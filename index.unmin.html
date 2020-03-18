@@ -98,21 +98,7 @@
     <div class="anchor-padding"></div>
 
     <div class="container">
-      <script
-        async
-        src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"
-      ></script>
       <!-- Ones and Skulls top -->
-      <ins
-        class="adsbygoogle"
-        style="display:block"
-        data-ad-client="ca-pub-4369217296754794"
-        data-ad-slot="5464160081"
-        data-ad-format="auto"
-      ></ins>
-      <script>
-        (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
       <br />
     </div>
 
@@ -187,6 +173,7 @@
       </div>
 
       <div id="summary-div" style="display:none">
+        <div id="chart"></div>
         <div id="game-details">
           <div class="row">
             <div class="col-sm-5 team-details team-details-left">
@@ -379,12 +366,15 @@
     <script src="js/lib/lz-string.min.js"></script>
     <script src="js/lib/JSONC.min.js"></script>
 
-    <script
-      src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
-      integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/underscore@1.9.2/underscore.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega@5.9.1/build/vega.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.2.0/build/vega-lite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.2.2/build/vega-embed.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.6/dist/js/bootstrap.min.js"></script>
 
+    <script src="js/constants.js"></script>
+    <script src="js/dice.js"></script>
+    <script src="js/rolls.js"></script>
     <script src="js/io.js"></script>
     <script src="js/replay.js"></script>
     <script src="js/stats.js"></script>
@@ -395,30 +385,5 @@
 <script src="js/stats.min.js"></script>
 <script src="js/site.min.js"></script>
 -->
-
-    <script>
-      (function(i, s, o, g, r, a, m) {
-        i["GoogleAnalyticsObject"] = r;
-        (i[r] =
-          i[r] ||
-          function() {
-            (i[r].q = i[r].q || []).push(arguments);
-          }),
-          (i[r].l = 1 * new Date());
-        (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
-        a.async = 1;
-        a.src = g;
-        m.parentNode.insertBefore(a, m);
-      })(
-        window,
-        document,
-        "script",
-        "//www.google-analytics.com/analytics.js",
-        "ga"
-      );
-
-      ga("create", "UA-71341597-1", "auto");
-      ga("send", "pageview");
-    </script>
   </body>
 </html>
