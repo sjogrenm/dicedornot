@@ -20,7 +20,8 @@ const BLOCK = die([
 const TWO_DIE_BLOCK = dice([BLOCK, BLOCK]);
 
 function unique(values) {
-  us = [];
+  var us = [];
+  var already_in;
   for (const value of values) {
     already_in = false;
     for (const existing of us) {
@@ -42,8 +43,7 @@ function die(values) {
 
 function dice(to_roll, combine) {
   combine = combine || append;
-  console.log(combine);
-  values = to_roll.shift().values;
+  var values = to_roll.shift().values;
   for (const die of to_roll) {
     new_values = [];
     for (const existing of values) {
