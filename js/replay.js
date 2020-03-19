@@ -1,6 +1,6 @@
 /* Minifier: http://jscompress.com/ */
 
-replay = {
+const replay = {
   processReplay: function(data) {
     //console.log("replay.processReplay");
     //console.log(data);

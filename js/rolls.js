@@ -310,6 +310,7 @@ class BlockRoll extends Roll {
     return Math.max(...dice.map(BlockRoll.dieValue));
   }
   get expectedValue() {
+    var values;
     if (this.dice.length == 1) {
       values = BLOCK.values.map(BlockRoll.dieValue);
     } else {

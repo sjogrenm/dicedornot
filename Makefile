@@ -9,10 +9,10 @@
 		--use-short-doctype \
 		--minify-css true \
 		--minify-js true \
-		$< -o $@
+		$< | sed -E 's#"js/([^/]*)\.js"#"js/\1.min.js"#g' > index.html
 
 %.min.js: %.js
-	node_modules/.bin/terser $< --compress --mangle -o $@
+	node_modules/.bin/babel $< | node_modules/.bin/terser -o $@
 
 FILES = \
 	index.html \
@@ -21,14 +21,14 @@ FILES = \
 	js/replay.min.js \
 	js/rolls.min.js \
 	js/site.min.js \
-	js/stats.min.js \
-	js/lib/JSONC.min.js \
-	js/lib/lz-string.min.js \
-	js/lib/xml2json.min.js
+	js/stats.min.js
 
 all: $(FILES)
 clean:
 	rm $(FILES)
 
-.PHONY: all clean
+server:
+	python3 -m http.server 8099
+
+.PHONY: all clean server
 .DEFAULT_GOAL := all

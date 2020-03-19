@@ -1,6 +1,6 @@
 /* Minifier: http://jscompress.com/ */
 
-stats = {
+var stats = {
   calculateStats: function(actions, playerDetails) {
     var stats = {
       standard: {

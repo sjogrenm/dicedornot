@@ -2,7 +2,7 @@
 
 zip.workerScriptsPath = "/js/lib/zipjs/";
 
-io = {
+const io = {
   xmlToJson: function(file, doneCallback, errorCallback) {
     //console.log("io.xmlToJson");
     zip.createReader(

@@ -45,7 +45,7 @@ function dice(to_roll, combine) {
   combine = combine || append;
   var values = to_roll.shift().values;
   for (const die of to_roll) {
-    new_values = [];
+    var new_values = [];
     for (const existing of values) {
       for (const value of die.values) {
         new_values.push(combine(existing, value));
