@@ -61,7 +61,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Ones and Skulls</a>
+          <a class="navbar-brand" href="#">Diced or Not</a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
@@ -98,14 +98,14 @@
     <div class="anchor-padding"></div>
 
     <div class="container">
-      <!-- Ones and Skulls top -->
+      <!-- Diced or Not top -->
       <br />
     </div>
 
     <div class="container-fluid" role="main">
       <div class="jumbotron">
         <p>
-          Welcome to Ones and Skulls, the Blood Bowl 2 replay dice analyzer! If
+          Welcome to Diced or Not, the Blood Bowl 2 replay dice analyzer! If
           you've just had a particularly good or bad game and you want to know
           if the dice are to blame, this is the site for you. To get started,
           use the button below to select the replay you want to load. These are
@@ -173,7 +173,6 @@
       </div>
 
       <div id="summary-div" style="display:none">
-        <div id="chart"></div>
         <div id="game-details">
           <div class="row">
             <div class="col-sm-5 team-details team-details-left">
@@ -201,148 +200,8 @@
         </div>
       </div>
 
-      <div id="middle-ad" class="container"></div>
-
-      <div id="blockdice">
-        <h4>Block Dice:</h4>
-        <img src="blockdice.png" />
-      </div>
-
       <div id="results-div" style="display:none">
-        <div id="charts">
-          <a name="1dbs"></a>
-          <div class="anchor-padding-small"></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="1dbs-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="1dbs-count-chart"></div>
-            </div>
-          </div>
-
-          <a name="2dbs"></a>
-          <div class="anchor-padding-small"></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="2dbs-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="2dbs-count-chart"></div>
-            </div>
-          </div>
-
-          <a name="dodges"></a>
-          <div class="anchor-padding-small"></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="dodges-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="dodges-count-chart"></div>
-            </div>
-          </div>
-
-          <a name="armour"></a>
-          <div class="anchor-padding-small"></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="armour-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="armour-count-chart"></div>
-            </div>
-          </div>
-
-          <a name="allblocks"></a>
-          <div class="anchor-padding-small"></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="allblocks-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="allblocks-count-chart"></div>
-            </div>
-          </div>
-
-          <a name="sixsided"></a>
-          <div class="anchor-padding-small"></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="sixsided-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="sixsided-count-chart"></div>
-            </div>
-          </div>
-
-          <a name="other"></a>
-          <div
-            id="other-stats-anchor-padding"
-            class="anchor-padding-small"
-          ></div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="scatter-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="scatter-count-chart"></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="injury-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="injury-count-chart"></div>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6">
-              <div id="cas-pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div id="cas-count-chart"></div>
-            </div>
-          </div>
-
-          <div id="other-stats-template" class="row" style="display:none">
-            <div class="col-md-6">
-              <div class="pct-chart"></div>
-            </div>
-            <div class="col-md-6">
-              <div class="count-chart"></div>
-            </div>
-          </div>
-        </div>
-
-        <a name="rolls"></a>
-        <div class="anchor-padding"></div>
-        <div id="roll-details">
-          <table
-            id="roll-details-table"
-            class="table table-striped table-condensed"
-          >
-            <thead>
-              <tr>
-                <td>Turn</td>
-                <td>Player</td>
-                <td>Roll Type</td>
-                <td>Roll</td>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div id="chart" class="col-sm-12"></div>
       </div>
     </div>
 

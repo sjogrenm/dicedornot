@@ -102,8 +102,6 @@ function renderReplayData(replayData, dataParam) {
   $("#summary-div").show();
   $("#results-div").show();
 
-  showResultsAd();
-
   $("#blockdice").show();
 
   $("#share-massive-url").attr("href", resultsUrl);
@@ -246,8 +244,12 @@ function raceIdToName(raceId) {
       return "Chaos";
     case 9:
       return "Dark Elf";
+    case 10:
+      return "Undead";
     case 15:
       return "High Elf";
+    case 21:
+      return "Chaos Dwarf";
     case 24:
       return "Bretonnian";
     default:
