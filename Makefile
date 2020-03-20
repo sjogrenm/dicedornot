@@ -49,10 +49,13 @@ all: $(FILES)
 clean:
 	rm -rf site
 
+requirements:
+	npm ci
+
 dev:
 	cd src && python3 -m http.server 8099
 prod: $(FILES)
 	cd site && python3 -m http.server 8099
 
-.PHONY: all clean dev prod
+.PHONY: all clean dev prod requirements
 .DEFAULT_GOAL := all
