@@ -67,36 +67,17 @@ function renderDataParam() {
 }
 
 function renderReplayData(replayData, dataParam) {
-  console.log("replayData:");
-  console.log(replayData);
-  // console.log("dataParam:");
-  // console.log(dataParam);
-
   //var baseUrl = "http://localhost:8080";
-  var baseUrl = "http://onesandskulls.com";
+  var baseUrl = "http://dicedornot.vengefulpickle.com";
   var resultsPage = "/index.html";
   var resultsUrl = baseUrl + resultsPage + "?data=" + dataParam;
   var encodedResultsUrl = encodeURIComponent(resultsUrl);
   var tinyUrlCreator =
     "http://tinyurl.com/create.php?url=" + encodedResultsUrl + "#success";
-  //console.log("resultsUrl", resultsUrl);
-  //console.log("tinyUrlCreator", tinyUrlCreator);
-
-  // var gameStats = stats.calculateStats(
-  //   replayData.actions,
-  //   replayData.playerDetails
-  // );
-  // console.log("gameStats");
-  // console.log(gameStats);
 
   updateChart(replayData.rolls);
 
-  // updateGameDetails(replayData.gameDetails);
-  // updateActions(
-  //   replayData.actions,
-  //   replayData.gameDetails,
-  //   replayData.playerDetails
-  // );
+  updateGameDetails(replayData.gameDetails);
 
   $("#loading").hide();
   $("#summary-div").show();
