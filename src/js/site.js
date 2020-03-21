@@ -14,8 +14,7 @@ fileInput.addEventListener("change", function() {
     $("#data-param-error").hide();
     $("#summary-div").hide();
     $("#results-div").hide();
-    $("#share-alert").hide();
-    $("#blockdice").hide();
+    $("#explanation-div").hide();
 
     io.xmlToJson(
       fileInput.files[0],
@@ -82,8 +81,7 @@ function renderReplayData(replayData, dataParam) {
   $("#loading").hide();
   $("#summary-div").show();
   $("#results-div").show();
-
-  $("#blockdice").show();
+  $("#explanation-div").show();
 
   $("#share-massive-url").attr("href", resultsUrl);
   $("#share-tiny-url").attr("href", tinyUrlCreator);
@@ -101,38 +99,44 @@ function updateChart(rolls) {
   var teams = [...new Set(rolls.map(roll => roll.team))];
   console.log(teams);
   var values = [];
-  for (const team of teams) {
-    values.push({ expectedValue: 0, outcomeValue: 0, team: team, index: 0 });
-  }
+  // for (const team of teams) {
+  //   values.push({ expectedValue: 0, outcomeValue: 0, team: team, index: 0 });
+  // }
   values = values.concat(rolls.map(roll => roll.actual));
-  for (var iteration = 0; iteration <= 1000; iteration++) {
-    values = values.concat(rolls.map(roll => roll.simulated(iteration)));
-  }
   // Assign the specification to a local variable vlSpec.
   // TODO: put details of the action into the popup
   var vlSpec = {
     $schema: "https://vega.github.io/schema/vega-lite/v4.json",
-    width: "container",
+    width: 1000,
+    height: 300,
     data: {
+      name: "rolls",
       values: values
     },
     transform: [
       { calculate: "datum.outcomeValue - datum.expectedValue", as: "netValue" },
       {
         window: [{ op: "sum", field: "netValue", as: "cumNetValue" }],
-        groupby: ["team", "iteration"]
+        groupby: ["teamId", "iteration"]
       }
     ],
+    // facet: { rows: "team" },
+    // spec: {
     layer: [
       {
         transform: [
           {
             quantile: "cumNetValue",
             probs: [0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99],
-            groupby: ["team", "index"]
+            groupby: ["teamId", "index"]
           }
         ],
-        mark: { type: "line", opacity: 0.3, tooltip: true },
+        mark: {
+          type: "line",
+          opacity: 0.3,
+          tooltip: true,
+          interpolate: "monotone"
+        },
         encoding: {
           x: {
             type: "ordinal",
@@ -143,7 +147,7 @@ function updateChart(rolls) {
             type: "quantitative"
           },
           color: {
-            field: "team",
+            field: "teamId",
             type: "nominal"
           },
           detail: {
@@ -158,7 +162,7 @@ function updateChart(rolls) {
             filter: "datum.type == 'actual'"
           }
         ],
-        mark: { type: "line", interpolate: "step-after" },
+        mark: { type: "line", interpolate: "monotone" },
         encoding: {
           x: {
             type: "ordinal",
@@ -169,7 +173,7 @@ function updateChart(rolls) {
             type: "quantitative"
           },
           color: {
-            field: "team",
+            field: "teamId",
             type: "nominal"
           },
           detail: {
@@ -195,16 +199,32 @@ function updateChart(rolls) {
             type: "quantitative"
           },
           color: {
-            field: "team",
+            field: "teamId",
             type: "nominal"
           }
         }
       }
     ]
+    // }
   };
 
   // Embed the visualization in the container with id `vis`
-  vegaEmbed("#chart", vlSpec);
+  vegaEmbed("#chart", vlSpec).then(res => {
+    var iteration = 0;
+    function addValues() {
+      var values = [];
+      for (var x = 0; x <= 10; x++) {
+        iteration++;
+        values = values.concat(rolls.map(roll => roll.simulated(iteration)));
+      }
+      var changeSet = vega.changeset().insert(values);
+      res.view.change("rolls", changeSet).run();
+      if (iteration < 2000) {
+        window.setTimeout(addValues, 100);
+      }
+    }
+    addValues();
+  });
 }
 
 function raceIdToName(raceId) {
@@ -231,8 +251,12 @@ function raceIdToName(raceId) {
       return "High Elf";
     case 21:
       return "Chaos Dwarf";
+    case 22:
+      return "Underworld";
     case 24:
       return "Bretonnian";
+    case 25:
+      return "Kislev";
     default:
       return raceId;
   }

@@ -18,9 +18,11 @@ class Roll {
     actionIndex,
     resultIndex,
     team,
+    teamId,
     turn,
     playerName,
     playerTeam,
+    playerTeamId,
     rollType,
     dice
   }) {
@@ -28,13 +30,15 @@ class Roll {
     this.actionIndex = actionIndex;
     this.resultIndex = resultIndex;
     this.activeTeam = team;
+    this.activeTeamId = teamId;
     this.turn = turn;
     this.playerName = playerName;
     this.playerTeam = playerTeam;
+    this.playerTeamId = playerTeamId;
     this.rollType = rollType;
     this.dice = dice;
   }
-  static constructFromXML(
+  static argsFromXML(
     stepIndex,
     replaystep,
     actionIndex,
@@ -42,21 +46,19 @@ class Roll {
     resultIndex,
     boardactionresult
   ) {
-    if (this.ignore(replaystep, action, boardactionresult)) {
-      return null;
-    } else {
-      return new this({
-        stepIndex,
-        actionIndex,
-        resultIndex,
-        team: this.activeTeamName(replaystep),
-        turn: this.currentTurn(replaystep),
-        playerName: this.currentPlayerName(replaystep, action),
-        playerTeam: this.currentPlayerTeam(replaystep, action),
-        rollType: this.rollType(boardactionresult),
-        dice: this.dice(boardactionresult)
-      });
-    }
+    return {
+      stepIndex,
+      actionIndex,
+      resultIndex,
+      team: this.activeTeamName(replaystep),
+      teamId: this.activeTeamId(replaystep),
+      turn: this.currentTurn(replaystep),
+      playerName: this.currentPlayerName(replaystep, action),
+      playerTeam: this.currentPlayerTeam(replaystep, action),
+      playerTeamId: this.currentPlayerTeamId(replaystep, action),
+      rollType: this.rollType(boardactionresult),
+      dice: this.dice(boardactionresult)
+    };
   }
   value(dice) {
     throw "Must be defined by subclass";
@@ -84,6 +86,9 @@ class Roll {
   }
 
   dataPoint(iteration, dice, type) {
+    if (!(this.playerTeam || this.activTeam)) {
+      console.log(this);
+    }
     return {
       iteration: iteration,
       index:
@@ -93,6 +98,7 @@ class Roll {
         "." +
         this.resultIndex,
       team: this.playerTeam || this.activeTeam,
+      teamId: this.playerTeamId || this.activeTeamId,
       turn: this.turn,
       player: this.playerName,
       playerTeam: this.playerTeam,
@@ -136,6 +142,18 @@ class Roll {
       for (var player of team.listpitchplayers.playerstate) {
         if (player.id === currentId) {
           return team.data.name;
+        }
+      }
+    }
+  }
+  static currentPlayerTeamId(replaystep, action) {
+    var currentId = Roll.currentPlayer(action);
+    var teams = replaystep.boardstate.listteams.teamstate;
+    for (var teamId = 0; teamId < teams.length; teamId++) {
+      var team = teams[teamId];
+      for (var player of team.listpitchplayers.playerstate) {
+        if (player.id === currentId) {
+          return teamId;
         }
       }
     }
@@ -239,14 +257,20 @@ class Roll {
     }
 
     if (rollClass) {
-      return rollClass.constructFromXML(
-        stepIndex,
-        replaystep,
-        actionIndex,
-        action,
-        resultIndex,
-        boardactionresult
-      );
+      if (rollClass.ignore(replaystep, action, boardactionresult)) {
+        return null;
+      } else {
+        return new rollClass(
+          rollClass.argsFromXML(
+            stepIndex,
+            replaystep,
+            actionIndex,
+            action,
+            resultIndex,
+            boardactionresult
+          )
+        );
+      }
     } else {
       console.warn("Unknown roll " + boardactionresult.rolltype, {
         stepIndex,
@@ -335,30 +359,7 @@ class BlockRoll extends Roll {
 }
 
 class FansRoll extends Roll {
-  static constructFromXML(
-    stepIndex,
-    replaystep,
-    actionIndex,
-    action,
-    resultIndex,
-    boardactionresult
-  ) {
-    // TODO: Need to capture both teams rolls, because result is about comparison.
-    teamId =
-      boardactionresult.coachchoices.concernedteam ||
-      Roll.activeTeamId(replaystep);
-    return new this({
-      stepIndex,
-      actionIndex,
-      resultIndex,
-      team: Roll.teamName(replaystep, teamId),
-      turn: Roll.currentTurn(replaystep),
-      playerName: this.currentPlayerName(replaystep, action),
-      playerTeam: this.currentPlayerTeam(replaystep, action),
-      rollType: Roll.rollType(boardactionresult),
-      dice: Roll.dice(boardactionresult)
-    });
-  }
+  // TODO: Need to capture both teams rolls, because result is about comparison.
 }
 
 class ModifiedD6SumRoll extends Roll {
@@ -367,7 +368,7 @@ class ModifiedD6SumRoll extends Roll {
     this.target = target;
     this.modifier = modifier;
   }
-  static constructFromXML(
+  static argsFromXML(
     stepIndex,
     replaystep,
     actionIndex,
@@ -375,22 +376,20 @@ class ModifiedD6SumRoll extends Roll {
     resultIndex,
     boardactionresult
   ) {
-    return new this({
+    var args = super.argsFromXML(
       stepIndex,
+      replaystep,
       actionIndex,
+      action,
       resultIndex,
-      team: this.activeTeamName(replaystep),
-      turn: this.currentTurn(replaystep),
-      playerName: this.currentPlayerName(replaystep, action),
-      playerTeam: this.currentPlayerTeam(replaystep, action),
-      rollType: this.rollType(boardactionresult),
-      dice: this.dice(boardactionresult),
-      modifier:
-        ensureList(boardactionresult.listmodifiers.dicemodifier || [])
-          .map(modifier => modifier.value)
-          .reduce((a, b) => a + b, 0) || 0,
-      target: boardactionresult.requirement
-    });
+      boardactionresult
+    );
+    args.modifier =
+      ensureList(boardactionresult.listmodifiers.dicemodifier || [])
+        .map(modifier => modifier.value)
+        .reduce((a, b) => a + b, 0) || 0;
+    args.target = boardactionresult.requirement;
+    return args;
   }
   get modifiedTarget() {
     if (this.dice.length == 1) {
