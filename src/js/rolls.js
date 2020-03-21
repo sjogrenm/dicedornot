@@ -286,7 +286,7 @@ class Roll {
 }
 
 class BlockRoll extends Roll {
-  static rollName = "Block";
+  rollName = "Block";
 
   static dice(boardactionresult) {
     var dice = super.dice(boardactionresult);
@@ -434,74 +434,74 @@ class ModifiedD6SumRoll extends Roll {
 }
 
 class PickupRoll extends ModifiedD6SumRoll {
-  static rollName = "Pickup";
-  static passValue = 1;
-  static failValue = -1;
+  rollName = "Pickup";
+  passValue = 1;
+  failValue = -1;
 }
 class ArmorRoll extends ModifiedD6SumRoll {
-  static rollName = "Armor";
+  rollName = "Armor";
   // Cases: Defender down, GFI fail, Attacker Down, Leap fail
-  static passValue = -1;
-  static failValue = 0;
+  passValue = -1;
+  failValue = 0;
 }
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
-  static rollName = "Wild Animal";
-  static passValue = 0;
-  static failValue = -1;
+  rollName = "Wild Animal";
+  passValue = 0;
+  failValue = -1;
 }
 
 class DauntlessRoll extends ModifiedD6SumRoll {
-  static rollName = "Dauntless";
-  static passValue = 1;
-  static failValue = -1;
+  rollName = "Dauntless";
+  passValue = 1;
+  failValue = -1;
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
-  static rollName = "Dodge";
-  static passValue = 1;
-  static failValue = -1;
+  rollName = "Dodge";
+  passValue = 1;
+  failValue = -1;
 }
 
 class JumpUpRoll extends ModifiedD6SumRoll {
-  static rollName = "Jump Up";
-  static passValue = 1;
-  static failValue = 0;
+  rollName = "Jump Up";
+  passValue = 1;
+  failValue = 0;
 }
 
 class PassRoll extends ModifiedD6SumRoll {
-  static rollName = "Pass";
-  static passValue = 1;
-  static failValue = -1;
+  rollName = "Pass";
+  passValue = 1;
+  failValue = -1;
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
   // TODO: Player/team seems incorrect. Double-check w/ in-game replay viewer
-  static rollName = "Interception";
-  static passValue = 1;
-  static failValue = 0;
+  rollName = "Interception";
+  passValue = 1;
+  failValue = 0;
 }
 
 class WakeUpRoll extends ModifiedD6SumRoll {
-  static rollName = "Wake Up";
-  static passValue = 1;
-  static failValue = -1;
+  rollName = "Wake Up";
+  passValue = 1;
+  failValue = -1;
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
-  static rollName = "GFI";
-  static passValue = 0;
-  static failValue = -1;
+  rollName = "GFI";
+  passValue = 0;
+  failValue = -1;
 }
 
 class CatchRoll extends ModifiedD6SumRoll {
-  static rollName = "Catch";
-  static passValue = 1;
-  static failValue = -1;
+  rollName = "Catch";
+  passValue = 1;
+  failValue = -1;
 }
 
 class InjuryRoll extends Roll {
-  static rollName = "Injury";
+  rollName = "Injury";
   // TODO: Handle skills
   injuryValue(total) {
     if (total <= 7) {
@@ -531,7 +531,7 @@ class InjuryRoll extends Roll {
 }
 
 class CasualtyRoll extends Roll {
-  static rollName = "Casualty";
+  rollName = "Casualty";
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
 
