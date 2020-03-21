@@ -53,7 +53,7 @@ requirements:
 	npm ci
 
 dev:
-	cd src && python3 -m http.server 8099
+	cd src && python3 -m http.server 8098
 prod: $(FILES)
 	cd site && python3 -m http.server 8099
 

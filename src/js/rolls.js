@@ -86,9 +86,6 @@ class Roll {
   }
 
   dataPoint(iteration, dice, type) {
-    if (!(this.playerTeam || this.activTeam)) {
-      console.log(this);
-    }
     return {
       iteration: iteration,
       index:
@@ -97,8 +94,9 @@ class Roll {
         this.actionIndex +
         "." +
         this.resultIndex,
-      team: this.playerTeam || this.activeTeam,
-      teamId: this.playerTeamId || this.activeTeamId,
+      team: this.playerTeam
+        ? this.playerTeamId + ". " + this.playerTeam
+        : this.activeTeamId + ". " + this.activeTeam,
       turn: this.turn,
       player: this.playerName,
       playerTeam: this.playerTeam,
@@ -230,7 +228,7 @@ class Roll {
         return [];
       }
     } else {
-      console.warning("Unexpectedly missing boardactionresult", {
+      console.warn("Unexpectedly missing boardactionresult", {
         stepIndex,
         replaystep,
         action
