@@ -16,10 +16,12 @@ fileInput.addEventListener("change", function() {
     $("#summary-div").hide();
     $("#results-div").hide();
     $("#explanation-div").hide();
+    console.log("Preparing to parse XML...");
 
     io.xmlToJson(
       fileInput.files[0],
       function(jsonObj) {
+        console.log("Preparing to process replay json...");
         var replayData = replay.processReplay(jsonObj);
 
         // var jsoncCompressedJson = JSONC.compress(replayData);
@@ -27,7 +29,7 @@ fileInput.addEventListener("change", function() {
         // var lzstringCompressed = LZString.compressToEncodedURIComponent(
         // jsoncCompressedString
         // );
-
+        console.log("Preparing to render replay data...");
         renderReplayData(replayData, "");
       },
       function(err) {
@@ -75,6 +77,7 @@ function renderReplayData(replayData, dataParam) {
   var tinyUrlCreator =
     "http://tinyurl.com/create.php?url=" + encodedResultsUrl + "#success";
 
+  console.log("Rendering replay data...");
   updateChart(replayData.rolls);
 
   updateGameDetails(replayData.gameDetails);

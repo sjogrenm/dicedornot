@@ -103,7 +103,7 @@ class Roll {
       turn: this.turn,
       player: this.playerName,
       playerTeam: this.playerTeam,
-      rollName: this.rollName || this.rollType,
+      rollName: this.constructor.rollName || this.rollName || this.rollType,
       outcomeValue: this.value(dice),
       expectedValue: this.expectedValue,
       type: type,
@@ -412,9 +412,9 @@ class ModifiedD6SumRoll extends Roll {
   }
   value(dice) {
     if (dice.reduce((a, b) => a + b, 0) >= this.modifiedTarget) {
-      return this.passValue;
+      return this.constructor.passValue;
     } else {
-      return this.failValue;
+      return this.constructor.failValue;
     }
   }
   get expectedValue() {
@@ -433,9 +433,9 @@ class ModifiedD6SumRoll extends Roll {
     var expected = 0;
     for (const sum of diceSums) {
       if (sum >= this.modifiedTarget) {
-        expected += this.passValue / numPossible;
+        expected += this.constructor.passValue / numPossible;
       } else {
-        expected += this.failValue / numPossible;
+        expected += this.constructor.failValue / numPossible;
       }
     }
     return expected;

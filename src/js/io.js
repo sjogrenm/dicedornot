@@ -4,10 +4,11 @@ zip.workerScriptsPath = "/js/lib/zipjs/";
 
 const io = {
   xmlToJson: function(file, doneCallback, errorCallback) {
-    //console.log("io.xmlToJson");
+    console.log("io.xmlToJson");
     zip.createReader(
       new zip.BlobReader(fileInput.files[0]),
       function(reader) {
+        console.log("Preparing to read XML entries...");
         reader.getEntries(function(entries) {
           if (entries.length == 0) {
             errorCallback("No entries from reader");
@@ -17,6 +18,7 @@ const io = {
           entries[0].getData(
             new zip.TextWriter(),
             function(text) {
+              console.log("Converting text to json...", text);
               var jsonObject = textToJson(text);
               reader.close(function() {});
               doneCallback(jsonObject);

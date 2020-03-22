@@ -6,6 +6,7 @@ const replay = {
     //console.log(data);
 
     var gameDetails = extractGameDetails(data);
+    console.log("Extracted game details...", gameDetails);
 
     var playerDetails = {};
     var rolls = [];
@@ -15,9 +16,10 @@ const replay = {
       stepIndex++
     ) {
       var replayStep = data.replay.replaystep[stepIndex];
-      extractPlayerDetails(replayStep, playerDetails);
+      // extractPlayerDetails(replayStep, playerDetails);
       //extractActionsFromStep(replayStep, rolls);
       rolls = rolls.concat(Roll.fromReplayStep(stepIndex, replayStep));
+      console.log("Extracted rolls...", rolls);
     }
 
     return {

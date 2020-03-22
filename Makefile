@@ -32,6 +32,7 @@ FILES = \
 	site/js/rolls.js \
 	site/js/site.js \
 	site/js/stats.js \
+	site/js/constants.js \
 	site/js/lib/JSONC.min.js \
 	site/js/lib/lz-string.min.js \
 	site/js/lib/xml2json.min.js \

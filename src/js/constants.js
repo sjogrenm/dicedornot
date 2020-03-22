@@ -1,1 +1,1 @@
-ROLL_BLOCK = 5;
+var ROLL_BLOCK = 5;
