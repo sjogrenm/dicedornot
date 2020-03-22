@@ -5,6 +5,7 @@ google.setOnLoadCallback(enableFileInput);
 
 function enableFileInput() {
   $("#file-input-button").removeClass("disabled");
+  renderValueTable();
 }
 
 var fileInput = document.getElementById("file-input");
@@ -249,6 +250,22 @@ function updateChart(rolls) {
     }
     addValues();
   });
+}
+
+function renderValueTable() {
+  var rollValues = Object.values(ROLL_TYPES)
+    .filter(c => !!c)
+    .map(c => c.valueTable())
+    .flatMap(Object.entries);
+
+  for (var [roll, value] of rollValues) {
+    $("#value-table tbody").append(
+      `<tr scope="row"><td>${roll}</td><td>${value}</td></tr>`
+    );
+  }
+  $("#value-table")
+    .show()
+    .DataTable();
 }
 
 function raceIdToName(raceId) {

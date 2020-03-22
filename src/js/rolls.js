@@ -61,13 +61,16 @@ class Roll {
     };
   }
   value(dice) {
-    throw "Must be defined by subclass";
+    throw "value must be defined by subclass";
   }
   get expectedValue() {
-    throw "Must be defined by subclass";
+    throw "expectedValue must be defined by subclass";
   }
   simulateDice() {
-    throw "Must be defined by subclass";
+    throw "simulateDice must be defined by subclass";
+  }
+  static valueTable() {
+    throw "valueTable must be defined by subclass";
   }
 
   static ignore() {
@@ -284,7 +287,7 @@ class Roll {
 }
 
 class BlockRoll extends Roll {
-  rollName = "Block";
+  static rollName = "Block";
 
   static dice(boardactionresult) {
     var dice = super.dice(boardactionresult);
@@ -353,6 +356,17 @@ class BlockRoll extends Roll {
         DEFENDER_DOWN
       ])
     );
+  }
+  static valueTable() {
+    var table = {};
+    table[`${this.rollName} - Attacker Down`] = this.dieValue(ATTACKER_DOWN);
+    table[`${this.rollName} - Both Down`] = this.dieValue(BOTH_DOWN);
+    table[`${this.rollName} - Push`] = this.dieValue(PUSH);
+    table[`${this.rollName} - Defender Stumbles`] = this.dieValue(
+      DEFENDER_STUMBLES
+    );
+    table[`${this.rollName} - Defender Down`] = this.dieValue(DEFENDER_DOWN);
+    return table;
   }
 }
 
@@ -429,79 +443,90 @@ class ModifiedD6SumRoll extends Roll {
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
   }
+  static valueTable() {
+    var table = {};
+    table[`${this.rollName} - Pass`] = this.passValue;
+    table[`${this.rollName} - Fail`] = this.failValue;
+    return table;
+  }
 }
 
 class PickupRoll extends ModifiedD6SumRoll {
-  rollName = "Pickup";
-  passValue = 1;
-  failValue = -1;
+  static rollName = "Pickup";
+  static passValue = 1;
+  static failValue = -1;
 }
 class ArmorRoll extends ModifiedD6SumRoll {
-  rollName = "Armor";
-  // Cases: Defender down, GFI fail, Attacker Down, Leap fail
-  passValue = -1;
-  failValue = 0;
+  static rollName = "Armor";
+  static passValue = -1;
+  static failValue = 0;
+  static valueTable() {
+    var table = {};
+    table[`${this.rollName} - Break`] = this.passValue;
+    table[`${this.rollName} - Save`] = this.failValue;
+    return table;
+  }
 }
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
-  rollName = "Wild Animal";
-  passValue = 0;
-  failValue = -1;
+  static rollName = "Wild Animal";
+  static passValue = 0;
+  static failValue = -1;
 }
 
 class DauntlessRoll extends ModifiedD6SumRoll {
-  rollName = "Dauntless";
-  passValue = 1;
-  failValue = -1;
+  static rollName = "Dauntless";
+  static passValue = 1;
+  static failValue = -1;
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
-  rollName = "Dodge";
-  passValue = 1;
-  failValue = -1;
+  static rollName = "Dodge";
+  static passValue = 1;
+  static failValue = -1;
 }
 
 class JumpUpRoll extends ModifiedD6SumRoll {
-  rollName = "Jump Up";
-  passValue = 1;
-  failValue = 0;
+  static rollName = "Jump Up";
+  static passValue = 1;
+  static failValue = 0;
 }
 
 class PassRoll extends ModifiedD6SumRoll {
-  rollName = "Pass";
-  passValue = 1;
-  failValue = -1;
+  static rollName = "Pass";
+  static passValue = 1;
+  static failValue = -1;
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
   // TODO: Player/team seems incorrect. Double-check w/ in-game replay viewer
-  rollName = "Interception";
-  passValue = 1;
-  failValue = 0;
+  static rollName = "Interception";
+  static passValue = 1;
+  static failValue = 0;
 }
 
 class WakeUpRoll extends ModifiedD6SumRoll {
-  rollName = "Wake Up";
-  passValue = 1;
-  failValue = -1;
+  static rollName = "Wake Up";
+  static passValue = 1;
+  static failValue = -1;
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
-  rollName = "GFI";
-  passValue = 0;
-  failValue = -1;
+  static rollName = "GFI";
+  static passValue = 0;
+  static failValue = -1;
 }
 
 class CatchRoll extends ModifiedD6SumRoll {
-  rollName = "Catch";
-  passValue = 1;
-  failValue = -1;
+  static rollName = "Catch";
+  static passValue = 1;
+  static failValue = -1;
 }
 
 class InjuryRoll extends Roll {
-  rollName = "Injury";
+  static rollName = "Injury";
   // TODO: Handle skills
-  injuryValue(total) {
+  static injuryValue(total) {
     if (total <= 7) {
       return 0; // Only stunned, best outcome
     } else if (total <= 9) {
@@ -512,13 +537,13 @@ class InjuryRoll extends Roll {
   }
   value(dice) {
     var total = dice[0] + dice[1];
-    return this.injuryValue(total);
+    return this.constructor.injuryValue(total);
   }
   get expectedValue() {
     var expected = 0;
     for (var first = 1; first <= 6; first++) {
       for (var second = 1; second <= 6; second++) {
-        expected += this.injuryValue(first + second);
+        expected += this.value([first, second]);
       }
     }
     return expected / 36;
@@ -526,10 +551,17 @@ class InjuryRoll extends Roll {
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
   }
+  static valueTable() {
+    var table = {};
+    table[`${this.rollName} - Stun`] = this.injuryValue(7);
+    table[`${this.rollName} - KO`] = this.injuryValue(9);
+    table[`${this.rollName} - Casualty`] = this.injuryValue(12);
+    return table;
+  }
 }
 
 class CasualtyRoll extends Roll {
-  rollName = "Casualty";
+  static rollName = "Casualty";
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
 
@@ -539,16 +571,19 @@ class CasualtyRoll extends Roll {
     dice = dice.slice(0, dice.length / 2);
     return [dice[dice.length - 1]];
   }
-  value(dice) {
-    if (dice <= 30) {
+  static casValue(dice) {
+    if (dice < 4) {
       return 0; // Badly Hurt
-    } else if (dice == 40) {
+    } else if (dice < 50) {
       return -0.5; // MNG
-    } else if (dice == 50) {
+    } else if (dice < 60) {
       return -0.75; // Stat Damage
     } else {
       return -1; // Dead
     }
+  }
+  value(dice) {
+    return this.constructor.casValue(dice);
   }
   get expectedValue() {
     var expected = 0;
@@ -561,6 +596,14 @@ class CasualtyRoll extends Roll {
   }
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);
+  }
+  static valueTable() {
+    var table = {};
+    table[`${this.rollName} - Badly Hurt`] = this.casValue(35);
+    table[`${this.rollName} - Miss Next game`] = this.casValue(45);
+    table[`${this.rollName} - Stat Damage`] = this.casValue(55);
+    table[`${this.rollName} - Dead`] = this.casValue(65);
+    return table;
   }
 }
 

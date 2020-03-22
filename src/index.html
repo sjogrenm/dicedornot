@@ -18,10 +18,10 @@
   <meta name="twitter:description"
     content="Blood Bowl 2 replay luck analyzer. Use it to decide whether you actually got diced." />
   <title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
-    integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous" />
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
-    integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
+    integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables@1.10.18/media/css/jquery.dataTables.min.css"
+    integrity="sha256-YY1izqyhIj4W3iyJOaGWOpXDSwrHWFL4Nfk+W0LyCHE=" crossorigin="anonymous">
   <link rel="stylesheet" href="css/app.css" />
   <!--<link rel="stylesheet" href="css/app.min.css" />-->
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
@@ -29,42 +29,30 @@
 </head>
 
 <body role="document">
-  <nav class="navbar navbar-inverse navbar-fixed-top">
-    <div class="container">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
-          aria-expanded="false" aria-controls="navbar">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="#">Diced or Not</a>
-      </div>
-      <div id="navbar" class="navbar-collapse collapse">
-        <ul class="nav navbar-nav">
-          <li><a href="#about">About</a></li>
-          <li class="dropdown">
-            <a href="#results">Replay</span></a>
-          <li>
-            <a href="#explanation">Explain?</a>
-          </li>
-          </li>
-          <li><a href="#contact">Contact</a></li>
-        </ul>
-      </div>
+  <nav class="navbar fixed-top navbar-dark bg-dark navbar-fixed-top navbar-expand-lg">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar" aria-controls="navbar"
+      aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand" href="#">Diced or Not</a>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+        <li class="dropdown">
+          <a class="nav-link" href="#results">Replay</span></a>
+        <li class="nav-item">
+          <a class="nav-link" href="#explanation">Explain?</a>
+        </li>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+      </ul>
     </div>
   </nav>
 
   <a name="about"></a>
   <div class="anchor-padding"></div>
 
-  <div class="container">
-    <!-- Diced or Not top -->
-    <br />
-  </div>
-
-  <div class="container-fluid" role="main">
+  <div class="container-flex">
     <div class="jumbotron">
       <p>
         Welcome to Diced or Not, the Blood Bowl 2 replay dice analyzer! If
@@ -91,6 +79,8 @@
         Loading...
       </div>
     </div>
+  </div>
+  <div class="container" role="main">
 
     <div class="alert alert-danger" role="alert" id="data-param-error" style="display:none">
       <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
@@ -174,7 +164,7 @@
             example, getting a Defender Down on a Block roll would be a +1 value, and getting
             an Attacker Down on a Block roll would be a -1 value (because it ends your turn).
 
-            More details of the values assigned are listed in the <a href="#values">Values Table</a>.
+            More details of the values assigned are listed in the <a href="#value-table">Values Table</a>.
           </dd>
           <dt id="expected-value-def">Expected Value</dt>
           <dd>The average <a href="value-def">Value</a> over all of the possible results of a roll.</dd>
@@ -183,6 +173,20 @@
           <dt>Cumulative Net Value</dt>
           <dd>The running total of Net Value for all the rolls taken so far by a team.</dd>
         </dl>
+      </div>
+    </div>
+    <div class="row justify-content-md-center">
+      <div class="col-sm-8">
+        <h1 class="">Roll Values</h1>
+        <table id="value-table" class="table table-striped" style="display:none">
+          <thead>
+            <tr>
+              <th scope="col">Roll Result</th>
+              <th scope="col">Value</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -205,11 +209,18 @@
   <script src="js/lib/lz-string.min.js"></script>
   <script src="js/lib/JSONC.min.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/underscore@1.9.2/underscore.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5.9.1/build/vega.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.2.0/build/vega-lite.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.2.2/build/vega-embed.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.6/dist/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/underscore@1.9.2/underscore.js"
+    integrity="sha256-cW9GhW39PUOihI4zyRJIUWwyhMReNB6RDmLwL7kmiC4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5.9.1/build/vega.min.js"
+    integrity="sha256-xVmd2OiOTh73s2iPfGy1DNyu/lCKvaDto452MU1O+xs=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@4.2.0/build/vega-lite.min.js"
+    integrity="sha256-sfP9zZMwUq/XqmwDa7hidctee3PZFkO46s/emgnYx8k=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6.2.2/build/vega-embed.min.js"
+    integrity="sha256-AW13lGYqQzWT9PymwqUEJqQHaz9ntM5m5jQVkvtzja4=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha256-OUFW7hFO0/r5aEGTQOz9F/aXQOt+TwqI1Z4fbVvww04=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/datatables@1.10.18/media/js/jquery.dataTables.min.js"
+    integrity="sha256-3aHVku6TxTRUkkiibvwTz5k8wc7xuEr1QqTB+Oo5Q7I=" crossorigin="anonymous"></script>
 
   <script src="js/constants.js"></script>
   <script src="js/dice.js"></script>
