@@ -218,7 +218,10 @@ function updateChart(rolls) {
           tooltip: [
             { field: "team", title: "Team" },
             { field: "player", title: "Player" },
+            { field: "playerSkills", title: "Player Skill" },
             { field: "rollName", title: "Roll" },
+            { field: "dice", title: "Dice" },
+            { field: "target", title: "Target" },
             { field: "outcomeValue", title: "Value", format: ".2f" },
             { field: "expectedValue", title: "Expected Value", format: ".2f" },
             { field: "netValue", title: "Net Value", format: ".2f" },
@@ -283,6 +286,8 @@ function raceIdToName(raceId) {
       return "Orc";
     case 5:
       return "Lizardman";
+    case 6:
+      return "Goblin";
     case 7:
       return "Wood Elf";
     case 8:
@@ -291,8 +296,12 @@ function raceIdToName(raceId) {
       return "Dark Elf";
     case 10:
       return "Undead";
+    case 14:
+      return "Pro Elf";
     case 15:
       return "High Elf";
+    case 17:
+      return "Necromantic";
     case 21:
       return "Chaos Dwarf";
     case 22:

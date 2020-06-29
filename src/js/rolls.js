@@ -13,30 +13,9 @@ function sample(list) {
 }
 
 class Roll {
-  constructor({
-    stepIndex,
-    actionIndex,
-    resultIndex,
-    team,
-    teamId,
-    turn,
-    playerName,
-    playerTeam,
-    playerTeamId,
-    rollType,
-    dice
-  }) {
-    this.stepIndex = stepIndex;
-    this.actionIndex = actionIndex;
-    this.resultIndex = resultIndex;
-    this.activeTeam = team;
-    this.activeTeamId = teamId;
-    this.turn = turn;
-    this.playerName = playerName;
-    this.playerTeam = playerTeam;
-    this.playerTeamId = playerTeamId;
-    this.rollType = rollType;
-    this.dice = dice;
+  constructor(attrs) {
+    console.log(attrs);
+    Object.assign(this, attrs);
   }
   static argsFromXML(
     stepIndex,
@@ -46,6 +25,7 @@ class Roll {
     resultIndex,
     boardactionresult
   ) {
+    var playerData = this.currentPlayerData(replaystep, action);
     return {
       stepIndex,
       actionIndex,
@@ -53,9 +33,12 @@ class Roll {
       team: this.activeTeamName(replaystep),
       teamId: this.activeTeamId(replaystep),
       turn: this.currentTurn(replaystep),
-      playerName: this.currentPlayerName(replaystep, action),
-      playerTeam: this.currentPlayerTeam(replaystep, action),
-      playerTeamId: this.currentPlayerTeamId(replaystep, action),
+      playerName: playerData.player.data.name,
+      playerTeam: playerData.team.data.name,
+      playerTeamId: playerData.teamId,
+      playerSkills: this.translateStringNumberList(
+        playerData.player.data.listskills
+      ),
       rollType: this.rollType(boardactionresult),
       dice: this.dice(boardactionresult)
     };
@@ -82,7 +65,13 @@ class Roll {
     );
   }
   get actual() {
-    return this.dataPoint(0, this.dice, "actual");
+    return Object.assign(this.dataPoint(0, this.dice, "actual"), {
+      turn: this.turn,
+      player: this.playerName,
+      playerSkills: this.playerSkills.map(skill => skillNames[skill]),
+      rollName: this.constructor.rollName || this.rollName || this.rollType,
+      dice: this.dice
+    });
   }
   simulated(iteration) {
     return this.dataPoint(iteration, this.simulateDice(), "simulated");
@@ -100,14 +89,9 @@ class Roll {
       team: this.playerTeam
         ? this.playerTeamId + ". " + this.playerTeam
         : this.activeTeamId + ". " + this.activeTeam,
-      turn: this.turn,
-      player: this.playerName,
-      playerTeam: this.playerTeam,
-      rollName: this.constructor.rollName || this.rollName || this.rollType,
       outcomeValue: this.value(dice),
-      expectedValue: this.expectedValue,
       type: type,
-      dice: dice
+      expectedValue: this.expectedValue
     };
   }
 
@@ -126,39 +110,21 @@ class Roll {
         .gameturn || 0
     );
   }
-  static currentPlayerName(replaystep, action) {
+
+  static currentPlayerData(replaystep, action) {
     var currentId = this.currentPlayer(action);
-    for (var team of replaystep.boardstate.listteams.teamstate) {
-      for (var player of team.listpitchplayers.playerstate) {
-        if (player.id === currentId) {
-          return player.data.name;
-        }
-      }
-    }
-    console.log("No player found", { replaystep, action });
-  }
-  static currentPlayerTeam(replaystep, action) {
-    var currentId = Roll.currentPlayer(action);
-    for (var team of replaystep.boardstate.listteams.teamstate) {
-      for (var player of team.listpitchplayers.playerstate) {
-        if (player.id === currentId) {
-          return team.data.name;
-        }
-      }
-    }
-  }
-  static currentPlayerTeamId(replaystep, action) {
-    var currentId = Roll.currentPlayer(action);
     var teams = replaystep.boardstate.listteams.teamstate;
     for (var teamId = 0; teamId < teams.length; teamId++) {
       var team = teams[teamId];
       for (var player of team.listpitchplayers.playerstate) {
         if (player.id === currentId) {
-          return teamId;
+          return { team, teamId, player, playerId: player.id };
         }
       }
     }
+    console.log("No player found", { replaystep, action });
   }
+
   static currentPlayer(action) {
     return action.playerid;
   }
@@ -297,7 +263,14 @@ class BlockRoll extends Roll {
 
   static ignore(replaystep, action, boardactionresult) {
     // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
-    return boardactionresult.resulttype != 2;
+    if (boardactionresult.resulttype != 2) {
+      return true;
+    }
+    if (boardactionresult.subresulttype == 35) {
+      // Opponent picking whether to activate fend
+      return true;
+    }
+    return false;
   }
 
   static asBlockDie(dieRoll) {
@@ -315,16 +288,33 @@ class BlockRoll extends Roll {
     }
   }
 
-  static dieValue(result) {
+  static dieValue(result, attackerSkills, defenderSkills) {
+    var attackerSkills = attackerSkills || [];
+    var defenderSkills = defenderSkills || [];
+
     switch (result) {
       case ATTACKER_DOWN:
         return -1;
       case BOTH_DOWN:
-        return -0.75;
+        if (attackerSkills.includes(skills.Block)) {
+          if (defenderSkills.includes(skills.Block)) {
+            return 0;
+          } else {
+            return 0.75;
+          }
+        } else if (attackerSkills.includes(skills.Wrestle)) {
+          return 0.5;
+        } else {
+          return -1;
+        }
       case PUSH:
         return 0.25;
       case DEFENDER_STUMBLES:
-        return 0.75;
+        if (defenderSkills.includes(skills.Dodge)) {
+          return 0;
+        } else {
+          return 1;
+        }
       case DEFENDER_DOWN:
         return 1;
     }
@@ -332,16 +322,15 @@ class BlockRoll extends Roll {
   value(dice) {
     // TODO: Handle values based on skills
     // TODO: Red Dice?
-    return Math.max(...dice.map(BlockRoll.dieValue));
+    var aSkills = this.playerSkills;
+    return Math.max(...dice.map(die => BlockRoll.dieValue(die, aSkills)));
   }
   get expectedValue() {
     var values;
     if (this.dice.length == 1) {
-      values = BLOCK.values.map(BlockRoll.dieValue);
+      values = BLOCK.values.map(dice => this.value([dice]));
     } else {
-      values = TWO_DIE_BLOCK.values.map(dice =>
-        Math.max(BlockRoll.dieValue(dice[0]), BlockRoll.dieValue(dice[1]))
-      );
+      values = TWO_DIE_BLOCK.values.map(dice => this.value(dice));
     }
     return values.reduce((a, b) => a + b, 0) / values.length;
   }
@@ -358,15 +347,33 @@ class BlockRoll extends Roll {
     );
   }
   static valueTable() {
-    var table = {};
-    table[`${this.rollName} - Attacker Down`] = this.dieValue(ATTACKER_DOWN);
-    table[`${this.rollName} - Both Down`] = this.dieValue(BOTH_DOWN);
-    table[`${this.rollName} - Push`] = this.dieValue(PUSH);
-    table[`${this.rollName} - Defender Stumbles`] = this.dieValue(
-      DEFENDER_STUMBLES
-    );
-    table[`${this.rollName} - Defender Down`] = this.dieValue(DEFENDER_DOWN);
-    return table;
+    return {
+      [`${this.rollName} - Attacker Down`]: this.dieValue(ATTACKER_DOWN),
+      [`${this.rollName} - Both Down`]: this.dieValue(BOTH_DOWN),
+      [`${this.rollName} - Both Down (Block vs None)`]: this.dieValue(
+        BOTH_DOWN,
+        [skills.Block]
+      ),
+      [`${this.rollName} - Both Down (Wrestle vs Anything)`]: this.dieValue(
+        BOTH_DOWN,
+        [skills.Wrestle]
+      ),
+      [`${this.rollName} - Both Down (Block vs Block)`]: this.dieValue(
+        BOTH_DOWN,
+        [skills.Block],
+        [skills.Block]
+      ),
+      [`${this.rollName} - Both Down (None vs Block)`]: this.dieValue(
+        BOTH_DOWN,
+        [],
+        [skills.Block]
+      ),
+      [`${this.rollName} - Push`]: this.dieValue(PUSH),
+      [`${this.rollName} - Defender Stumbles`]: this.dieValue(
+        DEFENDER_STUMBLES
+      ),
+      [`${this.rollName} - Defender Down`]: this.dieValue(DEFENDER_DOWN)
+    };
   }
 }
 
@@ -402,6 +409,12 @@ class ModifiedD6SumRoll extends Roll {
         .reduce((a, b) => a + b, 0) || 0;
     args.target = boardactionresult.requirement;
     return args;
+  }
+
+  get actual() {
+    return Object.assign(super.actual, {
+      target: this.modifiedTarget
+    });
   }
   get modifiedTarget() {
     if (this.dice.length == 1) {
@@ -477,7 +490,7 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
 class DauntlessRoll extends ModifiedD6SumRoll {
   static rollName = "Dauntless";
   static passValue = 1;
-  static failValue = -1;
+  static failValue = 0;
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {

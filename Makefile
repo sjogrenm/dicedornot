@@ -57,6 +57,8 @@ dev:
 	cd src && python3 -m http.server 8098
 prod: $(FILES)
 	cd site && python3 -m http.server 8099
-
-.PHONY: all clean dev prod requirements
+watch:
+	watchmedo shell-command -c 'make' -R src
+	
+.PHONY: all clean dev prod requirements watch
 .DEFAULT_GOAL := all

@@ -19,8 +19,8 @@ const replay = {
       // extractPlayerDetails(replayStep, playerDetails);
       //extractActionsFromStep(replayStep, rolls);
       rolls = rolls.concat(Roll.fromReplayStep(stepIndex, replayStep));
-      console.log("Extracted rolls...", rolls);
     }
+    console.log("Extracted rolls...", rolls);
 
     return {
       gameDetails: gameDetails,
