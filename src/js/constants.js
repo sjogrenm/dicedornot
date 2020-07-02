@@ -1,4 +1,4 @@
-const skills = {
+export const skills = {
   StripBall: 1,
   IncreaseStrength: 2,
   IncreaseAgility: 3,
@@ -78,10 +78,10 @@ const skills = {
   Titchy: 83,
   BloodLust: 84,
   FanFavourite: 85,
-  Animosity: 86
+  Animosity: 86,
 };
 
-const skillNames = {
+export const skillNames = {
   [skills.StripBall]: "Strip Ball",
   [skills.IncreaseStrength]: "ST+",
   [skills.IncreaseAgility]: "AG+",
@@ -160,5 +160,5 @@ const skillNames = {
   [skills.Titchy]: "Titchy",
   [skills.BloodLust]: "Blood-Lust",
   [skills.FanFavourite]: "Fan Favourite",
-  [skills.Animosity]: "Animosity"
+  [skills.Animosity]: "Animosity",
 };

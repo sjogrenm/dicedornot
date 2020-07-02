@@ -1,7 +1,9 @@
 /* Minifier: http://jscompress.com/ */
 
-const replay = {
-  processReplay: function(data) {
+import { Roll } from "./rolls";
+
+export const replay = {
+  processReplay: function (data) {
     //console.log("replay.processReplay");
     //console.log(data);
 
@@ -26,9 +28,9 @@ const replay = {
       gameDetails: gameDetails,
       playerDetails: playerDetails,
       rolls: rolls,
-      version: 1
+      version: 1,
     };
-  }
+  },
 };
 
 function extractGameDetails(jsonObject) {
@@ -44,14 +46,14 @@ function extractGameDetails(jsonObject) {
       coachName: firstStep.gameinfos.coachesinfos.coachinfos[0].userid,
       teamName: firstStep.boardstate.listteams.teamstate[0].data.name,
       raceId: firstStep.boardstate.listteams.teamstate[0].data.idrace,
-      score: lastStep.ruleseventgamefinished.matchresult.row.homescore || 0
+      score: lastStep.ruleseventgamefinished.matchresult.row.homescore || 0,
     },
     awayTeam: {
       coachName: firstStep.gameinfos.coachesinfos.coachinfos[1].userid,
       teamName: firstStep.boardstate.listteams.teamstate[1].data.name,
       raceId: firstStep.boardstate.listteams.teamstate[1].data.idrace,
-      score: lastStep.ruleseventgamefinished.matchresult.row.awayscore || 0
-    }
+      score: lastStep.ruleseventgamefinished.matchresult.row.awayscore || 0,
+    },
   };
 }
 
@@ -88,7 +90,7 @@ function extractPlayerDetailsFromTeamState(teamState, playerDetails) {
         id: player.id,
         teamId: player.data.teamid || 0,
         type: player.data.idplayertypes,
-        name: player.data.name
+        name: player.data.name,
         // player.data.name is sometimes useful but not populated for hired players
       };
     }
@@ -170,7 +172,7 @@ function extractActionDetails(replayStep, action, result) {
       dice,
       action.playerid,
       action.targetid
-    )
+    ),
   };
 }
 
@@ -179,7 +181,7 @@ function expectedValue(rollType, rollResult, player, target) {
     if (rollResult.length == 1) {
       values = BLOCK.values.map(blockResultValue);
     } else {
-      values = TWO_DIE_BLOCK.values.map(dice =>
+      values = TWO_DIE_BLOCK.values.map((dice) =>
         Math.max(blockResultValue(dice[0]), blockResultValue(dice[1]))
       );
     }
@@ -267,6 +269,6 @@ function extractKickoffDetails(replayStep) {
       ].gameturn || 0,
     player: null,
     rollType: -1,
-    dice: translateDice(replayStep.ruleseventkickofftable.listdice, -1)
+    dice: translateDice(replayStep.ruleseventkickofftable.listdice, -1),
   };
 }

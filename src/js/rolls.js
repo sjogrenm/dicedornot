@@ -1,3 +1,14 @@
+import {
+  ATTACKER_DOWN,
+  PUSH,
+  BOTH_DOWN,
+  DEFENDER_STUMBLES,
+  DEFENDER_DOWN,
+  TWO_DIE_BLOCK,
+  BLOCK,
+} from "./dice";
+import { skillNames, skills } from "./constants";
+
 // TODO: Switch over to using dice.js for better clarity
 
 function ensureList(objOrList) {
@@ -12,9 +23,33 @@ function sample(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-class Roll {
+class Player {
+  #teamData;
+  teamId;
+  #playerData;
+  playerId;
+
+  constructor({ teamData, teamId, playerData, playerId }) {
+    this.teamData = teamData;
+    this.teamId = teamId;
+    this.playerData = playerData;
+    this.playerId = playerId;
+  }
+
+  get name() {
+    return this.playerData.data.name;
+  }
+
+  get teamName() {
+    return this.teamData.data.name;
+  }
+  get skills() {
+    return Roll.translateStringNumberList(this.playerData.data.listskills);
+  }
+}
+
+export class Roll {
   constructor(attrs) {
-    console.log(attrs);
     Object.assign(this, attrs);
   }
   static argsFromXML(
@@ -27,6 +62,9 @@ class Roll {
   ) {
     var playerData = this.currentPlayerData(replaystep, action);
     return {
+      replaystep,
+      action,
+      boardactionresult,
       stepIndex,
       actionIndex,
       resultIndex,
@@ -40,7 +78,7 @@ class Roll {
         playerData.player.data.listskills
       ),
       rollType: this.rollType(boardactionresult),
-      dice: this.dice(boardactionresult)
+      dice: this.dice(boardactionresult),
     };
   }
   value(dice) {
@@ -200,8 +238,9 @@ class Roll {
       console.warn("Unexpectedly missing boardactionresult", {
         stepIndex,
         replaystep,
-        action
+        action,
       });
+      return [];
     }
   }
   static fromBoardActionResult(
@@ -245,7 +284,7 @@ class Roll {
         actionIndex,
         action,
         resultIndex,
-        boardactionresult
+        boardactionresult,
       });
       return null;
     }
@@ -328,9 +367,9 @@ class BlockRoll extends Roll {
   get expectedValue() {
     var values;
     if (this.dice.length == 1) {
-      values = BLOCK.values.map(dice => this.value([dice]));
+      values = BLOCK.values.map((dice) => this.value([dice]));
     } else {
-      values = TWO_DIE_BLOCK.values.map(dice => this.value(dice));
+      values = TWO_DIE_BLOCK.values.map((dice) => this.value(dice));
     }
     return values.reduce((a, b) => a + b, 0) / values.length;
   }
@@ -342,7 +381,7 @@ class BlockRoll extends Roll {
         PUSH,
         PUSH,
         DEFENDER_STUMBLES,
-        DEFENDER_DOWN
+        DEFENDER_DOWN,
       ])
     );
   }
@@ -405,7 +444,7 @@ class ModifiedD6SumRoll extends Roll {
     );
     args.modifier =
       ensureList(boardactionresult.listmodifiers.dicemodifier || [])
-        .map(modifier => modifier.value)
+        .map((modifier) => modifier.value)
         .reduce((a, b) => a + b, 0) || 0;
     args.target = boardactionresult.requirement;
     return args;
@@ -413,7 +452,7 @@ class ModifiedD6SumRoll extends Roll {
 
   get actual() {
     return Object.assign(super.actual, {
-      target: this.modifiedTarget
+      target: this.modifiedTarget,
     });
   }
   get modifiedTarget() {
@@ -620,7 +659,7 @@ class CasualtyRoll extends Roll {
   }
 }
 
-const ROLL_TYPES = {
+export const ROLL_TYPES = {
   1: GFIRoll,
   2: DodgeRoll,
   3: ArmorRoll,
@@ -661,7 +700,7 @@ const ROLL_TYPES = {
   60: InjuryRoll,
   63: null, // Carrier KD scatter
   // 69: FansRoll,
-  70: null // Weather
+  70: null, // Weather
 };
 
 // TODO: Parse Kickoff events

@@ -1,39 +1,18 @@
 /* Minifier: http://jscompress.com/ */
+import * as JSZip from "jszip";
 
-zip.workerScriptsPath = "/js/lib/zipjs/";
-
-const io = {
-  xmlToJson: function(file, doneCallback, errorCallback) {
-    console.log("io.xmlToJson");
-    zip.createReader(
-      new zip.BlobReader(fileInput.files[0]),
-      function(reader) {
-        console.log("Preparing to read XML entries...");
-        reader.getEntries(function(entries) {
-          if (entries.length == 0) {
-            errorCallback("No entries from reader");
-            return;
-          }
-
-          entries[0].getData(
-            new zip.TextWriter(),
-            function(text) {
-              console.log("Converting text to json...", text);
-              var jsonObject = textToJson(text);
-              reader.close(function() {});
-              doneCallback(jsonObject);
-            },
-            function(current, total) {}
-          );
+export const io = {
+  xmlToJson: function (file, doneCallback, errorCallback) {
+    JSZip.loadAsync(file).then((zip) => {
+      zip.forEach((relPath, file) => {
+        file.async("string").then((text) => {
+          var jsonObject = textToJson(text);
+          console.log(jsonObject);
+          doneCallback(jsonObject);
         });
-      },
-      function(error) {
-        console.error("Error reading ZIP");
-        console.error(error);
-        errorCallback("Could not extract ZIP file");
-      }
-    );
-  }
+      });
+    });
+  },
 };
 
 function textToJson(text) {

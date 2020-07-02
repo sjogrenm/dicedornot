@@ -1,15 +1,17 @@
 /* Minifier: http://jscompress.com/ */
+import { ROLL_TYPES } from "./rolls";
+import { io } from "./io";
+import { replay } from "./replay";
 
 google.load("visualization", "1.0", { packages: ["corechart"] });
 google.setOnLoadCallback(enableFileInput);
 
 function enableFileInput() {
   $("#file-input-button").removeClass("disabled");
-  renderValueTable();
 }
 
 var fileInput = document.getElementById("file-input");
-fileInput.addEventListener("change", function() {
+fileInput.addEventListener("change", function () {
   if (fileInput.files.length > 0) {
     $("#loading").show();
     $("#data-param-error").hide();
@@ -20,7 +22,7 @@ fileInput.addEventListener("change", function() {
 
     io.xmlToJson(
       fileInput.files[0],
-      function(jsonObj) {
+      function (jsonObj) {
         console.log("Preparing to process replay json...");
         var replayData = replay.processReplay(jsonObj);
 
@@ -32,7 +34,7 @@ fileInput.addEventListener("change", function() {
         console.log("Preparing to render replay data...");
         renderReplayData(replayData, "");
       },
-      function(err) {
+      function (err) {
         $("#loading").hide();
         alert(err);
       }
@@ -101,13 +103,13 @@ function renderReplayData(replayData, dataParam) {
 
 function updateChart(rolls) {
   console.log(rolls);
-  var teams = [...new Set(rolls.map(roll => roll.team))];
+  var teams = [...new Set(rolls.map((roll) => roll.team))];
   console.log(teams);
   var values = [];
   // for (const team of teams) {
   //   values.push({ expectedValue: 0, outcomeValue: 0, team: team, index: 0 });
   // }
-  values = values.concat(rolls.map(roll => roll.actual));
+  values = values.concat(rolls.map((roll) => roll.actual));
   // Assign the specification to a local variable vlSpec.
   // TODO: put details of the action into the popup
   var vlSpec = {
@@ -116,14 +118,14 @@ function updateChart(rolls) {
     height: 300,
     data: {
       name: "rolls",
-      values: values
+      values: values,
     },
     transform: [
       { calculate: "datum.outcomeValue - datum.expectedValue", as: "netValue" },
       {
         window: [{ op: "sum", field: "netValue", as: "cumNetValue" }],
-        groupby: ["team", "iteration"]
-      }
+        groupby: ["team", "iteration"],
+      },
     ],
     // facet: { rows: "team" },
     // spec: {
@@ -133,87 +135,87 @@ function updateChart(rolls) {
           {
             quantile: "cumNetValue",
             probs: [0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99],
-            groupby: ["team", "index"]
+            groupby: ["team", "index"],
           },
           {
             calculate: "datum.prob * 100",
-            as: "perc"
-          }
+            as: "perc",
+          },
         ],
         mark: {
           type: "line",
           opacity: 0.3,
-          interpolate: "basis"
+          interpolate: "basis",
         },
         encoding: {
           x: {
             type: "ordinal",
-            field: "index"
+            field: "index",
           },
           y: {
             field: "value",
-            type: "quantitative"
+            type: "quantitative",
           },
           color: {
             field: "team",
-            type: "nominal"
+            type: "nominal",
           },
           detail: {
             field: "prob",
-            type: "nominal"
+            type: "nominal",
           },
           tooltip: [
             { field: "team", title: "Team" },
             { field: "value", title: "Cumulative Net Value", format: ".2f" },
-            { field: "perc", title: "Percentile", format: ".0f" }
-          ]
-        }
+            { field: "perc", title: "Percentile", format: ".0f" },
+          ],
+        },
       },
       {
         transform: [
           {
-            filter: "datum.type == 'actual'"
-          }
+            filter: "datum.type == 'actual'",
+          },
         ],
         mark: { type: "line", interpolate: "monotone" },
         encoding: {
           x: {
             type: "ordinal",
-            field: "index"
+            field: "index",
           },
           y: {
             field: "cumNetValue",
-            type: "quantitative"
+            type: "quantitative",
           },
           color: {
             field: "team",
-            type: "nominal"
+            type: "nominal",
           },
           detail: {
             field: "iteration",
-            type: "nominal"
-          }
-        }
+            type: "nominal",
+          },
+        },
       },
       {
         transform: [
           {
-            filter: "datum.type == 'actual'"
-          }
+            filter: "datum.type == 'actual'",
+          },
         ],
         mark: { type: "point" },
         encoding: {
           x: {
             type: "ordinal",
-            field: "index"
+            field: "index",
           },
           y: {
             field: "cumNetValue",
-            type: "quantitative"
+            type: "quantitative",
           },
           color: {
             field: "team",
-            type: "nominal"
+            type: "nominal",
           },
           tooltip: [
             { field: "team", title: "Team" },
@@ -228,24 +230,24 @@ function updateChart(rolls) {
             {
               field: "cumNetValue",
               title: "Cumulative Net Value",
-              format: ".2f"
-            }
-          ]
-        }
-      }
-    ]
+              format: ".2f",
+            },
+          ],
+        },
+      },
+    ],
     // }
   };
 
   // Embed the visualization in the container with id `vis`
-  vegaEmbed("#chart", vlSpec).then(res => {
+  vegaEmbed("#chart", vlSpec).then((res) => {
     var iteration = 0;
     function addValues() {
       var values = [];
       var curIteration = Math.max(iteration, 1);
       for (var x = 0; x < curIteration; x++) {
         iteration++;
-        values = values.concat(rolls.map(roll => roll.simulated(iteration)));
+        values = values.concat(rolls.map((roll) => roll.simulated(iteration)));
       }
       var changeSet = vega.changeset().insert(values);
       res.view.change("rolls", changeSet).run();

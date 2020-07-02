@@ -16,3 +16,5 @@
   - Sweltering Heat
   - Pitch Invasion
 - Check if Surf Injuries are handled?
+- Combine Armor + Injury rolls
+- Combine rolls + rerolls?

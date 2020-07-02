@@ -1,23 +1,25 @@
-const ATTACKER_DOWN = "AD";
-const BOTH_DOWN = "BD";
-const PUSH = "P";
-const DEFENDER_STUMBLES = "DS";
-const DEFENDER_DOWN = "DD";
+import * as _ from "underscore";
 
-const D6 = die([1, 2, 3, 4, 5, 6]);
+export const ATTACKER_DOWN = "AD";
+export const BOTH_DOWN = "BD";
+export const PUSH = "P";
+export const DEFENDER_STUMBLES = "DS";
+export const DEFENDER_DOWN = "DD";
 
-const D8 = die([1, 2, 3, 4, 5, 6, 7, 8]);
+export const D6 = die([1, 2, 3, 4, 5, 6]);
 
-const BLOCK = die([
+export const D8 = die([1, 2, 3, 4, 5, 6, 7, 8]);
+
+export const BLOCK = die([
   ATTACKER_DOWN,
   BOTH_DOWN,
   PUSH,
   PUSH,
   DEFENDER_STUMBLES,
-  DEFENDER_DOWN
+  DEFENDER_DOWN,
 ]);
 
-const TWO_DIE_BLOCK = dice([BLOCK, BLOCK]);
+export const TWO_DIE_BLOCK = dice([BLOCK, BLOCK]);
 
 function unique(values) {
   var us = [];
@@ -37,7 +39,7 @@ function unique(values) {
 function die(values) {
   return {
     values: values,
-    range: unique(values)
+    range: unique(values),
   };
 }
 
