@@ -8,7 +8,6 @@ google.setOnLoadCallback(enableFileInput);
 
 function enableFileInput() {
   $("#file-input-button").removeClass("disabled");
-  renderValueTable();
 }
 
 var fileInput = document.getElementById("file-input");
@@ -253,26 +252,13 @@ function updateChart(rolls) {
       var changeSet = vega.changeset().insert(values);
       res.view.change("rolls", changeSet).run();
       $("#game-count").text(iteration);
-      if (iteration < 1000) {
+      console.log(iteration, values.length);
+      if (iteration <= 64) {
         window.setTimeout(addValues, 100);
       }
     }
     addValues();
   });
-}
-
-function renderValueTable() {
-  var rollValues = Object.values(ROLL_TYPES)
-    .filter((c) => !!c)
-    .map((c) => c.valueTable())
-    .flatMap(Object.entries);
-
-  for (var [roll, value] of rollValues) {
-    $("#value-table tbody").append(
-      `<tr scope="row"><td>${roll}</td><td>${value}</td></tr>`
-    );
-  }
-  $("#value-table").show().DataTable();
 }
 
 function raceIdToName(raceId) {
@@ -311,6 +297,9 @@ function raceIdToName(raceId) {
       return "Bretonnian";
     case 25:
       return "Kislev";
+    case 33:
+      return "Chaos Pa";
+    case 35:
     default:
       return raceId;
   }
