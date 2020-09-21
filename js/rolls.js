@@ -6,8 +6,8 @@ import {
   DEFENDER_DOWN,
   TWO_DIE_BLOCK,
   BLOCK,
-} from "./dice";
-import { SKILL_NAME, SKILL, SITUATION } from "./constants";
+} from "./dice.js";
+import { SKILL_NAME, SKILL, SITUATION } from "./constants.js";
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -27,7 +27,7 @@ function sample(list) {
 
 class Player {
   team;
-  #playerState;
+  playerState;
 
   constructor(team, playerState) {
     this.team = team;
@@ -45,7 +45,7 @@ class Player {
 }
 
 class Team {
-  #teamState;
+  teamState;
   constructor(teamState) {
     this.teamState = teamState;
     this.players = this.teamState.listpitchplayers.playerstate.map(
@@ -560,6 +560,16 @@ class PickupRoll extends ModifiedD6SumRoll {
   }
 }
 
+class BoneHeadRoll extends ModifiedD6SumRoll {
+  static rollName = "BoneHeadRoll";
+  passValue() {
+    return 0.01;
+  }
+  failValue() {
+    return -0.05;
+  }
+}
+
 class ArmorRoll extends ModifiedD6SumRoll {
   static rollName = "Armor";
   static handledSkills = [SKILL.MightyBlow, SKILL.Claw];
@@ -741,7 +751,6 @@ class CasualtyRoll extends Roll {
     return [dice[dice.length - 1]];
   }
   value(dice) {
-    return 0;
     if (dice < 40) {
       return 0; // Badly Hurt
     } else if (dice < 50) {
@@ -783,7 +792,7 @@ export const ROLL_TYPES = {
   14: null, // Follow up
   16: InterceptionRoll,
   17: WakeUpRoll,
-  //20: BoneHeadRoll,
+  20: BoneHeadRoll,
   //21: ReallyStupidRoll,
   22: WildAnimalRoll,
   //23: LonerRoll,

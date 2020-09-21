@@ -1,7 +1,6 @@
-/* Minifier: http://jscompress.com/ */
-import { ROLL_TYPES } from "./rolls";
-import { io } from "./io";
-import { replay } from "./replay";
+import { ROLL_TYPES } from "./rolls.js";
+import { io } from "./io.js";
+import { replay } from "./replay.js";
 
 google.load("visualization", "1.0", { packages: ["corechart"] });
 google.setOnLoadCallback(enableFileInput);
@@ -114,8 +113,8 @@ function updateChart(rolls) {
   // TODO: put details of the action into the popup
   var vlSpec = {
     $schema: "https://vega.github.io/schema/vega-lite/v4.json",
-    width: 1000,
-    height: 300,
+    width: 1200,
+    height: 800,
     data: {
       name: "rolls",
       values: values,
@@ -283,12 +282,20 @@ function raceIdToName(raceId) {
       return "Dark Elf";
     case 10:
       return "Undead";
+    case 12:
+      return "Norse";
     case 14:
       return "Pro Elf";
     case 15:
       return "High Elf";
+    case 16:
+      return "Khemri";
     case 17:
       return "Necromantic";
+    case 18:
+      return "Nurgle";
+    case 20:
+      return "Vampire";
     case 21:
       return "Chaos Dwarf";
     case 22:
@@ -319,4 +326,6 @@ function updateGameDetails(gameDetails) {
   $("#away-score").text(gameDetails.awayTeam.score);
 
   $("#stadium-name").text(gameDetails.stadiumName);
+  $("#stadium-type").text(gameDetails.stadiumType);
+  $("#league-name").text(gameDetails.leagueName);
 }
