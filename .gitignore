@@ -1,4 +1,13 @@
 .idea/
+.idea
+node_modules
+.parcel-cache
+*.code-workspace
+*.xml
+Coach-*
+*.bbrz
+dist
+favicon.*.ico
 /.vs/ProjectSettings.json
 /.vs/VSWorkspaceState.json
 /.vs/diced/v16/.suo
