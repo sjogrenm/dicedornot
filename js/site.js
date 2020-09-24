@@ -154,7 +154,7 @@ function updateChart(rolls) {
               {op: "min", field: "cumNetValue", as: "teamMinNetValue"},
               {op: "max", field: "cumNetValue", as: "teamMaxNetValue"},
             ],
-            groupby: ['turn', 'activeTeamColor'],
+            groupby: ['turn', 'activeTeamColor', 'activeTeamName'],
           },
           {
             joinaggregate: [
@@ -173,6 +173,10 @@ function updateChart(rolls) {
           y: {field: "minNetValue", type: "quantitative", title: "Net Value"},
           y2: {field: "maxNetValue", type: "quantitative", title: "Net Value"},
           color: {field: "activeTeamColor", type: "nominal"},
+          tooltip: [
+            { field: "turn", title: "Turn" },
+            { field: "activeTeamName", title: "Active Team" }
+          ],
         }
       },
       {
