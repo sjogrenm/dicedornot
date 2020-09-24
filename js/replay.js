@@ -1,6 +1,4 @@
-/* Minifier: http://jscompress.com/ */
-
-import { Roll } from "./rolls";
+import { Roll } from "./rolls.js";
 
 export const replay = {
   processReplay: function (data) {
@@ -19,7 +17,7 @@ export const replay = {
     ) {
       var replayStep = data.replay.replaystep[stepIndex];
       // extractPlayerDetails(replayStep, playerDetails);
-      //extractActionsFromStep(replayStep, rolls);
+      // extractActionsFromStep(replayStep, rolls);
       rolls = rolls.concat(Roll.fromReplayStep(stepIndex, replayStep));
     }
     console.log("Extracted rolls...", rolls);
@@ -36,12 +34,14 @@ export const replay = {
 function extractGameDetails(jsonObject) {
   var firstStep = jsonObject.replay.replaystep[0];
   var lastStep =
-    jsonObject.replay.replaystep[jsonObject.replay.replaystep.length - 1];
-
+        jsonObject.replay.replaystep[jsonObject.replay.replaystep.length - 1];
+  console.log("Full gameinfo:");
+  console.log(firstStep.gameinfos);
   return {
     //fileName: lastStep.ruleseventgamefinished.matchresult.row.replayfilename,
     stadiumName: firstStep.gameinfos.namestadium,
-    //stadiumType: firstStep.gameinfos.stadium,
+    stadiumType: firstStep.gameinfos.structstadium,
+    leagueName: firstStep.gameinfos.rowleague.name,
     homeTeam: {
       coachName: firstStep.gameinfos.coachesinfos.coachinfos[0].userid,
       teamName: firstStep.boardstate.listteams.teamstate[0].data.name,

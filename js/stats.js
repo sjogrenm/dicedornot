@@ -1,5 +1,3 @@
-/* Minifier: http://jscompress.com/ */
-
 var stats = {
   calculateStats: function(actions, playerDetails) {
     var stats = {

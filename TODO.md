@@ -15,3 +15,17 @@
 - Combine rolls + rerolls?
 - Non-removal Kickoff result values?
 - Include expected value of armor/injury rolls in rolls that could result in KDs?
+
+
+------------------------------------------------------------------------------------
+
+1. Rework base values for ball handling and hitting (and make sure they are including probabilities as param), make sure they have common denominator
+2. Handle dodge/BT/Sure Hands skills properly
+3. MB/CLAW/TACKLE proper handling on hitting
+4. Maybe rework pushes value based on skills of player? If he has CLAW/MB/PO/TACKLE - pushes are wasting a lot of TV?
+5. Fix a bug where in Vega Editor its fine, and here its half drawn
+6. Add koefficient on dodges before hitting a ballcarrier, and hitting a ballcarrier? And dodges before scoring?
+7. Kickoff events handling
+8. Remove all those simulations for good? They show nothing right now.
+9. Make Leap work.
+10. Goblins handling - chainsaw, and all need fixing.
