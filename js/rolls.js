@@ -36,7 +36,8 @@ class Player {
     this.name = this.playerState.data.name;
     this.cell = this.playerState.cell;
     this.situation = this.playerState.situation;
-    this.canAct = this.playerState.canact == 1 && this.situation === SITUATION.Active;
+    this.canAct =
+      this.playerState.canact == 1 && this.situation === SITUATION.Active;
   }
 
   get skills() {
@@ -64,63 +65,36 @@ class Team {
   }
 }
 
-function playerById(teams, playerId) {
-  for (var team of teams) {
-    for (var player of team.players) {
-      if (player.id === playerId) {
-        return player;
-      }
-    }
-  }
-}
-
 export class Roll {
   static handledSkills = [];
 
   constructor(attrs) {
     Object.assign(this, attrs);
 
-    var unhandledSkills = this.skillsInEffect.filter(skillinfo => !this.constructor.handledSkills.includes(skillinfo.skillid));
+    this.teams = this.replaystep.boardstate.listteams.teamstate.map(
+      (teamstate) => new Team(teamstate)
+    );
+    this.activeTeam =
+      this.teams.filter(
+        (team) => team.id == this.replaystep.boardstate.activeteam
+      )[0] || this.teams[0];
+    this.turn = (this.activeTeam && this.activeTeam.turn) || 0;
+    this.activePlayer = this.playerById(this.action.playerid);
+    this.rollType = this.boardactionresult.rolltype;
+    this.dice = this.constructor.dice(this.boardactionresult);
+
+    var unhandledSkills = this.skillsInEffect.filter(
+      (skillinfo) => !this.constructor.handledSkills.includes(skillinfo.skillid)
+    );
     if (unhandledSkills.length > 0) {
       console.warn("Unhandled skills for roll", {
         roll: this,
-        skills: unhandledSkills.map(skillinfo => SKILL_NAME[skillinfo.skillid]),
+        skills: unhandledSkills.map(
+          (skillinfo) => SKILL_NAME[skillinfo.skillid]
+        ),
         rollName: this.constructor.rollName,
-      })
+      });
     }
-
-  }
-  static argsFromXML(
-    stepIndex,
-    replaystep,
-    actionIndex,
-    action,
-    resultIndex,
-    boardactionresult
-  ) {
-    var teams = replaystep.boardstate.listteams.teamstate.map(
-      (teamstate) => new Team(teamstate)
-    );
-    var activeTeam =
-      teams.filter((team) => team.id == replaystep.boardstate.activeteam)[0] ||
-      teams[0];
-
-    var currentId = action.playerid;
-    var currentPlayer = playerById(teams, currentId);
-    return {
-      replaystep,
-      action,
-      boardactionresult,
-      stepIndex,
-      actionIndex,
-      resultIndex,
-      teams: teams,
-      activeTeam: activeTeam,
-      turn: (activeTeam && activeTeam.turn) || 0,
-      activePlayer: currentPlayer,
-      rollType: this.rollType(boardactionresult),
-      dice: this.dice(boardactionresult),
-    };
   }
   value(dice) {
     throw "value must be defined by subclass";
@@ -175,7 +149,13 @@ export class Roll {
   }
 
   playerById(playerId) {
-    return playerById(this.teams, playerId);
+    for (var team of this.teams) {
+      for (var player of team.players) {
+        if (player.id === playerId) {
+          return player;
+        }
+      }
+    }
   }
 
   playerAtPosition(cell) {
@@ -191,9 +171,6 @@ export class Roll {
       action: this.action,
       cell,
     });
-  }
-  static rollType(boardactionresult) {
-    return boardactionresult.rolltype;
   }
 
   static translateStringNumberList(str) {
@@ -270,16 +247,14 @@ export class Roll {
       if (rollClass.ignore(replaystep, action, boardactionresult)) {
         return null;
       } else {
-        return new rollClass(
-          rollClass.argsFromXML(
-            stepIndex,
-            replaystep,
-            actionIndex,
-            action,
-            resultIndex,
-            boardactionresult
-          )
-        );
+        return new rollClass({
+          stepIndex,
+          replaystep,
+          actionIndex,
+          action,
+          resultIndex,
+          boardactionresult,
+        });
       }
     } else {
       console.warn("Unknown roll " + boardactionresult.rolltype, {
@@ -316,11 +291,11 @@ export class Roll {
   get halfTurnsLeft() {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
-    var halfTurns = this.teams.map(team => {
+    var halfTurns = this.teams.map((team) => {
       if (team.turn <= 16) {
-        return (16 - team.turn);
+        return 16 - team.turn;
       } else {
-        return (24 - team.turn);
+        return 24 - team.turn;
       }
     });
     return halfTurns[0] + halfTurns[1];
@@ -328,7 +303,9 @@ export class Roll {
 
   onPitchValue(player) {
     // The fraction of the teams on-pitch players that this player represents.
-    return this.playerValue(player) / this.teamValue(player.team, [SITUATION.Active]);
+    return (
+      this.playerValue(player) / this.teamValue(player.team, [SITUATION.Active])
+    );
   }
 
   knockdownValue(player) {
@@ -354,7 +331,9 @@ export class Roll {
   }
 
   koValue(player) {
-    return (this.onPitchValue(player) * this.halfTurnsLeft) - this.stunValue(player);
+    return (
+      this.onPitchValue(player) * this.halfTurnsLeft - this.stunValue(player)
+    );
   }
 
   casValue(player) {
@@ -362,12 +341,12 @@ export class Roll {
   }
 
   unactivatedPlayers() {
-    return this.activeTeam.players.filter(player => player.canAct);
+    return this.activeTeam.players.filter((player) => player.canAct);
   }
 
   turnoverValue() {
     var value = this.unactivatedPlayers()
-      .filter(player => player != this.activePlayer)
+      .filter((player) => player != this.activePlayer)
       .map((player) => this.onPitchValue(player))
       .reduce((a, b) => a + b, 0);
     return value;
@@ -581,7 +560,9 @@ class ArmorRoll extends ModifiedD6SumRoll {
     if (this.resultIndex == 0) {
       this.isPileOn = false;
     } else {
-      var previousResult = this.action.results.boardactionresult[this.resultIndex - 1];
+      var previousResult = this.action.results.boardactionresult[
+        this.resultIndex - 1
+      ];
       this.isPileOn = previousResult.rolltype == 59;
       if (this.isPileOn) {
         var previousSkills = previousResult.coachchoices.listskills.skillinfo;
@@ -592,7 +573,8 @@ class ArmorRoll extends ModifiedD6SumRoll {
           previousSkills = [previousSkills];
         }
         this.pilingOnPlayer = this.playerById(
-          previousSkills.filter(skill => skill.skillid == SKILL.PilingOn)[0].playerid
+          previousSkills.filter((skill) => skill.skillid == SKILL.PilingOn)[0]
+            .playerid
         );
       }
     }
@@ -626,13 +608,17 @@ class ArmorRoll extends ModifiedD6SumRoll {
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
   static rollName = "Wild Animal";
+  static handledSkills = [SKILL.WildAnimal];
   failValue() {
-    return -this.knockdownValue(this.activePlayer) * 0.5;
+    // Failing Wild Animal means that this player is effectively unavailable
+    // for the rest of your turn, but is active on your opponents turn
+    return -this.onPitchValue(this.activePlayer);
   }
 }
 
 class DauntlessRoll extends ModifiedD6SumRoll {
   static rollName = "Dauntless";
+  static handledSkills = [SKILL.Dauntless];
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
@@ -646,6 +632,18 @@ class DodgeRoll extends ModifiedD6SumRoll {
 class JumpUpRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.JumpUp];
   static rollName = "Jump Up";
+  failValue() {
+    // Jump Up failure means the block fails to activate, so the player is no longer
+    // available for this turn.
+    return -this.onPitchValue(this.activePlayer);
+  }
+}
+
+class LeapRoll extends ModifiedD6SumRoll {
+  static rollName = "Leap";
+  failValue() {
+    return -this.knockdownValue(this.activePlayer) - this.turnoverValue();
+  }
 }
 
 class PassRoll extends ModifiedD6SumRoll {
@@ -689,12 +687,17 @@ class InjuryRoll extends Roll {
     if (this.resultIndex == 0) {
       this.isPileOn = false;
     } else {
-      var previousResult = this.action.results.boardactionresult[this.resultIndex - 1];
+      var previousResult = this.action.results.boardactionresult[
+        this.resultIndex - 1
+      ];
       this.isPileOn = previousResult.rolltype == 60;
       if (this.isPileOn) {
-        var previousSkills = ensureList(previousResult.coachchoices.listskills.skillinfo);
+        var previousSkills = ensureList(
+          previousResult.coachchoices.listskills.skillinfo
+        );
         this.pilingOnPlayer = this.playerById(
-          previousSkills.filter(skill => skill.skillid == SKILL.PilingOn)[0].playerid
+          previousSkills.filter((skill) => skill.skillid == SKILL.PilingOn)[0]
+            .playerid
         );
       }
     }
@@ -802,7 +805,7 @@ export const ROLL_TYPES = {
   29: DauntlessRoll,
   31: JumpUpRoll,
   // 34: StabRoll,
-  // 36: LeapRoll,
+  36: LeapRoll,
   // 37: FoulAppearanceRoll,
   // 40: TakeRootRoll,
   // 42: HailMaryPassRoll,

@@ -56,7 +56,7 @@ export const SKILL = {
   StrongArm: 58,
   Stunty: 59,
   SureFeet: 60,
-  SureHands: 61,
+  SureHands: 61,  // Shows up on the second roll (the automatic reroll)
   ThickSkull: 63,
   ThrowTeamMate: 64,
   Unknown_65: 65, // ??
