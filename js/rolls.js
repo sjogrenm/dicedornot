@@ -541,11 +541,8 @@ class PickupRoll extends ModifiedD6SumRoll {
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
   static rollName = "BoneHeadRoll";
-  passValue() {
-    return 0.01;
-  }
   failValue() {
-    return -0.05;
+    return -this.knockdownValue(this.activePlayer);
   }
 }
 
