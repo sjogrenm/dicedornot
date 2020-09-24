@@ -144,7 +144,6 @@ function extractActionDetails(replayStep, action, result) {
   if (ignoreResult(result)) {
     return null;
   }
-  console.log(action);
   var dice = translateDice(result.coachchoices.listdices, result.rolltype);
 
   // Translate kickoff scatters to their own type

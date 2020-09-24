@@ -52,16 +52,9 @@ class Team {
     this.players = this.teamState.listpitchplayers.playerstate.map(
       (playerstate) => new Player(this, playerstate)
     );
-  }
-
-  get id() {
-    return this.teamState.data.teamid || 0;
-  }
-  get name() {
-    return this.teamState.data.name;
-  }
-  get turn() {
-    return this.teamState.gameturn || 0;
+    this.name = this.teamState.data.name;
+    this.id = this.teamState.data.teamid || 0;
+    this.turn = this.teamState.gameturn || 0;
   }
 }
 
@@ -133,15 +126,16 @@ export class Roll {
   dataPoint(iteration, dice, type) {
     return {
       iteration: iteration,
-      index:
-        this.stepIndex.toString().padStart(3, "0") +
-        "." +
-        this.actionIndex +
-        "." +
-        this.resultIndex,
-      team: this.activePlayer
-        ? this.activePlayer.team.id + ". " + this.activePlayer.team.name
-        : this.activeTeam.id + ". " + this.activeTeam.name,
+      turn: this.turn,
+      stepIndex: this.stepIndex,
+      actionIndex: this.actionIndex,
+      resultIndex: this.resultIndex,
+      activeTeamId: this.activeTeam.id,
+      activeTeamName: this.activeTeam.name,
+      teamId: this.activePlayer ? this.activePlayer.team.id : this.activeTeam.id,
+      teamName: this.activePlayer
+        ? this.activePlayer.team.name
+        : this.activeTeam.name,
       outcomeValue: this.value(dice),
       type: type,
       expectedValue: this.expectedValue,
@@ -563,9 +557,6 @@ class ArmorRoll extends ModifiedD6SumRoll {
       this.isPileOn = previousResult.rolltype == 59;
       if (this.isPileOn) {
         var previousSkills = previousResult.coachchoices.listskills.skillinfo;
-        if (!previousSkills) {
-          console.log(previousResult);
-        }
         if (previousSkills && !previousSkills.length) {
           previousSkills = [previousSkills];
         }

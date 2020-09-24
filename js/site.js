@@ -102,13 +102,7 @@ function renderReplayData(replayData, dataParam) {
 
 function updateChart(rolls) {
   console.log(rolls);
-  var teams = [...new Set(rolls.map((roll) => roll.team))];
-  console.log(teams);
-  var values = [];
-  // for (const team of teams) {
-  //   values.push({ expectedValue: 0, outcomeValue: 0, team: team, index: 0 });
-  // }
-  values = values.concat(rolls.map((roll) => roll.actual));
+  var values = rolls.map((roll) => roll.actual);
   // Assign the specification to a local variable vlSpec.
   // TODO: put details of the action into the popup
   var vlSpec = {
@@ -120,21 +114,73 @@ function updateChart(rolls) {
       values: values,
     },
     transform: [
+      {
+        calculate: "join([datum.teamId, datum.teamName], '. ')",
+        as: "teamColor",
+      },
       { calculate: "datum.outcomeValue - datum.expectedValue", as: "netValue" },
       {
         window: [{ op: "sum", field: "netValue", as: "cumNetValue" }],
-        groupby: ["team", "iteration"],
+        groupby: ["teamId", "iteration"],
+      },
+      {
+        window: [
+          {op: "percent_rank", as: "turnRank"}
+        ],
+        groupby: ["turn"],
+        sort: [
+            {field: "stepIndex", order: "ascending"},
+            {field: "actionIndex", order: "ascending"},
+            {field: "resultIndex", order: "ascending"}
+        ],
+        frame: [null, null],
+      },
+      {
+        calculate: "datum.turn + datum.turnRank",
+        as: "gameFraction",
       },
     ],
-    // facet: { rows: "team" },
-    // spec: {
     layer: [
+      // {
+      //   transform: [
+      //     {
+      //       calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
+      //       as: "activeTeamColor",
+      //     },
+      //     {
+      //       joinaggregate: [
+      //         {op: "min", field: "cumNetValue", as: "minNetValue"},
+      //         {op: "max", field: "cumNetValue", as: "maxNetValue"},
+      //       ],
+      //       groupby: ['turn']
+      //     },
+      //     {
+      //       aggregate: [
+      //         {op: "min", field: "gameFraction", as: "teamTurnStart"},
+      //         {op: "max", field: "gameFraction", as: "teamTurnEnd"},
+      //       ],
+      //       groupby: ['turn', 'activeTeamColor'],
+      //     },
+      //   ],
+      //   mark: {
+      //     type: "rect",
+      //     opacity: 0.1,
+      //     tooltip: true,
+      //   },
+      //   encoding: {
+      //     x: {field: "teamTurnStart", type: "quantitative"},
+      //     x2: {field: "teamTurnEnd", type: "quantitative"},
+      //     y: {field: "minNetValue", type: "quantitative"},
+      //     y2: {field: "maxNetValue", type: "quantitative"},
+      //     color: {field: "activeTeamColor", type: "nominal"},
+      //   }
+      // },
       {
         transform: [
           {
             quantile: "cumNetValue",
             probs: [0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99],
-            groupby: ["team", "index"],
+            groupby: ["teamColor", "gameFraction"],
           },
           {
             calculate: "datum.prob * 100",
@@ -148,23 +194,28 @@ function updateChart(rolls) {
         },
         encoding: {
           x: {
-            type: "ordinal",
-            field: "index",
+            type: "quantitative",
+            field: "gameFraction",
+            title: "Turn",
+            axis: {
+              labelExpr: "floor(datum.label)"
+            }
           },
           y: {
             field: "value",
             type: "quantitative",
           },
           color: {
-            field: "team",
+            field: "teamColor",
             type: "nominal",
+            title: "Team",
           },
           detail: {
             field: "prob",
             type: "nominal",
           },
           tooltip: [
-            { field: "team", title: "Team" },
+            { field: "teamColor", title: "Team" },
             { field: "value", title: "Cumulative Net Value", format: ".2f" },
             { field: "perc", title: "Percentile", format: ".0f" },
           ],
@@ -179,16 +230,21 @@ function updateChart(rolls) {
         mark: { type: "line", interpolate: "monotone" },
         encoding: {
           x: {
-            type: "ordinal",
-            field: "index",
+            type: "quantitative",
+            field: "gameFraction",
+            title: "Turn",
+            axis: {
+              labelExpr: "floor(datum.label)"
+            }
           },
           y: {
             field: "cumNetValue",
             type: "quantitative",
           },
           color: {
-            field: "team",
+            field: "teamColor",
             type: "nominal",
+            title: "Team",
           },
           detail: {
             field: "iteration",
@@ -205,19 +261,26 @@ function updateChart(rolls) {
         mark: { type: "point" },
         encoding: {
           x: {
-            type: "ordinal",
-            field: "index",
+            type: "quantitative",
+            field: "gameFraction",
+            title: "Turn",
+            axis: {
+              labelExpr: "floor(datum.label)"
+            }
           },
           y: {
             field: "cumNetValue",
             type: "quantitative",
           },
           color: {
-            field: "team",
+            field: "teamColor",
             type: "nominal",
+            title: "Team",
           },
           tooltip: [
-            { field: "team", title: "Team" },
+            { field: "turn", title: "Turn"},
+            { field: "activeTeamName", title: "Active Team"},
+            { field: "teamName", title: "Player Team" },
             { field: "player", title: "Player" },
             { field: "playerSkills", title: "Player Skill" },
             { field: "rollName", title: "Roll" },
