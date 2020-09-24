@@ -141,40 +141,40 @@ function updateChart(rolls) {
       },
     ],
     layer: [
-      // {
-      //   transform: [
-      //     {
-      //       calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
-      //       as: "activeTeamColor",
-      //     },
-      //     {
-      //       joinaggregate: [
-      //         {op: "min", field: "cumNetValue", as: "minNetValue"},
-      //         {op: "max", field: "cumNetValue", as: "maxNetValue"},
-      //       ],
-      //       groupby: ['turn']
-      //     },
-      //     {
-      //       aggregate: [
-      //         {op: "min", field: "gameFraction", as: "teamTurnStart"},
-      //         {op: "max", field: "gameFraction", as: "teamTurnEnd"},
-      //       ],
-      //       groupby: ['turn', 'activeTeamColor'],
-      //     },
-      //   ],
-      //   mark: {
-      //     type: "rect",
-      //     opacity: 0.1,
-      //     tooltip: true,
-      //   },
-      //   encoding: {
-      //     x: {field: "teamTurnStart", type: "quantitative"},
-      //     x2: {field: "teamTurnEnd", type: "quantitative"},
-      //     y: {field: "minNetValue", type: "quantitative"},
-      //     y2: {field: "maxNetValue", type: "quantitative"},
-      //     color: {field: "activeTeamColor", type: "nominal"},
-      //   }
-      // },
+      {
+        transform: [
+          {
+            calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
+            as: "activeTeamColor",
+          },
+          {
+            aggregate: [
+              {op: "min", field: "gameFraction", as: "teamTurnStart"},
+              {op: "max", field: "gameFraction", as: "teamTurnEnd"},
+              {op: "min", field: "cumNetValue", as: "teamMinNetValue"},
+              {op: "max", field: "cumNetValue", as: "teamMaxNetValue"},
+            ],
+            groupby: ['turn', 'activeTeamColor'],
+          },
+          {
+            joinaggregate: [
+              {op: "min", field: "teamMinNetValue", as: "minNetValue"},
+              {op: "max", field: "teamMaxNetValue", as: "maxNetValue"},
+            ],
+          },
+        ],
+        mark: {
+          type: "rect",
+          opacity: 0.05,
+        },
+        encoding: {
+          x: {field: "teamTurnStart", type: "quantitative"},
+          x2: {field: "teamTurnEnd", type: "quantitative"},
+          y: {field: "minNetValue", type: "quantitative", title: "Net Value"},
+          y2: {field: "maxNetValue", type: "quantitative", title: "Net Value"},
+          color: {field: "activeTeamColor", type: "nominal"},
+        }
+      },
       {
         transform: [
           {
@@ -204,6 +204,7 @@ function updateChart(rolls) {
           y: {
             field: "value",
             type: "quantitative",
+            title: "Net Value",
           },
           color: {
             field: "teamColor",
@@ -240,6 +241,7 @@ function updateChart(rolls) {
           y: {
             field: "cumNetValue",
             type: "quantitative",
+            title: "Net Value",
           },
           color: {
             field: "teamColor",
@@ -271,6 +273,7 @@ function updateChart(rolls) {
           y: {
             field: "cumNetValue",
             type: "quantitative",
+            title: "Net Value",
           },
           color: {
             field: "teamColor",
