@@ -11,10 +11,12 @@
   - Sweltering Heat
   - Pitch Invasion
 - Check if Surf Injuries are handled?
-- Combine Armor + Injury rolls --- WHY?
+- Combine Armor + Injury rolls with any move that could knock down, so that the potential for injury is included in the 
 - Combine rolls + rerolls?
 - Non-removal Kickoff result values?
 - Include expected value of armor/injury rolls in rolls that could result in KDs?
+- Handle Foul Sendoff value
+- Label foul, piling on, surfs on Armor/Injury rolls
 
 
 ------------------------------------------------------------------------------------
