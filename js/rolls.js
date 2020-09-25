@@ -99,7 +99,22 @@ export class Roll {
     throw "simulateDice must be defined by subclass";
   }
 
-  static ignore() {
+  ignore() {
+    const dataPoint = this.actual;
+    if (!isFinite(dataPoint.outcomeValue)) {
+      console.warn("Dice roll with non-finite outcome value", {roll: this, dataPoint: dataPoint});
+      return true;
+    }
+    if (!isFinite(dataPoint.expectedValue)) {
+      console.warn("Dice roll with non-finite expected value", {roll: this, dataPoint: dataPoint});
+      return true;
+    }
+
+    // As far as I can tell, this comes up when a reroll was possible but not used
+    if (this.boardactionresult.rollstatus == 2) {
+      return true;
+    }
+
     return false;
   }
   static dice(boardactionresult) {
@@ -238,17 +253,18 @@ export class Roll {
     }
 
     if (rollClass) {
-      if (rollClass.ignore(replaystep, action, boardactionresult)) {
+      const roll = new rollClass({
+        stepIndex,
+        replaystep,
+        actionIndex,
+        action,
+        resultIndex,
+        boardactionresult,
+      });
+      if (roll.ignore()) {
         return null;
       } else {
-        return new rollClass({
-          stepIndex,
-          replaystep,
-          actionIndex,
-          action,
-          resultIndex,
-          boardactionresult,
-        });
+        return roll;
       }
     } else {
       console.warn("Unknown roll " + boardactionresult.rolltype, {
@@ -357,16 +373,21 @@ class BlockRoll extends Roll {
     return dice.slice(0, dice.length / 2).map(BlockRoll.asBlockDie);
   }
 
-  static ignore(replaystep, action, boardactionresult) {
+  ignore() {
     // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
-    if (boardactionresult.resulttype != 2) {
+    if (this.boardactionresult.resulttype != 2) {
       return true;
     }
-    if (boardactionresult.subresulttype == 35) {
+    if (this.boardactionresult.subresulttype == 35) {
       // Opponent picking whether to activate fend
       return true;
     }
-    return false;
+    if (this.boardactionresult.subresulttype == 57) {
+      // Not sure what this is, but it doesn't have the expected number of dice.
+      return true;
+    }
+
+    return super.ignore();
   }
 
   static asBlockDie(dieRoll) {
@@ -769,6 +790,20 @@ class CasualtyRoll extends Roll {
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);
   }
+  ignore() {
+
+    // Just guessing at this
+    if (
+      this.boardactionresult.resulttype != 2 &&
+      this.boardactionresult.subresulttype != 1 &&
+      // Replay Coach-551-9619f4910217db1915282ea2242c819f_2016-04-07_00_05_06, Furry Bears turn 8 crowdsurf injury, shouldn't be ignored
+      this.boardactionresult.subresulttype != 12
+    ) {
+      console.warn("Ignoring casualty roll, should verify", {roll: this});
+      return true;
+    }
+    return super.ignore()
+  }
 }
 
 export const ROLL_TYPES = {
@@ -786,6 +821,7 @@ export const ROLL_TYPES = {
   12: PassRoll,
   13: null, // Push
   14: null, // Follow up
+  // 15: null, // Foul Penalty
   16: InterceptionRoll,
   17: WakeUpRoll,
   20: BoneHeadRoll,
@@ -810,6 +846,7 @@ export const ROLL_TYPES = {
   58: null, // Kickoff Gust
   59: ArmorRoll, // Armor Roll with Pile On. If followed by a RollType 59 w/ IsOrderCompleted, then PO happened. Otherwise, no PO
   60: InjuryRoll, // Injury Roll with Pile On. If followed by a RollType 60 w/ IsOrderCompleted, then PO happened, otherwise, no PO?
+  61: null, // Some sort of wrestle roll that doesn't do anything
   63: null, // Carrier KD scatter
   // 69: FansRoll,
   70: null, // Weather

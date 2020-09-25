@@ -141,9 +141,6 @@ function processResult(replayStep, action, result, actionsList) {
 }
 
 function extractActionDetails(replayStep, action, result) {
-  if (ignoreResult(result)) {
-    return null;
-  }
   var dice = translateDice(result.coachchoices.listdices, result.rolltype);
 
   // Translate kickoff scatters to their own type
@@ -198,47 +195,6 @@ function outcomeValue(rollType, rollResult, player, target) {
     }
   }
   return 0;
-}
-
-function ignoreResult(result) {
-  // As far as I can tell, this comes up when a reroll was possible but not used
-  if (result.rollstatus == 2) {
-    return true;
-  }
-
-  // This is the foul penalty - the roll is already covered by an armour roll
-  if (result.rolltype == 15) {
-    return true;
-  }
-
-  // This is some sort of wrestle roll which doesn't do anything
-  if (result.rolltype == 61) {
-    return true;
-  }
-
-  // Some sort of piling-on roll that isn't the armor or the injury roll
-  if (result.rolltype == 63) {
-    return true;
-  }
-
-  // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
-  if (result.rolltype == 5 && result.resulttype != 2) {
-    return true;
-  }
-
-  // Just guessing at this
-  if (
-    result.rolltype == 8 &&
-    result.resulttype != 2 &&
-    result.subresulttype != 1
-  ) {
-    // Replay Coach-551-9619f4910217db1915282ea2242c819f_2016-04-07_00_05_06, Furry Bears turn 8 crowdsurf injury, shouldn't be ignored
-    if (result.subresulttype != 12) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 function translateDice(dice, rollType) {
