@@ -365,7 +365,7 @@ export class Roll {
 
 class BlockRoll extends Roll {
   static rollName = "Block";
-  static handledSkills = [SKILL.Guard, SKILL.Horns];
+  static handledSkills = [SKILL.Block, SKILL.Guard, SKILL.Horns];
 
   static dice(boardactionresult) {
     var dice = super.dice(boardactionresult);
