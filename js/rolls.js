@@ -136,9 +136,9 @@ export class Roll {
       teamName: this.activePlayer
         ? this.activePlayer.team.name
         : this.activeTeam.name,
-      outcomeValue: this.value(dice),
+      outcomeValue: this.activePlayer.team.id === this.activeTeam.id ? this.value(dice) : -this.value(dice),
       type: type,
-      expectedValue: this.expectedValue,
+      expectedValue: this.activePlayer.team.id === this.activeTeam.id ? this.expectedValue : -this.expectedValue,
     };
   }
 

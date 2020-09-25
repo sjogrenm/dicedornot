@@ -118,10 +118,14 @@ function updateChart(rolls) {
         calculate: "join([datum.teamId, datum.teamName], '. ')",
         as: "teamColor",
       },
+      {
+        calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
+        as: "activeTeamColor",
+      },
       { calculate: "datum.outcomeValue - datum.expectedValue", as: "netValue" },
       {
         window: [{ op: "sum", field: "netValue", as: "cumNetValue" }],
-        groupby: ["teamId", "iteration"],
+        groupby: ["activeTeamId", "iteration"],
       },
       {
         window: [
@@ -143,10 +147,6 @@ function updateChart(rolls) {
     layer: [
       {
         transform: [
-          {
-            calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
-            as: "activeTeamColor",
-          },
           {
             aggregate: [
               {op: "min", field: "gameFraction", as: "teamTurnStart"},
@@ -184,7 +184,7 @@ function updateChart(rolls) {
           {
             quantile: "cumNetValue",
             probs: [0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99],
-            groupby: ["teamColor", "gameFraction"],
+            groupby: ["activeTeamColor", "gameFraction"],
           },
           {
             calculate: "datum.prob * 100",
@@ -211,7 +211,7 @@ function updateChart(rolls) {
             title: "Net Value",
           },
           color: {
-            field: "teamColor",
+            field: "activeTeamColor",
             type: "nominal",
             title: "Team",
           },
@@ -220,7 +220,7 @@ function updateChart(rolls) {
             type: "nominal",
           },
           tooltip: [
-            { field: "teamColor", title: "Team" },
+            { field: "activeTeamColor", title: "Active Team" },
             { field: "value", title: "Cumulative Net Value", format: ".2f" },
             { field: "perc", title: "Percentile", format: ".0f" },
           ],
@@ -248,9 +248,9 @@ function updateChart(rolls) {
             title: "Net Value",
           },
           color: {
-            field: "teamColor",
+            field: "activeTeamColor",
             type: "nominal",
-            title: "Team",
+            title: "Active Team",
           },
           detail: {
             field: "iteration",
