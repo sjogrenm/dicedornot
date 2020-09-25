@@ -648,6 +648,11 @@ class InterceptionRoll extends ModifiedD6SumRoll {
 
 class WakeUpRoll extends ModifiedD6SumRoll {
   static rollName = "Wake Up";
+
+  constructor(attrs) {
+    super(attrs);
+    this.activeTeam = this.activePlayer.team;
+  }
   passValue() {
     return this.koValue(this.activePlayer);
   }
