@@ -705,7 +705,7 @@ class StandUpRoll extends ModifiedD6SumRoll {
 
 class InjuryRoll extends Roll {
   static rollName = "Injury";
-  static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer];
+  static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
 
   constructor({ ...rest }) {
     super(rest);
@@ -737,6 +737,9 @@ class InjuryRoll extends Roll {
 
   // TODO: Handle skills
   injuryValue(total) {
+    if (this.activePlayer.skills.includes(SKILL.Stunty)) {
+      total += 1;
+    }
     if (total <= 7) {
       return 0; // Only stunned, no additional cost relative to armor break failure
     } else if (total <= 9) {
