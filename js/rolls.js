@@ -633,7 +633,7 @@ class DauntlessRoll extends ModifiedD6SumRoll {
 
 class DodgeRoll extends ModifiedD6SumRoll {
   static rollName = "Dodge";
-  static handledSkills = [SKILL.BreakTackle];
+  static handledSkills = [SKILL.BreakTackle, SKILL.Stunty];
   failValue() {
     return -this.knockdownValue(this.activePlayer) - this.turnoverValue();
   }
