@@ -555,6 +555,7 @@ class PickupRoll extends ModifiedD6SumRoll {
 }
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
+  static handledSkills = [SKILL.BoneHead];
   static rollName = "BoneHeadRoll";
   failValue() {
     return -this.knockdownValue(this.activePlayer);
