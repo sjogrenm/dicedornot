@@ -365,7 +365,7 @@ export class Roll {
 
 class BlockRoll extends Roll {
   static rollName = "Block";
-  static handledSkills = [SKILL.Tackle, SKILL.Dodge, SKILL.Block, SKILL.Guard, SKILL.Horns];
+  static handledSkills = [SKILL.Tackle, SKILL.Dodge, SKILL.Block, SKILL.Guard, SKILL.Horns, SKILL.StandFirm];
 
   static dice(boardactionresult) {
     var dice = super.dice(boardactionresult);
@@ -429,10 +429,10 @@ class BlockRoll extends Roll {
           );
         }
       case PUSH:
-        return this.knockdownValue(defender) * 0.25;
+        return defenderSkills.includes(SKILL.StandFirm) ? 0 : this.knockdownValue(defender) * 0.25;
       case DEFENDER_STUMBLES:
         if (defenderSkills.includes(SKILL.Dodge) && !attackerSkills.includes(SKILL.Tackle)) {
-          return this.knockdownValue(defender) * 0.25;
+          return defenderSkills.includes(SKILL.StandFirm) ? 0 : this.knockdownValue(defender) * 0.25;
         } else {
           return this.knockdownValue(defender);
         }
