@@ -689,6 +689,18 @@ class GFIRoll extends ModifiedD6SumRoll {
 
 class CatchRoll extends ModifiedD6SumRoll {
   static rollName = "Catch";
+
+  failValue() {
+    return -this.turnoverValue();
+  }
+}
+
+class StandUpRoll extends ModifiedD6SumRoll {
+  static rollName = "StandUp";
+
+  passValue() {
+    return this.knockdownValue(this.activePlayer);
+  }
 }
 
 class InjuryRoll extends Roll {
@@ -813,7 +825,7 @@ export const ROLL_TYPES = {
   3: ArmorRoll,
   4: InjuryRoll,
   5: BlockRoll,
-  //6: StandUpRoll,
+  6: StandUpRoll,
   7: PickupRoll,
   8: CasualtyRoll,
   9: CatchRoll,
