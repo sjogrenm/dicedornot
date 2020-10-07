@@ -692,8 +692,12 @@ class PassRoll extends ModifiedD6SumRoll {
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
-  // TODO: Player/team seems incorrect. Double-check w/ in-game replay viewer
   static rollName = "Interception";
+  // Interception rolls on the thrower, not the interceptee. If it "passes",
+  // then the ball is caught
+  passValue() {
+    return -this.turnoverValue();
+  }
 }
 
 class WakeUpRoll extends ModifiedD6SumRoll {
