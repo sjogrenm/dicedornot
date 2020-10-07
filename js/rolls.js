@@ -717,6 +717,7 @@ class GFIRoll extends ModifiedD6SumRoll {
 
 class CatchRoll extends ModifiedD6SumRoll {
   static rollName = "Catch";
+  static handledSkills = [SKILL.DisturbingPresence];
 
   failValue() {
     return -this.turnoverValue();
