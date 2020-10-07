@@ -102,11 +102,17 @@ export class Roll {
   ignore() {
     const dataPoint = this.actual;
     if (!isFinite(dataPoint.outcomeValue)) {
-      console.warn("Dice roll with non-finite outcome value", {roll: this, dataPoint: dataPoint});
+      console.warn("Dice roll with non-finite outcome value", {
+        roll: this,
+        dataPoint: dataPoint,
+      });
       return true;
     }
     if (!isFinite(dataPoint.expectedValue)) {
-      console.warn("Dice roll with non-finite expected value", {roll: this, dataPoint: dataPoint});
+      console.warn("Dice roll with non-finite expected value", {
+        roll: this,
+        dataPoint: dataPoint,
+      });
       return true;
     }
 
@@ -147,13 +153,21 @@ export class Roll {
       resultIndex: this.resultIndex,
       activeTeamId: this.activeTeam.id,
       activeTeamName: this.activeTeam.name,
-      teamId: this.activePlayer ? this.activePlayer.team.id : this.activeTeam.id,
+      teamId: this.activePlayer
+        ? this.activePlayer.team.id
+        : this.activeTeam.id,
       teamName: this.activePlayer
         ? this.activePlayer.team.name
         : this.activeTeam.name,
-      outcomeValue: this.activePlayer.team.id === this.activeTeam.id ? this.value(dice) : -this.value(dice),
+      outcomeValue:
+        this.activePlayer.team.id === this.activeTeam.id
+          ? this.value(dice)
+          : -this.value(dice),
       type: type,
-      expectedValue: this.activePlayer.team.id === this.activeTeam.id ? this.expectedValue : -this.expectedValue,
+      expectedValue:
+        this.activePlayer.team.id === this.activeTeam.id
+          ? this.expectedValue
+          : -this.expectedValue,
     };
   }
 
@@ -365,7 +379,14 @@ export class Roll {
 
 class BlockRoll extends Roll {
   static rollName = "Block";
-  static handledSkills = [SKILL.Tackle, SKILL.Dodge, SKILL.Block, SKILL.Guard, SKILL.Horns, SKILL.StandFirm];
+  static handledSkills = [
+    SKILL.Tackle,
+    SKILL.Dodge,
+    SKILL.Block,
+    SKILL.Guard,
+    SKILL.Horns,
+    SKILL.StandFirm,
+  ];
 
   static dice(boardactionresult) {
     var dice = super.dice(boardactionresult);
@@ -429,10 +450,17 @@ class BlockRoll extends Roll {
           );
         }
       case PUSH:
-        return defenderSkills.includes(SKILL.StandFirm) ? 0 : this.knockdownValue(defender) * 0.25;
+        return defenderSkills.includes(SKILL.StandFirm)
+          ? 0
+          : this.knockdownValue(defender) * 0.25;
       case DEFENDER_STUMBLES:
-        if (defenderSkills.includes(SKILL.Dodge) && !attackerSkills.includes(SKILL.Tackle)) {
-          return defenderSkills.includes(SKILL.StandFirm) ? 0 : this.knockdownValue(defender) * 0.25;
+        if (
+          defenderSkills.includes(SKILL.Dodge) &&
+          !attackerSkills.includes(SKILL.Tackle)
+        ) {
+          return defenderSkills.includes(SKILL.StandFirm)
+            ? 0
+            : this.knockdownValue(defender) * 0.25;
         } else {
           return this.knockdownValue(defender);
         }
@@ -815,10 +843,10 @@ class CasualtyRoll extends Roll {
       // Replay Coach-551-9619f4910217db1915282ea2242c819f_2016-04-07_00_05_06, Furry Bears turn 8 crowdsurf injury, shouldn't be ignored
       this.boardactionresult.subresulttype != 12
     ) {
-      console.warn("Ignoring casualty roll, should verify", {roll: this});
+      console.warn("Ignoring casualty roll, should verify", { roll: this });
       return true;
     }
-    return super.ignore()
+    return super.ignore();
   }
 }
 

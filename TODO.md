@@ -17,6 +17,8 @@
 - Include expected value of armor/injury rolls in rolls that could result in KDs?
 - Handle Foul Sendoff value
 - Label foul, piling on, surfs on Armor/Injury rolls
+- Pass failure (and catch failure) should penalize based on losing the ball (modified TV before vs modified TV after?)
+- Merge rolls into the Actions they are part of, tagged by what type of action they are.
 
 
 ------------------------------------------------------------------------------------

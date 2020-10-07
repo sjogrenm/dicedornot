@@ -170,3 +170,13 @@ export const SITUATION = {
   KO: 2,
   Casualty: 4,
 };
+
+export const BLOCK_OUTCOME = {
+    AtDownDeInPlace = 0,
+    AtDownDeDown = 1,
+    WrestleDown = 2, //Before use wrestle choice!
+    AtInPlaceDeInPlace = 3,
+    AtMoveDePush = 4,
+    AtInPlaceDeDown = 5, //block down De in Place -> Fend has no 2nd dice afterpush?
+    AtMoveDePushDown = 6,
+}
