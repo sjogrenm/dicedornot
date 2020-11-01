@@ -588,6 +588,13 @@ class BoneHeadRoll extends ModifiedD6SumRoll {
   }
 }
 
+class ReallyStupidRoll extends ModifiedD6SumRoll {
+  static handledSkills = [SKILL.ReallyStupid];
+  failValue() {
+    return -this.knockdownValue(this.activePlayer);
+  }
+}
+
 class ArmorRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.MightyBlow, SKILL.Claw];
 
@@ -837,6 +844,18 @@ class CasualtyRoll extends Roll {
   }
 }
 
+class NoValueRoll extends Roll {
+  value() {return 0;}
+  get expectedValue() {return 0;}
+  simulateDice() {return null;}
+}
+
+class PushRoll extends NoValueRoll {}
+
+class FollowUpRoll extends NoValueRoll {}
+
+class FoulPenaltyRoll extends NoValueRoll {}
+
 export const ROLL_TYPES = {
   1: GFIRoll,
   2: DodgeRoll,
@@ -850,13 +869,13 @@ export const ROLL_TYPES = {
   10: null, // Kickoff Scatter
   11: null, // Throw-in Roll
   12: PassRoll,
-  13: null, // Push
-  14: null, // Follow up
-  // 15: null, // Foul Penalty
+  13: PushRoll,
+  14: FollowUpRoll,
+  15: FoulPenaltyRoll,
   16: InterceptionRoll,
   17: WakeUpRoll,
   20: BoneHeadRoll,
-  //21: ReallyStupidRoll,
+  21: ReallyStupidRoll,
   22: WildAnimalRoll,
   //23: LonerRoll,
   //24: LandingRoll,
