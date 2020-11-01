@@ -85,10 +85,17 @@ export class Roll {
         skills: unhandledSkills.map(
           (skillinfo) => SKILL_NAME[skillinfo.skillid]
         ),
-        rollName: this.constructor.rollName,
+        rollName: this.rollName,
       });
     }
   }
+  
+  get rollName() {
+    return this.constructor.name
+      .replace("Roll", "")
+      .replace(/([a-z])([A-Z])/, "$1 $2");
+  }
+
   value(dice) {
     throw "value must be defined by subclass";
   }
@@ -136,7 +143,7 @@ export class Roll {
         (this.activePlayer &&
           this.activePlayer.skills.map((skill) => SKILL_NAME[skill])) ||
         [],
-      rollName: this.constructor.rollName || this.rollName || this.rollType,
+      rollName: this.rollName,
       dice: this.dice,
     });
   }
@@ -378,7 +385,6 @@ export class Roll {
 }
 
 class BlockRoll extends Roll {
-  static rollName = "Block";
   static handledSkills = [
     SKILL.Tackle,
     SKILL.Dodge,
@@ -576,7 +582,6 @@ class ModifiedD6SumRoll extends Roll {
 }
 
 class PickupRoll extends ModifiedD6SumRoll {
-  static rollName = "Pickup";
   failValue() {
     return -this.turnoverValue();
   }
@@ -584,14 +589,12 @@ class PickupRoll extends ModifiedD6SumRoll {
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BoneHead];
-  static rollName = "BoneHeadRoll";
   failValue() {
     return -this.knockdownValue(this.activePlayer);
   }
 }
 
 class ArmorRoll extends ModifiedD6SumRoll {
-  static rollName = "Armor";
   static handledSkills = [SKILL.MightyBlow, SKILL.Claw];
 
   constructor({ ...rest }) {
@@ -645,7 +648,6 @@ class ArmorRoll extends ModifiedD6SumRoll {
 }
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
-  static rollName = "Wild Animal";
   static handledSkills = [SKILL.WildAnimal];
   failValue() {
     // Failing Wild Animal means that this player is effectively unavailable
@@ -655,12 +657,10 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
 }
 
 class DauntlessRoll extends ModifiedD6SumRoll {
-  static rollName = "Dauntless";
   static handledSkills = [SKILL.Dauntless];
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
-  static rollName = "Dodge";
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty];
   failValue() {
     return -this.knockdownValue(this.activePlayer) - this.turnoverValue();
@@ -669,7 +669,6 @@ class DodgeRoll extends ModifiedD6SumRoll {
 
 class JumpUpRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.JumpUp];
-  static rollName = "Jump Up";
   failValue() {
     // Jump Up failure means the block fails to activate, so the player is no longer
     // available for this turn.
@@ -678,21 +677,18 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 }
 
 class LeapRoll extends ModifiedD6SumRoll {
-  static rollName = "Leap";
   failValue() {
     return -this.knockdownValue(this.activePlayer) - this.turnoverValue();
   }
 }
 
 class PassRoll extends ModifiedD6SumRoll {
-  static rollName = "Pass";
   failValue() {
     return -this.turnoverValue();
   }
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
-  static rollName = "Interception";
   // Interception rolls on the thrower, not the interceptee. If it "passes",
   // then the ball is caught
   passValue() {
@@ -701,8 +697,6 @@ class InterceptionRoll extends ModifiedD6SumRoll {
 }
 
 class WakeUpRoll extends ModifiedD6SumRoll {
-  static rollName = "Wake Up";
-
   constructor(attrs) {
     super(attrs);
     this.activeTeam = this.activePlayer.team;
@@ -713,14 +707,12 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
-  static rollName = "GFI";
   failValue() {
     return -this.knockdownValue(this.activePlayer) - this.turnoverValue();
   }
 }
 
 class CatchRoll extends ModifiedD6SumRoll {
-  static rollName = "Catch";
   static handledSkills = [SKILL.DisturbingPresence];
 
   failValue() {
@@ -729,15 +721,12 @@ class CatchRoll extends ModifiedD6SumRoll {
 }
 
 class StandUpRoll extends ModifiedD6SumRoll {
-  static rollName = "StandUp";
-
   passValue() {
     return this.knockdownValue(this.activePlayer);
   }
 }
 
 class InjuryRoll extends Roll {
-  static rollName = "Injury";
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
 
   constructor({ ...rest }) {
@@ -806,7 +795,6 @@ class InjuryRoll extends Roll {
 }
 
 class CasualtyRoll extends Roll {
-  static rollName = "Casualty";
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
 
