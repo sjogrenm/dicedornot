@@ -123,18 +123,15 @@ export class Roll {
       return true;
     }
 
-    // As far as I can tell, this comes up when a reroll was possible but not used
-    if (this.boardactionresult.rollstatus == 2) {
-      return true;
-    }
-
     return false;
   }
+
   static dice(boardactionresult) {
     return this.translateStringNumberList(
       boardactionresult.coachchoices.listdices
     );
   }
+  
   get actual() {
     return Object.assign(this.dataPoint(0, this.dice, "actual"), {
       turn: this.turn,
@@ -263,9 +260,6 @@ export class Roll {
     boardactionresult
   ) {
     if (boardactionresult.rolltype === undefined) {
-      return null;
-    }
-    if (boardactionresult.coachchoices.listdices === undefined) {
       return null;
     }
     var rollClass = ROLL_TYPES[boardactionresult.rolltype];
