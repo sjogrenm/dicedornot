@@ -22,6 +22,17 @@ export const replay = {
     }
     console.log("Extracted rolls...", rolls);
     rolls = rolls.filter((roll) => !roll.ignore);
+    rolls = rolls.reduce((rolls, nextRoll) =>  {
+      if (
+        rolls.length > 0 &&
+        rolls[rolls.length - 1].isDependentRoll(nextRoll)
+      ) {
+        rolls[rolls.length - 1].dependentRolls.push(nextRoll);
+      } else {
+        rolls.push(nextRoll);
+      }
+      return rolls;
+    }, []);
     rolls.forEach((roll, idx) => (roll.rollIndex = idx));
 
     return {

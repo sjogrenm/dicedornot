@@ -69,7 +69,27 @@ function renderReplayData(replayData, dataParam) {
 
 function updateChart(rolls) {
   console.log(rolls);
-  var values = rolls.map((roll) => roll.actual);
+  var values = rolls
+    .filter((roll) => {
+      const dataPoint = roll.actual;
+      if (!isFinite(dataPoint.outcomeValue)) {
+        console.warn("Dice roll with non-finite outcome value", {
+          roll: roll,
+          dataPoint: dataPoint,
+        });
+        return false;
+      }
+      if (!isFinite(dataPoint.expectedValue)) {
+        console.warn("Dice roll with non-finite expected value", {
+          roll: roll,
+          dataPoint: dataPoint,
+        });
+        return false;
+      }
+      return true;
+    })
+    .map((roll) => roll.actual);
+
   // Assign the specification to a local variable vlSpec.
 
   // Embed the visualization in the container with id `vis`
@@ -101,7 +121,7 @@ function updateChart(rolls) {
         window.setTimeout(addValues, 200);
       }
     }
-    addValues();
+    // addValues();
   });
 }
 
@@ -196,7 +216,7 @@ function updateRollLog(rolls) {
     const rollDetails = group.map(
       (roll) => `
         <li>
-          ${renderDetails(roll.details)}
+          ${renderDetails(roll.detail)}
         </li>
       `
     );
@@ -223,7 +243,7 @@ function updateRollLog(rolls) {
       }
       return `<details>
         <summary>${details.summary}</summary>
-        ${details.detailDescription}
+        ${details.detailDescription || ""}
         <ul>${subdetails}</ul>
       </details>`;
     } else {

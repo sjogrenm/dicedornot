@@ -34,27 +34,145 @@ function decayedHalfTurns(halfTurns) {
   return decayedTurns;
 }
 
+class Details {
+  summary;
+  detailDescription;
+  details;
+  
+  constructor({summary, detailDescription, details}) {
+    this.summary = summary;
+    this.detailDescription = detailDescription;
+    this.details = details;
+  }
+}
+
+class ValueComponent {
+  valueOf() {
+    return this.value;
+  }
+  toFixed(n) {
+    return this.value.toFixed(n);
+  }
+}
+
+class DetailedValue extends ValueComponent {
+  value;
+  detail;
+
+  constructor({value, ...rest}) {
+    super()
+    this.detail = new Details(rest)
+    this.value = value;
+  }
+}
+
+class ExpectedOutcome extends ValueComponent{
+  constructor(outcomes) {
+    super()
+    this.outcomes = outcomes;
+    this.value = (
+      outcomes
+        .map((outcome) => outcome.value * (outcome.count || 1))
+        .reduce((a, b) => a + b, 0) /
+      outcomes
+        .map((outcome) => outcome.count || 1)
+        .reduce((a, b) => a + b, 0)
+    );
+  }
+  get detail() {
+    return new Details({
+      summary: `Expected Outcome: ${this.toFixed(2)}`,
+      detailDescription: "Possible outcomes",
+      details: this.outcomes.map(
+        (outcome) => outcome.detail ||
+          `${outcome.count || 1}x ${
+            outcome.name
+          }: value = ${outcome.value.toFixed(2)}`
+      ),
+    })
+  }
+}
+
+class ValueSum extends ValueComponent {
+  constructor(factors) {
+    super()
+    this.factors = factors;
+    this.value = factors.reduce((a, b) => a + b, 0)
+  }
+  get detail() {
+    return new Details({
+      summary: `${this.factors.map(factor => factor.toFixed(2)).join(" + ")} = ${this.value.toFixed(2)}`,
+      details: this.factors.map(
+        factor => factor.detail || factor.toFixed(2)
+      )
+    });
+  }
+}
+
+class MaxValue extends ValueComponent {
+  constructor(values) {
+    super()
+    this.values = values;
+    this.value = Math.max(...values);
+  }
+  get detail() {
+    return new Details({
+      summary: `Max of ${this.values.map(value => value.toFixed(2)).join(', ')}`,
+      details: this.values.map(
+        value => value.detail || value.toFixed(3)
+      )
+    });
+  }
+}
+
+class MinValue extends ValueComponent {
+  constructor(values) {
+    super()
+    this.values = values;
+    this.value = Math.min(...values);
+  }
+  get detail() {
+    return new Details({
+      summary: `Min of ${this.values.map(value => value.toFixed(2)).join(', ')}`,
+      details: this.values.map(
+        value => value.detail || value
+      )
+    });
+  }
+}
+
+class NamedOutcome extends ValueComponent {
+  constructor(name, outcome, count) {
+    super()
+    this.name = name;
+    this.value = outcome;
+    this.count = count || 1;
+  }
+
+  get detail() {
+    return new Details({
+      summary: `${this.count || 1}x ${
+            this.name
+          }: value = ${this.value.toFixed(2)}`,
+      details: [this.value.detail || this.value],
+    });
+  }
+}
+
 class Player {
   team;
   playerState;
 
   constructor(team, playerState) {
     this.team = team;
+    this.id = playerState.Data.Id;
+    this.name = playerState.Data.Name;
+    this.cell = playerState.Cell;
+    this.situation = playerState.Situation;
     this.playerState = playerState;
-    this.id = this.playerState.Data.Id;
-    this.name = this.playerState.Data.Name;
-    this.cell = this.playerState.Cell;
-    this.situation = this.playerState.Situation;
     this.canAct =
-      this.playerState.CanAct == 1 && this.situation === SITUATION.Active;
-  }
-
-  get skills() {
-    Object.defineProperty(this, "skills", {
-      value:
-        Roll.translateStringNumberList(this.playerState.Data.ListSkills) || [],
-    });
-    return this.skills;
+      playerState.CanAct == 1 && this.situation === SITUATION.Active;
+    this.skills = Roll.translateStringNumberList(playerState.Data.ListSkills) || [];
   }
 
   get skillNames() {
@@ -65,13 +183,12 @@ class Player {
 class Team {
   teamState;
   constructor(teamState) {
-    this.teamState = teamState;
-    this.players = this.teamState.ListPitchPlayers.PlayerState.map(
+    this.players = teamState.ListPitchPlayers.PlayerState.map(
       (playerState) => new Player(this, playerState)
     );
-    this.name = this.teamState.Data.Name;
-    this.id = this.teamState.Data.TeamId || 0;
-    this.turn = this.teamState.GameTurn || 0;
+    this.name = teamState.Data.Name;
+    this.id = teamState.Data.TeamId || 0;
+    this.turn = teamState.GameTurn || 0;
   }
 
   get shortName() {
@@ -82,177 +199,29 @@ class Team {
   }
 }
 
-export class Roll {
-  static handledSkills = [];
-
-  constructor(attrs) {
-    Object.assign(this, attrs);
-
-    this.teams = this.replayStep.BoardState.ListTeams.TeamState.map(
+class BoardState {
+  teams;
+  activeTeam;
+  turn;
+  
+  constructor({teams, activeTeamId, activePlayerId, ballCell}) {
+    this.teams = teams;
+    this.activeTeam = teams.filter(
+        (team) => team.id == activeTeamId
+      )[0] || teams[0];
+    this.turn = (this.activeTeam && this.activeTeam.turn) || 0;
+    this.activePlayer = this.playerById(activePlayerId);
+    this.ballCell = ballCell;
+  }
+  static argsFromXml(xml) {
+    const args = {};
+    args.teams = xml.replayStep.BoardState.ListTeams.TeamState.map(
       (teamState) => new Team(teamState)
     );
-    this.activeTeam =
-      this.teams.filter(
-        (team) => team.id == this.replayStep.BoardState.ActiveTeam
-      )[0] || this.teams[0];
-    this.turn = (this.activeTeam && this.activeTeam.turn) || 0;
-    this.activePlayer = this.playerById(this.action.PlayerId);
-    this.rollType = this.boardActionResult.RollType;
-    this.dice = this.constructor.dice(this.boardActionResult);
-
-    var unhandledSkills = this.skillsInEffect.filter(
-      (skillInfo) => !this.constructor.handledSkills.includes(skillInfo.SkillId)
-    );
-    if (unhandledSkills.length > 0) {
-      console.warn("Unhandled skills for roll", {
-        roll: this,
-        skills: unhandledSkills.map(
-          (skillinfo) => SKILL_NAME[skillinfo.SkillId]
-        ),
-        rollName: this.rollName,
-      });
-    }
-
-    this.onPitchValues = {};
-    this.onTeamValues = {};
-  }
-
-  get details() {
-    return {
-      summary: `${this.description}: value = ${this.value(this.dice).toFixed(
-        2
-      )} (expected: ${this.expectedValue.toFixed(2)})`,
-      detailDescription: "Possible Outcomes and Values",
-      details: this.possibleOutcomes.map(
-        (outcome) =>
-          `${outcome.count || 1}x ${
-            outcome.name
-          }: value = ${outcome.value.toFixed(2)}`
-      ),
-    };
-  }
-
-  get rollName() {
-    return this.constructor.name
-      .replace("Roll", "")
-      .replace(/([a-z])([A-Z])/, "$1 $2");
-  }
-
-  get description() {
-    var activeSkills =
-      this.activePlayer.skills.length > 0
-        ? ` (${this.activePlayer.skillNames.join(", ")})`
-        : "";
-    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills}  - ${this.dice}`;
-  }
-
-  value(dice) {
-    throw "value must be defined by subclass";
-  }
-  get expectedValue() {
-    return (
-      this.possibleOutcomes
-        .map((outcome) => outcome.value * (outcome.count || 1))
-        .reduce((a, b) => a + b, 0) /
-      this.possibleOutcomes
-        .map((outcome) => outcome.count || 1)
-        .reduce((a, b) => a + b, 0)
-    );
-  }
-  get possibleOutcomes() {
-    throw `possibleOutcomes must be defined by subclass ${this.constructor.name}`;
-  }
-  simulateDice() {
-    throw "simulateDice must be defined by subclass";
-  }
-
-  get ignore() {
-    if (this.boardActionResult.CoachChoices.ListDices === undefined) {
-      return true;
-    }
-
-    const dataPoint = this.actual;
-    if (!isFinite(dataPoint.outcomeValue)) {
-      console.warn("Dice roll with non-finite outcome value", {
-        roll: this,
-        dataPoint: dataPoint,
-      });
-      return true;
-    }
-    if (!isFinite(dataPoint.expectedValue)) {
-      console.warn("Dice roll with non-finite expected value", {
-        roll: this,
-        dataPoint: dataPoint,
-      });
-      return true;
-    }
-
-    return false;
-  }
-
-  static dice(boardActionResult) {
-    return this.translateStringNumberList(
-      boardActionResult.CoachChoices.ListDices
-    );
-  }
-
-  get actual() {
-    var dataPoint = this.dataPoint(-1, this.dice, "actual");
-    const deltaNetValues = this.possibleOutcomes
-      .flatMap((outcome) => new Array(outcome.count).fill(outcome))
-      .map((outcome) => outcome.value - dataPoint.expectedValue);
-    return Object.assign(dataPoint, {
-      turn: this.turn,
-      player: (this.activePlayer && this.activePlayer.name) || "",
-      playerSkills:
-        (this.activePlayer &&
-          this.activePlayer.skills.map((skill) => SKILL_NAME[skill])) ||
-        [],
-      rollName: this.rollName,
-      dice: this.dice,
-      dnvMin: Math.min(...deltaNetValues),
-      dnvq33: quantile(deltaNetValues, 0.33),
-      dnvMed: quantile(deltaNetValues, 0.5),
-      dnvq67: quantile(deltaNetValues, 0.67),
-      dnvMax: Math.max(...deltaNetValues),
-    });
-  }
-  simulated(iteration, rollIndex) {
-    return this.dataPoint(
-      iteration,
-      this.simulateDice(),
-      "simulated",
-      rollIndex
-    );
-  }
-
-  dataPoint(iteration, dice, type) {
-    var outcomeValue = this.value(dice);
-    var expectedValue = this.expectedValue;
-    return {
-      iteration: iteration,
-      turn: this.turn,
-      stepIndex: this.stepIndex,
-      actionIndex: this.actionIndex,
-      resultIndex: this.resultIndex,
-      activeTeamId: this.activeTeam.id,
-      activeTeamName: this.activeTeam.name,
-      teamId: this.activePlayer
-        ? this.activePlayer.team.id
-        : this.activeTeam.id,
-      teamName: this.activePlayer
-        ? this.activePlayer.team.name
-        : this.activeTeam.name,
-      outcomeValue,
-      type,
-      expectedValue,
-      netValue: outcomeValue - expectedValue,
-      description: this.description,
-      valueDescription: `${outcomeValue.toFixed(
-        2
-      )} (expected: ${expectedValue.toFixed(2)})`,
-      rollIndex: this.rollIndex,
-    };
+    args.activeTeamId = xml.replayStep.BoardState.ActiveTeam;
+    args.activePlayerId = xml.action.PlayerId;
+    args.ballCell = xml.replayStep.BoardState.Ball.Cell;
+    return args;
   }
 
   playerById(playerId) {
@@ -278,6 +247,202 @@ export class Roll {
       action: this.action,
       cell,
     });
+  }
+}
+
+export class Roll {
+  static handledSkills = [];
+
+  constructor(attrs) {
+    Object.assign(this, attrs);
+
+    this.onPitchValues = {};
+    this.onTeamValues = {};
+    this.armorRollCache = {};
+    this.dependentRolls = [];
+    
+    if (this.unhandledSkills.length > 0) {
+      console.warn("Unhandled skills for roll", {
+        roll: this,
+        skills: this.unhandledSkills.map(
+          (skillinfo) => SKILL_NAME[skillinfo.SkillId]
+        ),
+        rollName: this.rollName,
+      });
+    }
+  }
+
+  static argsFromXml(xml) {
+    const args = {};
+
+    args.boardState = new BoardState(BoardState.argsFromXml(xml)
+    );
+    args.rollType = xml.boardActionResult.RollType;
+    args.dice = this.dice(xml.boardActionResult);
+    const skillsInEffect = ensureList(xml.boardActionResult.CoachChoices.ListSkills.SkillInfo);
+    args.unhandledSkills = skillsInEffect.filter(
+      (skillInfo) => !this.handledSkills.includes(skillInfo.SkillId)
+    );
+    args.ignore = this.ignore(xml);
+
+    return args;
+  }
+
+  static ignore(xml) {
+    return false;
+  }
+
+  get activePlayer() {
+    return this.boardState.activePlayer;
+  }
+
+  set activePlayer(player) {
+    this.boardState.activePlayer = player;
+  }
+
+  get activeTeam() {
+    return this.boardState.activeTeam;
+  }
+
+  get teams() {
+    return this.boardState.teams;
+  }
+
+  get turn() {
+    return this.boardState.turn;
+  }
+  get detail() {
+    var details = [
+      this.value(this.dice).detail || `Value: ${this.value(this.dice).toFixed(2)}`
+    ]
+    if (this.dependentRolls.length > 0) {
+      details.push(new Details({
+        summary: `Dependent rolls value = ${this.dependentRollsValue}`,
+        details: this.dependentRolls.map(roll => roll.detail)
+      }))
+    }
+    details.push(this.expectedValue.detail)
+    return new Details({
+      summary: `${this.description}: value = ${this.value(this.dice).toFixed(
+        2
+      )} (expected: ${this.expectedValue.toFixed(2)})`,
+      detailDescription: "Value Breakdown",
+      details: details
+    });
+  }
+
+  get rollName() {
+    return this.constructor.name
+      .replace("Roll", "")
+      .replace(/([a-z])([A-Z])/, "$1 $2");
+  }
+
+  get description() {
+    var activeSkills =
+      this.activePlayer.skills.length > 0
+        ? ` (${this.activePlayer.skillNames.join(", ")})`
+        : "";
+    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills}  - ${this.dice}`;
+  }
+
+  isDependentRoll(roll) {
+    return false;
+  }
+
+  value(dice, expected) {
+    throw "value must be defined by subclass";
+  }
+  get expectedValue() {
+    return new ExpectedOutcome(this.possibleOutcomes);
+  }
+  get possibleOutcomes() {
+    throw `possibleOutcomes must be defined by subclass ${this.constructor.name}`;
+  }
+  simulateDice() {
+    throw "simulateDice must be defined by subclass";
+  }
+
+  static ignore(xml) {
+    if (xml.boardActionResult.CoachChoices.ListDices === undefined) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static dice(boardActionResult) {
+    return this.translateStringNumberList(
+      boardActionResult.CoachChoices.ListDices
+    );
+  }
+
+  get dependentRollsValue() {
+    return this.dependentRolls
+      .map((roll) => roll.value(roll.dice, false))
+      .reduce((a, b) => a + b, 0);
+  }
+
+  get actual() {
+    var dataPoint = this.dataPoint(-1, this.dice, "actual", true);
+    const deltaNetValues = this.possibleOutcomes
+      .flatMap((outcome) => new Array(outcome.count).fill(outcome))
+      .map((outcome) => outcome.value - dataPoint.expectedValue);
+    return Object.assign(dataPoint, {
+      turn: this.turn,
+      player: (this.activePlayer && this.activePlayer.name) || "",
+      playerSkills:
+        (this.activePlayer &&
+          this.activePlayer.skills.map((skill) => SKILL_NAME[skill])) ||
+        [],
+      rollName: this.rollName,
+      dice: this.dice,
+      dnvMin: Math.min(...deltaNetValues),
+      dnvq33: quantile(deltaNetValues, 0.33),
+      dnvMed: quantile(deltaNetValues, 0.5),
+      dnvq67: quantile(deltaNetValues, 0.67),
+      dnvMax: Math.max(...deltaNetValues),
+    });
+  }
+  simulated(iteration, rollIndex) {
+    var dataPoint = this.dataPoint(
+      iteration,
+      this.simulateDice(),
+      "simulated",
+      false
+    );
+    dataPoint.outcomeValue += this.dependentRolls
+      .map((roll) => roll.value(roll.simuulateDice(), false))
+      .reduce((a, b) => a + b, 0);
+    return dataPoint;
+  }
+
+  dataPoint(iteration, dice, type, includeDependent) {
+    var outcomeValue = this.value(dice, false);
+    if (includeDependent) {
+      outcomeValue += this.dependentRollsValue;
+    }
+    var expectedValue = this.expectedValue;
+    return {
+      iteration: iteration,
+      turn: this.turn,
+      activeTeamId: this.activeTeam.id,
+      activeTeamName: this.activeTeam.name,
+      teamId: this.activePlayer
+        ? this.activePlayer.team.id
+        : this.activeTeam.id,
+      teamName: this.activePlayer
+        ? this.activePlayer.team.name
+        : this.activeTeam.name,
+      outcomeValue,
+      type,
+      expectedValue,
+      netValue: outcomeValue - expectedValue,
+      description: this.description,
+      valueDescription: `${outcomeValue.toFixed(
+        2
+      )} (expected: ${expectedValue.toFixed(2)})`,
+      rollIndex: this.rollIndex,
+    };
   }
 
   static translateStringNumberList(str) {
@@ -348,14 +513,16 @@ export class Roll {
     }
 
     if (rollClass) {
-      return new rollClass({
-        stepIndex,
-        replayStep,
-        actionIndex,
-        action,
-        resultIndex,
-        boardActionResult,
-      });
+      return new rollClass(
+        rollClass.argsFromXml({
+            stepIndex,
+            replayStep,
+            actionIndex,
+            action,
+            resultIndex,
+            boardActionResult,
+          })
+      );
     } else {
       console.warn("Unknown roll " + boardActionResult.RollType, {
         stepIndex,
@@ -369,21 +536,12 @@ export class Roll {
     }
   }
 
-  get skillsInEffect() {
-    Object.defineProperty(this, "skillsInEffect", {
-      value: ensureList(
-        this.boardActionResult.CoachChoices.ListSkills.SkillInfo
-      ),
-    });
-    return this.skillsInEffect;
-  }
-
   onActiveTeam(player) {
     return player.team.id === this.activeTeam.id;
   }
 
   playerValue(player) {
-    var ballCell = this.replayStep.BoardState.Ball.Cell;
+    var ballCell = this.boardState.ballCell;
     if (ballCell.x < 0 || ballCell.y < 0) {
       return this.rawPlayerValue(player);
     }
@@ -443,15 +601,46 @@ export class Roll {
     );
   }
 
-  knockdownValue(player) {
+  armorRoll(player) {
+    return this.armorRollCache[player.id] || (this.armorRollCache[player.id] = new ArmorRoll({
+      unhandledSkills: this.unhandledSkills,
+      boardState: {
+        ...this.boardState,
+        activePlayer: player,
+      }
+    }));
+  }
+
+  knockdownValue(player, includeExpectedArmor) {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
     var playerValue = this.onPitchValue(player);
+    var turnsMissing = 1
     if (this.onActiveTeam(player)) {
-      return -playerValue * decayedHalfTurns(Math.min(2, this.halfTurnsLeft));
-    } else {
-      return playerValue;
+      turnsMissing = decayedHalfTurns(Math.min(2, this.halfTurnsLeft));
     }
+    var value = playerValue * turnsMissing;
+    var details = [
+      playerValue.detail || `Player Value: ${playerValue.toFixed(2)}`,
+      `Time-discounted half-turns missing: ${turnsMissing}`,
+    ]
+    if (includeExpectedArmor) {
+      var armorValue = this.armorRoll(player).expectedValue;
+      details.push(new Details({
+        summary: `Expected armor break value: ${armorValue.toFixed(2)}`,
+        details: [armorValue.detail],
+      }));
+      value += armorValue;
+    }
+    if (this.onActiveTeam(player)) {
+      value *= -1;
+      details.push(`On Active Team (negative value)`)
+    }
+    return new DetailedValue({
+      summary: `Knockdown Value: ${value.toFixed(2)}`,
+      details: details,
+      value: value,
+    });
   }
 
   stunValue(player) {
@@ -512,9 +701,18 @@ class BlockRoll extends Roll {
     SKILL.StandFirm,
   ];
 
-  constructor(attrs) {
-    super(attrs);
-    this.isRedDice = this.boardActionResult.Requirement < 0;
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
+    args.isRedDice = xml.boardActionResult.Requirement < 0;
+    args.attacker = args.boardState.activePlayer;
+    args.defender = args.boardState.playerAtPosition(xml.action.Order.CellTo.Cell);
+    return args;
+  }
+
+  isDependentRoll(roll) {
+    return [PushRoll, FollowUpRoll, ArmorRoll, InjuryRoll].includes(
+      roll.constructor
+    );
   }
 
   static dice(boardActionResult) {
@@ -540,21 +738,21 @@ class BlockRoll extends Roll {
     }${defenderSkills} - ${this.dice.join("/")}${uphill}`;
   }
 
-  get ignore() {
+  static ignore(xml) {
     // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
-    if (this.boardActionResult.ResultType != 2) {
+    if (xml.boardActionResult.ResultType != 2) {
       return true;
     }
-    if (this.boardActionResult.SubResultType == 35) {
+    if (xml.boardActionResult.SubResultType == 35) {
       // Opponent picking whether to activate fend
       return true;
     }
-    if (this.boardActionResult.SubResultType == 57) {
+    if (xml.boardActionResult.SubResultType == 57) {
       // Not sure what this is, but it doesn't have the expected number of dice.
       return true;
     }
 
-    return super.ignore;
+    return super.ignore(xml);
   }
 
   static asBlockDie(dieRoll) {
@@ -572,83 +770,82 @@ class BlockRoll extends Roll {
     }
   }
 
-  dieValue(result, attacker, defender) {
+  dieValue(result, includeExpectedArmor) {
+    const attacker = this.attacker;
+    const defender = this.defender;
     var attackerSkills = (attacker && attacker.skills) || [];
     var defenderSkills = (defender && defender.skills) || [];
 
     switch (result) {
       case ATTACKER_DOWN:
-        return this.knockdownValue(attacker) + this.turnoverValue;
+        return new ValueSum([
+          this.knockdownValue(attacker, includeExpectedArmor),
+          this.turnoverValue
+        ]);
       case BOTH_DOWN:
         if (attackerSkills.includes(SKILL.Block)) {
           if (defenderSkills.includes(SKILL.Block)) {
-            return 0;
+            return new DetailedValue({summary: 'Block/Block', value: 0});
           } else {
-            return this.knockdownValue(defender);
+            return this.knockdownValue(defender, includeExpectedArmor);
           }
         } else if (attackerSkills.includes(SKILL.Wrestle)) {
-          return this.knockdownValue(defender) + this.knockdownValue(attacker);
+          return new ValueSum([
+            this.knockdownValue(defender, false),
+            this.knockdownValue(attacker, false)
+          ]);
         } else {
-          return (
-            this.knockdownValue(defender) +
-            this.knockdownValue(attacker) +
+          return new ValueSum([
+            this.knockdownValue(defender, includeExpectedArmor),
+            this.knockdownValue(attacker, includeExpectedArmor),
             this.turnoverValue
-          );
+          ]);
         }
       case PUSH:
         return defenderSkills.includes(SKILL.StandFirm)
-          ? 0
-          : this.knockdownValue(defender) * 0.25;
+          ? new DetailedValue({summary: 'Push into Stand Firm', value: 0})
+          : this.knockdownValue(defender, false) * 0.25;
       case DEFENDER_STUMBLES:
         if (
           defenderSkills.includes(SKILL.Dodge) &&
           !attackerSkills.includes(SKILL.Tackle)
         ) {
           return defenderSkills.includes(SKILL.StandFirm)
-            ? 0
-            : this.knockdownValue(defender) * 0.25;
+            ? new DetailedValue({summary: 'DS into Dodge + Stand Firm', value: 0})
+            : this.knockdownValue(defender, includeExpectedArmor) * 0.25;
         } else {
-          return this.knockdownValue(defender);
+          return this.knockdownValue(defender, includeExpectedArmor);
         }
       case DEFENDER_DOWN:
-        return this.knockdownValue(defender);
+        return this.knockdownValue(defender, includeExpectedArmor);
     }
   }
 
-  get attacker() {
-    return this.activePlayer;
-  }
-
-  get defender() {
-    Object.defineProperty(this, "defender", {
-      value: this.playerAtPosition(this.action.Order.CellTo.Cell),
-    });
-    return this.defender;
-  }
-
-  value(dice) {
+  value(dice, expected) {
     var possibilities = dice.map((die) =>
-      this.dieValue(die, this.attacker, this.defender)
+      this.dieValue(die, expected)
     );
-    if (this.isRedDice) {
-      return Math.min(...possibilities);
+    if (possibilities.length == 1) {
+      return possibilities[0];
+    } else if (this.isRedDice) {
+      return new MinValue(possibilities);
     } else {
-      return Math.max(...possibilities);
+      return new MaxValue(possibilities);
     }
   }
   get possibleOutcomes() {
     var values;
     if (this.dice.length == 1) {
-      values = BLOCK.values.map((dice) => ({
-        name: dice.toString(),
-        value: this.value([dice]),
-      }));
+      values = BLOCK.values.map((dice) => new NamedOutcome(
+        dice.toString(),
+        this.value([dice], true),
+      ));
     } else {
       values = dice(new Array(this.dice.length).fill(BLOCK)).values.map(
-        (dice) => ({
-          name: dice.join("/"),
-          value: this.value(dice),
-        })
+        (dice) => new NamedOutcome(
+          dice.sort().join("/"),
+          this.value(dice, true),
+        )
       );
     }
     var valuesSummary = {};
@@ -684,13 +881,41 @@ class FansRoll extends Roll {
 }
 
 class ModifiedD6SumRoll extends Roll {
+  static numDice = 1;
+
   constructor(args) {
     super(args);
-    this.modifier =
-      ensureList(this.boardActionResult.ListModifiers.DiceModifier || [])
+    console.assert(
+      !this.computedTarget  || !this.target || this.computedTarget == this.target,
+      "Computed target (%d) doesn't equal target from replay XML (%d)",
+      this.computedTarget,
+      this.target,
+      this
+    )
+    console.assert(
+      !this.computedModifier || !this.modifier || this.computedModifier == this.modifier,
+      "Computed modifier (%d) doesn't equal modifier from replay XML (%d)",
+      this.computedModifier,
+      this.modifier,
+      this
+    )
+    console.assert(
+      (!this.dice) || this.constructor.numDice == this.dice.length,
+      "Mismatch in number of dice (%d) and expected number of dice (%d)",
+      this.dice && this.dice.length,
+      this.constructor.numDice,
+      this
+    );
+  }
+
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
+    args.modifier =
+      ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
-    this.target = this.boardActionResult.Requirement;
+    args.target = xml.boardActionResult.Requirement;
+    return args;
   }
 
   get description() {
@@ -707,22 +932,23 @@ class ModifiedD6SumRoll extends Roll {
     });
   }
   get modifiedTarget() {
-    if (this.dice.length == 1) {
-      return Math.min(6, Math.max(2, this.target - this.modifier));
+    var target = (this.target || this.computedTarget) - (this.modifier || this.computedModifier)
+    if (this.constructor.numDice == 1) {
+      return Math.min(6, Math.max(2, target));
     } else {
-      return this.target - this.modifier;
+      return target;
     }
   }
-  value(dice) {
+  value(dice, expected) {
     if (dice.reduce((a, b) => a + b, 0) >= this.modifiedTarget) {
-      return this.passValue();
+      return this.passValue(expected);
     } else {
-      return this.failValue();
+      return this.failValue(expected);
     }
   }
   get possibleOutcomes() {
     var diceSums = [0];
-    for (var die = 0; die < this.dice.length; die++) {
+    for (var die = 0; die < this.constructor.numDice; die++) {
       var newSums = [];
       for (var face = 1; face <= 6; face++) {
         for (const sum of diceSums) {
@@ -741,18 +967,25 @@ class ModifiedD6SumRoll extends Roll {
         failingSums.unshift(sum);
       }
     }
-    return [
-      {
+    var outcomes = [];
+    if (passingSums.length > 0) {
+      outcomes.push({
         name: `${Math.min(...passingSums)} - ${Math.max(...passingSums)}`,
-        value: this.passValue(),
+        value: this.passValue(true),
         count: passingSums.length,
-      },
-      {
+      });
+    }
+    if (failingSums.length > 0) {
+      outcomes.push({
         name: `${Math.min(...failingSums)} - ${Math.max(...failingSums)}`,
-        value: this.failValue(),
+        value: this.failValue(true),
         count: failingSums.length,
-      },
-    ];
+      });
+    }
+    return outcomes;
+  }
+  hasFreeReroll() {
+    return false;
   }
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
@@ -773,52 +1006,81 @@ class PickupRoll extends ModifiedD6SumRoll {
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BoneHead];
-  failValue() {
-    return this.knockdownValue(this.activePlayer);
+  failValue(expected) {
+    return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class ReallyStupidRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.ReallyStupid];
-  failValue() {
-    return this.knockdownValue(this.activePlayer);
+  failValue(expected) {
+    return this.knockdownValue(this.activePlayer, false);
   }
 }
 
+// TODO: Detect which armor/injury rolls are from fouls, and classify as such
+// TODO: Include foul send-offs in armor/injury roll outcomes
 class ArmorRoll extends ModifiedD6SumRoll {
+  static numDice = 2;
   static handledSkills = [SKILL.Claw];
 
-  constructor(args) {
-    super(args);
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
 
     // An Armor PileOn has a IsOrderCompleted RollType 60 right before it
-    if (this.resultIndex == 0) {
-      this.isPileOn = false;
+    if (xml.resultIndex == 0) {
+      args.isPileOn = false;
     } else {
-      var previousResult = this.action.Results.BoardActionResult[
-        this.resultIndex - 1
+      var previousResult = xml.action.Results.BoardActionResult[
+        xml.resultIndex - 1
       ];
-      this.isPileOn = previousResult.RollType == 59;
-      if (this.isPileOn) {
+      args.isPileOn = previousResult.RollType == 59;
+      if (args.isPileOn) {
         var previousSkills = previousResult.CoachChoices.ListSkills.SkillInfo;
         if (previousSkills && !previousSkills.length) {
           previousSkills = [previousSkills];
         }
-        this.pilingOnPlayer = this.playerById(
+        args.pilingOnPlayer = args.boardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
         );
       }
     }
+    return args;
   }
 
-  passValue() {
+  get computedTarget() {
+    return this.activePlayer.playerState.Data.Av + 1;
+  }
+
+  get computedModifier() {
+    return 0;
+  }
+
+  get injuryRoll() {
+    Object.defineProperty(this, "injuryRoll", {
+      value: new InjuryRoll({
+        unhandledSkills: this.unhandledSkills,
+        boardState: {
+          ...this.boardState,
+        }
+      })
+    });
+    return this.injuryRoll;
+  }
+
+  passValue(expected) {
     // passValue is negative because "Passing" an armor roll means rolling higher than
     // armor, which is a bad thing.
     var injuredPlayerValue = this.stunValue(this.activePlayer); // Player is at least stunned = out for 2 turns
+    if (expected) {
+      injuredPlayerValue += this.injuryRoll.expectedValue;
+    }
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      return injuredPlayerValue + this.knockdownValue(this.pilingOnPlayer);
+      return (
+        injuredPlayerValue + this.knockdownValue(this.pilingOnPlayer, false)
+      );
     } else {
       return injuredPlayerValue;
     }
@@ -827,14 +1089,10 @@ class ArmorRoll extends ModifiedD6SumRoll {
   failValue() {
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      return this.knockdownValue(this.pilingOnPlayer);
+      return this.knockdownValue(this.pilingOnPlayer, false);
     } else {
       return 0;
     }
-  }
-
-  value(dice) {
-    return super.value(dice);
   }
 }
 
@@ -853,6 +1111,9 @@ class DauntlessRoll extends ModifiedD6SumRoll {
 
 class DodgeRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty];
+  isDependentRoll(roll) {
+    return [DodgeRoll, ArmorRoll, InjuryRoll].includes(roll.constructor);
+  }
   failValue() {
     return this.knockdownValue(this.activePlayer) + this.turnoverValue;
   }
@@ -868,6 +1129,9 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 }
 
 class LeapRoll extends ModifiedD6SumRoll {
+  isDependentRoll(roll) {
+    return [ArmorRoll, InjuryRoll].includes(roll.constructor);
+  }
   failValue() {
     return this.knockdownValue(this.activePlayer) + this.turnoverValue;
   }
@@ -891,6 +1155,10 @@ class ThrowTeammateRoll extends ModifiedD6SumRoll {
     // TODO: Account for fumbles.
     return 0;
   }
+
+  isDependentRoll(roll) {
+    return [CatchRoll, InterceptionRoll].includes(roll.constructor);
+  }
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
@@ -904,7 +1172,7 @@ class InterceptionRoll extends ModifiedD6SumRoll {
 class WakeUpRoll extends ModifiedD6SumRoll {
   constructor(attrs) {
     super(attrs);
-    this.activeTeam = this.activePlayer.team;
+    this.boardState.activeTeam = this.boardState.activePlayer.team;
   }
   passValue() {
     return this.koValue(this.activePlayer);
@@ -912,8 +1180,8 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
-  failValue() {
-    return this.knockdownValue(this.activePlayer) + this.turnoverValue;
+  failValue(expected) {
+    return this.knockdownValue(this.activePlayer, expected) + this.turnoverValue;
   }
 }
 
@@ -926,74 +1194,76 @@ class CatchRoll extends ModifiedD6SumRoll {
 }
 
 class StandUpRoll extends ModifiedD6SumRoll {
-  passValue() {
-    return this.knockdownValue(this.activePlayer);
+  failValue(expected) {
+    return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class TakeRootRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.TakeRoot];
-  failValue() {
-    return -this.knockdownValue(this.activePlayer);
+  failValue(expected) {
+    return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class LandingRoll extends ModifiedD6SumRoll {
-  failValue() {
+  failValue(expected) {
     // TODO: Handle a turnover if the thrown player has the ball
-    return this.knockdownValue(this.activePlayer);
+    return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
 class FireballRoll extends ModifiedD6SumRoll {
-  passValue() {
-    return this.knockdownValue(this.activePlayer);
+  passValue(expected) {
+    return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
-  passValue() {
-    return this.knockdownValue(this.activePlayer);
+  passValue(expected) {
+    return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
 class InjuryRoll extends Roll {
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
 
-  constructor(args) {
-    super(args);
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
 
     // An Injury PileOn has a IsOrderCompleted RollType 60 right before it
-    if (this.resultIndex == 0) {
-      this.isPileOn = false;
+    if (xml.resultIndex == 0) {
+      args.isPileOn = false;
     } else {
-      var previousResult = this.action.Results.BoardActionResult[
-        this.resultIndex - 1
+      var previousResult = xml.action.Results.BoardActionResult[
+        xml.resultIndex - 1
       ];
-      this.isPileOn = previousResult.RollType == 60;
+      args.isPileOn = previousResult.RollType == 60;
       if (this.isPileOn) {
         var previousSkills = ensureList(
           previousResult.CoachChoices.ListSkills.SkillInfo
         );
-        this.pilingOnPlayer = this.playerById(
+        args.pilingOnPlayer = args.boardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
         );
       }
     }
 
-    this.modifier =
-      ensureList(this.boardActionResult.ListModifiers.DiceModifier || [])
+    args.modifier =
+      ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
+
+    return args;
   }
 
-  get ignore() {
-    if (this.boardActionResult.IsOrderCompleted != 1) {
+  static ignore(xml) {
+    if (xml.boardActionResult.IsOrderCompleted != 1) {
       console.log("Ignoring incomplete InjuryRoll", { roll: this });
       return true;
     }
-    return super.ignore;
+    return super.ignore(xml);
   }
 
   // TODO: Handle skills
@@ -1010,7 +1280,7 @@ class InjuryRoll extends Roll {
     }
   }
 
-  value(dice) {
+  value(dice, expected) {
     var total = dice[0] + dice[1] + this.modifier;
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
@@ -1023,13 +1293,13 @@ class InjuryRoll extends Roll {
     var outcomesByValue = {};
     for (var first = 1; first <= 6; first++) {
       for (var second = 1; second <= 6; second++) {
-        var outcomeList = outcomesByValue[this.value([first, second])];
+        var outcomeList = outcomesByValue[this.value([first, second], true)];
         if (!outcomeList) {
-          outcomeList = outcomesByValue[this.value([first, second])] = [];
+          outcomeList = outcomesByValue[this.value([first, second], true)] = [];
         }
         outcomeList.unshift({
           name: (first + second).toString(),
-          value: this.value([first, second]),
+          value: this.value([first, second], true),
         });
       }
     }
@@ -1077,7 +1347,7 @@ class CasualtyRoll extends Roll {
       for (var subtype = 1; subtype <= 8; subtype++) {
         outcomes.unshift({
           name: `${type}${subtype}`,
-          value: this.value(type * 10 + subtype),
+          value: this.value(type * 10 + subtype, true),
         });
       }
     }
@@ -1087,39 +1357,36 @@ class CasualtyRoll extends Roll {
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);
   }
-  get ignore() {
+  static ignore(xml) {
     // Just guessing at this
     if (
-      this.boardActionResult.ResultType != 2 &&
-      this.boardActionResult.SubResultType != 1 &&
+      xml.ResultType != 2 &&
+      xml.SubResultType != 1 &&
       // Replay Coach-551-9619f4910217db1915282ea2242c819f_2016-04-07_00_05_06, Furry Bears turn 8 crowdsurf injury, shouldn't be ignored
-      this.boardActionResult.SubResultType != 12
+      xml.SubResultType != 12
     ) {
       console.warn("Ignoring casualty roll, should verify", { roll: this });
       return true;
     }
-    return super.ignore;
+    return super.ignore(xml);
   }
 }
 
 class NoValueRoll extends Roll {
-  get ignore() {
+  static ignore(xml) {
     return true;
   }
   value() {
-    return null;
+    return 0;
   }
   get expectedValue() {
-    return null;
+    return 0;
   }
   simulateDice() {
     return null;
   }
-  get actual() {
-    return null;
-  }
-  simulated() {
-    return null;
+  get possibleOutcomes() {
+    return [];
   }
 }
 
@@ -1177,4 +1444,6 @@ export const ROLL_TYPES = {
   70: null, // Weather
 };
 
+// TODO: Parse Kickoff events
+// TODO: Parse Kickoff events
 // TODO: Parse Kickoff events
