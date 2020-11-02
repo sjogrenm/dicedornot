@@ -107,6 +107,10 @@ export class Roll {
   }
 
   ignore() {
+    if (this.boardactionresult.coachchoices.listdices === undefined) {
+      return true;
+    }
+
     const dataPoint = this.actual;
     if (!isFinite(dataPoint.outcomeValue)) {
       console.warn("Dice roll with non-finite outcome value", {
@@ -845,6 +849,7 @@ class CasualtyRoll extends Roll {
 }
 
 class NoValueRoll extends Roll {
+  ignore() {return false;}
   value() {return 0;}
   get expectedValue() {return 0;}
   simulateDice() {return null;}
