@@ -180,3 +180,7 @@ export const BLOCK_OUTCOME = {
   AtInPlaceDeDown: 5, //block down De in Place -> Fend has no 2nd dice afterpush?
   AtMoveDePushDown: 6,
 };
+
+export const ACTION_TYPE = {
+  Foul: 15,
+};
