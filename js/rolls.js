@@ -689,7 +689,21 @@ class LeapRoll extends ModifiedD6SumRoll {
 
 class PassRoll extends ModifiedD6SumRoll {
   failValue() {
+    // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
+    // player, then it's not a turnover.
+    // TODO: Account for fumbles.
     return -this.turnoverValue();
+  }
+}
+
+class ThrowTeammateRoll extends ModifiedD6SumRoll {
+  static handledSkills = [SKILL.ThrowTeamMate];
+  failValue() {
+    // TODO: Throw teammate only turns over if the thrown player has the ball, and even then, only
+    // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
+    // player, then it's not a turnover.
+    // TODO: Account for fumbles.
+    return 0;
   }
 }
 
@@ -728,6 +742,20 @@ class CatchRoll extends ModifiedD6SumRoll {
 class StandUpRoll extends ModifiedD6SumRoll {
   passValue() {
     return this.knockdownValue(this.activePlayer);
+  }
+}
+
+class TakeRootRoll extends ModifiedD6SumRoll {
+  static handledSkills = [SKILL.TakeRoot];
+  failValue() {
+    return -this.knockdownValue(this.activePlayer);
+  }
+}
+
+class LandingRoll extends ModifiedD6SumRoll {
+  failValue() {
+    // TODO: Handle a turnover if the thrown player has the ball
+    return -this.knockdownValue(this.activePlayer);
   }
 }
 
@@ -855,7 +883,9 @@ class NoValueRoll extends Roll {
   simulateDice() {return null;}
 }
 
-class PushRoll extends NoValueRoll {}
+class PushRoll extends NoValueRoll {
+  static handledSkills = [SKILL.SideStep];
+}
 
 class FollowUpRoll extends NoValueRoll {}
 
@@ -883,7 +913,7 @@ export const ROLL_TYPES = {
   21: ReallyStupidRoll,
   22: WildAnimalRoll,
   //23: LonerRoll,
-  //24: LandingRoll,
+  24: LandingRoll,
   26: null, // Inaccurate Pass Scatter
   //27: AlwaysHungryRoll,
   29: DauntlessRoll,
@@ -891,13 +921,13 @@ export const ROLL_TYPES = {
   // 34: StabRoll,
   36: LeapRoll,
   // 37: FoulAppearanceRoll,
-  // 40: TakeRootRoll,
+  40: TakeRootRoll,
   // 42: HailMaryPassRoll,
   // 45: ProRoll,
   // 46: HypnoticGazeRoll,
   // 54: FireballRoll,
   // 55: LightningBoltRoll,
-  // 56: ThrowTeammateRoll,
+  56: ThrowTeammateRoll,
   58: null, // Kickoff Gust
   59: ArmorRoll, // Armor Roll with Pile On. If followed by a RollType 59 w/ IsOrderCompleted, then PO happened. Otherwise, no PO
   60: InjuryRoll, // Injury Roll with Pile On. If followed by a RollType 60 w/ IsOrderCompleted, then PO happened, otherwise, no PO?
