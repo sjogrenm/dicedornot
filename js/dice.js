@@ -1,4 +1,4 @@
-//import _ from "underscore";
+import _ from "https://cdn.jsdelivr.net/npm/underscore@1.11.0/underscore-esm.js";
 
 export const ATTACKER_DOWN = "AD";
 export const BOTH_DOWN = "BD";
