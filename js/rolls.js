@@ -89,7 +89,7 @@ export class Roll {
       });
     }
   }
-  
+
   get rollName() {
     return this.constructor.name
       .replace("Roll", "")
@@ -106,7 +106,7 @@ export class Roll {
     throw "simulateDice must be defined by subclass";
   }
 
-  ignore() {
+  get ignore() {
     if (this.boardactionresult.coachchoices.listdices === undefined) {
       return true;
     }
@@ -135,7 +135,7 @@ export class Roll {
       boardactionresult.coachchoices.listdices
     );
   }
-  
+
   get actual() {
     return Object.assign(this.dataPoint(0, this.dice, "actual"), {
       turn: this.turn,
@@ -272,7 +272,7 @@ export class Roll {
     }
 
     if (rollClass) {
-      const roll = new rollClass({
+      return new rollClass({
         stepIndex,
         replaystep,
         actionIndex,
@@ -280,11 +280,6 @@ export class Roll {
         resultIndex,
         boardactionresult,
       });
-      if (roll.ignore()) {
-        return null;
-      } else {
-        return roll;
-      }
     } else {
       console.warn("Unknown roll " + boardactionresult.rolltype, {
         stepIndex,
@@ -398,7 +393,7 @@ class BlockRoll extends Roll {
     return dice.slice(0, dice.length / 2).map(BlockRoll.asBlockDie);
   }
 
-  ignore() {
+  get ignore() {
     // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
     if (this.boardactionresult.resulttype != 2) {
       return true;
@@ -412,7 +407,7 @@ class BlockRoll extends Roll {
       return true;
     }
 
-    return super.ignore();
+    return super.ignore;
   }
 
   static asBlockDie(dieRoll) {
@@ -860,8 +855,7 @@ class CasualtyRoll extends Roll {
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);
   }
-  ignore() {
-
+  get ignore() {
     // Just guessing at this
     if (
       this.boardactionresult.resulttype != 2 &&
@@ -872,15 +866,29 @@ class CasualtyRoll extends Roll {
       console.warn("Ignoring casualty roll, should verify", { roll: this });
       return true;
     }
-    return super.ignore();
+    return super.ignore;
   }
 }
 
 class NoValueRoll extends Roll {
-  ignore() {return false;}
-  value() {return 0;}
-  get expectedValue() {return 0;}
-  simulateDice() {return null;}
+  get ignore() {
+    return true;
+  }
+  value() {
+    return null;
+  }
+  get expectedValue() {
+    return null;
+  }
+  simulateDice() {
+    return null;
+  }
+  get actual() {
+    return null;
+  }
+  simulated() {
+    return null;
+  }
 }
 
 class PushRoll extends NoValueRoll {

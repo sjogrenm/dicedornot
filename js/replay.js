@@ -21,6 +21,7 @@ export const replay = {
       rolls = rolls.concat(Roll.fromReplayStep(stepIndex, replayStep));
     }
     console.log("Extracted rolls...", rolls);
+    rolls = rolls.filter((roll) => !roll.ignore);
 
     return {
       gameDetails: gameDetails,
