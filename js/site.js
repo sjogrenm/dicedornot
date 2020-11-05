@@ -1,13 +1,6 @@
-import { ROLL_TYPES } from "./rolls.js";
+
 import { io } from "./io.js";
 import { replay } from "./replay.js";
-
-google.load("visualization", "1.0", { packages: ["corechart"] });
-google.setOnLoadCallback(enableFileInput);
-
-function enableFileInput() {
-  $("#file-input-button").removeClass("disabled");
-}
 
 var fileInput = document.getElementById("file-input");
 fileInput.addEventListener("change", function () {
@@ -40,34 +33,6 @@ fileInput.addEventListener("change", function () {
     );
   }
 });
-
-function getParameterByName(name) {
-  name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-  var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-    results = regex.exec(location.search);
-  return results === null ? "" : decodeURIComponent(results[1]);
-}
-
-var dataParam = getParameterByName("data");
-if (dataParam) {
-  $("#loading").show();
-  $("#data-param-error").hide();
-  google.setOnLoadCallback(renderDataParam);
-}
-
-function renderDataParam() {
-  try {
-    var decompressedString = LZString.decompressFromEncodedURIComponent(
-      dataParam
-    );
-    var replayData = JSONC.decompress(JSON.parse(decompressedString));
-    renderReplayData(replayData, dataParam);
-  } catch (err) {
-    $("#loading").hide();
-    $("#data-param-error").show();
-    console.error(err);
-  }
-}
 
 function renderReplayData(replayData, dataParam) {
   //var baseUrl = "http://localhost:8080";
