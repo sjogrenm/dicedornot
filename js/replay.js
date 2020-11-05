@@ -12,10 +12,10 @@ export const replay = {
     var rolls = [];
     for (
       var stepIndex = 0;
-      stepIndex < data.replay.replaystep.length;
+      stepIndex < data.Replay.ReplayStep.length;
       stepIndex++
     ) {
-      var replayStep = data.replay.replaystep[stepIndex];
+      var replayStep = data.Replay.ReplayStep[stepIndex];
       // extractPlayerDetails(replayStep, playerDetails);
       // extractActionsFromStep(replayStep, rolls);
       rolls = rolls.concat(Roll.fromReplayStep(stepIndex, replayStep));
@@ -33,27 +33,27 @@ export const replay = {
 };
 
 function extractGameDetails(jsonObject) {
-  var firstStep = jsonObject.replay.replaystep[0];
+  var firstStep = jsonObject.Replay.ReplayStep[0];
   var lastStep =
-        jsonObject.replay.replaystep[jsonObject.replay.replaystep.length - 1];
+    jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1];
   console.log("Full gameinfo:");
-  console.log(firstStep.gameinfos);
+  console.log(firstStep.GameInfos);
   return {
-    //fileName: lastStep.ruleseventgamefinished.matchresult.row.replayfilename,
-    stadiumName: firstStep.gameinfos.namestadium,
-    stadiumType: firstStep.gameinfos.structstadium,
-    leagueName: firstStep.gameinfos.rowleague.name,
+    //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
+    stadiumName: firstStep.GameInfos.NameStadium,
+    stadiumType: firstStep.GameInfos.StructStadium,
+    leagueName: firstStep.GameInfos.RowLeague.Name,
     homeTeam: {
-      coachName: firstStep.gameinfos.coachesinfos.coachinfos[0].userid,
-      teamName: firstStep.boardstate.listteams.teamstate[0].data.name,
-      raceId: firstStep.boardstate.listteams.teamstate[0].data.idrace,
-      score: lastStep.ruleseventgamefinished.matchresult.row.homescore || 0,
+      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId,
+      teamName: firstStep.BoardState.ListTeams.TeamState[0].Data.Name,
+      raceId: firstStep.BoardState.ListTeams.TeamState[0].Data.IdRace,
+      score: lastStep.RulesEventGameFinished.MatchResult.Row.HomeScore || 0,
     },
     awayTeam: {
-      coachName: firstStep.gameinfos.coachesinfos.coachinfos[1].userid,
-      teamName: firstStep.boardstate.listteams.teamstate[1].data.name,
-      raceId: firstStep.boardstate.listteams.teamstate[1].data.idrace,
-      score: lastStep.ruleseventgamefinished.matchresult.row.awayscore || 0,
+      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId,
+      teamName: firstStep.BoardState.ListTeams.TeamState[1].Data.Name,
+      raceId: firstStep.BoardState.ListTeams.TeamState[1].Data.IdRace,
+      score: lastStep.RulesEventGameFinished.MatchResult.Row.AwayScore || 0,
     },
   };
 }

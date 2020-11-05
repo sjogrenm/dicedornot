@@ -279,7 +279,7 @@ function updateChart(rolls) {
     function addValues() {
       var values = [];
       var curIteration = Math.max(iteration, 1);
-      for (var x = 0; x < curIteration; x++) {
+      for (var x = 0; x < 50; x++) {
         iteration++;
         values = values.concat(rolls.map((roll) => roll.simulated(iteration)));
       }
@@ -287,8 +287,8 @@ function updateChart(rolls) {
       res.view.change("rolls", changeSet).run();
       $("#game-count").text(iteration);
       console.log(iteration, values.length);
-      if (iteration <= 64) {
-        window.setTimeout(addValues, 100);
+      if (iteration < 500) {
+        window.setTimeout(addValues, 200);
       }
     }
     addValues();
