@@ -302,13 +302,28 @@ export class Roll {
   }
 
   playerValue(player) {
+    var ballCell = this.replaystep.boardstate.ball.cell;
+    var distanceToBall = Math.max(
+      Math.abs(ballCell.x - player.cell.x),
+      Math.abs(ballCell.y - player.cell.y)
+    );
+    if (distanceToBall == 0) {
+      return 2 * this.rawPlayerValue(player);
+    } else if (distanceToBall == 1) {
+      return 1.5 * this.rawPlayerValue(player);
+    } else {
+      return this.rawPlayerValue(player);
+    }
+  }
+
+  rawPlayerValue(player) {
     return 1;
   }
 
   teamValue(team, situations) {
     return team.players
       .filter((player) => situations.includes(player.situation))
-      .map((player) => this.playerValue(player))
+      .map((player) => this.rawPlayerValue(player))
       .reduce((a, b) => a + b, 0);
   }
 
