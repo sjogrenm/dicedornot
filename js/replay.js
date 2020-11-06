@@ -22,6 +22,7 @@ export const replay = {
     }
     console.log("Extracted rolls...", rolls);
     rolls = rolls.filter((roll) => !roll.ignore);
+    rolls.forEach((roll, idx) => (roll.rollIndex = idx));
 
     return {
       gameDetails: gameDetails,

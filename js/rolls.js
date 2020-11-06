@@ -43,8 +43,12 @@ class Player {
   get skills() {
     Object.defineProperty(this, 'skills', {value: Roll.translateStringNumberList(
       this.playerState.Data.ListSkills
-    )});
+    ) || []});
     return this.skills;
+  }
+
+  get skillNames() {
+    return this.skills.map((skill) => SKILL_NAME[skill]);
   }
 }
 
@@ -58,6 +62,10 @@ class Team {
     this.name = this.teamState.Data.Name;
     this.id = this.teamState.Data.TeamId || 0;
     this.turn = this.teamState.GameTurn || 0;
+  }
+
+  get shortName() {
+    return this.name.split(/\s+/).map(word => word[0]).join('');
   }
 }
 
@@ -101,11 +109,23 @@ export class Roll {
       .replace(/([a-z])([A-Z])/, "$1 $2");
   }
 
+  get description() {
+    var activeSkills = this.activePlayer.skills.length > 0 ? ` (${this.activePlayer.skillNames.join(', ')})` : '';
+    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills}  - ${this.dice}`;
+  }
+
   value(dice) {
     throw "value must be defined by subclass";
   }
   get expectedValue() {
-    throw "expectedValue must be defined by subclass";
+    return this.possibleOutcomes.map(
+      outcome => outcome.value * (outcome.count || 1)
+    ).reduce((a, b) => a + b, 0) / this.possibleOutcomes.map(
+      outcome => outcome.count || 1
+    ).reduce((a, b) => a + b, 0);
+  }
+  get possibleOutcomes() {
+    throw "possibleOutcomes must be defined by subclass";
   }
   simulateDice() {
     throw "simulateDice must be defined by subclass";
@@ -142,7 +162,7 @@ export class Roll {
   }
 
   get actual() {
-    return Object.assign(this.dataPoint(0, this.dice, "actual"), {
+    return Object.assign(this.dataPoint(-1, this.dice, "actual"), {
       turn: this.turn,
       player: (this.activePlayer && this.activePlayer.name) || "",
       playerSkills:
@@ -153,11 +173,17 @@ export class Roll {
       dice: this.dice,
     });
   }
-  simulated(iteration) {
-    return this.dataPoint(iteration, this.simulateDice(), "simulated");
+  simulated(iteration, rollIndex) {
+    return this.dataPoint(iteration, this.simulateDice(), "simulated", rollIndex);
   }
 
   dataPoint(iteration, dice, type) {
+    var outcomeValue = this.activePlayer.team.id === this.activeTeam.id
+      ? this.value(dice)
+      : -this.value(dice);
+    var expectedValue = this.activePlayer.team.id === this.activeTeam.id
+      ? this.expectedValue
+      : -this.expectedValue;
     return {
       iteration: iteration,
       turn: this.turn,
@@ -172,15 +198,12 @@ export class Roll {
       teamName: this.activePlayer
         ? this.activePlayer.team.name
         : this.activeTeam.name,
-      outcomeValue:
-        this.activePlayer.team.id === this.activeTeam.id
-          ? this.value(dice)
-          : -this.value(dice),
-      type: type,
-      expectedValue:
-        this.activePlayer.team.id === this.activeTeam.id
-          ? this.expectedValue
-          : -this.expectedValue,
+      outcomeValue,
+      type,
+      expectedValue,
+      description: this.description,
+      valueDescription: `${outcomeValue.toFixed(2)} (expected: ${expectedValue.toFixed(2)})`,
+      rollIndex: this.rollIndex
     };
   }
 
@@ -299,7 +322,11 @@ export class Roll {
   }
 
   get skillsInEffect() {
-    Object.defineProperty(this, 'skillsInEffect', {value: ensureList(this.boardActionResult.CoachChoices.ListSkills.SkillInfo)});
+    Object.defineProperty(this, "skillsInEffect", {
+      value: ensureList(
+        this.boardActionResult.CoachChoices.ListSkills.SkillInfo
+      ),
+    });
     return this.skillsInEffect;
   }
 
@@ -348,9 +375,12 @@ export class Roll {
 
   onPitchValue(player) {
     // The fraction of the teams on-pitch players that this player represents.
-    return this.onPitchValues[player.id] || (this.onPitchValues[player.id] = (
-      this.playerValue(player) / this.teamValue(player.team, [SITUATION.Active])
-    ));
+    return (
+      this.onPitchValues[player.id] ||
+      (this.onPitchValues[player.id] =
+        this.playerValue(player) /
+        this.teamValue(player.team, [SITUATION.Active]))
+    );
   }
 
   knockdownValue(player) {
@@ -386,7 +416,9 @@ export class Roll {
   }
 
   get unactivatedPlayers() {
-    Object.defineProperty(this, 'unactivatedPlayers', {value: this.activeTeam.players.filter((player) => player.canAct)});
+    Object.defineProperty(this, "unactivatedPlayers", {
+      value: this.activeTeam.players.filter((player) => player.canAct),
+    });
     return this.unactivatedPlayers;
   }
 
@@ -395,7 +427,7 @@ export class Roll {
       .filter((player) => player != this.activePlayer)
       .map((player) => this.onPitchValue(player))
       .reduce((a, b) => a + b, 0);
-    Object.defineProperty(this, 'turnoverValue', {value: value});
+    Object.defineProperty(this, "turnoverValue", { value: value });
     return this.turnoverValue;
   }
 }
@@ -410,10 +442,22 @@ class BlockRoll extends Roll {
     SKILL.StandFirm,
   ];
 
+  constructor(attrs) {
+    super(attrs);
+    this.isRedDice = this.boardActionResult.Requirement < 0;
+  }
+
   static dice(boardActionResult) {
     var dice = super.dice(boardActionResult);
     // Block dice are doubled up, only use the first half of the dice list.
     return dice.slice(0, dice.length / 2).map(BlockRoll.asBlockDie);
+  }
+
+  get description() {
+    var uphill = this.isRedDice ? ' uphill' : '';
+    var attackerSkills = this.attacker.skills.length > 0 ? ` (${this.attacker.skillNames.join(', ')})` : '';
+    var defenderSkills = this.defender.skills.length > 0 ? ` (${this.defender.skillNames.join(', ')})` : '';
+    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${attackerSkills} against ${this.defender.name}${defenderSkills} - ${this.dice.join('/')}${uphill}`;
   }
 
   get ignore() {
@@ -496,28 +540,30 @@ class BlockRoll extends Roll {
   }
 
   get defender() {
-    Object.defineProperty(this, 'defender', {value:this.playerAtPosition(this.action.Order.CellTo.Cell)});
+    Object.defineProperty(this, "defender", {
+      value: this.playerAtPosition(this.action.Order.CellTo.Cell),
+    });
     return this.defender;
   }
 
   value(dice) {
-    // TODO: Handle values based on skills
-    // TODO: Red Dice?
-    return Math.max(
-      ...dice.map((die) => this.dieValue(die, this.attacker, this.defender))
+    var possibilities = dice.map((die) =>
+      this.dieValue(die, this.attacker, this.defender)
     );
+    if (this.isRedDice) {
+      return Math.min(...possibilities);
+    } else {
+      return Math.max(...possibilities);
+    }
   }
-  get expectedValue() {
+  get possibleOutcomes() {
     var values;
     if (this.dice.length == 1) {
-      values = BLOCK.values.map((dice) => this.value([dice]));
+      values = BLOCK.values.map((dice) => ({name: dice.toString(), value: this.value([dice])}));
     } else {
-      values = TWO_DIE_BLOCK.values.map((dice) => this.value(dice));
+      values = TWO_DIE_BLOCK.values.map((dice) => ({name: dice.join('/'), value: this.value(dice)}));
     }
-    Object.defineProperty(this, 'expectedValue', {value:
-      values.reduce((a, b) => a + b, 0) / values.length
-    });
-    return this.expectedValue;
+    return values;
   }
   simulateDice() {
     return this.dice.map(() =>
@@ -538,13 +584,18 @@ class FansRoll extends Roll {
 }
 
 class ModifiedD6SumRoll extends Roll {
-  constructor({ target, modifier, ...rest }) {
-    super(rest);
+  constructor(args) {
+    super(args);
     this.modifier =
       ensureList(this.boardActionResult.ListModifiers.DiceModifier || [])
         .map((modifier) => modifier.value)
         .reduce((a, b) => a + b, 0) || 0;
     this.target = this.boardActionResult.Requirement;
+  }
+
+  get description() {
+    var activeSkills = this.activePlayer.skills.length > 0 ? ` (${this.activePlayer.skillNames})` : '';
+    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills} - ${this.dice} (${this.modifiedTarget})`;
   }
 
   get actual() {
@@ -566,7 +617,7 @@ class ModifiedD6SumRoll extends Roll {
       return this.failValue();
     }
   }
-  get expectedValue() {
+  get possibleOutcomes() {
     var diceSums = [0];
     for (var die = 0; die < this.dice.length; die++) {
       var newSums = [];
@@ -580,15 +631,27 @@ class ModifiedD6SumRoll extends Roll {
 
     var numPossible = diceSums.length;
     var expected = 0;
+    var passingSums = [];
+    var failingSums = [];
     for (const sum of diceSums) {
       if (sum >= this.modifiedTarget) {
-        expected += this.passValue() / numPossible;
+        passingSums.unshift(sum);
       } else {
-        expected += this.failValue() / numPossible;
+        failingSums.unshift(sum);
       }
     }
-    Object.defineProperty(this, 'expectedValue', {value: expected});
-    return this.expectedValue;
+    return [
+      {
+        name: `${Math.min(...passingSums)} - ${Math.max(...passingSums)}`,
+        value: this.passValue(),
+        count: passingSums.length,
+      },
+      {
+        name: `${Math.min(...failingSums)} - ${Math.max(...failingSums)}`,
+        value: this.failValue(),
+        count: failingSums.length,
+      }
+    ]
   }
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
@@ -624,8 +687,8 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
 class ArmorRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.MightyBlow, SKILL.Claw];
 
-  constructor({ ...rest }) {
-    super(rest);
+  constructor(args) {
+    super(args);
 
     // An Armor PileOn has a IsOrderCompleted RollType 60 right before it
     if (this.resultIndex == 0) {
@@ -784,8 +847,8 @@ class LandingRoll extends ModifiedD6SumRoll {
 class InjuryRoll extends Roll {
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
 
-  constructor({ ...rest }) {
-    super(rest);
+  constructor(args) {
+    super(args);
 
     // An Injury PileOn has a IsOrderCompleted RollType 60 right before it
     if (this.resultIndex == 0) {
@@ -842,7 +905,7 @@ class InjuryRoll extends Roll {
         expected += this.value([first, second]);
       }
     }
-    Object.defineProperty(this, 'expectedValue', {value: expected / 36});
+    Object.defineProperty(this, "expectedValue", { value: expected / 36 });
     return this.expectedValue;
   }
   simulateDice() {
