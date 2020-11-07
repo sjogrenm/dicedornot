@@ -860,7 +860,7 @@ class InjuryRoll extends Roll {
       this.isPileOn = previousResult.RollType == 60;
       if (this.isPileOn) {
         var previousSkills = ensureList(
-          previousResult.coachchoices.ListSkills.SkillInfo
+          previousResult.CoachChoices.ListSkills.SkillInfo
         );
         this.pilingOnPlayer = this.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
