@@ -110,6 +110,7 @@ export class Roll {
     }
 
     this.onPitchValues = {};
+    this.onTeamValues = {};
   }
 
   get rollName() {
@@ -424,6 +425,16 @@ export class Roll {
     );
   }
 
+  onTeamValue(player) {
+    // The fraction of the teams on-pitch players that this player represents.
+    return (
+      this.onTeamValues[player.id] ||
+      (this.onTeamValues[player.id] =
+        this.playerValue(player) /
+        this.teamValue(player.team, [SITUATION.Active, SITUATION.Reserves]))
+    );
+  }
+
   knockdownValue(player) {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
@@ -455,7 +466,9 @@ export class Roll {
 
   casValue(player) {
     return (
-      this.onPitchValue(player) * this.halfTurnsLeft - this.stunValue(player)
+      (this.onTeamValue(player) * this.halfTurnsLeft) +
+      ((this.onPitchValue(player) - this.onTeamValue(player)) * decayedHalfTurns(this.halfTurnsLeft)) -
+      this.stunValue(player)
     );
   }
 
