@@ -652,7 +652,7 @@ class ModifiedD6SumRoll extends Roll {
     super(args);
     this.modifier =
       ensureList(this.boardActionResult.ListModifiers.DiceModifier || [])
-        .map((modifier) => modifier.value)
+        .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
     this.target = this.boardActionResult.Requirement;
   }
@@ -933,16 +933,13 @@ class InjuryRoll extends Roll {
 
     this.modifier =
       ensureList(this.boardActionResult.ListModifiers.DiceModifier || [])
-        .map((modifier) => modifier.value)
+        .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
   }
 
   // TODO: Handle skills
   injuryValue(total) {
     if (this.activePlayer.skills.includes(SKILL.Stunty)) {
-      total += 1;
-    }
-    if (this.skillsInEffect.map(skill => skill.SkillId).includes(SKILL.MightyBlow)) {
       total += 1;
     }
     if (total <= 7) {
