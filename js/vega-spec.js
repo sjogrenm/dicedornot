@@ -11,7 +11,6 @@ const vegaSpec = {
       calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
       as: "activeTeamColor",
     },
-    { calculate: "datum.outcomeValue - datum.expectedValue", as: "netValue" },
     {
       window: [{ op: "sum", field: "netValue", as: "cumNetValue" }],
       groupby: ["activeTeamId", "iteration", "type"],
@@ -146,16 +145,97 @@ const vegaSpec = {
         {
           filter: "datum.type == 'actual'",
         },
+        {
+          calculate: "datum.cumNetValue - datum.netValue + datum.dnvMin",
+          as: "y",
+        },
+
+        {
+          calculate: "datum.cumNetValue - datum.netValue + datum.dnvMax",
+          as: "y2",
+        },
       ],
-      mark: { type: "point" },
+      mark: { type: "rule" },
       encoding: {
         x: {
           type: "quantitative",
           field: "rollIndex",
-          title: "Turn",
-          axis: {
-            labelExpr: "floor(datum.label)",
-          },
+        },
+        y: {
+          field: "y",
+          type: "quantitative",
+          scale: { zero: false },
+          title: null,
+        },
+        y2: { field: "y2" },
+        color: {
+          field: "teamColor",
+          type: "nominal",
+          title: "Team",
+        },
+        size: {  value: 1  },
+        tooltip: [
+          { field: "dnvMin", title: "Min Net Value" , format: ".2f" },
+          { field: "dnvq33", title: "1/6 Net Value" , format: ".2f" },
+          { field: "dnvq67", title: "5/6 Net Value" , format: ".2f" },
+          { field: "dnvMax", title: "Max Net Value" , format: ".2f" },
+        ],
+      },
+    },
+    {
+      transform: [
+        {
+          filter: "datum.type == 'actual'",
+        },
+        {
+          calculate: "datum.cumNetValue - datum.netValue + datum.dnvq33 - 0.05",
+          as: "y",
+        },
+        {
+          calculate: "datum.cumNetValue - datum.netValue + datum.dnvq67 + 0.05",
+          as: "y2",
+        },
+      ],
+      mark: {type: "rule"},
+      encoding: {
+        size: {  value: 2  },
+        x: {
+          type: "quantitative",
+          field: "rollIndex",
+        },
+        y: { field: "y", type: "quantitative" },
+        y2: { field: "y2" },
+        color: {
+          field: "teamColor",
+          type: "nominal",
+          title: "Team",
+        },
+        tooltip: [
+          { field: "dnvMin", title: "Min Net Value" , format: ".2f" },
+          { field: "dnvq33", title: "1/6 Net Value" , format: ".2f" },
+          { field: "dnvq67", title: "5/6 Net Value" , format: ".2f" },
+          { field: "dnvMax", title: "Max Net Value" , format: ".2f" },
+        ],
+      },
+    },
+    {
+      transform: [
+        {
+          filter: "datum.type == 'actual'",
+        },
+      ],
+      mark: { type: "point", tooltip: { content: true } },
+
+      selection: {
+        grid: {
+          type: "interval",
+          bind: "scales",
+        },
+      },
+      encoding: {
+        x: {
+          type: "quantitative",
+          field: "rollIndex",
         },
         y: {
           field: "cumNetValue",

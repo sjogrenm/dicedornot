@@ -46,6 +46,7 @@ function renderReplayData(replayData, dataParam) {
 
   console.log("Rendering replay data...");
   updateChart(replayData.rolls);
+  updateRollLog(replayData.rolls);
 
   updateGameDetails(replayData.gameDetails);
 
@@ -70,18 +71,16 @@ function updateChart(rolls) {
   console.log(rolls);
   var values = rolls.map((roll) => roll.actual);
   // Assign the specification to a local variable vlSpec.
-  // TODO: put details of the action into the popup
 
   // Embed the visualization in the container with id `vis`
   vegaEmbed(
     "#chart",
     Object.assign(
       {
-        
         data: {
-            name: "rolls",
-            values: values,
-          },
+          name: "rolls",
+          values: values,
+        },
       },
       vegaSpec
     )
@@ -174,4 +173,8 @@ function updateGameDetails(gameDetails) {
   $("#stadium-name").text(gameDetails.stadiumName);
   $("#stadium-type").text(gameDetails.stadiumType);
   $("#league-name").text(gameDetails.leagueName);
+}
+
+function updateRollLog(rolls) {
+  console.log(rolls);
 }

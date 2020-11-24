@@ -4,10 +4,11 @@ import {
   BOTH_DOWN,
   DEFENDER_STUMBLES,
   DEFENDER_DOWN,
-  TWO_DIE_BLOCK,
+  dice,
   BLOCK,
 } from "./dice.js";
 import { SKILL_NAME, SKILL, SITUATION } from "./constants.js";
+import { quantile } from "./utils.js";
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -125,7 +126,7 @@ export class Roll {
     ).reduce((a, b) => a + b, 0);
   }
   get possibleOutcomes() {
-    throw "possibleOutcomes must be defined by subclass";
+    throw `possibleOutcomes must be defined by subclass ${this.constructor.name}`;
   }
   simulateDice() {
     throw "simulateDice must be defined by subclass";
@@ -162,7 +163,16 @@ export class Roll {
   }
 
   get actual() {
-    return Object.assign(this.dataPoint(-1, this.dice, "actual"), {
+    var dataPoint = this.dataPoint(-1, this.dice, "actual");
+    const deltaNetValues = this.possibleOutcomes
+      .flatMap((outcome) => new Array(outcome.count).fill(outcome))
+      .map(
+        (outcome) =>
+          (this.activePlayer.team.id === this.activeTeam.id
+            ? outcome.value
+            : -outcome.value) - dataPoint.expectedValue
+      );
+    return Object.assign(dataPoint, {
       turn: this.turn,
       player: (this.activePlayer && this.activePlayer.name) || "",
       playerSkills:
@@ -171,6 +181,11 @@ export class Roll {
         [],
       rollName: this.rollName,
       dice: this.dice,
+      dnvMin: Math.min(...deltaNetValues),
+      dnvq33: quantile(deltaNetValues, 0.33),
+      dnvMed: quantile(deltaNetValues, 0.5),
+      dnvq67: quantile(deltaNetValues, 0.67),
+      dnvMax: Math.max(...deltaNetValues),
     });
   }
   simulated(iteration, rollIndex) {
@@ -201,9 +216,12 @@ export class Roll {
       outcomeValue,
       type,
       expectedValue,
+      netValue: outcomeValue - expectedValue,
       description: this.description,
-      valueDescription: `${outcomeValue.toFixed(2)} (expected: ${expectedValue.toFixed(2)})`,
-      rollIndex: this.rollIndex
+      valueDescription: `${outcomeValue.toFixed(
+        2
+      )} (expected: ${expectedValue.toFixed(2)})`,
+      rollIndex: this.rollIndex,
     };
   }
 
@@ -561,9 +579,16 @@ class BlockRoll extends Roll {
     if (this.dice.length == 1) {
       values = BLOCK.values.map((dice) => ({name: dice.toString(), value: this.value([dice])}));
     } else {
-      values = TWO_DIE_BLOCK.values.map((dice) => ({name: dice.join('/'), value: this.value(dice)}));
+      console.log(dice(new Array(this.dice.length).fill(BLOCK)));
+      values = dice(new Array(this.dice.length).fill(BLOCK)).values.map(
+        (dice) => ({
+          name: dice.join("/"),
+          value: this.value(dice),
+        })
+      );
     }
-    return values;
+    Object.defineProperty(this, "possibleOutcomes", { value: values });
+    return this.possibleOutcomes;
   }
   simulateDice() {
     return this.dice.map(() =>
@@ -898,15 +923,18 @@ class InjuryRoll extends Roll {
       return this.injuryValue(total);
     }
   }
-  get expectedValue() {
-    var expected = 0;
+  get possibleOutcomes() {
+    var outcomes = [];
     for (var first = 1; first <= 6; first++) {
       for (var second = 1; second <= 6; second++) {
-        expected += this.value([first, second]);
+        outcomes.unshift({
+          name: (first  +  second).toString(),
+          value: this.value([first, second]),
+        });
       }
     }
-    Object.defineProperty(this, "expectedValue", { value: expected / 36 });
-    return this.expectedValue;
+    Object.defineProperty(this, "possibleOutcomes", { value: outcomes });
+    return this.possibleOutcomes;
   }
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
@@ -924,6 +952,7 @@ class CasualtyRoll extends Roll {
     return [dice[dice.length - 1]];
   }
   value(dice) {
+    return 0; // Need to figure out how to grade losing player value for multiple matches
     if (dice < 40) {
       return 0; // Badly Hurt
     } else if (dice < 50) {
@@ -934,15 +963,15 @@ class CasualtyRoll extends Roll {
       return -1; // Dead
     }
   }
-  get expectedValue() {
-    var expected = 0;
+  get possibleOutcomes() {
+    var outcomes = [];
     for (var type = 1; type <= 6; type++) {
       for (var subtype = 1; subtype <= 8; subtype++) {
-        expected += this.value(type * 10 + subtype);
+        outcomes.unshift({name: `${type}${subtype}`, value: this.value(type * 10 + subtype)});
       }
     }
-    Object.defineProperty(this, 'expectedValue', {value: expected / 48});
-    return this.expectedValue;
+    Object.defineProperty(this, 'possibleOutcomes', {value: outcomes});
+    return this.possibleOutcomes;
   }
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);

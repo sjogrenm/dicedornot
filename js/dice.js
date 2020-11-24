@@ -39,11 +39,13 @@ function unique(values) {
 function die(values) {
   return {
     values: values,
-    range: unique(values),
+    range: unique(
+      values.map((value) => (Array.isArray(value) ? value.sort() : value))
+    ),
   };
 }
 
-function dice(to_roll, combine) {
+export function dice(to_roll, combine) {
   combine = combine || append;
   var values = to_roll.shift().values;
   for (const die of to_roll) {
@@ -59,8 +61,8 @@ function dice(to_roll, combine) {
 }
 
 function append(existing, value) {
-  if (typeof existing == "array") {
-    return [value] + existing;
+  if (Array.isArray(existing)) {
+    return existing.concat([value]);
   } else {
     return [existing, value];
   }
