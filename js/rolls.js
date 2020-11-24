@@ -26,6 +26,14 @@ function sample(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+function decayedHalfTurns(halfTurns) {
+  var decayedTurns = 0;
+  for (var turn = 0; turn < halfTurns; turn++) {
+    decayedTurns += 0.8 ** turn;
+  }
+  return decayedTurns;
+}
+
 class Player {
   team;
   playerState;
@@ -111,7 +119,10 @@ export class Roll {
   }
 
   get description() {
-    var activeSkills = this.activePlayer.skills.length > 0 ? ` (${this.activePlayer.skillNames.join(', ')})` : '';
+    var activeSkills =
+      this.activePlayer.skills.length > 0
+        ? ` (${this.activePlayer.skillNames.join(", ")})`
+        : "";
     return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills}  - ${this.dice}`;
   }
 
@@ -119,11 +130,14 @@ export class Roll {
     throw "value must be defined by subclass";
   }
   get expectedValue() {
-    return this.possibleOutcomes.map(
-      outcome => outcome.value * (outcome.count || 1)
-    ).reduce((a, b) => a + b, 0) / this.possibleOutcomes.map(
-      outcome => outcome.count || 1
-    ).reduce((a, b) => a + b, 0);
+    return (
+      this.possibleOutcomes
+        .map((outcome) => outcome.value * (outcome.count || 1))
+        .reduce((a, b) => a + b, 0) /
+      this.possibleOutcomes
+        .map((outcome) => outcome.count || 1)
+        .reduce((a, b) => a + b, 0)
+    );
   }
   get possibleOutcomes() {
     throw `possibleOutcomes must be defined by subclass ${this.constructor.name}`;
@@ -189,16 +203,23 @@ export class Roll {
     });
   }
   simulated(iteration, rollIndex) {
-    return this.dataPoint(iteration, this.simulateDice(), "simulated", rollIndex);
+    return this.dataPoint(
+      iteration,
+      this.simulateDice(),
+      "simulated",
+      rollIndex
+    );
   }
 
   dataPoint(iteration, dice, type) {
-    var outcomeValue = this.activePlayer.team.id === this.activeTeam.id
-      ? this.value(dice)
-      : -this.value(dice);
-    var expectedValue = this.activePlayer.team.id === this.activeTeam.id
-      ? this.expectedValue
-      : -this.expectedValue;
+    var outcomeValue =
+      this.activePlayer.team.id === this.activeTeam.id
+        ? this.value(dice)
+        : -this.value(dice);
+    var expectedValue =
+      this.activePlayer.team.id === this.activeTeam.id
+        ? this.expectedValue
+        : -this.expectedValue;
     return {
       iteration: iteration,
       turn: this.turn,
@@ -382,8 +403,7 @@ export class Roll {
   }
 
   get halfTurnsLeft() {
-    // Return the number of half-turns the player is unavailable times the
-    // fraction of current team value it represents
+    // Return the number of half-turns left in the game
     var halfTurns = this.teams.map((team) => {
       if (team.turn <= 16) {
         return 16 - team.turn;
@@ -409,7 +429,7 @@ export class Roll {
     // fraction of current team value it represents
     var playerValue = this.onPitchValue(player);
     if (this.onActiveTeam(player)) {
-      return playerValue * Math.min(2, this.halfTurnsLeft);
+      return playerValue * decayedHalfTurns(Math.min(2, this.halfTurnsLeft));
     } else {
       return playerValue;
     }
@@ -420,20 +440,23 @@ export class Roll {
     // fraction of current team value it represents
     var playerValue = this.onPitchValue(player);
     if (this.onActiveTeam(player)) {
-      return playerValue * Math.min(3, this.halfTurnsLeft);
+      return playerValue * decayedHalfTurns(Math.min(3, this.halfTurnsLeft));
     } else {
-      return playerValue * Math.min(4, this.halfTurnsLeft);
+      return playerValue * decayedHalfTurns(Math.min(4, this.halfTurnsLeft));
     }
   }
 
   koValue(player) {
     return (
-      this.onPitchValue(player) * this.halfTurnsLeft - this.stunValue(player)
+      this.onPitchValue(player) * decayedHalfTurns(this.halfTurnsLeft) -
+      this.stunValue(player)
     );
   }
 
   casValue(player) {
-    return this.koValue(player);
+    return (
+      this.onPitchValue(player) * this.halfTurnsLeft - this.stunValue(player)
+    );
   }
 
   get unactivatedPlayers() {
