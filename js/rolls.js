@@ -747,7 +747,7 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
 }
 
 class ArmorRoll extends ModifiedD6SumRoll {
-  static handledSkills = [SKILL.MightyBlow, SKILL.Claw];
+  static handledSkills = [SKILL.Claw];
 
   constructor(args) {
     super(args);
@@ -940,6 +940,9 @@ class InjuryRoll extends Roll {
   // TODO: Handle skills
   injuryValue(total) {
     if (this.activePlayer.skills.includes(SKILL.Stunty)) {
+      total += 1;
+    }
+    if (this.skillsInEffect.map(skill => skill.SkillId).includes(SKILL.MightyBlow)) {
       total += 1;
     }
     if (total <= 7) {
