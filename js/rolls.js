@@ -354,6 +354,9 @@ export class Roll {
 
   playerValue(player) {
     var ballCell = this.replayStep.BoardState.Ball.Cell;
+    if (ballCell.x < 0 || ballCell.y < 0) {
+      return this.rawPlayerValue(player);
+    }
     var distanceToBall = Math.max(
       Math.abs(ballCell.x - player.cell.x),
       Math.abs(ballCell.y - player.cell.y)
@@ -654,8 +657,6 @@ class ModifiedD6SumRoll extends Roll {
       diceSums = newSums;
     }
 
-    var numPossible = diceSums.length;
-    var expected = 0;
     var passingSums = [];
     var failingSums = [];
     for (const sum of diceSums) {
@@ -675,8 +676,8 @@ class ModifiedD6SumRoll extends Roll {
         name: `${Math.min(...failingSums)} - ${Math.max(...failingSums)}`,
         value: this.failValue(),
         count: failingSums.length,
-      }
-    ]
+      },
+    ];
   }
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
