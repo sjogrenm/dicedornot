@@ -29,7 +29,7 @@ function sample(list) {
 function decayedHalfTurns(halfTurns) {
   var decayedTurns = 0;
   for (var turn = 0; turn < halfTurns; turn++) {
-    decayedTurns += 0.8 ** turn;
+    decayedTurns += 0.9 ** turn;
   }
   return decayedTurns;
 }
