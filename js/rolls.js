@@ -50,9 +50,10 @@ class Player {
   }
 
   get skills() {
-    Object.defineProperty(this, 'skills', {value: Roll.translateStringNumberList(
-      this.playerState.Data.ListSkills
-    ) || []});
+    Object.defineProperty(this, "skills", {
+      value:
+        Roll.translateStringNumberList(this.playerState.Data.ListSkills) || [],
+    });
     return this.skills;
   }
 
@@ -74,7 +75,10 @@ class Team {
   }
 
   get shortName() {
-    return this.name.split(/\s+/).map(word => word[0]).join('');
+    return this.name
+      .split(/\s+/)
+      .map((word) => word[0])
+      .join("");
   }
 }
 
@@ -181,12 +185,7 @@ export class Roll {
     var dataPoint = this.dataPoint(-1, this.dice, "actual");
     const deltaNetValues = this.possibleOutcomes
       .flatMap((outcome) => new Array(outcome.count).fill(outcome))
-      .map(
-        (outcome) =>
-          (this.activePlayer.team.id === this.activeTeam.id
-            ? outcome.value
-            : -outcome.value) - dataPoint.expectedValue
-      );
+      .map((outcome) => outcome.value - dataPoint.expectedValue);
     return Object.assign(dataPoint, {
       turn: this.turn,
       player: (this.activePlayer && this.activePlayer.name) || "",
@@ -213,14 +212,8 @@ export class Roll {
   }
 
   dataPoint(iteration, dice, type) {
-    var outcomeValue =
-      this.activePlayer.team.id === this.activeTeam.id
-        ? this.value(dice)
-        : -this.value(dice);
-    var expectedValue =
-      this.activePlayer.team.id === this.activeTeam.id
-        ? this.expectedValue
-        : -this.expectedValue;
+    var outcomeValue = this.value(dice);
+    var expectedValue = this.expectedValue;
     return {
       iteration: iteration,
       turn: this.turn,
@@ -440,7 +433,7 @@ export class Roll {
     // fraction of current team value it represents
     var playerValue = this.onPitchValue(player);
     if (this.onActiveTeam(player)) {
-      return playerValue * decayedHalfTurns(Math.min(2, this.halfTurnsLeft));
+      return -playerValue * decayedHalfTurns(Math.min(2, this.halfTurnsLeft));
     } else {
       return playerValue;
     }
@@ -451,23 +444,28 @@ export class Roll {
     // fraction of current team value it represents
     var playerValue = this.onPitchValue(player);
     if (this.onActiveTeam(player)) {
-      return playerValue * decayedHalfTurns(Math.min(3, this.halfTurnsLeft));
+      return -playerValue * decayedHalfTurns(Math.min(3, this.halfTurnsLeft));
     } else {
       return playerValue * decayedHalfTurns(Math.min(4, this.halfTurnsLeft));
     }
   }
 
   koValue(player) {
+    const playerValue =
+      this.onPitchValue(player) * decayedHalfTurns(this.halfTurnsLeft);
     return (
-      this.onPitchValue(player) * decayedHalfTurns(this.halfTurnsLeft) -
+      (this.onActiveTeam(player) ? -playerValue : playerValue) -
       this.stunValue(player)
     );
   }
 
   casValue(player) {
+    const playerValue =
+      this.onTeamValue(player) * this.halfTurnsLeft +
+      (this.onPitchValue(player) - this.onTeamValue(player)) *
+        decayedHalfTurns(this.halfTurnsLeft);
     return (
-      (this.onTeamValue(player) * this.halfTurnsLeft) +
-      ((this.onPitchValue(player) - this.onTeamValue(player)) * decayedHalfTurns(this.halfTurnsLeft)) -
+      (this.onActiveTeam(player) ? -playerValue : playerValue) -
       this.stunValue(player)
     );
   }
@@ -484,7 +482,7 @@ export class Roll {
       .filter((player) => player != this.activePlayer)
       .map((player) => this.onPitchValue(player))
       .reduce((a, b) => a + b, 0);
-    Object.defineProperty(this, "turnoverValue", { value: value });
+    Object.defineProperty(this, "turnoverValue", { value: -value });
     return this.turnoverValue;
   }
 }
@@ -511,10 +509,20 @@ class BlockRoll extends Roll {
   }
 
   get description() {
-    var uphill = this.isRedDice ? ' uphill' : '';
-    var attackerSkills = this.attacker.skills.length > 0 ? ` (${this.attacker.skillNames.join(', ')})` : '';
-    var defenderSkills = this.defender.skills.length > 0 ? ` (${this.defender.skillNames.join(', ')})` : '';
-    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${attackerSkills} against ${this.defender.name}${defenderSkills} - ${this.dice.join('/')}${uphill}`;
+    var uphill = this.isRedDice ? " uphill" : "";
+    var attackerSkills =
+      this.attacker.skills.length > 0
+        ? ` (${this.attacker.skillNames.join(", ")})`
+        : "";
+    var defenderSkills =
+      this.defender.skills.length > 0
+        ? ` (${this.defender.skillNames.join(", ")})`
+        : "";
+    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${
+      this.activePlayer.name
+    }${attackerSkills} against ${
+      this.defender.name
+    }${defenderSkills} - ${this.dice.join("/")}${uphill}`;
   }
 
   get ignore() {
@@ -555,7 +563,7 @@ class BlockRoll extends Roll {
 
     switch (result) {
       case ATTACKER_DOWN:
-        return -this.knockdownValue(attacker) - this.turnoverValue;
+        return this.knockdownValue(attacker) + this.turnoverValue;
       case BOTH_DOWN:
         if (attackerSkills.includes(SKILL.Block)) {
           if (defenderSkills.includes(SKILL.Block)) {
@@ -564,11 +572,11 @@ class BlockRoll extends Roll {
             return this.knockdownValue(defender);
           }
         } else if (attackerSkills.includes(SKILL.Wrestle)) {
-          return this.knockdownValue(defender) - this.knockdownValue(attacker);
+          return this.knockdownValue(defender) + this.knockdownValue(attacker);
         } else {
           return (
-            this.knockdownValue(defender) -
-            this.knockdownValue(attacker) -
+            this.knockdownValue(defender) +
+            this.knockdownValue(attacker) +
             this.turnoverValue
           );
         }
@@ -616,7 +624,10 @@ class BlockRoll extends Roll {
   get possibleOutcomes() {
     var values;
     if (this.dice.length == 1) {
-      values = BLOCK.values.map((dice) => ({name: dice.toString(), value: this.value([dice])}));
+      values = BLOCK.values.map((dice) => ({
+        name: dice.toString(),
+        value: this.value([dice]),
+      }));
     } else {
       console.log(dice(new Array(this.dice.length).fill(BLOCK)));
       values = dice(new Array(this.dice.length).fill(BLOCK)).values.map(
@@ -658,7 +669,10 @@ class ModifiedD6SumRoll extends Roll {
   }
 
   get description() {
-    var activeSkills = this.activePlayer.skills.length > 0 ? ` (${this.activePlayer.skillNames})` : '';
+    var activeSkills =
+      this.activePlayer.skills.length > 0
+        ? ` (${this.activePlayer.skillNames})`
+        : "";
     return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills} - ${this.dice} (${this.modifiedTarget})`;
   }
 
@@ -728,21 +742,21 @@ class ModifiedD6SumRoll extends Roll {
 
 class PickupRoll extends ModifiedD6SumRoll {
   failValue() {
-    return -this.turnoverValue;
+    return this.turnoverValue;
   }
 }
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BoneHead];
   failValue() {
-    return -this.knockdownValue(this.activePlayer);
+    return this.knockdownValue(this.activePlayer);
   }
 }
 
 class ReallyStupidRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.ReallyStupid];
   failValue() {
-    return -this.knockdownValue(this.activePlayer);
+    return this.knockdownValue(this.activePlayer);
   }
 }
 
@@ -776,7 +790,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
   passValue() {
     // passValue is negative because "Passing" an armor roll means rolling higher than
     // armor, which is a bad thing.
-    var injuredPlayerValue = -this.stunValue(this.activePlayer); // Player is at least stunned = out for 2 turns
+    var injuredPlayerValue = this.stunValue(this.activePlayer); // Player is at least stunned = out for 2 turns
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
       return injuredPlayerValue + this.knockdownValue(this.pilingOnPlayer);
@@ -815,7 +829,7 @@ class DauntlessRoll extends ModifiedD6SumRoll {
 class DodgeRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty];
   failValue() {
-    return -this.knockdownValue(this.activePlayer) - this.turnoverValue;
+    return this.knockdownValue(this.activePlayer) + this.turnoverValue;
   }
 }
 
@@ -830,7 +844,7 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 
 class LeapRoll extends ModifiedD6SumRoll {
   failValue() {
-    return -this.knockdownValue(this.activePlayer) - this.turnoverValue;
+    return this.knockdownValue(this.activePlayer) + this.turnoverValue;
   }
 }
 
@@ -839,7 +853,7 @@ class PassRoll extends ModifiedD6SumRoll {
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
     // TODO: Account for fumbles.
-    return -this.turnoverValue;
+    return this.turnoverValue;
   }
 }
 
@@ -858,7 +872,7 @@ class InterceptionRoll extends ModifiedD6SumRoll {
   // Interception rolls on the thrower, not the interceptee. If it "passes",
   // then the ball is caught
   passValue() {
-    return -this.turnoverValue;
+    return this.turnoverValue;
   }
 }
 
@@ -874,7 +888,7 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 
 class GFIRoll extends ModifiedD6SumRoll {
   failValue() {
-    return -this.knockdownValue(this.activePlayer) - this.turnoverValue;
+    return this.knockdownValue(this.activePlayer) + this.turnoverValue;
   }
 }
 
@@ -882,7 +896,7 @@ class CatchRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.DisturbingPresence];
 
   failValue() {
-    return -this.turnoverValue;
+    return this.turnoverValue;
   }
 }
 
@@ -902,7 +916,19 @@ class TakeRootRoll extends ModifiedD6SumRoll {
 class LandingRoll extends ModifiedD6SumRoll {
   failValue() {
     // TODO: Handle a turnover if the thrown player has the ball
-    return -this.knockdownValue(this.activePlayer);
+    return this.knockdownValue(this.activePlayer);
+  }
+}
+
+class FireballRoll extends ModifiedD6SumRoll {
+  passValue() {
+    return this.knockdownValue(this.activePlayer);
+  }
+}
+
+class LightningBoltRoll extends ModifiedD6SumRoll {
+  passValue() {
+    return this.knockdownValue(this.activePlayer);
   }
 }
 
@@ -945,9 +971,9 @@ class InjuryRoll extends Roll {
     if (total <= 7) {
       return 0; // Only stunned, no additional cost relative to armor break failure
     } else if (total <= 9) {
-      return -this.koValue(this.activePlayer);
+      return this.koValue(this.activePlayer);
     } else {
-      return -this.casValue(this.activePlayer);
+      return this.casValue(this.activePlayer);
     }
   }
 
@@ -955,7 +981,7 @@ class InjuryRoll extends Roll {
     var total = dice[0] + dice[1] + this.modifier;
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      return this.injuryValue(total) + this.onPitchValue(this.pilingOnPlayer);
+      return this.injuryValue(total) - this.onPitchValue(this.pilingOnPlayer);
     } else {
       return this.injuryValue(total);
     }
@@ -965,7 +991,7 @@ class InjuryRoll extends Roll {
     for (var first = 1; first <= 6; first++) {
       for (var second = 1; second <= 6; second++) {
         outcomes.unshift({
-          name: (first  +  second).toString(),
+          name: (first + second).toString(),
           value: this.value([first, second]),
         });
       }
@@ -1004,10 +1030,13 @@ class CasualtyRoll extends Roll {
     var outcomes = [];
     for (var type = 1; type <= 6; type++) {
       for (var subtype = 1; subtype <= 8; subtype++) {
-        outcomes.unshift({name: `${type}${subtype}`, value: this.value(type * 10 + subtype)});
+        outcomes.unshift({
+          name: `${type}${subtype}`,
+          value: this.value(type * 10 + subtype),
+        });
       }
     }
-    Object.defineProperty(this, 'possibleOutcomes', {value: outcomes});
+    Object.defineProperty(this, "possibleOutcomes", { value: outcomes });
     return this.possibleOutcomes;
   }
   simulateDice() {
@@ -1091,8 +1120,8 @@ export const ROLL_TYPES = {
   // 42: HailMaryPassRoll,
   // 45: ProRoll,
   // 46: HypnoticGazeRoll,
-  // 54: FireballRoll,
-  // 55: LightningBoltRoll,
+  54: FireballRoll,
+  55: LightningBoltRoll,
   56: ThrowTeammateRoll,
   58: null, // Kickoff Gust
   59: ArmorRoll, // Armor Roll with Pile On. If followed by a RollType 59 w/ IsOrderCompleted, then PO happened. Otherwise, no PO
