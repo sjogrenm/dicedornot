@@ -963,6 +963,14 @@ class InjuryRoll extends Roll {
         .reduce((a, b) => a + b, 0) || 0;
   }
 
+  get ignore() {
+    if (this.boardActionResult.IsOrderCompleted != 1) {
+      console.log("Ignoring incomplete InjuryRoll", { roll: this });
+      return true;
+    }
+    return super.ignore;
+  }
+
   // TODO: Handle skills
   injuryValue(total) {
     if (this.activePlayer.skills.includes(SKILL.Stunty)) {
