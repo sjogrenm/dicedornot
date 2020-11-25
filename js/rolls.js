@@ -117,6 +117,21 @@ export class Roll {
     this.onTeamValues = {};
   }
 
+  get details() {
+    return {
+      summary: `${this.description}: value = ${this.value(this.dice).toFixed(
+        2
+      )} (expected: ${this.expectedValue.toFixed(2)})`,
+      detailDescription: "Possible Outcomes and Values",
+      details: this.possibleOutcomes.map(
+        (outcome) =>
+          `${outcome.count || 1}x ${
+            outcome.name
+          }: value = ${outcome.value.toFixed(2)}`
+      ),
+    };
+  }
+
   get rollName() {
     return this.constructor.name
       .replace("Roll", "")
@@ -629,7 +644,6 @@ class BlockRoll extends Roll {
         value: this.value([dice]),
       }));
     } else {
-      console.log(dice(new Array(this.dice.length).fill(BLOCK)));
       values = dice(new Array(this.dice.length).fill(BLOCK)).values.map(
         (dice) => ({
           name: dice.join("/"),
@@ -637,7 +651,18 @@ class BlockRoll extends Roll {
         })
       );
     }
-    Object.defineProperty(this, "possibleOutcomes", { value: values });
+    var valuesSummary = {};
+    for (const value of values) {
+      if (valuesSummary[value.name]) {
+        valuesSummary[value.name].count += 1;
+      } else {
+        valuesSummary[value.name] = value;
+        value.count = 1;
+      }
+    }
+    Object.defineProperty(this, "possibleOutcomes", {
+      value: Object.values(valuesSummary),
+    });
     return this.possibleOutcomes;
   }
   simulateDice() {
@@ -995,16 +1020,28 @@ class InjuryRoll extends Roll {
     }
   }
   get possibleOutcomes() {
-    var outcomes = [];
+    var outcomesByValue = {};
     for (var first = 1; first <= 6; first++) {
       for (var second = 1; second <= 6; second++) {
-        outcomes.unshift({
+        var outcomeList = outcomesByValue[this.value([first, second])];
+        if (!outcomeList) {
+          outcomeList = outcomesByValue[this.value([first, second])] = [];
+        }
+        outcomeList.unshift({
           name: (first + second).toString(),
           value: this.value([first, second]),
         });
       }
     }
-    Object.defineProperty(this, "possibleOutcomes", { value: outcomes });
+    Object.defineProperty(this, "possibleOutcomes", {
+      value: Object.entries(outcomesByValue).map(([value, outcomes]) => ({
+        name: `${Math.min(
+          ...outcomes.map((outcome) => parseInt(outcome.name))
+        )} - ${Math.max(...outcomes.map((outcome) => parseInt(outcome.name)))}`,
+        count: outcomes.length,
+        value: outcomes[0].value,
+      })),
+    });
     return this.possibleOutcomes;
   }
   simulateDice() {

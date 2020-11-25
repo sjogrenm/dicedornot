@@ -1,4 +1,3 @@
-
 import { io } from "./io.js";
 import { replay } from "./replay.js";
 import vegaSpec from "./vega-spec.js";
@@ -54,6 +53,7 @@ function renderReplayData(replayData, dataParam) {
   $("#summary-div").show();
   $("#results-div").show();
   $("#explanation-div").show();
+  $("#details-div").show();
 
   $("#share-massive-url").attr("href", resultsUrl);
   $("#share-tiny-url").attr("href", tinyUrlCreator);
@@ -177,4 +177,57 @@ function updateGameDetails(gameDetails) {
 
 function updateRollLog(rolls) {
   console.log(rolls);
+  const groupedRolls = rolls.reduce((groups, roll) => {
+    const lastGroup = groups[groups.length - 1];
+    const lastRoll = lastGroup && lastGroup[lastGroup.length - 1];
+    if (
+      !lastGroup ||
+      !lastRoll ||
+      lastRoll.activeTeam.id != roll.activeTeam.id ||
+      lastRoll.turn != roll.turn
+    ) {
+      groups.push([roll]);
+    } else {
+      lastGroup.push(roll);
+    }
+    return groups;
+  }, []);
+  for (const group of groupedRolls) {
+    const rollDetails = group.map(
+      (roll) => `
+        <li>
+          ${renderDetails(roll.details)}
+        </li>
+      `
+    );
+    $("#details-list").append(
+      $(
+        `
+        <li>
+          <details>
+            <summary>${group[0].activeTeam.name} - Turn ${
+          group[0].turn
+        }</summary>
+            <ul>${rollDetails.join("\n")}</ul>
+          </details>
+        </li>`
+      )
+    );
+  }
+
+  function renderDetails(details) {
+    if (details.details) {
+      var subdetails = "";
+      for (const subdetail of details.details) {
+        subdetails += `<li>${renderDetails(subdetail)}</li>`;
+      }
+      return `<details>
+        <summary>${details.summary}</summary>
+        ${details.detailDescription}
+        <ul>${subdetails}</ul>
+      </details>`;
+    } else {
+      return details.summary || details;
+    }
+  }
 }
