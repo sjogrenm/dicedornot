@@ -7,9 +7,9 @@ fileInput.addEventListener("change", function () {
   if (fileInput.files.length > 0) {
     $("#loading").show();
     $("#data-param-error").hide();
-    $("#summary-div").hide();
-    $("#results-div").hide();
-    $("#explanation-div").hide();
+    $('#summary').hide();
+    $('#results').hide();
+    $('#explanation').hide();
     console.log("Preparing to parse XML...");
 
     io.xmlToJson(
@@ -50,10 +50,10 @@ function renderReplayData(replayData, dataParam) {
   updateGameDetails(replayData.gameDetails);
 
   $("#loading").hide();
-  $("#summary-div").show();
-  $("#results-div").show();
-  $("#explanation-div").show();
-  $("#details-div").show();
+  $('#summary').show();
+  $('#results').show();
+  $('#explanation').show();
+  $('#details').show();
 
   $("#share-massive-url").attr("href", resultsUrl);
   $("#share-tiny-url").attr("href", tinyUrlCreator);
@@ -107,7 +107,11 @@ function updateChart(rolls) {
   )
   .then((result) => {
     result.view.addEventListener('click', function (event, item) {
-      $(`#roll-${item.datum.rollIndex}`).parents('details').attr({open: true});
+      $('#details').find(`.active`).removeClass('active');
+      $(`#roll-${item.datum.rollIndex}`)
+        .addClass('active')
+        .parents('details')
+        .attr({ open: true });
     });
   })
   .then((res) => {
@@ -223,20 +227,22 @@ function updateRollLog(rolls) {
   for (const group of groupedRolls) {
     const rollDetails = group.map(
       (roll) => `
-        <li id="roll-${roll.rollIndex}">
+        <li id="roll-${
+          roll.rollIndex
+        }" class="list-group-item list-group-item-action">
           ${renderDetails(roll.detail)}
         </li>
       `
     );
-    $("#details-list").append(
+    $('#details-list').append(
       $(
         `
-        <li>
+        <li class="list-group-item">
           <details>
             <summary>${group[0].activeTeam.name} - Turn ${
           group[0].turn
         }</summary>
-            <ul>${rollDetails.join("\n")}</ul>
+            <ul class="list-group">${rollDetails.join('\n')}</ul>
           </details>
         </li>`
       )
@@ -247,12 +253,14 @@ function updateRollLog(rolls) {
     if (details.details) {
       var subdetails = "";
       for (const subdetail of details.details) {
-        subdetails += `<li>${renderDetails(subdetail)}</li>`;
+        subdetails += `<li class="list-group-item list-group-item-action">${renderDetails(
+          subdetail
+        )}</li>`;
       }
       return `<details>
         <summary>${details.summary}</summary>
-        ${details.detailDescription || ""}
-        <ul>${subdetails}</ul>
+        ${details.detailDescription || ''}
+        <ul class="list-group">${subdetails}</ul>
       </details>`;
     } else {
       return details.summary || details;
