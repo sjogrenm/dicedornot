@@ -629,17 +629,16 @@ export class Roll {
       playerValue.detail || `Player Value: ${playerValue.toFixed(2)}`,
       `Time-discounted half-turns missing: ${turnsMissing}`,
     ]
-    if (includeExpectedArmor) {
-      var armorValue = this.armorRoll(player).expectedValue;
-      details.push(new Details({
-        summary: `Expected armor break value: ${armorValue.toFixed(2)}`,
-        details: [armorValue.detail],
-      }));
-      value += armorValue;
-    }
     if (this.onActiveTeam(player)) {
       value *= -1;
-      details.push(`On Active Team (negative value)`)
+      details.push(`On Active Team (negative value)`);
+    }
+    if (includeExpectedArmor) {
+      const armorValue = this.armorRoll(player).expectedValue;
+      const armorDetail = armorValue.detail;
+      armorDetail.summary = 'Armor: ' + armorDetail.summary;
+      details.push(armorDetail);
+      value += armorValue;
     }
     return new DetailedValue({
       summary: `Knockdown Value: ${value.toFixed(2)}`,
@@ -687,11 +686,20 @@ export class Roll {
   }
 
   get turnoverValue() {
-    var value = this.unactivatedPlayers
+    const value = -this.unactivatedPlayers
       .filter((player) => player != this.activePlayer)
       .map((player) => this.onPitchValue(player))
       .reduce((a, b) => a + b, 0);
-    Object.defineProperty(this, "turnoverValue", { value: -value });
+    const detail = new DetailedValue({
+      value,
+      summary: `Turnover Value: ${value.toFixed(2)}`,
+      details: this.unactivatedPlayers
+        .filter((player) => player != this.activePlayer)
+        .map(
+          (player) => `${player.name}: ${-this.onPitchValue(player).toFixed(2)}`
+        )
+    });
+    Object.defineProperty(this, 'turnoverValue', { value: detail });
     return this.turnoverValue;
   }
 }
