@@ -1,267 +1,272 @@
 const vegaSpec = {
-  $schema: "https://vega.github.io/schema/vega-lite/v4.json",
+  $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
   width: 1200,
   height: 800,
   transform: [
     {
       calculate: "join([datum.teamId, datum.teamName], '. ')",
-      as: "teamColor",
+      as: 'teamColor'
     },
     {
       calculate: "join([datum.activeTeamId, datum.activeTeamName], '. ')",
-      as: "activeTeamColor",
+      as: 'activeTeamColor'
     },
     {
-      window: [{ op: "sum", field: "netValue", as: "cumNetValue" }],
-      groupby: ["activeTeamId", "iteration", "type"],
+      window: [{ op: 'sum', field: 'netValue', as: 'cumNetValue' }],
+      groupby: ['activeTeamId', 'iteration', 'type']
     },
+    {
+      calculate: "'#roll-' + datum.rollIndex",
+      as: 'url'
+    }
   ],
   layer: [
     {
       transform: [
         {
           aggregate: [
-            { op: "min", field: "cumNetValue", as: "teamMinNetValue" },
-            { op: "max", field: "cumNetValue", as: "teamMaxNetValue" },
+            { op: 'min', field: 'cumNetValue', as: 'teamMinNetValue' },
+            { op: 'max', field: 'cumNetValue', as: 'teamMaxNetValue' }
           ],
-          groupby: ["rollIndex", "turn", "activeTeamColor", "activeTeamName"],
+          groupby: ['rollIndex', 'turn', 'activeTeamColor', 'activeTeamName']
         },
         {
           joinaggregate: [
-            { op: "min", field: "teamMinNetValue", as: "minNetValue" },
-            { op: "max", field: "teamMaxNetValue", as: "maxNetValue" },
-          ],
+            { op: 'min', field: 'teamMinNetValue', as: 'minNetValue' },
+            { op: 'max', field: 'teamMaxNetValue', as: 'maxNetValue' }
+          ]
         },
         {
-          calculate: "datum.rollIndex - 0.5",
-          as: "x",
+          calculate: 'datum.rollIndex - 0.5',
+          as: 'x'
         },
         {
-          calculate: "datum.rollIndex + 0.5",
-          as: "x2",
-        },
+          calculate: 'datum.rollIndex + 0.5',
+          as: 'x2'
+        }
       ],
       mark: {
-        type: "rect",
-        opacity: 0.05,
+        type: 'rect',
+        opacity: 0.05
       },
       encoding: {
-        x: { field: "x", type: "quantitative" },
-        x2: { field: "x2", type: "quantitative" },
-        y: { field: "minNetValue", type: "quantitative", title: "Net Value" },
+        x: { field: 'x', type: 'quantitative' },
+        x2: { field: 'x2', type: 'quantitative' },
+        y: { field: 'minNetValue', type: 'quantitative', title: 'Net Value' },
         y2: {
-          field: "maxNetValue",
-          type: "quantitative",
-          title: "Net Value",
+          field: 'maxNetValue',
+          type: 'quantitative',
+          title: 'Net Value'
         },
-        color: { field: "activeTeamColor", type: "nominal" },
+        color: { field: 'activeTeamColor', type: 'nominal' },
         tooltip: [
-          { field: "turn", title: "Turn" },
-          { field: "activeTeamName", title: "Active Team" },
-        ],
-      },
+          { field: 'turn', title: 'Turn' },
+          { field: 'activeTeamName', title: 'Active Team' }
+        ]
+      }
     },
     {
       transform: [
         {
-          quantile: "cumNetValue",
+          quantile: 'cumNetValue',
           probs: [0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99],
-          groupby: ["activeTeamColor", "rollIndex"],
+          groupby: ['activeTeamColor', 'rollIndex']
         },
         {
-          calculate: "datum.prob * 100",
-          as: "perc",
-        },
+          calculate: 'datum.prob * 100',
+          as: 'perc'
+        }
       ],
       mark: {
-        type: "line",
+        type: 'line',
         opacity: 0.3,
-        interpolate: "basis",
+        interpolate: 'basis'
       },
       encoding: {
         x: {
-          type: "quantitative",
-          field: "rollIndex",
-          title: "Turn",
+          type: 'quantitative',
+          field: 'rollIndex',
+          title: 'Turn',
           axis: {
-            labelExpr: "floor(datum.label)",
-          },
+            labelExpr: 'floor(datum.label)'
+          }
         },
         y: {
-          field: "value",
-          type: "quantitative",
-          title: "Net Value",
+          field: 'value',
+          type: 'quantitative',
+          title: 'Net Value'
         },
         color: {
-          field: "activeTeamColor",
-          type: "nominal",
-          title: "Team",
+          field: 'activeTeamColor',
+          type: 'nominal',
+          title: 'Team'
         },
         detail: {
-          field: "prob",
-          type: "nominal",
+          field: 'prob',
+          type: 'nominal'
         },
         tooltip: [
-          { field: "activeTeamColor", title: "Active Team" },
-          { field: "value", title: "Cumulative Net Value", format: ".2f" },
-          { field: "perc", title: "Percentile", format: ".0f" },
-        ],
-      },
+          { field: 'activeTeamColor', title: 'Active Team' },
+          { field: 'value', title: 'Cumulative Net Value', format: '.2f' },
+          { field: 'perc', title: 'Percentile', format: '.0f' }
+        ]
+      }
     },
     {
       transform: [
         {
-          filter: "datum.type == 'actual'",
-        },
+          filter: "datum.type == 'actual'"
+        }
       ],
-      mark: { type: "line", interpolate: "monotone" },
+      mark: { type: 'line', interpolate: 'monotone' },
       encoding: {
         x: {
-          type: "quantitative",
-          field: "rollIndex",
-          title: "Turn",
+          type: 'quantitative',
+          field: 'rollIndex',
+          title: 'Turn',
           axis: {
-            labelExpr: "floor(datum.label)",
-          },
+            labelExpr: 'floor(datum.label)'
+          }
         },
         y: {
-          field: "cumNetValue",
-          type: "quantitative",
-          title: "Net Value",
+          field: 'cumNetValue',
+          type: 'quantitative',
+          title: 'Net Value'
         },
         color: {
-          field: "activeTeamColor",
-          type: "nominal",
-          title: "Active Team",
+          field: 'activeTeamColor',
+          type: 'nominal',
+          title: 'Active Team'
         },
         detail: {
-          field: "iteration",
-          type: "nominal",
-        },
-      },
+          field: 'iteration',
+          type: 'nominal'
+        }
+      }
     },
     {
       transform: [
         {
-          filter: "datum.type == 'actual'",
+          filter: "datum.type == 'actual'"
         },
         {
-          calculate: "datum.cumNetValue - datum.netValue + datum.dnvMin",
-          as: "y",
+          calculate: 'datum.cumNetValue - datum.netValue + datum.dnvMin',
+          as: 'y'
         },
 
         {
-          calculate: "datum.cumNetValue - datum.netValue + datum.dnvMax",
-          as: "y2",
-        },
+          calculate: 'datum.cumNetValue - datum.netValue + datum.dnvMax',
+          as: 'y2'
+        }
       ],
-      mark: { type: "rule" },
+      mark: { type: 'rule' },
       encoding: {
         x: {
-          type: "quantitative",
-          field: "rollIndex",
+          type: 'quantitative',
+          field: 'rollIndex'
         },
         y: {
-          field: "y",
-          type: "quantitative",
+          field: 'y',
+          type: 'quantitative',
           scale: { zero: false },
-          title: null,
+          title: null
         },
-        y2: { field: "y2" },
+        y2: { field: 'y2' },
         color: {
-          field: "teamColor",
-          type: "nominal",
-          title: "Team",
+          field: 'teamColor',
+          type: 'nominal',
+          title: 'Team'
         },
-        size: {  value: 1  },
+        size: { value: 1 },
         tooltip: [
-          { field: "dnvMin", title: "Min Net Value" , format: ".2f" },
-          { field: "dnvq33", title: "1/6 Net Value" , format: ".2f" },
-          { field: "dnvq67", title: "5/6 Net Value" , format: ".2f" },
-          { field: "dnvMax", title: "Max Net Value" , format: ".2f" },
-        ],
-      },
+          { field: 'dnvMin', title: 'Min Net Value', format: '.2f' },
+          { field: 'dnvq33', title: '1/6 Net Value', format: '.2f' },
+          { field: 'dnvq67', title: '5/6 Net Value', format: '.2f' },
+          { field: 'dnvMax', title: 'Max Net Value', format: '.2f' }
+        ]
+      }
     },
     {
       transform: [
         {
-          filter: "datum.type == 'actual'",
+          filter: "datum.type == 'actual'"
         },
         {
-          calculate: "datum.cumNetValue - datum.netValue + datum.dnvq33 - 0.05",
-          as: "y",
+          calculate: 'datum.cumNetValue - datum.netValue + datum.dnvq33 - 0.05',
+          as: 'y'
         },
         {
-          calculate: "datum.cumNetValue - datum.netValue + datum.dnvq67 + 0.05",
-          as: "y2",
-        },
+          calculate: 'datum.cumNetValue - datum.netValue + datum.dnvq67 + 0.05',
+          as: 'y2'
+        }
       ],
-      mark: {type: "rule"},
+      mark: { type: 'rule' },
       encoding: {
-        size: {  value: 2  },
+        size: { value: 2 },
         x: {
-          type: "quantitative",
-          field: "rollIndex",
+          type: 'quantitative',
+          field: 'rollIndex'
         },
-        y: { field: "y", type: "quantitative" },
-        y2: { field: "y2" },
+        y: { field: 'y', type: 'quantitative' },
+        y2: { field: 'y2' },
         color: {
-          field: "teamColor",
-          type: "nominal",
-          title: "Team",
+          field: 'teamColor',
+          type: 'nominal',
+          title: 'Team'
         },
         tooltip: [
-          { field: "dnvMin", title: "Min Net Value" , format: ".2f" },
-          { field: "dnvq33", title: "1/6 Net Value" , format: ".2f" },
-          { field: "dnvq67", title: "5/6 Net Value" , format: ".2f" },
-          { field: "dnvMax", title: "Max Net Value" , format: ".2f" },
-        ],
-      },
+          { field: 'dnvMin', title: 'Min Net Value', format: '.2f' },
+          { field: 'dnvq33', title: '1/6 Net Value', format: '.2f' },
+          { field: 'dnvq67', title: '5/6 Net Value', format: '.2f' },
+          { field: 'dnvMax', title: 'Max Net Value', format: '.2f' }
+        ]
+      }
     },
     {
       transform: [
         {
-          filter: "datum.type == 'actual'",
-        },
+          filter: "datum.type == 'actual'"
+        }
       ],
-      mark: { type: "point", tooltip: { content: true } },
+      mark: { type: 'point', tooltip: { content: true } },
 
       selection: {
         grid: {
-          type: "interval",
-          bind: "scales",
-        },
+          type: 'interval',
+          bind: 'scales'
+        }
       },
       encoding: {
         x: {
-          type: "quantitative",
-          field: "rollIndex",
+          type: 'quantitative',
+          field: 'rollIndex'
         },
         y: {
-          field: "cumNetValue",
-          type: "quantitative",
-          title: "Net Value",
+          field: 'cumNetValue',
+          type: 'quantitative',
+          title: 'Net Value'
         },
         color: {
-          field: "teamColor",
-          type: "nominal",
-          title: "Team",
+          field: 'teamColor',
+          type: 'nominal',
+          title: 'Team'
         },
         tooltip: [
-          { field: "turn", title: "Turn" },
-          { field: "activeTeamName", title: "Active Team" },
-          { field: "description", title: "Roll" },
-          { field: "valueDescription", title: "Value" },
-          { field: "netValue", title: "Net Value", format: ".2f" },
+          { field: 'turn', title: 'Turn' },
+          { field: 'activeTeamName', title: 'Active Team' },
+          { field: 'description', title: 'Roll' },
+          { field: 'valueDescription', title: 'Value' },
+          { field: 'netValue', title: 'Net Value', format: '.2f' },
           {
-            field: "cumNetValue",
-            title: "Cumulative Net Value",
-            format: ".2f",
+            field: 'cumNetValue',
+            title: 'Cumulative Net Value',
+            format: '.2f'
           },
         ],
-      },
-    },
-  ],
+        href: { field: 'url', type: 'nominal' }
+      }
+    }
+  ]
   // }
 };
 

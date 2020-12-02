@@ -223,7 +223,7 @@ function updateRollLog(rolls) {
   for (const group of groupedRolls) {
     const rollDetails = group.map(
       (roll) => `
-        <li>
+        <li id="roll-${roll.rollIndex}">
           ${renderDetails(roll.detail)}
         </li>
       `
