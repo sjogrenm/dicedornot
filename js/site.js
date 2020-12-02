@@ -94,28 +94,36 @@ function updateChart(rolls) {
 
   // Embed the visualization in the container with id `vis`
   vegaEmbed(
-    "#chart",
+    '#chart',
     Object.assign(
       {
         data: {
-          name: "rolls",
-          values: values,
-        },
+          name: 'rolls',
+          values: values
+        }
       },
       vegaSpec
     )
-  ).then((res) => {
+  )
+  .then((result) => {
+    result.view.addEventListener('click', function (event, item) {
+      $(`#roll-${item.datum.rollIndex}`).parents('details').attr({open: true});
+    });
+  })
+  .then((res) => {
     var iteration = 0;
     function addValues() {
       var values = [];
       var curIteration = Math.max(iteration, 1);
       for (var x = 0; x < 50; x++) {
         iteration++;
-        values = values.concat(rolls.map((roll) => roll.simulated(iteration)));
+        values = values.concat(
+          rolls.map((roll) => roll.simulated(iteration))
+        );
       }
       var changeSet = vega.changeset().insert(values);
-      res.view.change("rolls", changeSet).run();
-      $("#game-count").text(iteration);
+      res.view.change('rolls', changeSet).run();
+      $('#game-count').text(iteration);
       console.log(iteration, values.length);
       if (iteration < 500) {
         window.setTimeout(addValues, 200);
@@ -170,7 +178,7 @@ function raceIdToName(raceId) {
     case 25:
       return "Kislev";
     case 33:
-      return "Chaos Pa";
+      return "Chaos Pact";
     case 35:
     default:
       return raceId;

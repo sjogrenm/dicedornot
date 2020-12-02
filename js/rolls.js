@@ -260,16 +260,18 @@ export class Roll {
     this.onTeamValues = {};
     this.armorRollCache = {};
     this.dependentRolls = [];
-    
-    if (this.unhandledSkills.length > 0) {
-      console.warn("Unhandled skills for roll", {
+
+    console.assert(
+      !this.unhandledSkills || this.unhandledSkills.length == 0,
+      "Unhandled skills for roll",
+      {
         roll: this,
-        skills: this.unhandledSkills.map(
+        skills: (this.unhandledSkills && this.unhandledSkills.map(
           (skillinfo) => SKILL_NAME[skillinfo.SkillId]
-        ),
+        )),
         rollName: this.rollName,
-      });
-    }
+      }
+    );
   }
 
   static argsFromXml(xml) {
@@ -603,13 +605,15 @@ export class Roll {
   }
 
   armorRoll(player) {
-    return this.armorRollCache[player.id] || (this.armorRollCache[player.id] = new ArmorRoll({
-      unhandledSkills: this.unhandledSkills,
-      boardState: {
-        ...this.boardState,
-        activePlayer: player,
-      }
-    }));
+    return (
+      this.armorRollCache[player.id] ||
+      (this.armorRollCache[player.id] = new ArmorRoll({
+        boardState: {
+          ...this.boardState,
+          activePlayer: player,
+        },
+      }))
+    );
   }
 
   knockdownValue(player, includeExpectedArmor) {
@@ -894,14 +898,14 @@ class ModifiedD6SumRoll extends Roll {
       this
     )
     console.assert(
-      !this.computedModifier || !this.modifier || this.computedModifier == this.modifier,
+      this.computedModifier === undefined || this.modifier === undefined || this.computedModifier == this.modifier,
       "Computed modifier (%d) doesn't equal modifier from replay XML (%d)",
       this.computedModifier,
       this.modifier,
       this
     )
     console.assert(
-      (!this.dice) || this.constructor.numDice == this.dice.length,
+      this.dice === undefined || this.constructor.numDice == this.dice.length,
       "Mismatch in number of dice (%d) and expected number of dice (%d)",
       this.dice && this.dice.length,
       this.constructor.numDice,
@@ -933,7 +937,9 @@ class ModifiedD6SumRoll extends Roll {
     });
   }
   get modifiedTarget() {
-    var target = (this.target || this.computedTarget) - (this.modifier || this.computedModifier)
+    var target =
+      (this.target || this.computedTarget) -
+      (this.modifier || this.computedModifier || 0);
     if (this.constructor.numDice == 1) {
       return Math.min(6, Math.max(2, target));
     } else {
@@ -1023,7 +1029,7 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
 // TODO: Include foul send-offs in armor/injury roll outcomes
 class ArmorRoll extends ModifiedD6SumRoll {
   static numDice = 2;
-  static handledSkills = [SKILL.Claw];
+  static handledSkills = [SKILL.Claw, SKILL.MightyBlow];
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -1061,7 +1067,6 @@ class ArmorRoll extends ModifiedD6SumRoll {
   get injuryRoll() {
     Object.defineProperty(this, "injuryRoll", {
       value: new InjuryRoll({
-        unhandledSkills: this.unhandledSkills,
         boardState: {
           ...this.boardState,
         }
@@ -1395,7 +1400,9 @@ class PushRoll extends NoValueRoll {
   static handledSkills = [SKILL.SideStep];
 }
 
-class FollowUpRoll extends NoValueRoll {}
+class FollowUpRoll extends NoValueRoll {
+  static handledSkills = [SKILL.Frenzy];
+}
 
 class FoulPenaltyRoll extends NoValueRoll {}
 
