@@ -414,7 +414,7 @@ export class Roll {
       false
     );
     dataPoint.outcomeValue += this.dependentRolls
-      .map((roll) => roll.value(roll.simuulateDice(), false))
+      .map((roll) => roll.value(roll.simulateDice(), false))
       .reduce((a, b) => a + b, 0);
     return dataPoint;
   }

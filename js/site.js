@@ -113,20 +113,17 @@ function updateChart(rolls) {
         .parents('details')
         .attr({ open: true });
     });
-  })
-  .then((res) => {
+
     var iteration = 0;
     function addValues() {
       var values = [];
       var curIteration = Math.max(iteration, 1);
       for (var x = 0; x < 50; x++) {
         iteration++;
-        values = values.concat(
-          rolls.map((roll) => roll.simulated(iteration))
-        );
+        values = values.concat(rolls.map((roll) => roll.simulated(iteration)));
       }
       var changeSet = vega.changeset().insert(values);
-      res.view.change('rolls', changeSet).run();
+      result.view.change('rolls', changeSet).run();
       $('#game-count').text(iteration);
       console.log(iteration, values.length);
       if (iteration < 500) {
