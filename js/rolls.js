@@ -8,7 +8,7 @@ import {
   BLOCK,
 } from "./dice.js";
 import { SKILL_NAME, SKILL, SITUATION } from "./constants.js";
-import { quantile } from "./utils.js";
+import { weightedQuantile } from "./utils.js";
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -384,9 +384,10 @@ export class Roll {
 
   get actual() {
     var dataPoint = this.dataPoint(-1, this.dice, "actual", true);
-    const deltaNetValues = this.possibleOutcomes
-      .flatMap((outcome) => new Array(outcome.count).fill(outcome))
-      .map((outcome) => outcome.value - dataPoint.expectedValue);
+    const deltaNetValues = this.possibleOutcomes.map((outcome) => ({
+      value: outcome.value - dataPoint.expectedValue,
+      weight: outcome.count,
+    }));
     return Object.assign(dataPoint, {
       turn: this.turn,
       player: (this.activePlayer && this.activePlayer.name) || "",
@@ -396,11 +397,11 @@ export class Roll {
         [],
       rollName: this.rollName,
       dice: this.dice,
-      dnvMin: Math.min(...deltaNetValues),
-      dnvq33: quantile(deltaNetValues, 0.33),
-      dnvMed: quantile(deltaNetValues, 0.5),
-      dnvq67: quantile(deltaNetValues, 0.67),
-      dnvMax: Math.max(...deltaNetValues),
+      dnvMin: Math.min(...deltaNetValues.map((outcome) => outcome.value)),
+      dnvq33: weightedQuantile(deltaNetValues, 0.33, "value", "weight"),
+      dnvMed: weightedQuantile(deltaNetValues, 0.5, "value", "weight"),
+      dnvq67: weightedQuantile(deltaNetValues, 0.67, "value", "weight"),
+      dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value)),
     });
   }
   simulated(iteration, rollIndex) {

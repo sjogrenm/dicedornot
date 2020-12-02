@@ -23,3 +23,18 @@ export const quantile = (arr, q) => {
     return sorted[base];
   }
 };
+
+export function weightedQuantile(arr, q, valueKey, weightKey) {
+  valueKey = valueKey || "value";
+  weightKey = weightKey || "weight";
+  const sorted = arr.sort((a, b) => a[valueKey] - b[valueKey]);
+  const totalWeight = arr.reduce((acc, v) => acc + v[weightKey], 0);
+  var i = 0;
+  while (q > 1e-8 && i < sorted.length) {
+    q -= sorted[i][weightKey] / totalWeight;
+    if (q > 1e-8) {
+      i++;
+    }
+  }
+  return sorted[i][valueKey];
+}
