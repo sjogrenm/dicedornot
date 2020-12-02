@@ -827,9 +827,9 @@ class BlockRoll extends Roll {
   }
 
   value(dice, expected) {
-    var possibilities = dice.map((die) =>
-      this.dieValue(die, expected)
-    );
+    var possibilities = dice
+      .filter((value, index, self) => self.indexOf(value) === index)
+      .map((die) => this.dieValue(die, expected));
     if (possibilities.length == 1) {
       return possibilities[0];
     } else if (this.isRedDice) {
