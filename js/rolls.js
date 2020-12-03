@@ -1072,8 +1072,10 @@ class ModifiedD6SumRoll extends Roll {
     }
     var outcomes = [];
     if (passingSums.length > 0) {
+      const minPassing = Math.min(...passingSums);
+      const maxPassing = Math.max(...passingSums);
       outcomes.push(new NamedOutcome(
-        `${Math.min(...passingSums)} - ${Math.max(...passingSums)}`,
+        minPassing === maxPassing ? minPassing : `${minPassing} - ${maxPassing}`,
         this.passValue(true),
         passingSums.length
       ));
@@ -1091,8 +1093,10 @@ class ModifiedD6SumRoll extends Roll {
           return outcome;
         }));
       } else {
+        const minFailing = Math.min(...failingSums);
+        const maxFailing = Math.max(...failingSums);
         outcomes.push(new NamedOutcome(
-          `${Math.min(...failingSums)} - ${Math.max(...failingSums)}`,
+          minFailing === maxFailing ? minFailing : `${minFailing} - ${maxFailing}`,
           this.failValue(true),
           failingSums.length
         ));
@@ -1459,13 +1463,17 @@ class InjuryRoll extends Roll {
       }
     }
     Object.defineProperty(this, 'possibleOutcomes', {
-      value: Object.entries(outcomesByValue).map(([value, outcomes]) => ({
-        name: `${Math.min(
+      value: Object.entries(outcomesByValue).map(([value, outcomes]) => {
+        const minOutcome = Math.min(
           ...outcomes.map((outcome) => parseInt(outcome.name))
-        )} - ${Math.max(...outcomes.map((outcome) => parseInt(outcome.name)))}`,
-        count: outcomes.length,
-        value: outcomes[0].value
-      }))
+        );
+        const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
+        return {
+          name: minOutcome === maxOutcome ? minOutcome : `${minOutcome} - ${maxOutcome}`,
+          count: outcomes.length,
+          value: outcomes[0].value
+        }
+      })
     });
     return this.possibleOutcomes;
   }
