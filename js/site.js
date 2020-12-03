@@ -10,6 +10,8 @@ fileInput.addEventListener("change", function () {
     $('#summary').hide();
     $('#results').hide();
     $('#explanation').hide();
+    $('#details').hide();
+    $('#details-list').empty();
     console.log("Preparing to parse XML...");
 
     io.xmlToJson(

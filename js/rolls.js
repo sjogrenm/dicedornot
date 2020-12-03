@@ -1081,14 +1081,11 @@ class ModifiedD6SumRoll extends Roll {
       ));
     }
     if (failingSums.length > 0) {
-      console.assert(!this.reroll.hasSkillReroll, this, this.reroll);
-      if (this.reroll.hasSkillReroll) {
-        throw Error();
-      }
       if (this.hasSkillReroll) {
         const rerollOutcomes = this.reroll.possibleOutcomes;
-        const totalRerollWeight = rerollOutcomes.map(outcome => outcome.count).reduce((a, b) => a + b, 0); outcomes = outcomes.concat(rerollOutcomes.map(outcome => {
-          outcome.count /= totalRerollWeight * failingSums.length;
+        const totalRerollWeight = rerollOutcomes.map(outcome => outcome.count).reduce((a, b) => a + b, 0);
+        outcomes = outcomes.concat(rerollOutcomes.map(outcome => {
+          outcome.count = (outcome.count / totalRerollWeight) * failingSums.length;
           outcome.name = `Reroll: ${outcome.name}`
           return outcome;
         }));
@@ -1139,7 +1136,7 @@ class ModifiedD6SumRoll extends Roll {
 
 class PickupRoll extends ModifiedD6SumRoll {
   static rerollSkill = SKILL.SureHands;
-  static handledSkills = [SKILL.SureHands, SKILL.BigHand];
+  static handledSkills = [SKILL.SureHands, SKILL.BigHand, SKILL.ExtraArms];
   failValue() {
     return this.turnoverValue;
   }
@@ -1176,10 +1173,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
         xml.action.Results.BoardActionResult[xml.resultIndex - 1];
       args.isPileOn = previousResult.RollType == 59;
       if (args.isPileOn) {
-        var previousSkills = previousResult.CoachChoices.ListSkills.SkillInfo;
-        if (previousSkills && !previousSkills.length) {
-          previousSkills = [previousSkills];
-        }
+        var previousSkills = ensureList(previousResult.CoachChoices.ListSkills.SkillInfo);
         args.pilingOnPlayer = args.boardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
@@ -1253,7 +1247,7 @@ class DauntlessRoll extends ModifiedD6SumRoll {
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
-  static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle];
+  static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
   static rerollSkill = SKILL.Dodge;
   static rerollCancelSkill = SKILL.Tackle;
   isDependentRoll(roll) {
@@ -1263,7 +1257,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
     );
   }
   failValue() {
-    return new ValueSum([this.knockdownValue(this.activePlayer), this.turnoverValue]);
+    return new ValueSum([this.knockdownValue(this.activePlayer, true), this.turnoverValue]);
   }
 }
 
@@ -1312,6 +1306,7 @@ class ThrowTeammateRoll extends ModifiedD6SumRoll {
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
+  static handledSkills = [SKILL.ExtraArms];
   // Interception rolls on the thrower, not the interceptee. If it "passes",
   // then the ball is caught
   passValue() {
@@ -1345,7 +1340,7 @@ class GFIRoll extends ModifiedD6SumRoll {
 }
 
 class CatchRoll extends ModifiedD6SumRoll {
-  static handledSkills = [SKILL.DisturbingPresence, SKILL.Catch];
+  static handledSkills = [SKILL.DisturbingPresence, SKILL.Catch, SKILL.ExtraArms];
   static rerollSkill = SKILL.Catch;
 
   failValue() {
@@ -1402,6 +1397,7 @@ class InjuryRoll extends Roll {
         var previousSkills = ensureList(
           previousResult.CoachChoices.ListSkills.SkillInfo
         );
+        console.log(previousSkills);
         args.pilingOnPlayer = args.boardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
