@@ -83,21 +83,22 @@ class DetailedValue extends ValueComponent {
 class ExpectedOutcome extends ValueComponent {
   constructor(outcomes, shortName) {
     super(shortName);
+    this.totalWeight = outcomes.map((outcome) => outcome.count || 1).reduce((a, b) => a + b, 0);
+    outcomes.forEach(outcome => outcome.count = (outcome.count || 1) / this.totalWeight);
     this.outcomes = outcomes;
     this.value =
       outcomes
-        .map((outcome) => outcome.value * (outcome.count || 1))
-        .reduce((a, b) => a + b, 0) /
-      outcomes.map((outcome) => outcome.count || 1).reduce((a, b) => a + b, 0);
+        .map((outcome) => outcome.value * outcome.count)
+        .reduce((a, b) => a + b, 0);
   }
   get detail() {
     return new Details({
       summary: `Expected Outcome: ${this.toFixed(2)}`,
       detailDescription: 'Possible outcomes',
-      details: this.outcomes.map(
+      details: this.outcomes.sort((a, b) => b.count - a.count).map(
         (outcome) =>
           outcome.detail ||
-          `${outcome.count || 1}x ${outcome.name
+          `${(outcome.count * 100).toFixed(1)}% ${outcome.name
           }: value = ${outcome.value.toFixed(2)}`
       )
     });
@@ -159,7 +160,7 @@ class NamedOutcome extends ValueComponent {
 
   get detail() {
     return new Details({
-      summary: `${this.count || 1}x ${this.name}: value = ${this.value.toFixed(
+      summary: `${(this.count * 100).toFixed(1)}% ${this.name}: value = ${this.value.toFixed(
         2
       )}`,
       details: [this.value.detail || this.value]
