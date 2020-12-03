@@ -938,9 +938,10 @@ class BlockRoll extends Roll {
       );
     } else {
       values = dice(new Array(this.dice.length).fill(BLOCK)).values.map(
-        (dice) =>
-          new NamedOutcome(dice.sort().join('/'), this.value(dice, true))
-      );
+        (dice) => dice.map(die => new NamedOutcome(die.toString(), this.value([die], true)))
+      ).map(outcomes => outcomes.reduce(
+        (best, current) => (this.isRedDice ? best.value < current.value : best.value > current.value) ? best : current,
+      ));
     }
     var valuesSummary = {};
     for (const value of values) {
