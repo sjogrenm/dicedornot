@@ -1226,7 +1226,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
       // Using Piling On means the piling on player is out for a whole turn;
       const pileOnCost = this.knockdownValue(this.pilingOnPlayer, false);
       pileOnCost.name = `Pile On Cost: ${pileOnCost.value.toFixed(2)}`
-      return value;
+      return pileOnCost;
     } else {
       return 0;
     }
@@ -1393,11 +1393,10 @@ class InjuryRoll extends Roll {
       var previousResult =
         xml.action.Results.BoardActionResult[xml.resultIndex - 1];
       args.isPileOn = previousResult.RollType == 60;
-      if (this.isPileOn) {
+      if (args.isPileOn) {
         var previousSkills = ensureList(
           previousResult.CoachChoices.ListSkills.SkillInfo
         );
-        console.log(previousSkills);
         args.pilingOnPlayer = args.boardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
