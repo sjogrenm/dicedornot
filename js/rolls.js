@@ -789,7 +789,7 @@ class BlockRoll extends Roll {
   }
 
   isDependentRoll(roll) {
-    return [PushRoll, FollowUpRoll, ArmorRoll, InjuryRoll].includes(
+    return [PushRoll, FollowUpRoll, ArmorRoll, InjuryRoll, CasualtyRoll].includes(
       roll.constructor
     );
   }
