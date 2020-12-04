@@ -86,7 +86,7 @@ const vegaSpec = {
         x: {
           type: 'quantitative',
           field: 'rollIndex',
-          title: 'Turn',
+          title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'
           }
@@ -123,7 +123,7 @@ const vegaSpec = {
         x: {
           type: 'quantitative',
           field: 'rollIndex',
-          title: 'Turn',
+          title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'
           }
