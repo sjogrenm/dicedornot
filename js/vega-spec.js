@@ -178,7 +178,7 @@ const vegaSpec = {
         },
         y2: { field: 'y2' },
         color: {
-          field: 'teamColor',
+          field: 'activeTeamColor',
           type: 'nominal',
           title: 'Team'
         },
@@ -230,7 +230,7 @@ const vegaSpec = {
         y: { field: 'y', type: 'quantitative' },
         y2: { field: 'y2', type: 'quantitative' },
         color: {
-          field: 'teamColor',
+          field: 'activeTeamColor',
           type: 'nominal',
           title: 'Team'
         },
@@ -263,7 +263,7 @@ const vegaSpec = {
           title: 'Net Value'
         },
         color: {
-          field: 'teamColor',
+          field: 'activeTeamColor',
           type: 'nominal',
           title: 'Team'
         },
