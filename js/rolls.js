@@ -1153,14 +1153,14 @@ class CatchRoll extends ModifiedD6SumRoll {
 }
 
 class StandUpRoll extends ModifiedD6SumRoll {
-  failValue(expected) {
+  failValue() {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class TakeRootRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.TakeRoot];
-  failValue(expected) {
+  failValue() {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
@@ -1263,7 +1263,7 @@ class InjuryRoll extends Roll {
     }
     Object.defineProperty(this, 'possibleOutcomes', {
       value: new SimpleDistribution(
-        Object.entries(outcomesByName).map(([value, outcomes]) => {
+        Object.values(outcomesByName).map((outcomes) => {
           const minOutcome = Math.min(
             ...outcomes.map((outcome) => parseInt(outcome.name))
           );
@@ -1338,7 +1338,7 @@ class CasualtyRoll extends Roll {
 }
 
 class NoValueRoll extends Roll {
-  static ignore(xml) {
+  static ignore() {
     return true;
   }
   value() {
