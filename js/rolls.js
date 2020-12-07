@@ -139,7 +139,7 @@ class BoardState {
   playerAtPosition(cell) {
     for (var team of this.teams) {
       for (var player of team.players) {
-        if (player.cell.x === cell.x && player.cell.y === cell.y) {
+        if ((player.cell.x || 0) === (cell.x || 0) && (player.cell.y || 0) === (cell.y || 0)) {
           return player;
         }
       }
@@ -446,12 +446,12 @@ export class Roll {
 
   playerValue(player) {
     var ballCell = this.boardState.ballCell;
-    if (ballCell.x < 0 || ballCell.y < 0) {
+    if ((ballCell.x || 0) < 0 || (ballCell.y || 0) < 0) {
       return this.rawPlayerValue(player);
     }
     var distanceToBall = Math.max(
-      Math.abs(ballCell.x - player.cell.x),
-      Math.abs(ballCell.y - player.cell.y)
+      Math.abs((ballCell.x || 0) - (player.cell.x || 0)),
+      Math.abs((ballCell.y || 0) - (player.cell.y || 0))
     );
     if (distanceToBall == 0) {
       return this.rawPlayerValue(player).product(new SingleValue("On Ball", 2));
@@ -1179,6 +1179,11 @@ class FireballRoll extends ModifiedD6SumRoll {
 }
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
+    args.activePlayer = args.boardState.playerAtPosition(xml.action.Order.CellTo.Cell);
+    return args;
+  }
   passValue(expected) {
     return this.knockdownValue(this.activePlayer, expected);
   }
