@@ -229,7 +229,7 @@ function updateRollLog(rolls) {
         <li id="roll-${
           roll.rollIndex
         }" class="list-group-item list-group-item-action">
-          ${renderDetails(roll.detail)}
+          ${renderRoll(roll)}
         </li>
       `
     );
@@ -248,11 +248,22 @@ function updateRollLog(rolls) {
     );
   }
 
-  function renderDetails(details) {
+  function renderRoll(roll) {
+    return `
+      <detail>
+        <summary>${roll.jointDescription} [value: ${roll.actual.outcomeValue.toFixed(2)}
+          -
+          expected: ${roll.actual.expectedValue.toFixed(2)}]
+        </summary>
+      </detail>
+    `
+  }
+
+  function renderDistribution(details) {
     if (details.details) {
       var subdetails = "";
       for (const subdetail of details.details) {
-        subdetails += `<li class="list-group-item list-group-item-action">${renderDetails(
+        subdetails += `<li class="list-group-item list-group-item-action">${renderDistribution(
           subdetail
         )}</li>`;
       }

@@ -1,3 +1,5 @@
+const breakPoints = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
+
 const vegaSpec = {
   $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
   width: 1200,
@@ -159,7 +161,10 @@ const vegaSpec = {
           as: 'y2'
         }
       ],
-      mark: { type: 'rule' },
+      mark: {
+        type: 'rule',
+        opacity: 0.7
+      },
       encoding: {
         x: {
           type: 'quantitative',
@@ -198,17 +203,32 @@ const vegaSpec = {
         {
           calculate: 'datum.cumNetValue - datum.netValue + datum.dnvq67 + 0.05',
           as: 'y2'
+        },
+        {
+          calculate: 'datum.rollIndex - 0.4',
+          as: 'x'
+        },
+        {
+          calculate: 'datum.rollIndex + 0.4',
+          as: 'x2'
         }
       ],
-      mark: { type: 'rule' },
+      mark: {
+        type: 'bar',
+        opacity: 0.7
+      },
       encoding: {
         size: { value: 2 },
         x: {
           type: 'quantitative',
-          field: 'rollIndex'
+          field: 'x'
+        },
+        x2: {
+          type: 'quantitative',
+          field: 'x2',
         },
         y: { field: 'y', type: 'quantitative' },
-        y2: { field: 'y2' },
+        y2: { field: 'y2', type: 'quantitative' },
         color: {
           field: 'teamColor',
           type: 'nominal',
@@ -229,12 +249,8 @@ const vegaSpec = {
         }
       ],
       mark: { type: 'point', tooltip: { content: true } },
-
       selection: {
-        grid: {
-          type: 'interval',
-          bind: 'scales'
-        }
+        zoom_x: { type: "interval", bind: "scales", encodings: ["x"] },
       },
       encoding: {
         x: {
