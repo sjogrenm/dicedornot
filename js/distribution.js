@@ -36,6 +36,7 @@ export class Distribution {
     return this.flat;
   }
 
+
   get singularValue() {
     const flattened = this.flat;
     if (flattened.length > 1) {
@@ -57,7 +58,15 @@ export class Distribution {
   }
 
   divide(value) {
-    return new BinFuncDistribution((a, b) => a / b, (a, b) => `${a} / ${b}`, [this, value]);
+    return new DivideDistribution(this, value);
+  }
+
+  subtract(value) {
+    return new DifferenceDistribution(this, value);
+  }
+
+  valueOf() {
+    return this.expectedValue;
   }
 }
 
@@ -68,7 +77,20 @@ export class SimpleDistribution extends Distribution {
     values.forEach(value => {
       value.weight /= totalWeight;
     });
-    this.values = values;
+    this.values = Object.values(
+      values.reduce((acc, value) => {
+        const existing = acc[`${value.name}`];
+        if (existing) {
+          if (existing.value != value.value) {
+            throw new Error("Inconsistent values passed to SimpleDistribution")
+          }
+          existing.weight += value.weight;
+        } else {
+          acc[`${value.name}`] = value;
+        }
+        return acc;
+      }, {})
+    )
   }
   _flat() {
     return this.values.flatMap(value => {
@@ -107,10 +129,11 @@ export class SingleValue extends Distribution {
 }
 
 export class BinFuncDistribution extends Distribution {
-  constructor(valFunc, nameFunc, values, name) {
+  constructor(valFunc, nameFunc, distFuncName, values, name) {
     super(name)
     this.valFunc = valFunc;
     this.nameFunc = nameFunc;
+    this.distFuncName = distFuncName;
     if (!isIterable(values)) {
       throw new Error("values not iterable", values);
     }
@@ -118,6 +141,16 @@ export class BinFuncDistribution extends Distribution {
       throw new Error("empty values list", values);
     }
     this.values = values;
+  }
+
+  _combine(a, b) {
+    if (a instanceof Distribution) {
+      return a[this.distFuncName](b);
+    } else if (b instanceof Distribution) {
+      return b[this.distFuncName](a);
+    } else {
+      return this.valFunc(a, b);
+    }
   }
 
   _flat() {
@@ -172,18 +205,29 @@ export class BinFuncDistribution extends Distribution {
 
 export class SumDistribution extends BinFuncDistribution {
   constructor(values, name) {
-    super((a, b) => a + b, (a, b) => `${a} + ${b}`, values, name);
+    super((a, b) => a + b, (a, b) => `${a} + ${b}`, 'add', values, name);
   }
 }
 
 export class ProductDistribution extends BinFuncDistribution {
   constructor(values, name) {
-    super((a, b) => a * b, (a, b) => `${a} * ${b}`, values, name);
+    super((a, b) => a * b, (a, b) => `${a} * ${b}`, 'product', values, name);
   }
 }
 
-export class MaxDistribution extends Distribution {
-  constructor(values, name) {
+export class DivideDistribution extends BinFuncDistribution {
+  constructor(base, divisor, name) {
+    super((a, b) => a / b, (a, b) => `${a} / ${b}`, 'divide', [base, divisor], name)
+  }
+}
+export class DifferenceDistribution extends BinFuncDistribution {
+  constructor(base, subtract, name) {
+    super((a, b) => a - b, (a, b) => `${a} - ${b}`, 'subtract', [base, subtract], name)
+  }
+}
+
+export class ComparativeDistribution extends Distribution {
+  constructor(better, values, name) {
     super(name)
     if (!isIterable(values)) {
       throw new Error("values not iterable", values);
@@ -191,109 +235,56 @@ export class MaxDistribution extends Distribution {
     if (values.length == 0) {
       throw new Error("empty values list", values);
     }
+    this.better = better;
     this.values = values;
   }
 
-  _flat() {
+  _simple() {
     const valQueue = [...this.values];
-    var flattened = null;
+    var simplified = null;
+
     while (valQueue.length > 0) {
       var next = valQueue.shift();
-      if (!flattened) {
-        flattened = next;
+      if (!simplified) {
+        simplified = next;
       } else {
-        if (flattened instanceof Distribution) {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(flattened.flat.flatMap(fVal => (
-              next.flat.map(nextVal => (
-                {
-                  name: fVal.value > nextVal.value ? fVal.name : nextVal.name,
-                  weight: fVal.weight * nextVal.weight,
-                  value: fVal.value > nextVal.value ? fVal.value : nextVal.value,
-                })
-              )
-            )));
-          } else {
-            flattened = new SimpleDistribution(flattened.flat.map(value => {
-              value.name = value.value > next ? value.name : next;
-              value.value = value.value > next ? value.value : next;
-              return value;
-            }));
-          }
-        } else {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(next.flat.map(value => {
-              value.name = value.value > flattened ? value.name : flattened;
-              value.value = value.value > flattened ? value.value : flattened;
-              return value;
-            }));
-          } else {
-            flattened = new SingleValue(
-              flattened > next ? flattened : next,
-              flattened > next ? flattened : next,
-            )
-          }
+        if (!((simplified instanceof SimpleDistribution) && (next instanceof SimpleDistribution))) {
+          throw new Error("Can only compare simple distributions")
         }
+        simplified = new SimpleDistribution(simplified.values.flatMap(fVal => (
+          next.values.map(nextVal => (
+            {
+              name: this.better(fVal.value, nextVal.value) ? fVal.name : nextVal.name,
+              weight: fVal.weight * nextVal.weight,
+              value: this.better(fVal.value, nextVal.value) ? fVal.value : nextVal.value,
+            })
+          )
+        )));
       }
     }
-    return flattened.flat;
+    return simplified;
+  }
+
+  get simple() {
+    Object.defineProperty(this, 'simple', {
+      value: this._simple().named(this.name)
+    })
+    console.assert(Math.abs(this.simple.expectedValue - this.expectedValue) < 0.0001, this);
+    return this.simple;
+  }
+
+  _flat() {
+    return this._simple().flat;
   }
 }
 
-export class MinDistribution extends Distribution {
+export class MaxDistribution extends ComparativeDistribution {
   constructor(values, name) {
-    super(name)
-    if (!isIterable(values)) {
-      throw new Error("values not iterable", values);
-    }
-    if (values.length == 0) {
-      throw new Error("empty values list", values);
-    }
-    this.values = values;
+    super((a, b) => a > b, values, name);
   }
-
-  _flat() {
-    const valQueue = [...this.values];
-    var flattened = null;
-    while (valQueue.length > 0) {
-      var next = valQueue.shift();
-      if (!flattened) {
-        flattened = next;
-      } else {
-        if (flattened instanceof Distribution) {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(flattened.flat.flatMap(fVal => (
-              next.flat.map(nextVal => (
-                {
-                  name: fVal.value < nextVal.value ? fVal.name : nextVal.name,
-                  weight: fVal.weight * nextVal.weight,
-                  value: fVal.value < nextVal.value ? fVal.value : nextVal.value,
-                })
-              )
-            )));
-          } else {
-            flattened = new SimpleDistribution(flattened.flat.map(value => {
-              value.name = value.value < next ? value.name : next;
-              value.value = value.value < next ? value.value : next;
-              return value;
-            }));
-          }
-        } else {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(next.flat.map(value => {
-              value.name = value.value < flattened ? value.name : flattened;
-              value.value = value.value < flattened ? value.value : flattened;
-              return value;
-            }));
-          } else {
-            flattened = new SingleValue(
-              flattened < next ? flattened : next,
-              flattened < next ? flattened : next,
-            )
-          }
-        }
-      }
-    }
-    return flattened.flat;
+}
+export class MinDistribution extends ComparativeDistribution {
+  constructor(values, name) {
+    super((a, b) => a < b, values, name);
   }
 }

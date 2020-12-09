@@ -46,7 +46,7 @@ function decayedHalfTurns(halfTurns) {
   for (var turn = 0; turn < halfTurns; turn++) {
     decayedTurns += 0.9 ** turn;
   }
-  return new SingleValue("Time-discounted half turns", decayedTurns);
+  return decayedTurns;
 }
 
 class Details {
@@ -344,7 +344,7 @@ export class Roll {
       description: this.description,
       valueDescription: `${outcomeValue.toFixed(
         2
-      )} (expected: ${expectedValue.toFixed(2)})`,
+      )} (EV=${expectedValue.toFixed(2)})`,
       rollIndex: this.rollIndex
     };
   }
@@ -454,16 +454,16 @@ export class Roll {
       Math.abs((ballCell.y || 0) - (player.cell.y || 0))
     );
     if (distanceToBall == 0) {
-      return this.rawPlayerValue(player).product(new SingleValue("On Ball", 2));
+      return this.rawPlayerValue(player).product(new SingleValue("On Ball", 2)).named(`PV(${player.name})`);
     } else if (distanceToBall == 1) {
-      return this.rawPlayerValue(player).product(new SingleValue("By Ball", 1.5));
+      return this.rawPlayerValue(player).product(new SingleValue("By Ball", 1.5)).named(`PV(${player.name})`);
     } else {
       return this.rawPlayerValue(player);
     }
   }
 
   rawPlayerValue(player) {
-    return new SingleValue(player.name, 1);
+    return new SingleValue(`TV(${player.name})`, 1);
   }
 
   teamValue(team, situations) {
@@ -471,14 +471,14 @@ export class Roll {
       team.players
       .filter((player) => situations.includes(player.situation))
         .map((player) => this.rawPlayerValue(player)),
-      ''
+      `TV(${team.name})`
     );
   }
 
-  get halfTurnsLeft() {
+  get halfTurnsInGame() {
     // Return the number of half-turns left in the game
     var halfTurns = this.teams.map((team) => {
-      if (team.turn <= 16) {
+      if (this.activeTeam.turn <= 16) {
         return 16 - team.turn;
       } else {
         return 24 - team.turn;
@@ -487,13 +487,41 @@ export class Roll {
     return halfTurns[0] + halfTurns[1];
   }
 
+  get halfTurnsInHalf() {
+    // Return the number of half-turns left in the game
+    var halfTurns = this.teams.map((team) => {
+      if (this.activeTeam.turn <= 8) {
+        return 8 - team.turn;
+      } else if (this.activeTeam.turn <= 16) {
+        return 16 - team.turn;
+      } else {
+        return 24 - team.turn;
+      }
+    });
+    return halfTurns[0] + halfTurns[1];
+  }
+
+  stunTurns(player) {
+    return Math.min(
+      this.onActiveTeam(player) ? 4 + (player.canAct ? 1 : 0) : 3,
+      this.halfTurnsInHalf
+    );
+  }
+
+  kdTurns(player) {
+    return Math.min(
+      this.onActiveTeam(player) ? 2 + (player.canAct ? 1 : 0) : 1,
+      this.halfTurnsInHalf
+    );
+  }
+
   onPitchValue(player) {
     // The fraction of the teams on-pitch players that this player represents.
     return this.onPitchValues[player.id] || (
       this.onPitchValues[player.id] =
       this.playerValue(player).divide(
-        this.teamValue(player.team, [SITUATION.Active]).named('Players on Pitch')
-      ).named(player.name)
+        this.teamValue(player.team, [SITUATION.Active]).named(`TPV(${player.team.name})`)
+      ).named(`%PV(${player.name})`)
     );
   }
 
@@ -525,18 +553,15 @@ export class Roll {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
     const playerValue = this.onPitchValue(player);
-    var turnsMissing = 1;
-    if (this.onActiveTeam(player)) {
-      turnsMissing = Math.min(2, this.halfTurnsLeft);
-    }
-    turnsMissing = decayedHalfTurns(turnsMissing);
-    var scalingFactors = [turnsMissing];
+    var turnsMissing = this.kdTurns(player);
+    var tdTurnsMissing = decayedHalfTurns(turnsMissing);
+    var scalingFactors = [new SingleValue(`TDT(${turnsMissing / 2})`, tdTurnsMissing)];
     if (this.onActiveTeam(player)) {
       scalingFactors.push(new SingleValue('On Active Team', -1));
     }
     var result = playerValue.product(...scalingFactors).named(`KD(${player.name})`);
     if (includeExpectedArmor) {
-      result = result.add(this.armorRoll(player).possibleOutcomes);
+      result = result.add(this.armorRoll(player).possibleOutcomes.named('Armor Roll'));
     }
     return result;
   }
@@ -545,13 +570,9 @@ export class Roll {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
     var playerValue = this.onPitchValue(player);
-    var turnsMissing;
-    if (this.onActiveTeam(player)) {
-      turnsMissing = decayedHalfTurns(Math.min(3, this.halfTurnsLeft));
-    } else {
-      turnsMissing = decayedHalfTurns(Math.min(4, this.halfTurnsLeft));
-    }
-    var scalingFactors = [turnsMissing];
+    var turnsMissing = this.stunTurns(player);
+    var tdTurnsMissing = decayedHalfTurns(turnsMissing);
+    var scalingFactors = [new SingleValue(`TDT(${turnsMissing / 2})`, tdTurnsMissing)];
     if (this.onActiveTeam(player)) {
       scalingFactors.push(new SingleValue('On Active Team', -1));
     }
@@ -562,14 +583,15 @@ export class Roll {
   koValue(player) {
     const playerValue =
       this.onPitchValue(player)
-    var turnsMissing = decayedHalfTurns(this.halfTurnsLeft);
-    if (this.onActiveTeam(player)) {
-      turnsMissing = turnsMissing.add(decayedHalfTurns(Math.min(3, this.halfTurnsLeft)).product(-1));
-    } else {
-      turnsMissing = turnsMissing.add(decayedHalfTurns(Math.min(4, this.halfTurnsLeft)).product(-1));
-    }
+    var turnsInHalf = this.halfTurnsInHalf;
+    var stunTurns = this.stunTurns(player);
 
-    var scalingFactors = [turnsMissing];
+    var scalingFactors = [
+      new SingleValue(
+        `TDT(${turnsInHalf - stunTurns})`,
+        decayedHalfTurns(turnsInHalf) - decayedHalfTurns(stunTurns)
+      )
+    ];
     if (this.onActiveTeam(player)) {
       scalingFactors.push(new SingleValue('On Active Team', -1));
     }
@@ -578,19 +600,21 @@ export class Roll {
   }
 
   casValue(player) {
-    const playerValue =
-      this.onTeamValue(player).product(this.halfTurnsLeft).add(
-        this.onPitchValue(player).add(
-          this.onTeamValue(player).product(-1)
-        ).product(
-          decayedHalfTurns(this.halfTurnsLeft)
-        )
-      );
-    return (
-      (this.onActiveTeam(player) ? playerValue.product(-1) : playerValue).add(
-        this.stunValue(player).product(-1)
-      )
-    ).named(`CAS(${player.name})`);
+    const remainingTeamValue = this.onTeamValue(player).product(
+      new SingleValue(`TL(${this.halfTurnsInGame / 2})`, this.halfTurnsInGame)
+    );
+    const excessPitchValue = this.onPitchValue(player).subtract(
+      this.onTeamValue(player)
+    ).product(
+      new SingleValue(`TDT(${this.halfTurnsInGame})`, decayedHalfTurns(this.halfTurnsInHalf))
+    );
+    const playerValue = remainingTeamValue.add(excessPitchValue).named(`PV(${player.name})`);
+
+    var scalingFactors = [];
+    if (this.onActiveTeam(player)) {
+      scalingFactors.push(new SingleValue('On Active Team', -1));
+    }
+    return playerValue.product(...scalingFactors).subtract(this.stunValue(player)).named(`CAS(${player.name})`);
   }
 
   get unactivatedPlayers() {
@@ -604,12 +628,16 @@ export class Roll {
     const playerValues = this.unactivatedPlayers.filter((player) => player != this.activePlayer).map((player) => this.onPitchValue(player));
     var value;
     if (playerValues.length > 0) {
-      value = new SumDistribution(playerValues).product(-1).named('Turnover');
+      value = new SumDistribution(playerValues).named('Unactivated PV').product(-1).named('Turnover');
     } else {
       value = new SingleValue("No Active Players", 0);
     }
     Object.defineProperty(this, 'turnoverValue', { value: value });
     return this.turnoverValue;
+  }
+
+  get rerollValue() {
+    return 0;
   }
 }
 
@@ -638,7 +666,7 @@ class BlockRoll extends Roll {
   isDependentRoll(roll) {
     return [PushRoll, FollowUpRoll, ArmorRoll, InjuryRoll, CasualtyRoll].includes(
       roll.constructor
-    );
+    ) || (roll.rollType === this.rollType && roll.rollStatus == ROLL_STATUS.RerollTaken);
   }
 
   static dice(boardActionResult) {
@@ -743,25 +771,44 @@ class BlockRoll extends Roll {
   }
 
   value(dice, expected) {
+    if (
+      this.dependentRolls.length > 0 &&
+      this.dependentRolls[0].rollType == this.rollType &&
+      this.dependentRolls[0].rollStatus == ROLL_STATUS.RerollTaken
+    ) {
+      return this.rerollValue;
+    }
     var possibilities = dice
       .filter((value, index, self) => self.indexOf(value) === index)
       .map((die) => this.dieValue(die, expected));
     if (possibilities.length == 1) {
       return possibilities[0];
     } else if (this.isRedDice) {
-      return new MinDistribution(possibilities);
+      var [best, ...rest] = possibilities;
+      for (var next of rest) {
+        if (next.expectedValue < best.expectedValue) {
+          best = next;
+        }
+      }
+      return new SingleValue(`${dice.join('/')} uphill`, best);
     } else {
-      return new MaxDistribution(possibilities);
+      var [best, ...rest] = possibilities;
+      for (var next of rest) {
+        if (next.expectedValue > best.expectedValue) {
+          best = next;
+        }
+      }
+      return new SingleValue(dice.join('/'), best);
     }
   }
   get possibleOutcomes() {
     var value;
     const blockDie = new SimpleDistribution([
-      { name: PUSH, weight: 1 / 3, value: this.value([PUSH], true) },
-      { name: ATTACKER_DOWN, weight: 1 / 6, value: this.value([ATTACKER_DOWN], true) },
-      { name: DEFENDER_DOWN, weight: 1 / 6, value: this.value([DEFENDER_DOWN], true) },
-      { name: DEFENDER_STUMBLES, weight: 1 / 6, value: this.value([DEFENDER_STUMBLES], true) },
-      { name: BOTH_DOWN, weight: 1 / 6, value: this.value([BOTH_DOWN], true) },
+      { name: PUSH, weight: 1 / 3, value: this.dieValue(PUSH, true) },
+      { name: ATTACKER_DOWN, weight: 1 / 6, value: this.dieValue(ATTACKER_DOWN, true) },
+      { name: DEFENDER_DOWN, weight: 1 / 6, value: this.dieValue(DEFENDER_DOWN, true) },
+      { name: DEFENDER_STUMBLES, weight: 1 / 6, value: this.dieValue(DEFENDER_STUMBLES, true) },
+      { name: BOTH_DOWN, weight: 1 / 6, value: this.dieValue(BOTH_DOWN, true) },
     ])
     if (this.dice.length == 1) {
       value = blockDie;
@@ -1017,7 +1064,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     // armor, which is a bad thing.
     var injuredPlayerValue = this.stunValue(this.activePlayer); // Player is at least stunned = out for 2 turns
     if (expected) {
-      injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll.possibleOutcomes);
+      injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll.possibleOutcomes.named('Injury Roll'));
     }
     if (this.isPileOn) {
       const pileOnCost = this.knockdownValue(this.pilingOnPlayer, false);
@@ -1247,7 +1294,7 @@ class InjuryRoll extends Roll {
     var total = dice[0] + dice[1] + this.modifier;
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      return this.injuryValue(total).add(this.onPitchValue(this.pilingOnPlayer).product(-1));
+      return this.injuryValue(total).subtract(this.onPitchValue(this.pilingOnPlayer));
     } else {
       return this.injuryValue(total);
     }

@@ -1,3 +1,4 @@
+import { BinFuncDistribution, ComparativeDistribution, Distribution, SimpleDistribution, SingleValue } from "./distribution.js";
 import { io } from "./io.js";
 import { replay } from "./replay.js";
 import vegaSpec from "./vega-spec.js";
@@ -250,30 +251,69 @@ function updateRollLog(rolls) {
 
   function renderRoll(roll) {
     return `
-      <detail>
-        <summary>${roll.jointDescription} [value: ${roll.actual.outcomeValue.toFixed(2)}
-          -
-          expected: ${roll.actual.expectedValue.toFixed(2)}]
+      <details>
+        <summary>${roll.jointDescription} [V=${roll.actual.outcomeValue.toFixed(2)}
+          EV=${roll.actual.expectedValue.toFixed(2)}]
         </summary>
-      </detail>
+        <ul class="list-group">
+          ${[roll, ...roll.dependentRolls].map(
+            roll => `<li class="list-group-item list-group-item-action">${renderDistribution(roll.value(roll.dice, false))}</li>`
+          ).join('\n')}
+        </ul>
+        ${renderDistribution(roll.possibleOutcomes.named('Possible Outcomes')) }
+      </details>
     `
   }
 
-  function renderDistribution(details) {
-    if (details.details) {
-      var subdetails = "";
-      for (const subdetail of details.details) {
-        subdetails += `<li class="list-group-item list-group-item-action">${renderDistribution(
-          subdetail
-        )}</li>`;
+  function renderDistribution(dist) {
+    if (dist instanceof SingleValue) {
+      if (dist.value instanceof Distribution) {
+        return renderDistribution(dist.value);
+      } else {
+        return `${dist.name} (${dist.value.toFixed(2)})`;
       }
-      return `<details>
-        <summary>${details.summary}</summary>
-        ${details.detailDescription || ''}
-        <ul class="list-group">${subdetails}</ul>
-      </details>`;
+    } else if (dist instanceof SimpleDistribution) {
+      const summary = dist.name ? `${dist.name} \u2192 EV=${dist.expectedValue.toFixed(2)}` : dist.expectedValue.toString();
+      const distDetails = dist.values.map(
+        value => {
+          if (value.value instanceof Distribution) {
+            return `<li class="list-group-item list-group-item-action">${renderDistribution(value.value.named(`${(value.weight * 100).toFixed(1)}%: ${value.name}`))}</li>`
+          } else {
+            return `<li class="list-group-item list-group-item-action">${(value.weight * 100).toFixed(1)}%: ${value.name} \u2192 ${value.value}</li>`
+          }
+        }
+      ).join('\n');
+      return `
+          <details>
+            <summary>${summary}</summary>
+            <ul class="list-group">${distDetails}</ul>
+          </details>
+        `
+    } else if (dist instanceof ComparativeDistribution) {
+      return renderDistribution(dist.simple);
+    } else if (dist instanceof BinFuncDistribution) {
+      const valueTerm = dist.values.reduce((name, value) => name ? dist.nameFunc(name, value.name || value) : value.name, null);
+      const summary = dist.name ?
+        `${dist.name} \u2192 ${valueTerm} [EV=${dist.valueOf().toFixed(2)}]` :
+        `${valueTerm} [EV=${dist.valueOf().toFixed(2)}]`;
+      const distDetails = dist.values.map(
+        value => {
+          if (value instanceof Distribution) {
+            return `<li class="list-group-item list-group-item-action">${renderDistribution(value)}</li>`
+          } else {
+            return `<li class="list-group-item list-group-item-action">${value.toFixed(2)}</li>`
+          }
+        }
+      ).join('\n');
+      return `
+          <details>
+            <summary>${summary}</summary>
+            <ul class="list-group">${distDetails}</ul>
+          </details>
+        `
+
     } else {
-      return details.summary || details;
+      return dist.toString();
     }
   }
 }
