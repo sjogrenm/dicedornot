@@ -154,6 +154,7 @@ class BoardState {
 
 export class Roll {
   static handledSkills = [];
+  static diceSeparator = ', '
 
   constructor(attrs) {
     Object.assign(this, attrs);
@@ -233,7 +234,7 @@ export class Roll {
   }
 
   get jointDescription() {
-    return [this].concat(this.dependentRolls).map(roll => roll.description).join("\u2192");
+    return [this.description].concat(this.dependentRolls.map(roll => roll.shortDescription || roll.description)).join(" \u2192 ");
   }
 
   get description() {
@@ -241,7 +242,11 @@ export class Roll {
       this.activePlayer.skills.length > 0
         ? ` (${this.activePlayer.skillNames.join(', ')})`
         : '';
-    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills}  - ${this.dice}`;
+    return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills} - ${this.dice}`;
+  }
+
+  get shortDescription() {
+    return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.join(this.constructor.diceSeparator)}`;
   }
 
   isDependentRoll(roll) {
@@ -275,10 +280,17 @@ export class Roll {
     );
   }
 
-  get dependentRollsValue() {
-    return this.dependentRolls
-      .map((roll) => roll.value(roll.dice, false))
-      .reduce((a, b) => a + b, 0);
+  get actualValue() {
+    const outcomeValue = this.value(this.dice, false);
+    if (!(outcomeValue instanceof Distribution)) {
+      return new SingleValue(this.rollName, outcomeValue);
+    } else {
+      return outcomeValue;
+    }
+  }
+
+  get valueWithDependents() {
+    return this.actualValue.add(...this.dependentRolls.map(roll => roll.actualValue));
   }
 
   get actual() {
@@ -300,10 +312,14 @@ export class Roll {
       dnvq33: weightedQuantile(deltaNetValues, 0.33, 'value', 'weight'),
       dnvMed: weightedQuantile(deltaNetValues, 0.5, 'value', 'weight'),
       dnvq67: weightedQuantile(deltaNetValues, 0.67, 'value', 'weight'),
-      dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value))
+      dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value)),
+      description: this.jointDescription,
+      valueDescription: `${dataPoint.outcomeValue.toFixed(
+        2
+      )} (EV=${dataPoint.expectedValue.toFixed(2)})`,
     });
   }
-  simulated(iteration, rollIndex) {
+  simulated(iteration) {
     var dataPoint = this.dataPoint(
       iteration,
       this.simulateDice(),
@@ -317,12 +333,11 @@ export class Roll {
   }
 
   dataPoint(iteration, dice, type, includeDependent) {
-    var outcomeValue = this.value(dice, false);
-    if (!(outcomeValue instanceof Distribution)) {
-      outcomeValue = new SingleValue(this.rollName, outcomeValue);
-    }
+    var outcomeValue;
     if (includeDependent) {
-      outcomeValue = outcomeValue.add(...this.dependentRolls.map(roll => roll.value(roll.dice, false)));
+      outcomeValue = this.valueWithDependents;
+    } else {
+      outcomeValue = this.actualValue;
     }
     outcomeValue = outcomeValue.singularValue;
     const expectedValue = this.expectedValue;
@@ -341,10 +356,6 @@ export class Roll {
       type,
       expectedValue,
       netValue: outcomeValue - expectedValue,
-      description: this.description,
-      valueDescription: `${outcomeValue.toFixed(
-        2
-      )} (EV=${expectedValue.toFixed(2)})`,
       rollIndex: this.rollIndex
     };
   }
@@ -478,7 +489,7 @@ export class Roll {
   get halfTurnsInGame() {
     // Return the number of half-turns left in the game
     var halfTurns = this.teams.map((team) => {
-      if (this.activeTeam.turn <= 16) {
+      if (this.turn <= 16) {
         return 16 - team.turn;
       } else {
         return 24 - team.turn;
@@ -490,9 +501,9 @@ export class Roll {
   get halfTurnsInHalf() {
     // Return the number of half-turns left in the game
     var halfTurns = this.teams.map((team) => {
-      if (this.activeTeam.turn <= 8) {
+      if (this.turn <= 8) {
         return 8 - team.turn;
-      } else if (this.activeTeam.turn <= 16) {
+      } else if (this.turn <= 16) {
         return 16 - team.turn;
       } else {
         return 24 - team.turn;
@@ -637,7 +648,7 @@ export class Roll {
   }
 
   get rerollValue() {
-    return 0;
+    return new SingleValue("Reroll", 0);
   }
 }
 
@@ -652,6 +663,7 @@ class BlockRoll extends Roll {
     SKILL.Wrestle,
     SKILL.TakeRoot
   ];
+  static diceSeparator = '/';
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -687,7 +699,7 @@ class BlockRoll extends Roll {
         : '';
     return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name
       }${attackerSkills} against ${this.defender.name
-      }${defenderSkills} - ${this.dice.join('/')}${uphill}`;
+      }${defenderSkills} - ${this.dice.join(this.constructor.diceSeparator)}${uphill}`;
   }
 
   static ignore(xml) {
@@ -790,7 +802,7 @@ class BlockRoll extends Roll {
           best = next;
         }
       }
-      return new SingleValue(`${dice.join('/')} uphill`, best);
+      return best;
     } else {
       var [best, ...rest] = possibilities;
       for (var next of rest) {
@@ -798,7 +810,7 @@ class BlockRoll extends Roll {
           best = next;
         }
       }
-      return new SingleValue(dice.join('/'), best);
+      return best;
     }
   }
   get possibleOutcomes() {
@@ -843,6 +855,7 @@ class FansRoll extends Roll {
 
 class ModifiedD6SumRoll extends Roll {
   static numDice = 1;
+  static diceSeparator = '+'
 
   constructor(args) {
     super(args);
@@ -975,10 +988,10 @@ class ModifiedD6SumRoll extends Roll {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
   }
   passValue() {
-    return 0;
+    return new SingleValue("Pass", 0);
   }
   failValue() {
-    return 0;
+    return new SingleValue("Fail", 0);
   }
   isDependentRoll(roll) {
     return (
@@ -1148,7 +1161,7 @@ class ThrowTeammateRoll extends ModifiedD6SumRoll {
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
     // TODO: Account for fumbles.
-    return 0;
+    return new SingleValue("Fail", 0);
   }
 
   isDependentRoll(roll) {
@@ -1169,9 +1182,10 @@ class WakeUpRoll extends ModifiedD6SumRoll {
   constructor(attrs) {
     super(attrs);
     this.boardState.activeTeam = this.boardState.activePlayer.team;
+    this.boardState.turn = this.boardState.activeTeam.turn + 1;
   }
   passValue() {
-    return this.koValue(this.activePlayer);
+    return this.koValue(this.activePlayer).product(-1).named('Wake Up');
   }
 }
 
@@ -1238,6 +1252,7 @@ class LightningBoltRoll extends ModifiedD6SumRoll {
 
 class InjuryRoll extends Roll {
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
+  static diceSeparator = '+';
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -1338,6 +1353,7 @@ class InjuryRoll extends Roll {
 class CasualtyRoll extends Roll {
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
+  static diceSeparator = '';
 
   static dice(BoardActionResult) {
     // Casualty dice are also doubled up, and also both rolls appear when an apoc is used (so the last one is the valid one)
@@ -1394,7 +1410,7 @@ class NoValueRoll extends Roll {
     return true;
   }
   value() {
-    return 0;
+    return new SingleValue("No Value", 0);
   }
   get expectedValue() {
     return 0;

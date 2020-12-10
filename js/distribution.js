@@ -45,6 +45,10 @@ export class Distribution {
     return flattened[0].value;
   }
 
+  get isSingularValue() {
+    return this.flat.length == 1;
+  }
+
   get expectedValue() {
     return this.flat.reduce((acc, value) => acc + (value.value * value.weight), 0);
   }
@@ -63,6 +67,10 @@ export class Distribution {
 
   subtract(value) {
     return new DifferenceDistribution(this, value);
+  }
+
+  get valueString() {
+    return `[${this.isSingularValue ? 'V' : 'EV'}=${this.valueOf().toFixed(2)}]`;
   }
 
   valueOf() {

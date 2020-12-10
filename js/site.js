@@ -252,15 +252,30 @@ function updateRollLog(rolls) {
   function renderRoll(roll) {
     return `
       <details>
-        <summary>${roll.jointDescription} [V=${roll.actual.outcomeValue.toFixed(2)}
-          EV=${roll.actual.expectedValue.toFixed(2)}]
+        <summary>${roll.jointDescription} ${roll.valueWithDependents.valueString} ${roll.possibleOutcomes.valueString}
         </summary>
         <ul class="list-group">
-          ${[roll, ...roll.dependentRolls].map(
-            roll => `<li class="list-group-item list-group-item-action">${renderDistribution(roll.value(roll.dice, false))}</li>`
-          ).join('\n')}
+          <li class="list-group-item list-group-item-action">
+            <details>
+            <summary>Actual Outcomes</summary>
+              <ul class="list-group">
+                ${[roll, ...roll.dependentRolls].map(roll => {
+                  const dist = roll.actualValue;
+                  if (dist.name) {
+                    return dist.named(`${roll.shortDescription} - ${dist.name}`);
+                  } else {
+                    return dist.named(roll.shortDescription);
+                  }
+                }).map(
+                  dist => `<li class="list-group-item list-group-item-action">${renderDistribution(dist)}</li>`
+                ).join('\n')}
+              </ul>
+            </details>
+          </li>
+          <li class="list-group-item list-group-item-action">
+            ${renderDistribution(roll.possibleOutcomes.named('Possible Outcomes')) }
+          </li>
         </ul>
-        ${renderDistribution(roll.possibleOutcomes.named('Possible Outcomes')) }
       </details>
     `
   }
@@ -268,12 +283,12 @@ function updateRollLog(rolls) {
   function renderDistribution(dist) {
     if (dist instanceof SingleValue) {
       if (dist.value instanceof Distribution) {
-        return renderDistribution(dist.value);
+        return renderDistribution(dist.value.named(dist.name));
       } else {
-        return `${dist.name} (${dist.value.toFixed(2)})`;
+        return `${dist.name} ${dist.valueString}`;
       }
     } else if (dist instanceof SimpleDistribution) {
-      const summary = dist.name ? `${dist.name} \u2192 EV=${dist.expectedValue.toFixed(2)}` : dist.expectedValue.toString();
+      const summary = dist.name ? `${dist.name} \u2192 ${dist.valueString}` : dist.valueString;
       const distDetails = dist.values.map(
         value => {
           if (value.value instanceof Distribution) {
@@ -294,8 +309,8 @@ function updateRollLog(rolls) {
     } else if (dist instanceof BinFuncDistribution) {
       const valueTerm = dist.values.reduce((name, value) => name ? dist.nameFunc(name, value.name || value) : value.name, null);
       const summary = dist.name ?
-        `${dist.name} \u2192 ${valueTerm} [EV=${dist.valueOf().toFixed(2)}]` :
-        `${valueTerm} [EV=${dist.valueOf().toFixed(2)}]`;
+        `${dist.name} \u2192 ${valueTerm} ${dist.valueString}` :
+        `${valueTerm} ${dist.valueString}`;
       const distDetails = dist.values.map(
         value => {
           if (value instanceof Distribution) {
