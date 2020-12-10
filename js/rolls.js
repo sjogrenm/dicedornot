@@ -4,8 +4,6 @@ import {
   BOTH_DOWN,
   DEFENDER_STUMBLES,
   DEFENDER_DOWN,
-  dice,
-  BLOCK
 } from './dice.js';
 import {
   SKILL_NAME,
@@ -49,17 +47,6 @@ function decayedHalfTurns(halfTurns) {
   return decayedTurns;
 }
 
-class Details {
-  summary;
-  detailDescription;
-  details;
-
-  constructor({ summary, detailDescription, details }) {
-    this.summary = summary;
-    this.detailDescription = detailDescription;
-    this.details = details;
-  }
-}
 
 class Player {
   team;
