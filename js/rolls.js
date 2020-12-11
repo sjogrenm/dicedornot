@@ -593,12 +593,12 @@ export class Roll {
 
   casValue(player) {
     const remainingTeamValue = this.onTeamValue(player).product(
-      new SingleValue(`TL(${this.halfTurnsInGame / 2})`, this.halfTurnsInGame)
+      new SingleValue(`TDT(${this.halfTurnsInGame / 2})`, decayedHalfTurns(this.halfTurnsInGame))
     );
     const excessPitchValue = this.onPitchValue(player).subtract(
       this.onTeamValue(player)
     ).product(
-      new SingleValue(`TDT(${this.halfTurnsInGame})`, decayedHalfTurns(this.halfTurnsInHalf))
+      new SingleValue(`TDT(${this.halfTurnsInHalf / 2})`, decayedHalfTurns(this.halfTurnsInHalf))
     );
     const playerValue = remainingTeamValue.add(excessPitchValue).named(`PV(${player.name})`);
 
