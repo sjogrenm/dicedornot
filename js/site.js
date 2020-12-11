@@ -133,7 +133,7 @@ function updateChart(rolls) {
         window.setTimeout(addValues, 200);
       }
     }
-    // addValues();
+    addValues();
   });
 }
 

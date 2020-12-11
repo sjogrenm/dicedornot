@@ -36,6 +36,33 @@ export class Distribution {
     return this.flat;
   }
 
+  get cdf() {
+    Object.defineProperty(this, 'cdf', {
+      value: this.flat.sort(
+        (a, b) => a.value - b.value
+      ).reduce(
+        (cdf, result) => {
+          cdf.push({
+            weight: cdf[cdf.length - 1].weight + result.weight,
+            value: result.value,
+          });
+          return cdf;
+        }
+      )
+    })
+  }
+
+  sample() {
+    var target = Math.random();
+    for (const result of this.flat) {
+      if (result.weight > target) {
+        return result.value;
+      } else {
+        target -= result.weight;
+      }
+    }
+    return this.flat[this.flat.length - 1].value;
+  }
 
   get singularValue() {
     const flattened = this.flat;
@@ -50,7 +77,12 @@ export class Distribution {
   }
 
   get expectedValue() {
-    return this.flat.reduce((acc, value) => acc + (value.value * value.weight), 0);
+    Object.defineProperty(
+      this,
+      'expectedValue',
+      { value: this.flat.reduce((acc, value) => acc + (value.value * value.weight), 0) }
+    );
+    return this.expectedValue;
   }
 
   add(...values) {

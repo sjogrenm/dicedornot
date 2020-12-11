@@ -47,6 +47,10 @@ function decayedHalfTurns(halfTurns) {
   return decayedTurns;
 }
 
+const POINT = {
+  Actual: 'actual',
+  Simulated: 'simulated',
+}
 
 class Player {
   team;
@@ -281,7 +285,7 @@ export class Roll {
   }
 
   get actual() {
-    var dataPoint = this.dataPoint(-1, this.dice, 'actual', true);
+    var dataPoint = this.dataPoint(-1, POINT.Actual);
     const deltaNetValues = this.possibleOutcomes.flat.map((outcome) => ({
       value: outcome.value - dataPoint.expectedValue,
       weight: outcome.weight
@@ -301,33 +305,23 @@ export class Roll {
       dnvq67: weightedQuantile(deltaNetValues, 0.67, 'value', 'weight'),
       dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value)),
       description: this.jointDescription,
-      valueDescription: `${dataPoint.outcomeValue.toFixed(
-        2
-      )} (EV=${dataPoint.expectedValue.toFixed(2)})`,
+      valueDescription: `${this.valueWithDependents.valueString} ${this.possibleOutcomes.valueString}`,
     });
   }
   simulated(iteration) {
-    var dataPoint = this.dataPoint(
+    return this.dataPoint(
       iteration,
-      this.simulateDice(),
-      'simulated',
-      false
+      POINT.Simulated,
     );
-    dataPoint.outcomeValue += this.dependentRolls
-      .map((roll) => roll.value(roll.simulateDice(), false))
-      .reduce((a, b) => a + b, 0);
-    return dataPoint;
   }
 
-  dataPoint(iteration, dice, type, includeDependent) {
+  dataPoint(iteration, type) {
     var outcomeValue;
-    if (includeDependent) {
-      outcomeValue = this.valueWithDependents;
-    } else {
-      outcomeValue = this.actualValue;
+    if (type == POINT.Actual) {
+      outcomeValue = this.valueWithDependents.singularValue;
+    } else if (type == POINT.Simulated) {
+      outcomeValue = this.possibleOutcomes.sample();
     }
-    outcomeValue = outcomeValue.singularValue;
-    const expectedValue = this.expectedValue;
     return {
       iteration: iteration,
       turn: this.turn,
@@ -341,8 +335,8 @@ export class Roll {
         : this.activeTeam.name,
       outcomeValue,
       type,
-      expectedValue,
-      netValue: outcomeValue - expectedValue,
+      expectedValue: this.expectedValue,
+      netValue: outcomeValue - this.expectedValue,
       rollIndex: this.rollIndex
     };
   }
@@ -955,7 +949,8 @@ class ModifiedD6SumRoll extends Roll {
         weight: failingSums.length / (passingSums.length + failingSums.length)
       });
     }
-    return new SimpleDistribution(outcomes);
+    Object.defineProperty(this, 'possibleOutcomes', { value: new SimpleDistribution(outcomes) });
+    return this.possibleOutcomes;
   }
   get reroll() {
     const reroll = new this.constructor({
