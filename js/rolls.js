@@ -458,11 +458,11 @@ export class Roll {
     return new SingleValue(`TV(${player.name})`, 1);
   }
 
-  teamValue(team, situations) {
+  teamValue(team, situations, includingPlayer) {
     return new SumDistribution(
       team.players
-      .filter((player) => situations.includes(player.situation))
-        .map((player) => this.rawPlayerValue(player)),
+        .filter((player) => situations.includes(player.situation) || player.id == includingPlayer.id)
+        .map((player) => this.playerValue(player)),
       `TV(${team.name})`
     );
   }
@@ -512,7 +512,11 @@ export class Roll {
     return this.onPitchValues[player.id] || (
       this.onPitchValues[player.id] =
       this.playerValue(player).divide(
-        this.teamValue(player.team, [SITUATION.Active]).named(`TPV(${player.team.name})`)
+        this.teamValue(
+          player.team,
+          [SITUATION.Active],
+          player
+        ).named(`TPV(${player.team.name})`)
       ).named(`%PV(${player.name})`)
     );
   }
@@ -523,7 +527,11 @@ export class Roll {
       this.onTeamValues[player.id] || (
         this.onTeamValues[player.id] =
         this.playerValue(player).divide(
-          this.teamValue(player.team, [SITUATION.Active, SITUATION.Reserves]).named('Players on Team')
+          this.teamValue(
+            player.team,
+            [SITUATION.Active, SITUATION.Reserves, SITUATION.KO],
+            player
+          ).named('Players on Team')
         ).named(player.name)
       )
     );
@@ -657,8 +665,14 @@ class BlockRoll extends Roll {
   }
 
   isDependentRoll(roll) {
-    return [PushRoll, FollowUpRoll, ArmorRoll, InjuryRoll, CasualtyRoll].includes(
+    return [PushRoll, FollowUpRoll].includes(
       roll.constructor
+    ) || (
+        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
+        (
+          !this.dependentRolls.map(roll => roll.constructor).includes(roll.constructor) || // Except when they're duplicates (replace this w/ a foul check)
+          roll.isPileOn // But allow pile-on duplicates
+        )
     ) || (roll.rollType === this.rollType && roll.rollStatus == ROLL_STATUS.RerollTaken);
   }
 
