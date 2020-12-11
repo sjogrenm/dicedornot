@@ -108,6 +108,27 @@ export class Distribution {
   valueOf() {
     return this.expectedValue;
   }
+
+  max(...rest) {
+    var best = this;
+    for (var next of rest) {
+      if (next.expectedValue > best.expectedValue) {
+        best = next;
+      }
+    }
+    return best;
+  }
+
+  min(...rest) {
+    var best = this;
+    for (var next of rest) {
+      if (next.expectedValue < best.expectedValue) {
+        best = next;
+      }
+    }
+    return best;
+  }
+
 }
 
 export class SimpleDistribution extends Distribution {

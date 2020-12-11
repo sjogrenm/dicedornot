@@ -727,22 +727,40 @@ class BlockRoll extends Roll {
           this.turnoverValue,
         );
       case BOTH_DOWN:
-        if (attackerSkills.includes(SKILL.Block)) {
-          if (defenderSkills.includes(SKILL.Block)) {
-            return new SingleValue('Block/Block', 0);
-          } else {
-            return this.knockdownValue(defender, includeExpectedArmor);
-          }
-        } else if (attackerSkills.includes(SKILL.Wrestle)) {
-          return this.knockdownValue(defender, false).add(
-            this.knockdownValue(attacker, false)
-          );
-        } else {
-          return this.knockdownValue(defender, includeExpectedArmor).add(
-            this.knockdownValue(attacker, includeExpectedArmor),
-            this.turnoverValue
-          );
+        const blockBlock = new SingleValue('Block/Block', 0);
+        const wrestleDown = this.knockdownValue(defender, false).add(
+          this.knockdownValue(attacker, false)
+        );
+        const bothDown = this.knockdownValue(defender, includeExpectedArmor).add(
+          this.knockdownValue(attacker, includeExpectedArmor),
+          this.turnoverValue
+        );
+        const push = this.knockdownValue(defender, false).product(new SingleValue('Push', 0.33)).named(`Push(${defender.name})`);
+        const defDown = this.knockdownValue(defender, includeExpectedArmor);
+        const attDown = this.knockdownValue(attacker, includeExpectedArmor);
+
+        const aBlock = attackerSkills.includes(SKILL.Block);
+        const aWrestle = attackerSkills.includes(SKILL.Wrestle);
+        const aJuggs = attackerSkills.includes(SKILL.Juggernaut) && this.isBlitz;
+        const dBlock = defenderSkills.includes(SKILL.Block);
+        const dWrestle = defenderSkills.includes(SKILL.Wrestle);
+
+        var aOptions = [];
+        if (aWrestle) { aOptions.push(wrestleDown); }
+        if (aJuggs) { aOptions.push(push); }
+        var dOptions = [];
+        if (dWrestle) { dOptions.push(wrestleDown); }
+
+        var base = bothDown;
+        if (aBlock && dBlock) {
+          base = blockBlock;
+        } else if (aBlock) {
+          base = defDown;
+        } else if (dBlock) {
+          base = attDown;
         }
+
+        return base.min(...dOptions).max(...aOptions);
       case PUSH:
         return defenderSkills.includes(SKILL.StandFirm)
           ? new SingleValue('Stand Firm', 0)
@@ -777,21 +795,11 @@ class BlockRoll extends Roll {
     if (possibilities.length == 1) {
       return possibilities[0];
     } else if (this.isRedDice) {
-      var [best, ...rest] = possibilities;
-      for (var next of rest) {
-        if (next.expectedValue < best.expectedValue) {
-          best = next;
-        }
-      }
-      return best;
+      var [first, ...rest] = possibilities;
+      return first.min(...rest);
     } else {
-      var [best, ...rest] = possibilities;
-      for (var next of rest) {
-        if (next.expectedValue > best.expectedValue) {
-          best = next;
-        }
-      }
-      return best;
+      var [first, ...rest] = possibilities;
+      return first.max(...rest);
     }
   }
   get possibleOutcomes() {
@@ -1472,7 +1480,7 @@ export const ROLL_TYPES = {
   61: null, // Some sort of wrestle roll that doesn't do anything
   // 62: Dodge Pick
   // 63: Stand firm
-  // 64: Juggernaut
+  64: null, // Juggernaut
   // 65: Stand Firm 2
   // 66: Raise Dead
   // 69: FansRoll,
