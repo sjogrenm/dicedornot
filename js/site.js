@@ -129,7 +129,7 @@ function updateChart(rolls) {
       result.view.change('rolls', changeSet).run();
       $('#game-count').text(iteration);
       console.log(iteration, values.length);
-      if (iteration < 500) {
+      if (iteration < 3000) {
         window.setTimeout(addValues, 200);
       }
     }
