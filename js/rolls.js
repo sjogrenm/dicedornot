@@ -727,37 +727,51 @@ class BlockRoll extends Roll {
           this.turnoverValue,
         );
       case BOTH_DOWN:
-        const blockBlock = new SingleValue('Block/Block', 0);
-        const wrestleDown = this.knockdownValue(defender, false).add(
-          this.knockdownValue(attacker, false)
-        );
-        const bothDown = this.knockdownValue(defender, includeExpectedArmor).add(
-          this.knockdownValue(attacker, includeExpectedArmor),
-          this.turnoverValue
-        );
-        const push = this.knockdownValue(defender, false).product(new SingleValue('Push', 0.33)).named(`Push(${defender.name})`);
-        const defDown = this.knockdownValue(defender, includeExpectedArmor);
-        const attDown = this.knockdownValue(attacker, includeExpectedArmor);
 
         const aBlock = attackerSkills.includes(SKILL.Block);
-        const aWrestle = attackerSkills.includes(SKILL.Wrestle);
-        const aJuggs = attackerSkills.includes(SKILL.Juggernaut) && this.isBlitz;
         const dBlock = defenderSkills.includes(SKILL.Block);
-        const dWrestle = defenderSkills.includes(SKILL.Wrestle);
 
         var aOptions = [];
-        if (aWrestle) { aOptions.push(wrestleDown); }
-        if (aJuggs) { aOptions.push(push); }
+        if (attackerSkills.includes(SKILL.Wrestle)) {
+          const wrestleDown = this.knockdownValue(defender, false).add(
+            this.knockdownValue(attacker, false)
+          );
+          aOptions.push(wrestleDown);
+        }
+        if (attackerSkills.includes(SKILL.Juggernaut) && this.isBlitz) {
+          const push = this.knockdownValue(
+            defender, false
+          ).product(
+            new SingleValue('Push', 0.33)
+          ).named(
+            `Push(${defender.name})`
+          );
+          aOptions.push(push);
+        }
         var dOptions = [];
-        if (dWrestle) { dOptions.push(wrestleDown); }
+        if (defenderSkills.includes(SKILL.Wrestle)) {
+          const wrestleDown = this.knockdownValue(defender, false).add(
+            this.knockdownValue(attacker, false)
+          );
+          dOptions.push(wrestleDown);
+        }
 
-        var base = bothDown;
+        var base;
         if (aBlock && dBlock) {
+          const blockBlock = new SingleValue('Block/Block', 0);
           base = blockBlock;
         } else if (aBlock) {
+          const defDown = this.knockdownValue(defender, includeExpectedArmor);
           base = defDown;
         } else if (dBlock) {
+          const attDown = this.knockdownValue(attacker, includeExpectedArmor);
           base = attDown;
+        } else {
+          const bothDown = this.knockdownValue(defender, includeExpectedArmor).add(
+            this.knockdownValue(attacker, includeExpectedArmor),
+            this.turnoverValue
+          );
+          base = bothDown;
         }
 
         return base.min(...dOptions).max(...aOptions);
