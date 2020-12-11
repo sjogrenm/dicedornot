@@ -669,8 +669,16 @@ class BlockRoll extends Roll {
       roll.constructor
     ) || (
         [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
+      [this.attacker.id, this.defender.id].includes(roll.activePlayer.id) && // Only include rolls on the attacker or defender
         (
-          !this.dependentRolls.map(roll => roll.constructor).includes(roll.constructor) || // Except when they're duplicates (replace this w/ a foul check)
+        (
+          !this.dependentRolls.filter(
+            dependent => (
+              dependent.constructor == roll.constructor &&
+              dependent.activePlayer.id == roll.activePlayer.id
+            )
+          ).length > 0
+        ) || // Except when they're duplicates (replace this w/ a foul check)
           roll.isPileOn // But allow pile-on duplicates
         )
     ) || (roll.rollType === this.rollType && roll.rollStatus == ROLL_STATUS.RerollTaken);
@@ -873,6 +881,7 @@ class FansRoll extends Roll {
 class ModifiedD6SumRoll extends Roll {
   static numDice = 1;
   static diceSeparator = '+'
+  static canCauseInjury = false;
 
   constructor(args) {
     super(args);
@@ -1017,8 +1026,14 @@ class ModifiedD6SumRoll extends Roll {
       [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill].includes(
         roll.rollStatus
       )
-    );
-  }
+    ) || (
+        this.constructor.canCauseInjury &&
+        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
+        (
+          !this.dependentRolls.map(roll => roll.constructor).includes(roll.constructor)// Except when they're duplicates (replace this w/ a foul check)
+        )
+      )
+  };
 }
 
 class PickupRoll extends ModifiedD6SumRoll {
@@ -1132,12 +1147,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
   static rerollSkill = SKILL.Dodge;
   static rerollCancelSkill = SKILL.Tackle;
-  isDependentRoll(roll) {
-    return (
-      super.isDependentRoll(roll) ||
-      [ArmorRoll, InjuryRoll].includes(roll.constructor)
-    );
-  }
+  static canCauseInjury = true;
   failValue(expected) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
   }
@@ -1153,9 +1163,7 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 }
 
 class LeapRoll extends ModifiedD6SumRoll {
-  isDependentRoll(roll) {
-    return [ArmorRoll, InjuryRoll].includes(roll.constructor);
-  }
+  static canCauseInjury = true;
   failValue() {
     return this.knockdownValue(this.activePlayer).add(this.turnoverValue);
   }
@@ -1210,13 +1218,7 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 class GFIRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.SureFeet];
   static rerollSkill = SKILL.SureFeet;
-
-  isDependentRoll(roll) {
-    return (
-      super.isDependentRoll(roll) ||
-      [ArmorRoll, InjuryRoll].includes(roll.constructor)
-    );
-  }
+  static canCauseInjury = true;
   failValue(expected) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
   }
@@ -1245,6 +1247,7 @@ class TakeRootRoll extends ModifiedD6SumRoll {
 }
 
 class LandingRoll extends ModifiedD6SumRoll {
+  static canCauseInjury = true;
   failValue(expected) {
     // TODO: Handle a turnover if the thrown player has the ball
     return this.knockdownValue(this.activePlayer, expected);
@@ -1252,12 +1255,14 @@ class LandingRoll extends ModifiedD6SumRoll {
 }
 
 class FireballRoll extends ModifiedD6SumRoll {
+  static canCauseInjury = true;
   passValue(expected) {
     return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
+  static canCauseInjury = true;
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
     args.activePlayer = args.boardState.playerAtPosition(xml.action.Order.CellTo.Cell);
