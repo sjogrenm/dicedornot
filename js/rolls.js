@@ -11,7 +11,8 @@ import {
   SITUATION,
   ROLL_STATUS,
   RESULT_TYPE,
-  SUB_RESULT_TYPE
+  SUB_RESULT_TYPE,
+  ACTION_TYPE,
 } from './constants.js';
 import {
   SingleValue,
@@ -668,19 +669,8 @@ class BlockRoll extends Roll {
     return [PushRoll, FollowUpRoll].includes(
       roll.constructor
     ) || (
-        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
-      [this.attacker.id, this.defender.id].includes(roll.activePlayer.id) && // Only include rolls on the attacker or defender
-        (
-        (
-          !this.dependentRolls.filter(
-            dependent => (
-              dependent.constructor == roll.constructor &&
-              dependent.activePlayer.id == roll.activePlayer.id
-            )
-          ).length > 0
-        ) || // Except when they're duplicates (replace this w/ a foul check)
-          roll.isPileOn // But allow pile-on duplicates
-        )
+      [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
+      !roll.isFoul
     ) || (roll.rollType === this.rollType && roll.rollStatus == ROLL_STATUS.RerollTaken);
   }
 
@@ -1027,12 +1017,10 @@ class ModifiedD6SumRoll extends Roll {
         roll.rollStatus
       )
     ) || (
-        this.constructor.canCauseInjury &&
-        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
-        (
-          !this.dependentRolls.map(roll => roll.constructor).includes(roll.constructor)// Except when they're duplicates (replace this w/ a foul check)
-        )
-      )
+      this.constructor.canCauseInjury &&
+        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) &&
+        !roll.isFoul
+      );
   };
 }
 
@@ -1082,7 +1070,23 @@ class ArmorRoll extends ModifiedD6SumRoll {
         );
       }
     }
+
+    args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
     return args;
+  }
+
+  isDependentRoll(roll) {
+    return this.isFoul && [InjuryRoll, CasualtyRoll].includes(roll.constructor) && roll.isFoul && roll.activePlayer.id == this.activePlayer.id
+  }
+
+  get rollName() {
+    if (this.isFoul) {
+      return "Foul (Armor)";
+    } else if (this.isPileOn) {
+      return "Pile On (Armor)";
+    } else {
+      return "Armor";
+    }
   }
 
   get computedTarget() {
@@ -1121,11 +1125,12 @@ class ArmorRoll extends ModifiedD6SumRoll {
   }
 
   failValue() {
+    var value = new SingleValue('No Break', 0);
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      return this.knockdownValue(this.pilingOnPlayer, false);
+      return value.add(this.knockdownValue(this.pilingOnPlayer, false));
     } else {
-      return new SingleValue('No Break', 0);
+      return value;
     }
   }
 }
@@ -1296,6 +1301,7 @@ class InjuryRoll extends Roll {
             .PlayerId
         );
       }
+      args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
     }
 
     args.modifier =
@@ -1304,6 +1310,14 @@ class InjuryRoll extends Roll {
         .reduce((a, b) => a + b, 0) || 0;
 
     return args;
+  }
+
+  get rollName() {
+    if (this.isPileOn) {
+      return "Pile On (Injury)";
+    } else {
+      return "Injury";
+    }
   }
 
   static ignore(xml) {
@@ -1377,6 +1391,12 @@ class CasualtyRoll extends Roll {
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
   static diceSeparator = '';
+
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
+    args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
+    return args;
+  }
 
   static dice(BoardActionResult) {
     // Casualty dice are also doubled up, and also both rolls appear when an apoc is used (so the last one is the valid one)
