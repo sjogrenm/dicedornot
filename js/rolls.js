@@ -195,10 +195,6 @@ export class Roll {
     return args;
   }
 
-  static ignore(xml) {
-    return false;
-  }
-
   get activePlayer() {
     return this.boardState.activePlayer;
   }
@@ -259,6 +255,10 @@ export class Roll {
   }
 
   static ignore(xml) {
+    if (xml.boardActionResult.RollStatus == ROLL_STATUS.RerollNotTaken) {
+      return true; // Didn't take an offered reroll, so ignore this roll in favor of the previous one
+    }
+
     if (xml.boardActionResult.CoachChoices.ListDices === undefined) {
       return true;
     }
