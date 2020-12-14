@@ -191,6 +191,7 @@ export class Roll {
     args.stepIndex = xml.stepIndex;
     args.resultIndex = xml.resultIndex;
     args.actionIndex = xml.actionIndex;
+    args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill].includes(args.rollStatus);
 
     return args;
   }
@@ -938,10 +939,14 @@ class ModifiedD6SumRoll extends Roll {
   value(dice, expected) {
     if (dice.reduce((a, b) => a + b, 0) >= this.modifiedTarget) {
       return this.passValue(expected);
-    } else if (!this.hasSkillReroll) {
-      return this.failValue(expected);
-    } else {
+    } else if (
+      this.dependentRolls.length >= 1 &&
+      this.dependentRolls[0].constructor == this.constructor &&
+      this.dependentRolls[0].isReroll
+    ) {
       return new SingleValue(`Rerolled ${this.rollName}`, 0);
+    } else {
+      return this.failValue(expected);
     }
   }
   get possibleOutcomes() {
@@ -1050,7 +1055,7 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
 // TODO: Include foul send-offs in armor/injury roll outcomes
 class ArmorRoll extends ModifiedD6SumRoll {
   static numDice = 2;
-  static handledSkills = [SKILL.Claw, SKILL.MightyBlow];
+  static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
