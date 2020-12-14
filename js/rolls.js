@@ -944,7 +944,7 @@ class ModifiedD6SumRoll extends Roll {
       this.dependentRolls[0].constructor == this.constructor &&
       this.dependentRolls[0].isReroll
     ) {
-      return new SingleValue(`Rerolled ${this.rollName}`, 0);
+      return new SingleValue(`Rerolled ${this.rollName}`, this.rerollValue);
     } else {
       return this.failValue(expected);
     }
