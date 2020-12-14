@@ -1070,13 +1070,34 @@ class ArmorRoll extends ModifiedD6SumRoll {
         );
       }
     }
-
     args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
+    if (args.isFoul) {
+      args.foulingPlayer = args.boardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
+      console.log(xml, args.boardState.activePlayer, args.foulingPlayer);
+    }
     return args;
   }
 
+  get description() {
+    if (this.isFoul) {
+      var foulerSkills =
+        this.foulingPlayer.skills.length > 0
+          ? ` (${this.foulingPlayer.skillNames.join(', ')})`
+          : '';
+      var fouledSkills =
+        this.activePlayer.skills.length > 0
+          ? ` (${this.activePlayer.skillNames.join(', ')})`
+          : '';
+      return `${this.rollName}: [${this.foulingPlayer.team.shortName}] ${this.foulingPlayer.name
+        }${foulerSkills} against ${this.activePlayer.name}${fouledSkills} - ${this.dice.join(this.constructor.diceSeparator)}`;
+    } else {
+      return super.description;
+    }
+  }
+
   isDependentRoll(roll) {
-    return this.isFoul && [InjuryRoll, CasualtyRoll].includes(roll.constructor) && roll.isFoul && roll.activePlayer.id == this.activePlayer.id
+    return this.isFoul && ((
+      [InjuryRoll, CasualtyRoll].includes(roll.constructor) && roll.isFoul && roll.activePlayer.id == this.activePlayer.id) || roll.constructor == FoulPenaltyRoll)
   }
 
   get rollName() {
@@ -1107,6 +1128,14 @@ class ArmorRoll extends ModifiedD6SumRoll {
       })
     });
     return this.injuryRoll;
+  }
+
+  value(dice, expected) {
+    var value = super.value(dice, expected);
+    if (this.isFoul && dice[0] == dice[1]) {
+      value = value.add(this.casValue(this.foulingPlayer).named('Sent Off'), this.turnoverValue);
+    }
+    return value;
   }
 
   passValue(expected) {
@@ -1301,7 +1330,10 @@ class InjuryRoll extends Roll {
             .PlayerId
         );
       }
-      args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
+    }
+    args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
+    if (args.isFoul) {
+      args.foulingPlayer = args.boardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
     }
 
     args.modifier =
@@ -1344,13 +1376,17 @@ class InjuryRoll extends Roll {
 
   value(dice) {
     var total = dice[0] + dice[1] + this.modifier;
+    var value = this.injuryValue(total);
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      return this.injuryValue(total).subtract(this.onPitchValue(this.pilingOnPlayer));
-    } else {
-      return this.injuryValue(total);
+      value = value.subtract(this.onPitchValue(this.pilingOnPlayer));
     }
+    if (this.isFoul && dice[0] == dice[1]) {
+      value = value.add(this.casValue(this.foulingPlayer).named('Sent Off'), this.turnoverValue);
+    }
+    return value;
   }
+
   get possibleOutcomes() {
     var outcomesByName = {};
     for (var first = 1; first <= 6; first++) {
