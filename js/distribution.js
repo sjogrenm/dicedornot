@@ -86,11 +86,21 @@ export class Distribution {
   }
 
   add(...values) {
-    return new SumDistribution([this, ...values]);
+    values = values.filter(value => value !== null);
+    if (values.length > 0) {
+      return new SumDistribution([this, ...values]);
+    } else {
+      return this;
+    }
   }
 
   product(...values) {
-    return new ProductDistribution([this, ...values]);
+    values = values.filter(value => value !== null);
+    if (values.length > 0) {
+      return new ProductDistribution([this, ...values]);
+    } else {
+      return this;
+    }
   }
 
   divide(value) {

@@ -18,7 +18,11 @@ export const replay = {
       var replayStep = data.Replay.ReplayStep[stepIndex];
       // extractPlayerDetails(replayStep, playerDetails);
       // extractActionsFromStep(replayStep, rolls);
-      rolls = rolls.concat(Roll.fromReplayStep(stepIndex, replayStep));
+      rolls = rolls.concat(Roll.fromReplayStep(
+        data.Replay.ReplayStep[stepIndex - 1] && data.Replay.ReplayStep[stepIndex - 1].BoardState,
+        stepIndex,
+        replayStep
+      ));
     }
     console.log("Extracted rolls...", rolls);
     rolls = rolls.filter((roll) => !roll.ignore);
