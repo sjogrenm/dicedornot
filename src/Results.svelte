@@ -50,18 +50,15 @@
         vegaSpec
       )
     ).then((result) => {
-      //   result.view.addEventListener("click", function (event, item) {
-      //     $("#details").find(`.active`).removeClass("active");
-      //     $(`#roll-${item.datum.rollIndex}`)
-      //       .addClass("active")
-      //       .parents("details")
-      //       .attr({ open: true });
-      //   });
+        result.view.addEventListener("click", function (event, item) {
+          if (item) {
+            dispatch('rollClicked', {rollIndex: item.datum.rollIndex});
+          }
+        });
 
       var iteration = 0;
       function addValues() {
         var values = [];
-        var curIteration = Math.max(iteration, 1);
         for (var x = 0; x < 50; x++) {
           iteration++;
           values = values.concat(

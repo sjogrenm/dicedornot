@@ -1,3 +1,6 @@
+<style>
+</style>
+
 <div id="explanation" class="row">
   <div class="col-sm-12">
     <div>
