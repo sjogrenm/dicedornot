@@ -291,6 +291,7 @@ export const RACE_NAMES = {
   9: "Dark Elf",
   10: "Undead",
   12: "Norse",
+  13: "Amazon",
   14: "Pro Elf",
   15: "High Elf",
   16: "Khemri",

@@ -46,6 +46,10 @@
   .league-name {
     text-align: center;
   }
+
+  #summary {
+    padding: 20px 0px;
+  }
 </style>
 
 <div id="summary">
@@ -68,7 +72,7 @@
         <div class="race">
           Race:
           <span
-            id="home-race">{RACE_NAMES[gameDetails.homeTeam.raceId] || `Unknown: gameDetails.homeTeam.raceId`}</span>
+            id="home-race">{RACE_NAMES[gameDetails.homeTeam.raceId] || `Unknown: ${gameDetails.homeTeam.raceId}`}</span>
         </div>
       </div>
 
@@ -88,7 +92,7 @@
         <div class="race">
           Race:
           <span
-            id="away-race">{RACE_NAMES[gameDetails.awayTeam.raceId] || `Unknown: gameDetails.awayTeam.raceId`}</span>
+            id="away-race">{RACE_NAMES[gameDetails.awayTeam.raceId] || `Unknown: ${gameDetails.awayTeam.raceId}`}</span>
         </div>
       </div>
     </div>
