@@ -2,8 +2,8 @@ const breakPoints = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
 
 const vegaSpec = {
   $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
-  width: 1200,
-  height: 800,
+  width: 'container',
+  height: 500,
   transform: [
     {
       calculate: "join([datum.teamId, datum.teamName], '. ')",
@@ -60,7 +60,12 @@ const vegaSpec = {
           type: 'quantitative',
           title: 'Net Value'
         },
-        color: { field: 'activeTeamColor', type: 'nominal' },
+        color: {
+          field: 'activeTeamColor', type: 'nominal',
+          legend: {
+            disable: true
+          },
+        },
         tooltip: [
           { field: 'turn', title: 'Turn' },
           { field: 'activeTeamName', title: 'Active Team' }
@@ -101,7 +106,10 @@ const vegaSpec = {
         color: {
           field: 'activeTeamColor',
           type: 'nominal',
-          title: 'Team'
+          title: 'Team',
+          legend: {
+            disable: true
+          },
         },
         detail: {
           field: 'prob',
@@ -138,7 +146,10 @@ const vegaSpec = {
         color: {
           field: 'activeTeamColor',
           type: 'nominal',
-          title: 'Active Team'
+          title: 'Active Team',
+          legend: {
+            disable: true
+          },
         },
         detail: {
           field: 'iteration',
@@ -180,7 +191,10 @@ const vegaSpec = {
         color: {
           field: 'activeTeamColor',
           type: 'nominal',
-          title: 'Team'
+          title: 'Team',
+          legend: {
+            disable: true
+          },
         },
         size: { value: 1 },
         tooltip: [
@@ -232,7 +246,10 @@ const vegaSpec = {
         color: {
           field: 'activeTeamColor',
           type: 'nominal',
-          title: 'Team'
+          title: 'Team',
+          legend: {
+            disable: true
+          },
         },
         tooltip: [
           { field: 'dnvMin', title: 'Min Net Value', format: '.2f' },
@@ -265,7 +282,10 @@ const vegaSpec = {
         color: {
           field: 'activeTeamColor',
           type: 'nominal',
-          title: 'Team'
+          title: 'Team',
+          legend: {
+            disable: true,
+          },
         },
         tooltip: [
           { field: 'turn', title: 'Turn' },

@@ -5,7 +5,7 @@
   let open = false;
   $: open =
     open ||
-    (rolls &&
+    (rolls && selectedRoll &&
       selectedRoll >= rolls[0].rollIndex &&
       selectedRoll <= rolls[rolls.length - 1].rollIndex);
 </script>
@@ -24,7 +24,7 @@
           on:click|stopPropagation={() => (roll.open = !roll.open)}>
           <Roll {roll} bind:open={roll.open}/>
         </li>
-      {/each}event
+      {/each}
     </ul>
   {/if}
 </details>

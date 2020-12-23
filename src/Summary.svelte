@@ -100,7 +100,7 @@
     </div>
     <div class="row stadium-type">
       <div class="col-sm-12">
-        Stadium struct:
+        Stadium Enhancement:
         <span id="stadium-type">{gameDetails.stadiumType || 'None'}</span>
       </div>
     </div>

@@ -1,17 +1,57 @@
+<style>
+   /* The side navigation menu */
+.sidenav {
+  height: 100%;
+  width: 200px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  padding-top: 20px;
+  padding-left: 20px;
+}
+
+/* The navigation menu links */
+.sidenav li {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+.sidenav a:hover {
+  color: #f1f1f1;
+}
+
+/* Position and style the close button (top right corner) */
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+/* Style page content - use this if you want to push the page content to the right when you open the side navigation */
+#main {
+  transition: margin-left .5s;
+  padding: 20px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+} 
+</style>
 <nav
-  class="navbar fixed-top navbar-dark bg-dark navbar-fixed-top navbar-expand-lg">
-  <button
-    class="navbar-toggler"
-    type="button"
-    data-toggle="collapse"
-    data-target="#navbar"
-    aria-controls="navbar"
-    aria-expanded="false"
-    aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon" />
-  </button>
+  class="navbar-dark bg-dark sidenav">
   <a class="navbar-brand" href="/#">Diced or Not</a>
-  <div id="navbar" class="navbar-collapse collapse">
     <ul class="navbar-nav">
       <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
       <li class="dropdown"><a class="nav-link" href="#summary">Replay</a></li>
@@ -20,5 +60,4 @@
       </li>
       <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
     </ul>
-  </div>
 </nav>

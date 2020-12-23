@@ -16,16 +16,18 @@
 </script>
 
 <style>
+  #content {
+    margin-left: 200px;
+    position: relative;
+  }
   .footer {
-    position: absolute;
-    width: 100%;
-    /* Set the fixed height of the footer here */
-    height: 60px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     background-color: #f5f5f5;
   }
 
   .container .text-muted {
-    margin: 20px 0;
+    margin: 10px 0;
     text-align: center;
   }
 
@@ -73,53 +75,59 @@
 
 <body>
   <Nav />
-  <div class="container-flex">
-    <div class="jumbotron">
-      <About />
-      <ReplayLoader
-        on:replayLoaded={(e) => {
-          loading = false;
-          replay = e.detail;
-          console.log(e);
-        }}
-        on:replayLoading={() => {
-          replay = null;
-          error = false;
-          loading = true;
-        }}
-        on:replayError={() => {
-          loading = false;
-          error = true;
-          replay = null;
-        }} />
+  <div id="content">
+    <div class="container-flex">
+      <div class="jumbotron">
+        <About />
+        <ReplayLoader
+          on:replayLoaded={(e) => {
+            loading = false;
+            replay = e.detail;
+            console.log(e);
+          }}
+          on:replayLoading={() => {
+            replay = null;
+            error = false;
+            loading = true;
+          }}
+          on:replayError={() => {
+            loading = false;
+            error = true;
+            replay = null;
+          }} />
+      </div>
+
+      {#if loading}
+        <Loading />
+      {/if}
+      {#if error}
+        <Error />
+      {/if}
+    </div>
+    <div class="container-fluid" role="main">
+      {#if replay}
+        <Summary gameDetails={replay.gameDetails} />
+        <Results
+          rolls={replay.rolls}
+          on:rollClicked={(e) => (selectedRoll = e.detail.rollIndex)} />
+      {/if}
+    </div>
+    <div class="container" role="main">
+      {#if replay}
+        <RollDetails rolls={replay.rolls} bind:selectedRoll />
+        <Explanation />
+      {/if}
     </div>
 
-    {#if loading}
-      <Loading />
-    {/if}
+    <footer class="footer" id="contact">
+      <div class="container">
+        <p class="text-muted">
+          This website is under active development. If you notice issues, please
+          post the replay and a description of the problem to
+          <a href="https://github.com/cpennington/dicedornot/issues">Diced Or Not
+            Issues</a>.
+        </p>
+      </div>
+    </footer>
   </div>
-  <div class="container" role="main">
-    {#if error}
-      <Error />
-    {/if}
-    {#if replay}
-      <Summary gameDetails={replay.gameDetails} />
-      <Results
-        rolls={replay.rolls}
-        on:rollClicked={(e) => (selectedRoll = e.detail.rollIndex)} />
-      <RollDetails rolls={replay.rolls} bind:selectedRoll />
-      <Explanation />
-    {/if}
-  </div>
-
-  <footer class="footer" id="contact">
-    <div class="container">
-      <p class="text-muted">
-        This website is under active development. If you notice issues, please
-        post the replay and a description of the problem to
-        <a href="https://github.com/cpennington/dicedornot/issues">Diced Or Not
-          Issues</a>.
-      </p>
-    </div>
-  </footer>
 </body>
