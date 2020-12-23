@@ -31,6 +31,10 @@ function serve() {
 
 export default {
   input: 'src/main.js',
+  moduleContext: {
+    'vega-lite': 'window',
+    'fast-json-patch': 'window',
+  },
   output: {
     sourcemap: true,
     format: 'iife',
