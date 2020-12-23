@@ -262,3 +262,44 @@ export const SUB_RESULT_TYPE = {
   DodgeNoReq: 57, //Dodge vs Tackle before RR Pick
   Unknown_68: 68 //Pick Wrestle skill use?
 };
+
+export const BLOCK = {
+  AttackerDown: "AD",
+  BothDown: "BD",
+  Push: "P",
+  DefenderStumbles: "DS",
+  DefenderDown: "DD",
+}
+
+export const BLOCK_DIE = {
+  0: BLOCK.AttackerDown,
+  1: BLOCK.BothDown,
+  2: BLOCK.Push,
+  3: BLOCK.DefenderStumbles,
+  4: BLOCK.DefenderDown,
+}
+
+export const RACE_NAMES = {
+  1: "Human",
+  2: "Dwarf",
+  3: "Skaven",
+  4: "Orc",
+  5: "Lizardman",
+  6: "Goblin",
+  7: "Wood Elf",
+  8: "Chaos",
+  9: "Dark Elf",
+  10: "Undead",
+  12: "Norse",
+  14: "Pro Elf",
+  15: "High Elf",
+  16: "Khemri",
+  17: "Necromantic",
+  18: "Nurgle",
+  20: "Vampire",
+  21: "Chaos Dwarf",
+  22: "Underworld",
+  24: "Bretonnian",
+  25: "Kislev",
+  33: "Chaos Pact",
+}

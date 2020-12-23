@@ -1,5 +1,5 @@
 export const io = {
-  xmlToJson: function (file, doneCallback, errorCallback) {
+  xmlToJson: function (file, doneCallback) {
     JSZip.loadAsync(file).then((zip) => {
       zip.forEach((relPath, file) => {
         file.async("string").then((text) => {

@@ -1,11 +1,4 @@
 import {
-  ATTACKER_DOWN,
-  PUSH,
-  BOTH_DOWN,
-  DEFENDER_STUMBLES,
-  DEFENDER_DOWN,
-} from './dice.js';
-import {
   SKILL_NAME,
   SKILL,
   SITUATION,
@@ -13,6 +6,8 @@ import {
   RESULT_TYPE,
   SUB_RESULT_TYPE,
   ACTION_TYPE,
+  BLOCK,
+  BLOCK_DIE,
 } from './constants.js';
 import {
   SingleValue,
@@ -712,7 +707,7 @@ class BlockRoll extends Roll {
   static dice(boardActionResult) {
     var dice = super.dice(boardActionResult);
     // Block dice are doubled up, only use the first half of the dice list.
-    return dice.slice(0, dice.length / 2).map(BlockRoll.asBlockDie);
+    return dice.slice(0, dice.length / 2).map(face => BLOCK_DIE[face]);
   }
 
   get description() {
@@ -747,21 +742,6 @@ class BlockRoll extends Roll {
     return super.ignore(xml);
   }
 
-  static asBlockDie(dieRoll) {
-    switch (dieRoll) {
-      case 0:
-        return ATTACKER_DOWN;
-      case 1:
-        return BOTH_DOWN;
-      case 2:
-        return PUSH;
-      case 3:
-        return DEFENDER_STUMBLES;
-      case 4:
-        return DEFENDER_DOWN;
-    }
-  }
-
   dieValue(result, expected) {
     const attacker = this.attacker;
     const defender = this.defender;
@@ -769,11 +749,11 @@ class BlockRoll extends Roll {
     var defenderSkills = (defender && defender.skills) || [];
 
     switch (result) {
-      case ATTACKER_DOWN:
+      case BLOCK.AttackerDown:
         return this.knockdownValue(attacker, expected).add(
           this.turnoverValue,
         );
-      case BOTH_DOWN:
+      case BLOCK.BothDown:
 
         const aBlock = attackerSkills.includes(SKILL.Block);
         const dBlock = defenderSkills.includes(SKILL.Block);
@@ -822,13 +802,13 @@ class BlockRoll extends Roll {
         }
 
         return base.min(...dOptions).max(...aOptions);
-      case PUSH:
+      case BLOCK.Push:
         return (
           defenderSkills.includes(SKILL.StandFirm)
           ? new SingleValue('Stand Firm', 0)
             : this.knockdownValue(defender, false).product(new SingleValue('Push', 0.33)).named(`Push(${defender.name})`)
         ).add(expected ? this.dependentMoveValues : null);
-      case DEFENDER_STUMBLES:
+      case BLOCK.DefenderStumbles:
         if (
           defenderSkills.includes(SKILL.Dodge) &&
           !attackerSkills.includes(SKILL.Tackle)
@@ -841,7 +821,7 @@ class BlockRoll extends Roll {
         } else {
           return this.knockdownValue(defender, expected).add(expected ? this.dependentMoveValues : null);
         }
-      case DEFENDER_DOWN:
+      case BLOCK.DefenderDown:
         return this.knockdownValue(defender, expected).add(expected ? this.dependentMoveValues : null);
     }
   }
@@ -870,11 +850,11 @@ class BlockRoll extends Roll {
   get possibleOutcomes() {
     var value;
     const blockDie = new SimpleDistribution([
-      { name: PUSH, weight: 1 / 3, value: this.dieValue(PUSH, true) },
-      { name: ATTACKER_DOWN, weight: 1 / 6, value: this.dieValue(ATTACKER_DOWN, true) },
-      { name: DEFENDER_DOWN, weight: 1 / 6, value: this.dieValue(DEFENDER_DOWN, true) },
-      { name: DEFENDER_STUMBLES, weight: 1 / 6, value: this.dieValue(DEFENDER_STUMBLES, true) },
-      { name: BOTH_DOWN, weight: 1 / 6, value: this.dieValue(BOTH_DOWN, true) },
+      { name: BLOCK.Push, weight: 1 / 3, value: this.dieValue(BLOCK.Push, true) },
+      { name: BLOCK.AttackerDown, weight: 1 / 6, value: this.dieValue(BLOCK.AttackerDown, true) },
+      { name: BLOCK.DefenderDown, weight: 1 / 6, value: this.dieValue(BLOCK.DefenderDown, true) },
+      { name: BLOCK.DefenderStumbles, weight: 1 / 6, value: this.dieValue(BLOCK.DefenderStumbles, true) },
+      { name: BLOCK.BothDown, weight: 1 / 6, value: this.dieValue(BLOCK.BothDown, true) },
     ])
     if (this.dice.length == 1) {
       value = blockDie;
@@ -892,12 +872,12 @@ class BlockRoll extends Roll {
   simulateDice() {
     return this.dice.map(() =>
       sample([
-        ATTACKER_DOWN,
-        BOTH_DOWN,
-        PUSH,
-        PUSH,
-        DEFENDER_STUMBLES,
-        DEFENDER_DOWN
+        BLOCK.AttackerDown,
+        BLOCK.BothDown,
+        BLOCK.Push,
+        BLOCK.Push,
+        BLOCK.DefenderStumbles,
+        BLOCK.DefenderDown
       ])
     );
   }
@@ -1545,7 +1525,7 @@ class MoveAction extends Roll {
     const moves = [this].concat(this.dependentRolls);
     const from = this.cellFrom;
     const to = moves[moves.length - 1].cellTo;
-    return `Move: [${this.activePlayer.team.shortName}] ${this.activePlayer.name} - (${from.x || 0}, ${from.y || 0})\u2192 (${to.x || 0}, ${to.y || 0})`;
+    return `Move: [${this.activePlayer.team.shortName}] ${this.activePlayer.name} - (${from.x || 0}, ${from.y || 0}) \u2192 (${to.x || 0}, ${to.y || 0})`;
   }
   isDependentRoll(roll) {
     return roll.constructor == MoveAction && this.activePlayer.id == roll.activePlayer.id;
