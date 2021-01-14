@@ -18,6 +18,7 @@ import {
   Distribution
 } from './distribution.js';
 import { weightedQuantile } from './utils.js';
+import _ from 'underscore';
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -315,6 +316,8 @@ export class Roll {
       dnvMed: weightedQuantile(deltaNetValues, 0.5, 'value', 'weight'),
       dnvq67: weightedQuantile(deltaNetValues, 0.67, 'value', 'weight'),
       dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value)),
+      outcomes: this.possibleOutcomes.flat.map(outcome => outcome.value),
+      weights: this.possibleOutcomes.flat.map(outcome => outcome.weight),
       description: this.jointDescription,
       valueDescription: `${this.valueWithDependents.valueString} ${this.possibleOutcomes.valueString}`,
     });

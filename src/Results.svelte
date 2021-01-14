@@ -13,8 +13,7 @@
   }
 
   function renderChart() {
-    console.log(rolls);
-    var values = rolls
+    const valid = rolls
       .filter((roll) => {
         const dataPoint = roll.actual;
         if (!isFinite(dataPoint.outcomeValue)) {
@@ -32,23 +31,14 @@
           return false;
         }
         return true;
-      })
-      .map((roll) => roll.actual);
+      });
+    const actuals = valid.map((roll) => roll.actual);
 
     // Assign the specification to a local variable vlSpec.
 
     // Embed the visualization in the container with id `vis`
     embed(
-      "#chart",
-      Object.assign(
-        {
-          data: {
-            name: "rolls",
-            values: values,
-          },
-        },
-        vegaSpec
-      )
+      "#chart", vegaSpec
     ).then((result) => {
         result.view.addEventListener("click", function (event, item) {
           if (item) {
@@ -56,17 +46,21 @@
           }
         });
 
+      var view = result.view;
+      view = result.view.insert('actual', actuals).run();
+      view = view.insert('simulated', actuals).run();
+
       var iteration = 0;
       function addValues() {
         var values = [];
         for (var x = 0; x < 50; x++) {
           iteration++;
           values = values.concat(
-            rolls.map((roll) => roll.simulated(iteration))
+            valid.map((roll) => roll.simulated(iteration))
           );
         }
         var changeSet = vega.changeset().insert(values);
-        result.view.change("rolls", changeSet).run();
+        view = view.change("simulated", changeSet).run();
         dispatch("iterationComplete", iteration);
         if (iteration < 1000) {
           window.setTimeout(addValues, 200);
