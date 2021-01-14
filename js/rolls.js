@@ -228,9 +228,7 @@ export class Roll {
   }
 
   get rollName() {
-    return this.constructor.name
-      .replace('Roll', '')
-      .replace(/([a-z])([A-Z])/, '$1 $2');
+    return this.constructor.rollName;
   }
 
   get jointDescription() {
@@ -671,6 +669,7 @@ export class Roll {
 }
 
 class BlockRoll extends Roll {
+  static rollName = "Block";
   static handledSkills = [
     SKILL.Tackle,
     SKILL.Dodge,
@@ -884,6 +883,7 @@ class BlockRoll extends Roll {
 }
 
 class FansRoll extends Roll {
+  static rollName = "Fans";
   // TODO: Need to capture both teams rolls, because result is about comparison.
 }
 
@@ -1051,6 +1051,7 @@ class ModifiedD6SumRoll extends Roll {
 }
 
 class PickupRoll extends ModifiedD6SumRoll {
+  static rollName = "Pickup";
   static rerollSkill = SKILL.SureHands;
   static handledSkills = [SKILL.SureHands, SKILL.BigHand, SKILL.ExtraArms];
   failValue() {
@@ -1059,6 +1060,7 @@ class PickupRoll extends ModifiedD6SumRoll {
 }
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
+  static rollName = "Bone Head";
   static handledSkills = [SKILL.BoneHead];
   failValue() {
     return this.knockdownValue(this.activePlayer, false);
@@ -1066,6 +1068,7 @@ class BoneHeadRoll extends ModifiedD6SumRoll {
 }
 
 class ReallyStupidRoll extends ModifiedD6SumRoll {
+  static rollName = "Really Stupid";
   static handledSkills = [SKILL.ReallyStupid];
   failValue() {
     return this.knockdownValue(this.activePlayer, false);
@@ -1191,6 +1194,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
 }
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
+  static rollName = "Wild Animal";
   static handledSkills = [SKILL.WildAnimal];
   failValue() {
     // Failing Wild Animal means that this player is effectively unavailable
@@ -1200,10 +1204,12 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
 }
 
 class DauntlessRoll extends ModifiedD6SumRoll {
+  static rollName = "Dauntless";
   static handledSkills = [SKILL.Dauntless];
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
+  static rollName = "Dodge";
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
   static rerollSkill = SKILL.Dodge;
   static rerollCancelSkill = SKILL.Tackle;
@@ -1214,6 +1220,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
 }
 
 class JumpUpRoll extends ModifiedD6SumRoll {
+  static rollName = "Jump-Up";
   static handledSkills = [SKILL.JumpUp];
   failValue() {
     // Jump Up failure means the block fails to activate, so the player is no longer
@@ -1223,6 +1230,7 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 }
 
 class LeapRoll extends ModifiedD6SumRoll {
+  static rollName = "Leap";
   static canCauseInjury = true;
   failValue() {
     return this.knockdownValue(this.activePlayer).add(this.turnoverValue);
@@ -1230,6 +1238,7 @@ class LeapRoll extends ModifiedD6SumRoll {
 }
 
 class PassRoll extends ModifiedD6SumRoll {
+  static rollName = "Pass";
   static rerollSkill = SKILL.Pass;
   static handledSkills = [SKILL.Pass, SKILL.StrongArm, SKILL.Accurate];
   failValue() {
@@ -1241,6 +1250,7 @@ class PassRoll extends ModifiedD6SumRoll {
 }
 
 class ThrowTeammateRoll extends ModifiedD6SumRoll {
+  static rollName = "Throw Teammate";
   static handledSkills = [SKILL.ThrowTeamMate];
   failValue() {
     // TODO: Throw teammate only turns over if the thrown player has the ball, and even then, only
@@ -1256,6 +1266,7 @@ class ThrowTeammateRoll extends ModifiedD6SumRoll {
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
+  static rollName = "Intercept";
   static handledSkills = [SKILL.ExtraArms];
   // Interception rolls on the thrower, not the interceptee. If it "passes",
   // then the ball is caught
@@ -1265,6 +1276,7 @@ class InterceptionRoll extends ModifiedD6SumRoll {
 }
 
 class WakeUpRoll extends ModifiedD6SumRoll {
+  static rollName = "Wake Up";
   constructor(attrs) {
     super(attrs);
     this.finalBoardState.activeTeam = this.activePlayer.team;
@@ -1276,6 +1288,7 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
+  static rollName = "GFI";
   static handledSkills = [SKILL.SureFeet];
   static rerollSkill = SKILL.SureFeet;
   static canCauseInjury = true;
@@ -1285,6 +1298,7 @@ class GFIRoll extends ModifiedD6SumRoll {
 }
 
 class CatchRoll extends ModifiedD6SumRoll {
+  static rollName = "Catch";
   static handledSkills = [SKILL.DisturbingPresence, SKILL.Catch, SKILL.ExtraArms];
   static rerollSkill = SKILL.Catch;
 
@@ -1294,12 +1308,14 @@ class CatchRoll extends ModifiedD6SumRoll {
 }
 
 class StandUpRoll extends ModifiedD6SumRoll {
+  static rollName = "Stand Up";
   failValue() {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class TakeRootRoll extends ModifiedD6SumRoll {
+  static rollName = "Take Root";
   static handledSkills = [SKILL.TakeRoot];
   failValue() {
     return this.knockdownValue(this.activePlayer, false);
@@ -1307,6 +1323,7 @@ class TakeRootRoll extends ModifiedD6SumRoll {
 }
 
 class LandingRoll extends ModifiedD6SumRoll {
+  static rollName = "Landing";
   static canCauseInjury = true;
   failValue(expected) {
     // TODO: Handle a turnover if the thrown player has the ball
@@ -1315,6 +1332,7 @@ class LandingRoll extends ModifiedD6SumRoll {
 }
 
 class FireballRoll extends ModifiedD6SumRoll {
+  static rollName = "Fireball";
   static canCauseInjury = true;
   passValue(expected) {
     return this.knockdownValue(this.activePlayer, expected);
@@ -1322,6 +1340,7 @@ class FireballRoll extends ModifiedD6SumRoll {
 }
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
+  static rollName = "Lightning Bolt";
   static canCauseInjury = true;
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -1450,6 +1469,7 @@ class InjuryRoll extends Roll {
 }
 
 class CasualtyRoll extends Roll {
+  static rollName = "Casualty";
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
   static diceSeparator = '';
@@ -1511,6 +1531,7 @@ class CasualtyRoll extends Roll {
 }
 
 class MoveAction extends Roll {
+  static rollName = "Move";
   static ignore(xml) {
     return manhattan(xml.action.Order.CellFrom, xml.action.Order.CellTo.Cell) == 0;
   }
@@ -1563,10 +1584,12 @@ class NoValueRoll extends Roll {
 }
 
 class PushRoll extends NoValueRoll {
+  static rollName = "Push";
   static handledSkills = [SKILL.SideStep];
 }
 
 class FollowUpRoll extends NoValueRoll {
+  static rollName = "Follow Up";
   // static handledSkills = [SKILL.Frenzy];
 }
 
