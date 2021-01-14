@@ -24,7 +24,7 @@
       return groups;
     }, []);
 
-    open = !selectedRoll;
+    open = (selectedRoll !== null);
   }
 </script>
 
