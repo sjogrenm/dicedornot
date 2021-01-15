@@ -174,7 +174,7 @@ const vegaSpec = {
               flatten: ['outcomes', 'weights'],
             },
             {
-              calculate: 'datum.outcomes + datum.cumNetValue',
+              calculate: 'datum.outcomes + datum.cumNetValue - datum.netValue',
               as: 'possibleNetValue'
             },
             {
@@ -193,6 +193,14 @@ const vegaSpec = {
             {
               calculate: 'datum.rollIndex + (datum.weight_sum / 2)',
               as: 'x2'
+            },
+            {
+              calculate: 'datum.posNetValue_min',
+              as: 'y'
+            },
+            {
+              calculate: 'datum.posNetValue_max',
+              as: 'y2'
             },
             {
               calculate: "join([datum.posNetValue_min, datum.posNetValue_max], ' - ')",
@@ -214,11 +222,11 @@ const vegaSpec = {
             },
             y: {
               type: 'quantitative',
-              field: 'posNetValue_min',
+              field: 'y',
             },
             y2: {
               type: 'quantitative',
-              field: 'posNetValue_max',
+              field: 'y2',
             },
             color: {
               field: 'activeTeamColor',
