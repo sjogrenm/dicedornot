@@ -174,13 +174,17 @@ const vegaSpec = {
               flatten: ['outcomes', 'weights'],
             },
             {
-              calculate: 'datum.outcomes + datum.cumNetValue - datum.netValue',
-              as: 'possibleNetValue'
+              bin: { step: 0.5, anchor: -0.25 },
+              field: 'outcomes',
+              as: ['outcomes_min', 'outcomes_max']
             },
             {
-              bin: { step: 0.5, anchor: -0.25 },
-              field: 'possibleNetValue',
-              as: ['posNetValue_min', 'posNetValue_max']
+              calculate: 'datum.outcomes_min + datum.cumNetValue - datum.netValue',
+              as: 'posNetValue_min'
+            },
+            {
+              calculate: 'datum.outcomes_max + datum.cumNetValue - datum.netValue',
+              as: 'posNetValue_max'
             },
             {
               aggregate: [{ op: 'sum', field: 'weights', as: 'weight_sum' }],
