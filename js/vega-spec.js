@@ -188,6 +188,7 @@ const vegaSpec = {
                 'outcomes_max',
                 'cumNetValue',
                 'netValue',
+                'description',
               ],
             },
             {
@@ -249,6 +250,7 @@ const vegaSpec = {
               },
             },
             tooltip: [
+              { field: 'description', title: 'Roll' },
               { field: 'outcomes_range', title: 'Net Value Change' },
               { field: 'weight_sum', title: 'Probability', format: '.2p' },
               { field: 'activeTeamName', title: 'Active Team' }
