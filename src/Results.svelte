@@ -33,6 +33,8 @@
         return true;
       });
     const actuals = valid.map((roll) => roll.actual);
+    console.log("Valid rolls", valid);
+    console.log("Actual points", actuals);
 
     // Assign the specification to a local variable vlSpec.
 

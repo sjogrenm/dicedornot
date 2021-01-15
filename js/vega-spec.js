@@ -171,123 +171,50 @@ const vegaSpec = {
         {
           transform: [
             {
-              calculate: 'datum.cumNetValue - datum.netValue + datum.dnvMin',
-              as: 'y'
-            },
-
-            {
-              calculate: 'datum.cumNetValue - datum.netValue + datum.dnvMax',
-              as: 'y2'
-            }
-          ],
-          mark: {
-            type: 'rule',
-            opacity: 0.7
-          },
-          encoding: {
-            x: {
-              type: 'quantitative',
-              field: 'rollIndex'
-            },
-            y: {
-              field: 'y',
-              type: 'quantitative',
-              scale: { zero: false },
-              title: null
-            },
-            y2: { field: 'y2' },
-            color: {
-              field: 'activeTeamColor',
-              type: 'nominal',
-              title: 'Team',
-              legend: {
-                disable: true
-              },
-            },
-            size: { value: 1 },
-            tooltip: [
-              { field: 'dnvMin', title: 'Min Net Value', format: '.2f' },
-              { field: 'dnvq33', title: '1/6 Net Value', format: '.2f' },
-              { field: 'dnvq67', title: '5/6 Net Value', format: '.2f' },
-              { field: 'dnvMax', title: 'Max Net Value', format: '.2f' }
-            ]
-          }
-        },
-        {
-          transform: [
-            {
-              calculate: 'datum.cumNetValue - datum.netValue + datum.dnvq33 - 0.05',
-              as: 'y'
+              flatten: ['outcomes', 'weights'],
             },
             {
-              calculate: 'datum.cumNetValue - datum.netValue + datum.dnvq67 + 0.05',
-              as: 'y2'
+              calculate: 'datum.outcomes + datum.cumNetValue',
+              as: 'possibleNetValue'
             },
             {
-              calculate: 'datum.rollIndex - 0.4',
+              bin: { step: 0.5, anchor: -0.25 },
+              field: 'possibleNetValue',
+              as: ['posNetValue_min', 'posNetValue_max']
+            },
+            {
+              aggregate: [{ op: 'sum', field: 'weights', as: 'weight_sum' }],
+              groupby: ['rollIndex', 'activeTeamColor', 'activeTeamName', 'posNetValue_min', 'posNetValue_max'],
+            },
+            {
+              calculate: 'datum.rollIndex - (datum.weight_sum / 2)',
               as: 'x'
             },
             {
-              calculate: 'datum.rollIndex + 0.4',
+              calculate: 'datum.rollIndex + (datum.weight_sum / 2)',
               as: 'x2'
             }
           ],
           mark: {
-            type: 'bar',
-            opacity: 0.7
+            type: "rect",
+            opacity: 0.7,
           },
           encoding: {
-            size: { value: 2 },
             x: {
               type: 'quantitative',
-              field: 'x'
+              field: 'x',
             },
             x2: {
               type: 'quantitative',
               field: 'x2',
             },
-            y: { field: 'y', type: 'quantitative' },
-            y2: { field: 'y2', type: 'quantitative' },
-            color: {
-              field: 'activeTeamColor',
-              type: 'nominal',
-              title: 'Team',
-              legend: {
-                disable: true
-              },
-            },
-            tooltip: [
-              { field: 'dnvMin', title: 'Min Net Value', format: '.2f' },
-              { field: 'dnvq33', title: '1/6 Net Value', format: '.2f' },
-              { field: 'dnvq67', title: '5/6 Net Value', format: '.2f' },
-              { field: 'dnvMax', title: 'Max Net Value', format: '.2f' }
-            ]
-          }
-        },
-        {
-          transforms: [
-            {
-              flatten: ['outcome', 'weight'],
-            },
-            // {
-            //   calculate: 'datum.value + datum.cumNetValue',
-            //   as: 'possibleNetValue'
-            // },
-          ],
-          mark: {
-            type: "circle",
-            opacity: 0.7,
-            tooltip: { content: true },
-          },
-          encoding: {
-            x: {
-              type: 'quantitative',
-              field: 'weight'
-            },
             y: {
               type: 'quantitative',
-              field: 'outcome',
-              // bin: true,
+              field: 'posNetValue_min',
+            },
+            y2: {
+              type: 'quantitative',
+              field: 'posNetValue_max',
             },
             color: {
               field: 'activeTeamColor',
@@ -297,6 +224,10 @@ const vegaSpec = {
                 disable: true,
               },
             },
+            tooltip: [
+              { field: 'weight_sum', title: 'Probability' },
+              { field: 'activeTeamName', title: 'Active Team' }
+            ]
           }
         },
         {
