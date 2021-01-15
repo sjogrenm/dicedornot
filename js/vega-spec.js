@@ -179,16 +179,24 @@ const vegaSpec = {
               as: ['outcomes_min', 'outcomes_max']
             },
             {
+              aggregate: [{ op: 'sum', field: 'weights', as: 'weight_sum' }],
+              groupby: [
+                'rollIndex',
+                'activeTeamColor',
+                'activeTeamName',
+                'outcomes_min',
+                'outcomes_max',
+                'cumNetValue',
+                'netValue',
+              ],
+            },
+            {
               calculate: 'datum.outcomes_min + datum.cumNetValue - datum.netValue',
               as: 'posNetValue_min'
             },
             {
               calculate: 'datum.outcomes_max + datum.cumNetValue - datum.netValue',
               as: 'posNetValue_max'
-            },
-            {
-              aggregate: [{ op: 'sum', field: 'weights', as: 'weight_sum' }],
-              groupby: ['rollIndex', 'activeTeamColor', 'activeTeamName', 'posNetValue_min', 'posNetValue_max'],
             },
             {
               calculate: 'datum.rollIndex - (datum.weight_sum / 2)',
@@ -207,7 +215,7 @@ const vegaSpec = {
               as: 'y2'
             },
             {
-              calculate: "join([datum.posNetValue_min, datum.posNetValue_max], ' - ')",
+              calculate: "join([datum.outcomes_min, datum.outcomes_max], ' - ')",
               as: 'outcomes_range'
             }
           ],
@@ -241,7 +249,7 @@ const vegaSpec = {
               },
             },
             tooltip: [
-              { field: 'outcomes_range', title: 'Value change' },
+              { field: 'outcomes_range', title: 'Net Value Change' },
               { field: 'weight_sum', title: 'Probability', format: '.2p' },
               { field: 'activeTeamName', title: 'Active Team' }
             ]

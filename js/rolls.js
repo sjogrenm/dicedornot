@@ -316,7 +316,7 @@ export class Roll {
       dnvMed: weightedQuantile(deltaNetValues, 0.5, 'value', 'weight'),
       dnvq67: weightedQuantile(deltaNetValues, 0.67, 'value', 'weight'),
       dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value)),
-      outcomes: this.possibleOutcomes.flat.map(outcome => outcome.value),
+      outcomes: this.possibleOutcomes.flat.map(outcome => outcome.value - dataPoint.expectedValue),
       weights: this.possibleOutcomes.flat.map(outcome => outcome.weight),
       description: this.jointDescription,
       valueDescription: `${this.valueWithDependents.valueString} ${this.possibleOutcomes.valueString}`,
