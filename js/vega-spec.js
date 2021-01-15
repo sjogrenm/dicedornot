@@ -193,6 +193,10 @@ const vegaSpec = {
             {
               calculate: 'datum.rollIndex + (datum.weight_sum / 2)',
               as: 'x2'
+            },
+            {
+              calculate: "join([datum.posNetValue_min, datum.posNetValue_max], ' - ')",
+              as: 'outcomes_range'
             }
           ],
           mark: {
@@ -225,7 +229,8 @@ const vegaSpec = {
               },
             },
             tooltip: [
-              { field: 'weight_sum', title: 'Probability' },
+              { field: 'outcomes_range', title: 'Value change' },
+              { field: 'weight_sum', title: 'Probability', format: '.2p' },
               { field: 'activeTeamName', title: 'Active Team' }
             ]
           }
