@@ -614,7 +614,7 @@ class Viewer {
 
         state.diceResult.map(d => {
           let div = document.createElement("div");
-          div.classList.add("dice");
+          div.classList.add("d1h");
           div.classList.add(css);
           div.classList.add(blockDice[d]);
           target.prepend(div);

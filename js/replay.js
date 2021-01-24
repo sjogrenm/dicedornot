@@ -40,6 +40,7 @@ export const replay = {
     rolls.forEach((roll, idx) => (roll.rollIndex = idx));
 
     return {
+      fullReplay: data.Replay,
       gameDetails: gameDetails,
       playerDetails: playerDetails,
       rolls: rolls,

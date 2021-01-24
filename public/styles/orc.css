@@ -1,0 +1,34 @@
+:root{--orm:-28px;--orl:-32px;--orxl:-38px;}
+
+.orc.home {background: url("/images/players/orc/home.png") no-repeat;}
+.orc.away {background: url("/images/players/orc/away.png") no-repeat;}
+
+.orc{width: calc(-1 * var(--orm)); height: calc(-1 * var(--orm)); display: inline-block; background-position-x: 0px;}
+.orc.blocker1,.orc.blocker2,.orc.blocker3,.orc.blocker4{width: calc(-1 * var(--orl)); height: calc(-1 * var(--orl));}
+.orc.troll{width: calc(-1 * var(--orxl)); height: calc(-1 * var(--orxl));}
+
+.orc.lineman1{background-position-y: 0px;}
+.orc.lineman2{background-position-y: var(--orm);}
+.orc.lineman3{background-position-y: calc(2 * var(--orm));}
+.orc.blitzer1{background-position-y: calc(3 * var(--orm));}
+.orc.blitzer2{background-position-y: calc(4 * var(--orm));}
+.orc.blitzer3{background-position-y: calc(5 * var(--orm));}
+.orc.thrower1{background-position-y: calc(6 * var(--orm));}
+.orc.thrower2{background-position-y: calc(7 * var(--orm));}
+.orc.goblin1{background-position-y: calc(8 * var(--orm));}
+.orc.goblin2{background-position-y: calc(9 * var(--orm));}
+.orc.blocker1{background-position-y: calc(10 * var(--orm));}
+.orc.blocker2{background-position-y: calc(10 * var(--orm) + var(--orl));}
+.orc.blocker3{background-position-y: calc(10 * var(--orm) + 2 * var(--orl));}
+.orc.blocker4{background-position-y: calc(10 * var(--orm) + 3 * var(--orl));}
+.orc.troll{background-position-y: calc(10 * var(--orm) + 4 * var(--orl));}
+
+.orc.moving{background-position-x: var(--orm);}
+.orc.blocker1.moving,.orc.blocker2.moving,.orc.blocker3.moving,.orc.blocker4.moving{background-position-x: var(--orl);}
+.orc.troll.moving{background-position-x: var(--orxl);}
+.orc.prone{background-position-x: var(--orm);}
+.orc.blocker1.prone,.orc.blocker2.prone,.orc.blocker3.prone,.orc.blocker4.prone{background-position-x: var(--orl);}
+.orc.troll.prone{background-position-x: var(--orxl);}
+.orc.stunned{background-position-x: var(--orm);}
+.orc.blocker1.stunned,.orc.blocker2.stunned,.orc.blocker3.stunned,.orc.blocker4.stunned{background-position-x: var(--orl);}
+.orc.troll.stunned{background-position-x: var(--orxl);}

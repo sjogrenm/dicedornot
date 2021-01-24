@@ -54,7 +54,7 @@ function manhattan(a, b) {
 function ballPositionValue(team, cell) {
   var distToGoal;
   if (team.id == 0) {
-    distToGoal = 24 - (cell.x || 0);
+    distToGoal = 25 - (cell.x || 0);
   } else {
     distToGoal = (cell.x || 0);
   }

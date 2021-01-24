@@ -52,7 +52,7 @@
   }
 </style>
 
-<div id="summary">
+<div id="summary" class="container">
   <div class="row league-name">
     <div class="col-sm-12">
       League:
