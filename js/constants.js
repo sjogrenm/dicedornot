@@ -356,7 +356,7 @@ export const RACE_SLUG = {
   [RACE_ID.Chaos]: "chaos",
   [RACE_ID.ChaosDwarf]: "chaosdwarf",
   [RACE_ID.ChaosPact]: "chaospact",
-  [RACE_ID.DarkElf]: "dark elf",
+  [RACE_ID.DarkElf]: "darkelf",
   [RACE_ID.Dwarf]: "dwarf",
   [RACE_ID.Goblin]: "goblin",
   [RACE_ID.HighElf]: "highelf",
@@ -373,7 +373,7 @@ export const RACE_SLUG = {
   [RACE_ID.Undead]: "undead",
   [RACE_ID.Underworld]: "underworld",
   [RACE_ID.Vampire]: "vampire",
-  [RACE_ID.WoodElf]: "wood elf",
+  [RACE_ID.WoodElf]: "woodelf",
 }
 
 export function getPlayerType(playerId, playerTypeId) {

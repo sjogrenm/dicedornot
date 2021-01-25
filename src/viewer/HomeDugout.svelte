@@ -3,18 +3,22 @@
 import HomeBench from "./HomeBench.svelte";
 import TeamAids from "./TeamAids.svelte";
 import SelectedPlayer from "./SelectedPlayer.svelte";
+import FixedRatio from "./FixedRatio.svelte";
 import { homeTeam } from "../stores";
 
 </script>
 
 <div class="row">
-  <div class="col-5">
+  <div class="col">
     <HomeBench />
     <div class="row name">
-      <img src="/images/logo/256x256/logo_{$homeTeam.logo}.png" alt="Logo: {$homeTeam.logo}" class="logo"/>{$homeTeam.name}
+      <div class="col-2">
+        <img src="/images/logo/256x256/logo_{$homeTeam.logo}.png" alt="Logo: {$homeTeam.logo}" class="logo"/>
+      </div>
+      <div class="col">{$homeTeam.name}</div>
     </div>
   </div>
-  <div class="col-2">
+  <div class="col-1">
     <div>
       <span id="score">{$homeTeam.score}</span>
     </div>
@@ -22,17 +26,19 @@ import { homeTeam } from "../stores";
       <span id="turn" class="">{$homeTeam.turn}</span>
     </div>
   </div>
-  <div class="col-5">
-    <div class="row">
-      <div class="col-8">
+  <div class="col">
+    <div class="row no-gutters">
+      <div class="col">
         <TeamAids />
       </div>
-      <div class="col-3">
+      <div class="col-2">
         <SelectedPlayer />
       </div>
-    </div>
-    <div class="col-1">
-      <div class="weather heat" id="weather" title="sweltering heat!"/>
+      <div class="col-1">
+        <FixedRatio>
+          <div class="weather sprite heat" id="weather" title="sweltering heat!"/>
+        </FixedRatio>
+      </div>
     </div>
   </div>
 </div>
@@ -47,26 +53,28 @@ import { homeTeam } from "../stores";
     font-weight: bold;
   }
   .weather {
-    background: url("/images/weather.png") no-repeat;
-    width: 36px;
-    height: 36px;
-    display: inline-block;
-    background-position-x: 0px;
+    background-image: url("/images/weather.png");
+    width: 100%;
+    height: 100%;
+    --imW: 192;
+    --imH: 36;
+    --spW: 36;
+    --spH: 36;
     /* position: absolute; */
   }
   .heat {
-    background-position-x: 0px;
+    --spX: 0;
   }
   .sunny {
-    background-position-x: -39px;
+    --spX: 39;
   }
   .perfect {
-    background-position-x: -78px;
+    --spX: 78;
   }
   .rain {
-    background-position-x: -117px;
+    --spX: 117;
   }
   .blizzard {
-    background-position-x: -156px;
+    --spX: 156;
   }
 </style>

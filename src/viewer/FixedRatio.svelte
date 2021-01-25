@@ -1,5 +1,5 @@
 <script>
-  export let width, height;
+  export let width=1, height=1;
   let clazz = null;
   export { clazz as class }
 </script>

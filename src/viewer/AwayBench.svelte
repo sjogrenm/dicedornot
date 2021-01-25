@@ -2,14 +2,14 @@
   import CasBox from './CasBox.svelte';
 </script>
 
-<div class="row">
-  <div class="col-4">
-    <CasBox prefix="reserve" />
+<div class="row no-gutters">
+  <div class="col">
+    <CasBox casType="reserve" team="away"/>
   </div>
-  <div class="col-4">
-    <CasBox prefix="ko" />
+  <div class="col">
+    <CasBox casType="ko" team="away"/>
   </div>
-  <div class="col-4">
-    <CasBox prefix="cas" />
+  <div class="col">
+    <CasBox casType="cas" team="away"/>
   </div>
 </div>

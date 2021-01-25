@@ -4,7 +4,7 @@
   import Player from "./Player.svelte";
   import Ball from "./Ball.svelte";
   import { pitch, homeTeam, awayTeam } from "../stores.js";
-  export let id, row, column;
+  export let id, row, column, width, height;
   let player = null,
     cell = null,
     ball = null;

@@ -3,7 +3,7 @@
     {#each Array(height) as _r, row}
       {#each Array(width) as _C, column}
         {#if component}
-          <svelte:component this={component} {row} {column} id="{prefix}_{column}_{row}"/>
+          <svelte:component this={component} {row} {column} {width} {height} {...componentProps} id="{prefix}_{column}_{row}"/>
         {:else}
           <div class="grid-item" id="{prefix}_{column}_{row}"/>
         {/if}
@@ -13,8 +13,9 @@
 </FixedRatio>
 
 <script>
-  import FixedRatio from "./FixedRatio.svelte"
-  export let prefix, width, height, component=null;
+  import AwayBench from "./AwayBench.svelte";
+import FixedRatio from "./FixedRatio.svelte"
+  export let prefix, width, height, component=null, componentProps={};
 </script>
 
 <style>

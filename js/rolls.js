@@ -1555,7 +1555,7 @@ class MoveAction extends Roll {
     return roll.constructor == MoveAction && this.activePlayer.id == roll.activePlayer.id;
   }
   value() {
-    if (this.activePlayer.isBallCarrier) {
+    if (this.activePlayer && this.activePlayer.isBallCarrier) {
       return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
         ballPositionValue(this.activePlayer.team, this.cellFrom)
       );

@@ -6,6 +6,10 @@
     href="/styles/{race}.css"
   />
   {/each}
+  <link
+    rel="stylesheet"
+    href="/styles/sprite.css"
+  />
 </svelte:head>
 
 <script>
@@ -1187,4 +1191,5 @@
   .turnover {
     background-position-y: -539px;
   }
+
 </style>

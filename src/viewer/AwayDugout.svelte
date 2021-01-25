@@ -7,14 +7,10 @@
 </script>
 
 <div class="row">
-  <div class="col-5">
-    <div class="row">
-      <div class="col-8">
-        <TeamAids />
-      </div>
-    </div>
+  <div class="col">
+    <TeamAids />
   </div>
-  <div class="col-2">
+  <div class="col-1">
     <div>
       <span id="turn">{$awayTeam.turn}</span>
     </div>
@@ -23,23 +19,24 @@
     </div>
   </div>
 
-  <div class="col-5">
-    <AwayBench />
-    <div class="row name">
-      {$awayTeam.name}<img src="/images/logo/256x256/logo_{$awayTeam.logo}.png" alt="Logo: {$awayTeam.logo}"/>
+  <div class="col">
+    <div class="row">
+      <div class="col name">{$awayTeam.name}</div>
+      <div class="col-2 logo"><img src="/images/logo/256x256/logo_{$awayTeam.logo}.png" alt="Logo: {$awayTeam.logo}"/></div>
     </div>
+    <AwayBench />
   </div>
 </div>
 
 <style>
-
-.name img {
-    height: 1.5em;
-    width: 1.5em;
+  .logo img {
+    height: 2.25em;
+    width: 2.25em;
+    text-align: right;
   }
   .name {
     font-size: 1.5em;
     font-weight: bold;
-    justify-content: right;
+    text-align: right;
   }
 </style>
