@@ -1,10 +1,20 @@
+
+<svelte:head>
+  {#each races as race}
+  <link
+    rel="stylesheet"
+    href="/styles/{race}.css"
+  />
+  {/each}
+</svelte:head>
+
 <script>
   import DiceResult from "./DiceResult.svelte";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
   import { homeTeam, awayTeam, pitch } from "../stores.js";
-  import { SITUATION, getPlayerType } from '../../js/constants.js';
+  import { SITUATION, getPlayerType, RACE_SLUG } from '../../js/constants.js';
 
   export let replaySteps, priorBoardState;
   let stepIndex = 0;
@@ -16,7 +26,8 @@
   let lastPlayerId = 0;
 
   let lastChainPush = null;
-  
+  let races = [];
+
   let DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: 'reserve',
     [SITUATION.KO]: 'ko',
@@ -32,6 +43,7 @@
     console.log("boardState", boardState);
     $homeTeam = processTeam(boardState.ListTeams.TeamState[0]);
     $awayTeam = processTeam(boardState.ListTeams.TeamState[1]);
+    races = boardState.ListTeams.TeamState.map(team => RACE_SLUG[team.Data.IdRace]).filter((v, i, a) => a.indexOf(v) === i);
     clearPitch();
     setPlayerStates(boardState);
     console.log($pitch);
@@ -40,12 +52,14 @@
 
   function processTeam(team) {
     return {
-      logo: team.Data.Logo,
+      logo: team.Data.Logo.toLowerCase(),
       dugout: {
         cas: [],
         ko: [],
         reserve: []
       },
+      score: team.Touchdown || 0,
+      name: team.Data.Name,
     };
   }
 

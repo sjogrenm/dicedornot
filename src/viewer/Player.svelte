@@ -108,10 +108,3 @@
     height: 50%;
   }
 </style>
-
-<svelte:head>
-  <link
-    rel="stylesheet"
-    href="/styles/{race}.css"
-  />
-</svelte:head>

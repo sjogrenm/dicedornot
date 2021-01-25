@@ -3,6 +3,7 @@
   import PitchSquare from './PitchSquare.svelte';
 </script>
 
+<div class="pitch">
 <Grid
   width={26}
   height={15}
@@ -19,3 +20,10 @@
     <div class="blood splatter3" />
   </div>
 </Grid>
+</div>
+
+<style>
+  .pitch {
+    background-color: rgb(176, 235, 88);
+  }
+</style>

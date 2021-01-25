@@ -1,10 +1,11 @@
 <script>
 
+  import { awayTeam } from "../stores";
   import AwayBench from "./AwayBench.svelte";
   import TeamAids from "./TeamAids.svelte";
-  
+
 </script>
-  
+
 <div class="row">
   <div class="col-5">
     <div class="row">
@@ -12,28 +13,33 @@
         <TeamAids />
       </div>
     </div>
-    <div class="col-1">
-      <div class="weather heat" id="weather" title="sweltering heat!">
-        <h1 id="turnTimer">3:30</h1>
-      </div>
-    </div>
   </div>
   <div class="col-2">
     <div>
-      <span id="homeScore">0</span>
+      <span id="turn">{$awayTeam.turn}</span>
     </div>
     <div>
-      <span id="homeTurn" class="">4</span>
+      <span id="score">{$awayTeam.score}</span>
     </div>
   </div>
 
   <div class="col-5">
     <AwayBench />
-    <div class="row">
-      <img src="logo_vampire_04.png" />Bylorhofs at Camp
+    <div class="row name">
+      {$awayTeam.name}<img src="/images/logo/256x256/logo_{$awayTeam.logo}.png" alt="Logo: {$awayTeam.logo}"/>
     </div>
   </div>
 </div>
 
 <style>
+
+.name img {
+    height: 1.5em;
+    width: 1.5em;
+  }
+  .name {
+    font-size: 1.5em;
+    font-weight: bold;
+    justify-content: right;
+  }
 </style>

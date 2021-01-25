@@ -3,22 +3,23 @@
 import HomeBench from "./HomeBench.svelte";
 import TeamAids from "./TeamAids.svelte";
 import SelectedPlayer from "./SelectedPlayer.svelte";
+import { homeTeam } from "../stores";
 
 </script>
 
 <div class="row">
   <div class="col-5">
     <HomeBench />
-    <div class="row">
-      <img src="logo_vampire_04.png" />Bylorhofs at Camp
+    <div class="row name">
+      <img src="/images/logo/256x256/logo_{$homeTeam.logo}.png" alt="Logo: {$homeTeam.logo}" class="logo"/>{$homeTeam.name}
     </div>
   </div>
   <div class="col-2">
     <div>
-      <span id="homeScore">0</span>
+      <span id="score">{$homeTeam.score}</span>
     </div>
     <div>
-      <span id="homeTurn" class="">4</span>
+      <span id="turn" class="">{$homeTeam.turn}</span>
     </div>
   </div>
   <div class="col-5">
@@ -31,21 +32,27 @@ import SelectedPlayer from "./SelectedPlayer.svelte";
       </div>
     </div>
     <div class="col-1">
-      <div class="weather heat" id="weather" title="sweltering heat!">
-        <h1 id="turnTimer">3:30</h1>
-      </div>
+      <div class="weather heat" id="weather" title="sweltering heat!"/>
     </div>
   </div>
 </div>
 
 <style>
+  .name img {
+    height: 1.5em;
+    width: 1.5em;
+  }
+  .name {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
   .weather {
     background: url("/images/weather.png") no-repeat;
     width: 36px;
     height: 36px;
     display: inline-block;
     background-position-x: 0px;
-    position: absolute;
+    /* position: absolute; */
   }
   .heat {
     background-position-x: 0px;
