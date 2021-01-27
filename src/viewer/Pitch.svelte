@@ -1,12 +1,16 @@
 <script>
   import Grid from "./Grid.svelte";
   import PitchSquare from "./PitchSquare.svelte";
+  export let homeTeam, awayTeam, pitch;
+
+  let homeLogo = homeTeam.logo;
+  let awayLogo = awayTeam.logo;
 </script>
 
 <div class="row">
   <div class="col">
     <div class="pitch">
-      <Grid width={26} height={15} prefix="pos" component={PitchSquare}>
+      <Grid width={26} height={15} prefix="pos" component={PitchSquare} componentProps={{homeLogo, awayLogo, pitch}}>
         <div class="grid_item" id="pos_14_1">
           <div class="cell target" />
           <div class="dice d1h push" />

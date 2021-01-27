@@ -2,7 +2,8 @@
   export let plus = null,
     active = false,
     target = false,
-    pushbackChoice = false;
+    pushbackChoice = false,
+    blood = null;
 
   $: plusClass = plus ? `plus${plus}` : "";
 </script>
@@ -22,6 +23,19 @@
     display: inline-block;
     background-position-x: 0px;
     position: absolute;
+  }
+
+  .active {
+    background-position-x: -100px;
+    background-position-y: -150px;
+  }
+  .moved {
+    background-position-x: -100px;
+    background-position-y: 0px;
+  }
+  .target {
+    background-position-x: -200px;
+    background-position-y: 0px;
   }
   .pushback-choice {
     background-position-x: -50px;
@@ -57,5 +71,30 @@
   .plus6 {
     background-position-x: -300px;
     background-position-y: -50px;
+  }
+  
+  .blood {
+    background: url("/images/blood.png") no-repeat;
+    width: 40px;
+    height: 40px;
+    display: inline-block;
+    background-position-x: 0px;
+    position: absolute;
+  }
+  .splatter1 {
+    background-position-x: 0px;
+    background-position-y: 0px;
+  }
+  .splatter2 {
+    background-position-x: -40px;
+    background-position-y: 0px;
+  }
+  .splatter3 {
+    background-position-x: 0px;
+    background-position-y: -40px;
+  }
+  .splatter4 {
+    background-position-x: -40px;
+    background-position-y: -40px;
   }
 </style>

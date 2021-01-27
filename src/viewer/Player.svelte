@@ -53,19 +53,6 @@
     top: -4px;
   }
 
-  .active {
-    background-position-x: -100px;
-    background-position-y: -150px;
-  }
-  .moved {
-    background-position-x: -100px;
-    background-position-y: 0px;
-  }
-  .target {
-    background-position-x: -200px;
-    background-position-y: 0px;
-  }
-
   .BoneHeaded {
     background: url("/images/bonehead.png") no-repeat;
     background-size: contain;

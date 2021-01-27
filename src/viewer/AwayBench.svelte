@@ -1,15 +1,16 @@
 <script>
   import CasBox from './CasBox.svelte';
+  export let dugout;
 </script>
 
 <div class="row no-gutters">
   <div class="col">
-    <CasBox casType="reserve" team="away"/>
+    <CasBox casType="reserve" {dugout}/>
   </div>
   <div class="col">
-    <CasBox casType="ko" team="away"/>
+    <CasBox casType="ko" {dugout}/>
   </div>
   <div class="col">
-    <CasBox casType="cas" team="away"/>
+    <CasBox casType="cas" {dugout}/>
   </div>
 </div>

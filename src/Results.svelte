@@ -65,7 +65,7 @@
           window.setTimeout(addValues, 200);
         }
       }
-      addValues();
+      // addValues();
     });
   }
 </script>

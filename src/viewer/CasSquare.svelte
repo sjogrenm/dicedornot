@@ -1,19 +1,19 @@
 <script>
   import Player from "./Player.svelte";
-  import { homeTeam, awayTeam } from "../stores.js";
-  export let id, row, column, width, height, casType, team;
-  let player = null, dugout, players;
+  export let dugout, id, row, column, width, height, casType;
+  let player = null, players;
 
   $: {
-    dugout = team == 'home' ? $homeTeam.dugout : $awayTeam.dugout;
-    if (casType == 'ko') {
-      players = dugout['cas'].slice(width*height).concat(dugout[casType]);
-    } else if (casType == 'reserve') {
-      players = dugout['ko'].slice(width*height).concat(dugout[casType]);
-    } else {
-      players = dugout[casType];
+    if (dugout) {
+      if (casType == 'ko') {
+        players = dugout['cas'].slice(width*height).concat(dugout[casType]);
+      } else if (casType == 'reserve') {
+        players = dugout['ko'].slice(width*height).concat(dugout[casType]);
+      } else {
+        players = dugout[casType];
+      }
+      player = players[column*height + row];
     }
-    player = players[column*height + row];
   };
 </script>
 

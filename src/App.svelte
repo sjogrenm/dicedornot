@@ -102,8 +102,6 @@
               on:rollClicked={(e) => (selectedRoll = e.detail.rollIndex)}
             />
             <Viewer
-              priorBoardState={replay &&
-                replay.fullReplay.ReplayStep[0].BoardState}
               replaySteps={replay && replay.fullReplay.ReplayStep}
             />
           </div>

@@ -4,26 +4,27 @@ import HomeBench from "./HomeBench.svelte";
 import TeamAids from "./TeamAids.svelte";
 import SelectedPlayer from "./SelectedPlayer.svelte";
 import FixedRatio from "./FixedRatio.svelte";
-import { homeTeam } from "../stores";
+
+export let homeTeam;
 
 </script>
 
 <div class="row">
   <div class="col">
-    <HomeBench />
+    <HomeBench dugout={homeTeam.dugout}/>
     <div class="row name">
       <div class="col-2">
-        <img src="/images/logo/256x256/logo_{$homeTeam.logo}.png" alt="Logo: {$homeTeam.logo}" class="logo"/>
+        <img src="/images/logo/256x256/logo_{homeTeam.logo}.png" alt="Logo: {homeTeam.logo}" class="logo"/>
       </div>
-      <div class="col">{$homeTeam.name}</div>
+      <div class="col">{homeTeam.name}</div>
     </div>
   </div>
   <div class="col-1">
     <div>
-      <span id="score">{$homeTeam.score}</span>
+      <span id="score">{homeTeam.score}</span>
     </div>
     <div>
-      <span id="turn" class="">{$homeTeam.turn}</span>
+      <span id="turn" class="">{homeTeam.turn}</span>
     </div>
   </div>
   <div class="col">

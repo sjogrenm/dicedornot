@@ -1,10 +1,6 @@
-{#each dice as die}
-<div class="dice d{dice.length}h {blockDice[die]}">
-
-</div>
-{/each}
-
 <script>
+  import FixedRatio from "./FixedRatio.svelte";
+
   export let dice;
 
   const blockDice = [
@@ -15,21 +11,34 @@
     "defender-down",
   ];
 </script>
-<style>
 
-.dice,
-  .logdice {
-    background: url("/images/dice.png") no-repeat;
-    width: 25px;
-    height: 25px;
+<div class="dice-container">
+  {#each dice as die}
+    <div class="dice sprite d{dice.length}h {blockDice[die]}" />
+  {/each}
+</div>
+
+<style>
+  .dice-container {
+    width: 200%;
+    height: 50%;
+    top: 50%;
+    position: absolute;
     display: inline-block;
-    background-position-x: 0px;
+    text-align: center;
   }
   .dice {
-    position: absolute;
-  }
-  .logdice {
-    vertical-align: bottom;
+    background-image: url("/images/dice.png");
+    background-repeat: no-repeat;
+    width: 33%;
+    height: 133%;
+    display: inline-block;
+    --imW: 50;
+    --imH: 75;
+    --spW: 25;
+    --spH: 25;
+    --spX: 0;
+    --spY: 0;
   }
   .d1v {
     top: 12px;
@@ -73,26 +82,22 @@
   .d3h:nth-of-type(3) {
     left: 38px;
   }
-  .attacker-down {
-    background-position-y: 0px;
-  }
   .both-down {
-    background-position-y: -25px;
+    --spY: 25;
   }
   .defender-down {
-    background-position-y: -50px;
+    --spY: 50;
   }
   .defender-stumbles {
-    background-position-x: -25px;
-    background-position-y: 0px;
+    --spX: 25;
   }
   .push {
-    background-position-x: -25px;
-    background-position-y: -25px;
+    --spX: 25;
+    --spY: 25;
   }
 
   .foul {
-    background-position-x: -25px;
-    background-position-y: -50px;
+    --spX: 25;
+    --spY: 50;
   }
 </style>

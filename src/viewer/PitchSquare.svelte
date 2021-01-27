@@ -3,29 +3,34 @@
   import Cell from "./Cell.svelte";
   import Player from "./Player.svelte";
   import Ball from "./Ball.svelte";
-  import { pitch, homeTeam, awayTeam } from "../stores.js";
-  export let id, row, column, width, height;
+  import DiceResult from "./DiceResult.svelte";
+  import About from "../About.svelte";
+  export let id, row, column, width, height, pitch, homeLogo, awayLogo;
   let player = null,
     cell = null,
-    ball = null;
+    ball = null,
+    dice = null;
 
   $: {
-    ({ player, cell, ball } = $pitch[row][column]);
+    ({ player, cell, ball, dice } = pitch[`${column}-${row}`] || {});
   };
 </script>
 
 <div {id} class="pitch-square">
-  {#if column == 0 && row == 7 && $homeTeam.logo}
-    <TeamLogo logo={$homeTeam.logo.toLowerCase()} />
+  {#if column == 0 && row == 7 && homeLogo}
+    <TeamLogo logo={homeLogo.toLowerCase()} />
   {/if}
-  {#if column == 25 && row == 7 && $awayTeam.logo}
-    <TeamLogo logo={$awayTeam.logo.toLowerCase()} />
+  {#if column == 25 && row == 7 && awayLogo}
+    <TeamLogo logo={awayLogo.toLowerCase()} />
   {/if}
   {#if cell}
     <Cell {...cell} />
   {/if}
   {#if player}
     <Player {...player} />
+  {/if}
+  {#if dice}
+    <DiceResult {dice} />
   {/if}
   {#if ball}
     <Ball {...ball} />
@@ -34,7 +39,7 @@
 
 <style>
   .pitch-square {
-    border: 1px dashed rgba(170, 173, 179, 0.31);
+    border: 1.5px dashed rgba(255, 255, 255, 0.31);
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;

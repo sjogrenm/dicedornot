@@ -4,15 +4,19 @@
 <style>
   #ball {
     background-image: url("/images/ball.png");
-    width: 39px;
-    height: 26px;
+    top: 25%;
+    left: 12.5%;
+    width: 75%;
+    height: 50%;
     background-repeat: no-repeat;
-  }
-  .held {
-    background-image: url("/images/ball-held.png") !important;
-    width: 26px !important;
+    background-size: contain;
     position: absolute;
-    bottom: 5px;
+  }
+  #ball.held {
+    background-image: url("/images/ball-held.png");
+    width: 50%;
+    top: 50%;
+    left: 25%;
     z-index: 1;
   }
 </style>
