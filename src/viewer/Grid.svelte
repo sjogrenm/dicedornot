@@ -1,7 +1,7 @@
 <FixedRatio {width} {height}>
   <div class="grid" style="grid-template-columns: repeat({width}, minmax(0, 1fr));  grid-template-rows: repeat({height}, minmax(0, 1fr));">
-    {#each Array(height) as _r, row}
-      {#each Array(width) as _C, column}
+    {#each Array(height) as _r, row (row)}
+      {#each Array(width) as _c, column (column)}
         {#if component}
           <svelte:component this={component} {row} {column} {width} {height} {...componentProps} id="{prefix}_{column}_{row}"/>
         {:else}

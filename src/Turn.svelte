@@ -17,7 +17,7 @@
   <summary>{rolls[0].activeTeam.name} - Turn {rolls[0].turn}</summary>
   {#if open}
     <ul class="list-group" on:click|stopPropagation>
-      {#each rolls as roll}
+      {#each rolls as roll (roll.rolLIndex)}
         <li
           class="list-group-item list-group-item-action"
           class:active={selectedRoll == roll.rollIndex}

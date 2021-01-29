@@ -53,7 +53,7 @@
     height:50%;
   }
   .turn.active {
-    color: hsl(60, 100%, 67%);
+    color: #ffb22e;
   }
   .score {
     position: absolute;

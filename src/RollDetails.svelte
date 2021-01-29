@@ -30,7 +30,7 @@
 
 <div class="details-list">
   <ul>
-    {#each groupedRolls as rolls}
+    {#each groupedRolls as rolls (rolls[0].rollIndex)}
       <li
         class="list-group-item list-group-item-action"
         on:click|stopPropagation={() => (rolls.open = !rolls.open)}

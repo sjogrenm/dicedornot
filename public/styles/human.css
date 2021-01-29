@@ -1,5 +1,10 @@
-.human.home {background-image: url("/images/players/human/home.png");}
-.human.away {background-image: url("/images/players/human/away.png");}
+.human.home {
+  background-image: url("/images/players/human/home.png");
+}
+
+.human.away {
+  background-image: url("/images/players/human/away.png");
+}
 
 .human.sprite {
   --imH: 178;
@@ -8,20 +13,37 @@
   --spH: 28;
   --spX: 0;
   --spY: 0;
-  --spScale:75%;
+  --spScale: 75%;
   width: var(--spScale);
   height: var(--spScale);
 }
-.human.ogre{
-  --spW:38;
-  --spH:38;
+
+.human.ogre {
+  --spW: 38;
+  --spH: 38;
   --spScale: 100%;
 }
 
-.human.lineman2{--spY: 29;}
-.human.thrower{--spY: 57;}
-.human.blitzer{--spY: 85;}
-.human.catcher{--spY: 113;}
-.human.ogre{--spY: 141;}
+.human.lineman2 {
+  --spY: 29;
+}
 
-.human.moving,.human.prone,.human.stunned{--spX: var(--spS);}
+.human.thrower {
+  --spY: 57;
+}
+
+.human.blitzer {
+  --spY: 85;
+}
+
+.human.catcher {
+  --spY: 113;
+}
+
+.human.ogre {
+  --spY: 141;
+}
+
+.human.moving, .human.prone, .human.stunned {
+  --spX: var(--spS);
+}

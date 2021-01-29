@@ -60,7 +60,7 @@ export let homeTeam, weather;
     height:50%;
   }
   .turn.active {
-    color: hsl(60, 100%, 67%);
+    color: #ffb22e;
   }
   .score {
     display:flex;

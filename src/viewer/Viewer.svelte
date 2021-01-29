@@ -1,5 +1,4 @@
 <script>
-  import DiceResult from "./DiceResult.svelte";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
@@ -11,34 +10,43 @@
     Casualties,
     ROLL,
   } from "../../js/constants.js";
-  import { replay } from "../../js/replay";
-import { onMount, tick } from "svelte";
-import { Roll, ROLL_TYPES } from "../../js/rolls";
-import FixedRatio from "./FixedRatio.svelte";
-
+  import { onMount, tick } from "svelte";
+  import FixedRatio from "./FixedRatio.svelte";
+  import Banner from "./Banner.svelte";
   export let replaySteps;
-  let queue;
+  let queue,
+    lastPlayerId,
+    lastChainPush,
+    races,
+    homeTeam,
+    awayTeam,
+    pitch,
+    blitzerId,
+    banner;
 
-  let lastPlayerId = 0;
-
-  let lastChainPush = null;
-  let races = [];
-  let homeTeam = {}, awayTeam = {}, pitch = {};
-  let blitzerId;
-
-  let DUGOUT_POSITIONS = {
+  const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
     [SITUATION.KO]: "ko",
     [SITUATION.Casualty]: "cas",
     [SITUATION.SentOff]: "cas",
   };
 
-  $: queue = [...replaySteps];
+  $: initQueue();
 
   onMount(() => {
     processQueue();
-    return () => console.log('destroyed');
+    return () => console.log("destroyed");
   });
+
+  function initQueue() {
+    queue = [...replaySteps];
+    lastPlayerId = 0;
+    lastChainPush = null;
+    races = [];
+    homeTeam = {};
+    awayTeam = {};
+    pitch = {};
+  }
 
   function resetFromBoardState(boardState) {
     clearTemporaryState();
@@ -56,7 +64,6 @@ import FixedRatio from "./FixedRatio.svelte";
     ).filter((v, i, a) => a.indexOf(v) === i);
     setPlayerStates(boardState);
     setBallPosition(boardState);
-    console.log(boardState, pitch, homeTeam, awayTeam);
   }
 
   function processTeam(team, active) {
@@ -69,7 +76,7 @@ import FixedRatio from "./FixedRatio.svelte";
       },
       score: team.Touchdown || 0,
       name: team.Data.Name,
-      turn: team.Data.GameTurn || 1,
+      turn: team.GameTurn || 1,
       active,
       //rerolls
       //inducements
@@ -77,8 +84,18 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function setPitchSquare(x, y) {
-    let square = pitch[`${x}-${y}`] = pitch[`${x}-${y}`] || {};
+    let square = (pitch[`${x}-${y}`] = pitch[`${x}-${y}`] || {});
     return square;
+  }
+  function setPlayer(id) {
+    let player;
+    Object.entries(pitch).forEach(([idx, square]) => {
+      if (square.player && square.player.id == id) {
+        pitch[idx] = square;
+        player = square.player;
+      }
+    });
+    return player;
   }
   function getPitchSquare(x, y) {
     return pitch[`${x}-${y}`] || {};
@@ -89,11 +106,11 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function setPlayerStates(boardState) {
-    Object.values(pitch).forEach(square => {
+    Object.values(pitch).forEach((square) => {
       if (square.player) {
-        delete square.player;
+        square.player = null;
       }
-    })
+    });
     boardState.ListTeams.TeamState[0].ListPitchPlayers.PlayerState.map((p) =>
       placePlayer(p, "home")
     );
@@ -131,7 +148,10 @@ import FixedRatio from "./FixedRatio.svelte";
 
     if (p.Situation >= SITUATION.Casualty) {
       if (p.Situation === SITUATION.Casualty) {
-        player.cas = Casualties[Math.max(...p.sustainedCasualties)].icon;
+        player.cas =
+          Casualties[
+            Math.max(...translateStringNumberList(p.ListCasualties))
+          ].icon;
       } else {
         player.cas = "Expelled";
       }
@@ -153,14 +173,13 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function setBallPosition(boardState) {
-
-    let {x, y} = boardState.Ball.Cell;
-    Object.values(pitch).forEach(square => {
-      delete square.ball;
-    })
+    let { x, y } = boardState.Ball.Cell;
+    Object.values(pitch).forEach((square) => {
+      square.ball = null;
+    });
 
     if (x != -1 && y != -1) {
-      setPitchSquare(x, y).ball = {held: boardState.Ball.IsHeld == 1};
+      setPitchSquare(x, y).ball = { held: boardState.Ball.IsHeld == 1 };
     }
   }
 
@@ -239,7 +258,7 @@ import FixedRatio from "./FixedRatio.svelte";
     if (!str) return [];
 
     var stripped = str.substring(1, str.length - 1);
-    var textList = stripped.split(',');
+    var textList = stripped.split(",");
 
     var numberList = [];
     for (var i = 0; i < textList.length; i++) {
@@ -249,24 +268,22 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async function processQueue() {
     while (true) {
       if (queue.length === 0) {
-        return;
+        initQueue();
       }
 
       const replayStep = queue.shift();
-      console.log(replayStep);
 
       for (const boardAction of ensureList(replayStep.RulesEventBoardAction)) {
-
         if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results
 
         const action = actions[boardAction.ActionType || 0];
-        let timing = 475;
+        let timing = 50;
         if (
           [ACTION_TYPE.Block, ACTION_TYPE.Blitz, ACTION_TYPE.Pass].includes(
             boardAction.ActionType
@@ -277,7 +294,6 @@ import FixedRatio from "./FixedRatio.svelte";
         try {
           action(boardAction);
           await tick();
-          console.log("Completed action", {action, boardAction});
         } catch (error) {
           await tick();
           console.error("Action failed", { error, boardAction });
@@ -286,7 +302,9 @@ import FixedRatio from "./FixedRatio.svelte";
 
         await sleep(timing);
       }
-      resetFromBoardState(replayStep.BoardState);
+      if (replayStep.BoardState) {
+        resetFromBoardState(replayStep.BoardState);
+      }
     }
   }
   // wget http://rebblvision.rebbl.net/images/players/{human,dwarf,skaven,orc,lizardman,goblin,woodelf,chaos,darkelf,undead,norse,amazon,proelf,highelf,khemri,necromantic,nurgle,vampire,chaosdwarf,underworld,bretonnian,kislev,chaospact}/{home,away}.png -nH -x
@@ -557,26 +575,26 @@ import FixedRatio from "./FixedRatio.svelte";
   function clearTemporaryState() {
     Object.entries(pitch).forEach(([idx, square]) => {
       square.dice = null;
-      if (square.cell) {
-        square.cell.target = false;
-        square.cell.moved = false;
-        square.cell.active = false;
-      }
+      square.cell = null;
       if (square.player) {
         square.player.moving = false;
       }
       pitch[idx] = square;
     });
-    console.log(pitch);
   }
 
   function handleActivate(action) {
     clearTemporaryState();
     Object.entries(pitch).forEach(([idx, square]) => {
+      if (square.cell) {
+        square.cell.active = false;
+      }
       if (square.player) {
-        square.player.active = false;
         if (square.player.id == action.ActivePlayerId) {
-          square.player.active = true;
+          if (!square.cell) {
+            square.cell = {};
+          }
+          square.cell.active = true;
           square.player.prone = false;
         }
         if (square.player.id == lastPlayerId) {
@@ -589,7 +607,7 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function handleBall(action) {
-    delete setPitchSquare(action.Order.CellFrom.x, action.Order.CellFrom.y).ball;
+    setPitchSquare(action.Order.CellFrom.x, action.Order.CellFrom.y).ball = null;
     let to = action.Order.CellTo.Cell;
     setPitchSquare(to.x, to.y).ball = {
       held: false,
@@ -605,35 +623,46 @@ import FixedRatio from "./FixedRatio.svelte";
     let toSquare = setPitchSquare(to.x, to.y);
     let toPlayer = toSquare.player;
 
-    Object.values(pitch).forEach(square => {
-      delete (square.player || {}).dice;
-    })
+    Object.values(pitch).forEach((square) => {
+      (square.player || {}).dice = null;
+    });
 
-    if (action.Results.BoardActionResult.RollType === 5) {
-      let target = setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y);
+    if (action.Results.BoardActionResult.RollType === ROLL.Block) {
+      let target = setPitchSquare(
+        action.Order.CellTo.Cell.x,
+        action.Order.CellTo.Cell.y
+      );
       if (!target.cell) {
         target.cell = {};
       }
       target.cell.target = true;
 
       if (action.Results.BoardActionResult.IsOrderCompleted) {
-        target['dice'] = [translateStringNumberList(action.Results.BoardActionResult.CoachChoices.ListDices)[0]];
+        target["dice"] = [
+          translateStringNumberList(
+            action.Results.BoardActionResult.CoachChoices.ListDices
+          )[0],
+        ];
       } else {
-        let dice = translateStringNumberList(action.Results.BoardActionResult.CoachChoices.ListDices);
-        target.dice = dice.slice(0, dice.length/2);
+        let dice = translateStringNumberList(
+          action.Results.BoardActionResult.CoachChoices.ListDices
+        );
+        target.dice = dice.slice(0, dice.length / 2);
       }
     }
-    if (action.Results.BoardActionResult.RollType === 13) {
+    if (action.Results.BoardActionResult.RollType === ROLL.Push) {
       //pushback
       if (action.Results.BoardActionResult.IsOrderCompleted) {
-        Object.values(pitch).forEach(square => {
+        Object.values(pitch).forEach((square) => {
           if (square.cell) {
-            delete square.cell.pushbackChoice;
-            delete square.cell.target;
+            square.cell.pushbackChoice = false;
+            square.cell.target = false;
           }
         });
 
-        let pushTarget = ensureList(action.Results.BoardActionResult.CoachChoices.ListCells)[0].Cell;
+        let pushTarget = ensureList(
+          action.Results.BoardActionResult.CoachChoices.ListCells.Cell
+        )[0];
         let targetSquare = setPitchSquare(pushTarget.x, pushTarget.y);
         if (lastChainPush) {
           toPlayer = lastChainPush;
@@ -646,23 +675,26 @@ import FixedRatio from "./FixedRatio.svelte";
         }
 
         targetSquare.player = toPlayer;
-        delete toSquare.player;
+        toSquare.player = null;
       } else {
-        ensureList(action.Results.BoardActionResult.CoachChoices.ListCells).map((cell) => {
-          const square = setPitchSquare(cell.x, cell.y);
-          square.cell.pushbackChoice = true;
+        ensureList(action.Results.BoardActionResult.CoachChoices.ListCells.Cell).forEach(
+          (cell) => {
+            let square = setPitchSquare(cell.x, cell.y);
+            square.cell = square.cell || {};
+            square.cell.pushbackChoice = true;
 
-          if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
-            throw "Unexpected surf as a choice";
-            //surf
-            const target = this.getAvailableGridItem(
-              action.ActivePlayerId,
-              1,
-              action.ActivePlayerId < 21 ? "home" : "away"
-            );
-            target.appendChild(sprite);
+            if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
+              throw "Unexpected surf as a choice";
+              //surf
+              const target = this.getAvailableGridItem(
+                action.ActivePlayerId,
+                1,
+                action.ActivePlayerId < 21 ? "home" : "away"
+              );
+              target.appendChild(sprite);
+            }
           }
-        });
+        );
       }
     }
     if (action.Results.BoardActionResult.RollType === ROLL.FollowUp) {
@@ -670,9 +702,12 @@ import FixedRatio from "./FixedRatio.svelte";
       if (action.Results.BoardActionResult.IsOrderCompleted) {
         const from = action.Order.CellFrom;
         const fromSquare = setPitchSquare(from.x, from.y);
-        const target = ensureList(action.Results.BoardActionResult.CoachChoices.ListCells)[0];
-        const targetSquare = setPitchSquare(target.x, target.y).player = fromSquare.player;
-        delete fromSquare.player;
+        const target = ensureList(
+          action.Results.BoardActionResult.CoachChoices.ListCells.Cell
+        )[0];
+        const targetSquare = (setPitchSquare(target.x, target.y).player =
+          fromSquare.player);
+        fromSquare.player = null;
       }
     }
   }
@@ -681,23 +716,16 @@ import FixedRatio from "./FixedRatio.svelte";
     if (!action.Results.BoardActionResult.IsOrderCompleted) return;
     if (action.Results.BoardActionResult.ResultType !== 0) return;
 
-    Object.values(pitch).forEach(cell => cell['ball'] = null);
-    setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y).ball = {held: true};
+    Object.values(pitch).forEach((cell) => (cell["ball"] = null));
+    setPitchSquare(
+      action.Order.CellTo.Cell.x,
+      action.Order.CellTo.Cell.y
+    ).ball = { held: true };
   }
 
   function handleEndTurn(state) {
     if (state.turnover) {
-      const div = document.createElement("div");
-      div.classList.add("banner");
-      div.classList.add("turnover");
-      div.id = "banner";
-      const container = document.getElementById("container");
-      container.appendChild(div);
-
-      setTimeout((_) => {
-        const div = document.getElementById("banner");
-        div.parentElement.removeChild(div);
-      }, 2500);
+      banner = "turnover";
     }
 
     ["moving", "blitz", "done"].map(this.cleanClass);
@@ -726,7 +754,9 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function handleFoul(state) {
-    const target = document.getElementById(`pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`);
+    const target = document.getElementById(
+      `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
+    );
 
     if (action.Results.BoardActionResult.RollType === 0) {
       let div = document.createElement("div");
@@ -736,24 +766,26 @@ import FixedRatio from "./FixedRatio.svelte";
       target.prepend(div);
     }
   }
-  function handleFrontToBack(state) {
-    const sprite = document.getElementById(`player_${action.ActivePlayerId}`);
-    sprite.classList.remove("stunned");
-    sprite.classList.add("prone");
+  function handleFrontToBack(action) {
+    let player = setPlayer(action.PlayerId);
+    player.stunned = false;
+    player.prone = true;
   }
 
   function handleHandoff(state) {
     let sprite = document.getElementById("ball");
     sprite.classList.remove("held");
-    const target = document.getElementById(`pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`);
+    const target = document.getElementById(
+      `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
+    );
     target.appendChild(sprite);
   }
 
   function handleKickoff(action) {
-    let {x, y} = action.Order.CellTo.Cell;
-    let square = setPitchSquare(x, y).ball = {
+    let { x, y } = action.Order.CellTo.Cell;
+    let square = (setPitchSquare(x, y).ball = {
       held: false,
-    };
+    });
   }
 
   function handleLeap(action) {
@@ -761,34 +793,52 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function handleMove(action) {
-    let squareFrom = setPitchSquare(action.Order.CellFrom.x, action.Order.CellFrom.y);
-    let squareTo = setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y);
-    console.log(pitch, squareFrom, squareTo);
+    let player = setPlayer(action.PlayerId);
+    let squareFrom = setPitchSquare(
+      action.Order.CellFrom.x,
+      action.Order.CellFrom.y
+    );
+    let squareTo = setPitchSquare(
+      action.Order.CellTo.Cell.x,
+      action.Order.CellTo.Cell.y
+    );
 
-    delete squareFrom.player.prone;
-    squareFrom.player.moving = true;
-    if (action.Results.BoardActionResult.IsOrderCompleted) {
-      squareTo.player = squareFrom.player;
-      delete squareFrom.player;
+    player.prone = false;
+    player.moving = true;
+    if (
+      action.Results.BoardActionResult.IsOrderCompleted &&
+      squareTo != squareFrom
+    ) {
+      squareTo.player = player;
+      squareFrom.player = null;
     }
 
     squareFrom.cell = squareFrom.cell || {};
     squareFrom.cell.moved = true;
-    delete squareFrom.cell.active;
-    squareTo.cell = squareTo.cell || {};
-    squareTo.cell.active = true;
+    squareFrom.cell.active = false;
 
-    if (action.Results.BoardActionResult.RollType && [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(action.Results.BoardActionResult.RollType)) {
+    if (action.Results.BoardActionResult.IsOrderCompleted) {
+      squareTo.cell = squareTo.cell || {};
+      squareTo.cell.active = true;
+    }
+
+    if (
+      action.Results.BoardActionResult.RollType &&
+      [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(
+        action.Results.BoardActionResult.RollType
+      )
+    ) {
       //Dodge, GFI, Leap
+      squareTo.cell = squareTo.cell || {};
       squareTo.cell.plus = action.Results.BoardActionResult.Requirement;
     }
 
-    if (squareTo.player.id == blitzerId) {
-      squareTo.player.blitz = true;
+    if (player.id == blitzerId) {
+      player.blitz = true;
     }
     if (squareFrom.ball) {
       squareTo.ball = squareFrom.ball;
-      delete squareFrom.ball;
+      squareFrom.ball = null;
     }
   }
 
@@ -802,24 +852,28 @@ import FixedRatio from "./FixedRatio.svelte";
       Bloodlust = 50,
 
     */
-    square = setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y);
+    let square = setPitchSquare(
+      action.Order.CellTo.Cell.x,
+      action.Order.CellTo.Cell.y
+    );
 
     if (action.Results.BoardActionResult.ResultType === 0) {
       //success
-      delete square.player.stupidity;
+      square.player.stupidity = null;
       return;
     } else {
       //failure
-      STUPID_TYPES = {
-        [ROLL.BoneHead]: 'BoneHeaded',
-        [ROLL.ReallyStupid]: 'Stupid',
-        [ROLL.TakeRoot]: 'Rooted',
-      }
-      square.player.stupidity = STUPID_TYPES[action.Results.BoardActionResult.RollType];
+      const STUPID_TYPES = {
+        [ROLL.BoneHead]: "BoneHeaded",
+        [ROLL.ReallyStupid]: "Stupid",
+        [ROLL.TakeRoot]: "Rooted",
+      };
+      square.player.stupidity =
+        STUPID_TYPES[action.Results.BoardActionResult.RollType];
     }
   }
 
-  function handlePass(state) {
+  function handlePass(action) {
     if (!action.Results.BoardActionResult.IsOrderCompleted) {
       return;
     }
@@ -829,7 +883,9 @@ import FixedRatio from "./FixedRatio.svelte";
 
     if (action.Results.BoardActionResult.ResultType === 0) {
       //success
-      const target = document.getElementById(`pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`);
+      const target = document.getElementById(
+        `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
+      );
 
       target.appendChild(sprite);
       return;
@@ -837,13 +893,16 @@ import FixedRatio from "./FixedRatio.svelte";
   }
 
   function handlePickup(action) {
-    if (action.Results.BoardActionResult.IsOrderCompleted && action.Results.BoardActionResult.ResultType === 0)
-      Object.values(pitch).forEach(square => {
-        if (square['ball']) {
+    if (
+      action.Results.BoardActionResult.IsOrderCompleted &&
+      action.Results.BoardActionResult.ResultType === 0
+    )
+      Object.values(pitch).forEach((square) => {
+        if (square["ball"]) {
           //successful pickup
-          square['ball']['held'] = true;
+          square["ball"]["held"] = true;
         }
-      })
+      });
   }
 
   function handleTakeDamage(action) {
@@ -853,11 +912,11 @@ import FixedRatio from "./FixedRatio.svelte";
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
-        delete square.cell.target;
+        square.cell.target = null;
       }
       if (square.player && square.player.id == action.PlayerId) {
         player = square.player;
-        pitch[idx] = square;  // Force svelte to update
+        pitch[idx] = square; // Force svelte to update
         playerSquareIndex = idx;
       }
     });
@@ -877,173 +936,62 @@ import FixedRatio from "./FixedRatio.svelte";
         } else if (action.Results.BoardActionResult.SubResultType === 3) {
           //knocked out
           let team = player.team;
-          let dugout = team == 'home' ? homeTeam.dugout : awayTeam.dugout;
+          let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
           dugout.ko.push(player);
-          delete pitch[playerSquareIndex].player;
+          pitch[playerSquareIndex].player = null;
         }
         break;
       case 8: //casualty
         //knocked out
         let team = player.team;
-        let dugout = team == 'home' ? homeTeam.dugout : awayTeam.dugout;
+        let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
         dugout.cas.push(player);
-        delete pitch[playerSquareIndex].player;
-        pitch[playerSquareIndex].cell.blood = Math.floor(4 * Math.random() + 1);
+        pitch[playerSquareIndex].player = null;
+        pitch[playerSquareIndex].blood = {blood: Math.floor(4 * Math.random() + 1)};
         break;
       case 25: //regeneration
     }
   }
 
-  function handleTouchdown() {
-    const div = document.createElement("div");
-    div.classList.add("banner");
-    div.classList.add("touchdown");
-    div.id = "banner";
-    const container = document.getElementById("container");
-    container.appendChild(div);
-
-    let elements = document.getElementsByClassName("Stupidity");
-    while (elements.length > 0) {
-      elements[0].parentNode.removeChild(elements[0]);
-    }
-
-    [
-      "active",
-      "dice",
-      "cell",
-      "d1v",
-      "d1h",
-      "d2v",
-      "d2v",
-      "d3v",
-      "d3v",
-      "attacker-down",
-      "both-down",
-      "defender-down",
-      "defender-stumbles",
-      "push",
-      "foul",
-    ].map((cls) => {
-      let elements = document.getElementsByClassName(cls);
-      while (elements.length > 0) {
-        elements[0].remove(cls);
-      }
-    });
-
-    setTimeout((_) => {
-      const div = document.getElementById("banner");
-      div.parentElement.removeChild(div);
-    }, 2500);
+  async function handleTouchdown() {
+    banner = "touchdown";
+    clearTemporaryState();
+    await sleep(500);
+    banner = null;
   }
 </script>
 
 <svelte:head>
-  {#each races as race}
+  {#each races as race (race)}
     <link rel="stylesheet" href="/styles/{race}.css" />
   {/each}
   <link rel="stylesheet" href="/styles/sprite.css" />
 </svelte:head>
 
 <FixedRatio width={1335} height={1061}>
+  {#if banner}
+    <Banner {banner} />
+  {/if}
   <div class="pitch">
     <HomeDugout {homeTeam} />
     <Pitch {pitch} {homeTeam} {awayTeam} />
-    <AwayDugout {awayTeam}/>
+    <AwayDugout {awayTeam} />
   </div>
 </FixedRatio>
 
 <style>
   .pitch {
-    background-image: url('/images/pitch.png');
+    background-image: url("/images/pitch.png");
     background-size: 100% 100%;
     background-repeat: no-repeat;
     width: 100%;
     height: 100%;
-    position:relative;
+    position: relative;
   }
   @font-face {
     font-family: "trump_town_proregular";
     src: url("Trump_Town_Pro-webfont.woff") format("woff");
     font-weight: normal;
     font-style: normal;
-  }
-
-  h1 {
-    font-family: "trump_town_proregular";
-    color: whitesmoke;
-  }
-
-  .active-turn {
-    color: #ffb22e;
-  }
-
-  .grid_item {
-    border: 1px dashed rgba(170, 173, 179, 0.31);
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    position: relative;
-  }
-  .grid_item_dice {
-    display: -webkit-box;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    position: relative;
-  }
-  .grid_stat {
-    width: 19px;
-    height: 15px;
-    text-align: center;
-    display: inline-block;
-    align-self: flex-end;
-    font-size: smaller;
-    margin-top: 1px;
-  }
-
-  .box {
-    display: grid;
-    grid-template-columns: auto auto auto auto auto auto auto auto auto auto auto auto;
-    grid-template-rows: auto auto;
-    width: 600px;
-  }
-  .box.away {
-    clear: both;
-    float: right;
-    margin-right: 5px;
-  }
-  .box.home {
-    margin-left: 5px;
-    top: 8px;
-    position: absolute;
-  }
-
-  .banner {
-    background: url("/images/banner.png") no-repeat;
-    width: 1024px;
-    height: 512px;
-    display: inline-block;
-    position: absolute;
-  }
-  .touchdown {
-    background-position-y: 0px;
-  }
-  .turnover {
-    background-position-y: -539px;
   }
 </style>

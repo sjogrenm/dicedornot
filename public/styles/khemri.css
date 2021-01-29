@@ -1,21 +1,69 @@
-:root{--km:-28px;--kl:-30px;}
+.khemri.home {
+  background: url("/images/players/khemri/home.png") no-repeat;
+}
 
-.khemri.home {background: url("/images/players/khemri/home.png") no-repeat;}
-.khemri.away {background: url("/images/players/khemri/away.png") no-repeat;}
+.khemri.away {
+  background: url("/images/players/khemri/away.png") no-repeat;
+}
 
-.khemri{width: calc(-1 * var(--km)); height: calc(-1 * var(--km)); display: inline-block; background-position-x: 0px;}
-.khemri.mummy1,.khemri.mummy2{width: calc(-1 * var(--kl)); height: calc(-1 * var(--kl));}
+.khemri.sprite {
+  --imH: 284;
+  --imW: 60;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.khemri.lineman1{background-position-y: 0px;}
-.khemri.lineman2{background-position-y: var(--km);}
-.khemri.lineman3{background-position-y: calc(2 * var(--km));}
-.khemri.lineman4{background-position-y: calc(3 * var(--km));}
-.khemri.thrower1{background-position-y: calc(4 * var(--km));}
-.khemri.thrower2{background-position-y: calc(5 * var(--km));}
-.khemri.blitzer1{background-position-y: calc(6 * var(--km));}
-.khemri.blitzer2{background-position-y: calc(7 * var(--km));}
-.khemri.mummy1{background-position-y: calc(8 * var(--km));}
-.khemri.mummy2{background-position-y: calc(8 * var(--km) + var(--kl));}
+.khemri.mummy1, .khemri.mummy2 {
+  --spScale: 100%;
+  --spW: 30;
+  --spH: 30;
+}
 
-.khemri.moving,.khemri.prone,.khemri.stunned{background-position-x: var(--km);}
-.khemri.mummy1.moving,.khemri.mummy2.moving,.khemri.mummy1.prone,.khemri.mummy2.prone,.khemri.mummy1.stunned,.khemri.mummy2.stunned{background-position-x: var(--kl);}
+.khemri.lineman2 {
+  --imY: 28;
+}
+
+.khemri.lineman3 {
+  --imY: 56;
+}
+
+.khemri.lineman4 {
+  --imY: 84;
+}
+
+.khemri.thrower1 {
+  --imY: 112;
+}
+
+.khemri.thrower2 {
+  --imY: 140;
+}
+
+.khemri.blitzer1 {
+  --imY: 168;
+}
+
+.khemri.blitzer2 {
+  --imY: 196;
+}
+
+.khemri.mummy1 {
+  --imY: 224;
+}
+
+.khemri.mummy2 {
+  --imY: 254;
+}
+
+.khemri.moving, .khemri.prone, .khemri.stunned {
+  --imX: 28;
+}
+
+.khemri.mummy1.moving, .khemri.mummy2.moving, .khemri.mummy1.prone, .khemri.mummy2.prone, .khemri.mummy1.stunned, .khemri.mummy2.stunned {
+  --imX: 30;
+}

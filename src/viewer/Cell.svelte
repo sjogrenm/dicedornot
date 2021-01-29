@@ -3,47 +3,53 @@
     active = false,
     target = false,
     pushbackChoice = false,
-    blood = null;
+    moved = false;
 
-  $: plusClass = plus ? `plus${plus}` : "";
+  $: plusClass = (!active && plus) ? `plus${plus}` : "";
 </script>
 
 <div
-  class={`cell ${plusClass}`}
+  class={`cell sprite ${plusClass}`}
   class:active
   class:target
+  class:moved
   class:pushback-choice={pushbackChoice}
 />
 
 <style>
   .cell {
-    background: url("/images/cells.png") no-repeat;
-    width: 50px;
-    height: 50px;
+    background-image: url("/images/cells.png");
+    background-repeat: no-repeat;
+    --spW: 50;
+    --spH: 50;
     display: inline-block;
-    background-position-x: 0px;
+    --spX: 0;
+    --spY: 0;
     position: absolute;
+    --imH: 300;
+    --imW: 400;
+    width: 95%;
+    height: 95%;
   }
 
   .active {
-    background-position-x: -100px;
-    background-position-y: -150px;
+    --spX: 100;
+    --spY: 150;
   }
   .moved {
-    background-position-x: -100px;
-    background-position-y: 0px;
+    --spX: 100;
   }
   .target {
-    background-position-x: -200px;
-    background-position-y: 0px;
+    --spX: 200;
+    --spY: 0;
   }
   .pushback-choice {
-    background-position-x: -50px;
-    background-position-y: -150px;
+    --spX: 50;
+    --spY: 150;
   }
   .pushback-chosen {
-    background-position-x: -250px;
-    background-position-y: -150px;
+    --spX: 250;
+    --spY: 150;
   }
   .push-left {
     transform: scaleX(-1);
@@ -53,48 +59,41 @@
   }
 
   .plus2 {
-    background-position-x: -250px;
-    background-position-y: 0px;
+    --spX: 250;
   }
   .plus3 {
-    background-position-x: -300px;
-    background-position-y: 0px;
+    --spX: 300;
   }
   .plus4 {
-    background-position-x: -350px;
-    background-position-y: 0px;
+    --spX: 350;
   }
   .plus5 {
-    background-position-x: -250px;
-    background-position-y: -50px;
+    --spX: 250;
+    --spY: 50;
   }
   .plus6 {
-    background-position-x: -300px;
-    background-position-y: -50px;
+    --spX: 300;
+    --spY: 50;
   }
   
   .blood {
     background: url("/images/blood.png") no-repeat;
-    width: 40px;
-    height: 40px;
-    display: inline-block;
-    background-position-x: 0px;
+    --spW: 40;
+    --spH: 40;
+    --spX: 0;
+    --spY: 0;
+    --imH: 80;
+    --imW: 80;
     position: absolute;
   }
-  .splatter1 {
-    background-position-x: 0px;
-    background-position-y: 0px;
-  }
   .splatter2 {
-    background-position-x: -40px;
-    background-position-y: 0px;
+    --spX: 40;
   }
   .splatter3 {
-    background-position-x: 0px;
-    background-position-y: -40px;
+    --spY: 40;
   }
   .splatter4 {
-    background-position-x: -40px;
-    background-position-y: -40px;
+    --spX: 40;
+    --spY: 40;
   }
 </style>
