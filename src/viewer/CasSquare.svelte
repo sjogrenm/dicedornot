@@ -25,7 +25,6 @@
 
 <style>
   .pitch-square {
-    border: 1px dashed rgba(170, 173, 179, 0.31);
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;

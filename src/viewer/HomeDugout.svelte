@@ -3,79 +3,88 @@
 import HomeBench from "./HomeBench.svelte";
 import TeamAids from "./TeamAids.svelte";
 import SelectedPlayer from "./SelectedPlayer.svelte";
-import FixedRatio from "./FixedRatio.svelte";
+import Weather from "./Weather.svelte";
 
-export let homeTeam;
+export let homeTeam, weather;
 
 </script>
 
-<div class="row">
-  <div class="col">
-    <HomeBench dugout={homeTeam.dugout}/>
-    <div class="row name">
-      <div class="col-2">
-        <img src="/images/logo/256x256/logo_{homeTeam.logo}.png" alt="Logo: {homeTeam.logo}" class="logo"/>
-      </div>
-      <div class="col">{homeTeam.name}</div>
-    </div>
-  </div>
-  <div class="col-1">
-    <div>
-      <span id="score">{homeTeam.score}</span>
-    </div>
-    <div>
-      <span id="turn" class="">{homeTeam.turn}</span>
-    </div>
-  </div>
-  <div class="col">
-    <div class="row no-gutters">
-      <div class="col">
-        <TeamAids />
-      </div>
-      <div class="col-2">
-        <SelectedPlayer />
-      </div>
-      <div class="col-1">
-        <FixedRatio>
-          <div class="weather sprite heat" id="weather" title="sweltering heat!"/>
-        </FixedRatio>
-      </div>
-    </div>
-  </div>
+<div class="dugout">
+  <HomeBench dugout={homeTeam.dugout}/>
+  <img src="/images/logo/256x256/logo_{homeTeam.logo}.png" alt="Logo: {homeTeam.logo}" class="logo"/>
+  <div class="name">{homeTeam.name}</div>
+  <div class="score"><p>{homeTeam.score}</p></div>
+  <div class="turn" class:active={homeTeam.active}><p>{homeTeam.turn}</p></div>
+  <div class="aids"><TeamAids /></div>
+  <div class="selected"><SelectedPlayer /></div>
+  <div class="weather"><Weather {weather}/></div>
 </div>
 
 <style>
-  .name img {
-    height: 1.5em;
-    width: 1.5em;
+  .logo {
+    position: absolute;
+    width: 3.5%;
+    left: 1.5%;
+    bottom: 1.5%;
   }
   .name {
     font-size: 1.5em;
     font-weight: bold;
+    position: absolute;
+    bottom: 0;
+    left: 6%;
+    font-family: "Nuffle";
+  }
+  .dugout {
+    width: 100%;
+    height: 14.5%;
+    position: relative;
+    color: hsl(0, 0%, 85%);
+    font-family: Nuffle;
   }
   .weather {
-    background-image: url("/images/weather.png");
-    width: 100%;
-    height: 100%;
-    --imW: 192;
-    --imH: 36;
-    --spW: 36;
-    --spH: 36;
-    /* position: absolute; */
+    position: absolute;
+    right: .5%;
+    top: 4%;
+    width: 5%;
   }
-  .heat {
-    --spX: 0;
+  .turn {
+    position: absolute;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    left: 47%;
+    font-size: 200%;
+    width: 6%;
+    bottom:0;
+    height:50%;
   }
-  .sunny {
-    --spX: 39;
+  .turn.active {
+    color: hsl(60, 100%, 67%);
   }
-  .perfect {
-    --spX: 78;
+  .score {
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    left: 47%;
+    font-size: 350%;
+    text-align: center;
+    width: 6%;
+    top: 0;
+    height:50%;
   }
-  .rain {
-    --spX: 117;
+
+  .aids {
+    position: absolute;
+    width: 30%;
+    left: 53%;
+    bottom: 1%;
   }
-  .blizzard {
-    --spX: 156;
+
+  .selected {
+    width: 7.5%;
+    left: 86%;
+    position: relative;
   }
 </style>

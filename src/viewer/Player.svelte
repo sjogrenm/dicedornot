@@ -1,25 +1,39 @@
 <script>
-  export let id, race, model, team, done=false, moving=false, stunned=false, prone=false, blitz=false, cas=null;
+  export let id,
+    race,
+    model,
+    team,
+    done = false,
+    moving = false,
+    stunned = false,
+    prone = false,
+    blitz = false,
+    cas = null,
+    stupidity = null;
+    let classes;
+
+    $: {
+      classes = [race, model, team, 'sprite'].concat(stupidity ? [stupidity] : []).join(' ');
+    }
 </script>
 
-<div 
+<div
   id="player_{id}"
-  class={`${race} ${model} ${team} sprite`}
+  class={classes}
   class:done
   class:moving
   class:stunned
   class:prone
   class:blitz
 >
-{#if cas}
-  <img src={`/images/skills/${cas}.png`} alt={cas}/>
-{/if}
+  {#if cas}
+    <img src={`/images/skills/${cas}.png`} alt={cas} />
+  {/if}
 </div>
 
 <!-- image.src = `https://cdn2.rebbl.net/images/skills/${
   Casualties[Math.max(...p.sustainedCasualties)].icon
 }.png`; -->
-
 <style>
   .reverse {
     transform: scaleX(-1);

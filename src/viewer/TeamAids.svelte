@@ -2,7 +2,7 @@
   import Grid from "./Grid.svelte";
 </script>
 
-<Grid width={12} height={2} prefix="dice">
+<Grid width={10} height={3} prefix="dice">
   <div class="grid_item_dice">
     <div class="inducement wizard" />
   </div>

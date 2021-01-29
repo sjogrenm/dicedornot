@@ -13,7 +13,8 @@
   } from "../../js/constants.js";
   import { replay } from "../../js/replay";
 import { onMount, tick } from "svelte";
-import { Roll } from "../../js/rolls";
+import { Roll, ROLL_TYPES } from "../../js/rolls";
+import FixedRatio from "./FixedRatio.svelte";
 
   export let replaySteps;
   let queue;
@@ -791,7 +792,7 @@ import { Roll } from "../../js/rolls";
     }
   }
 
-  function handleNegaTraits(state) {
+  function handleNegaTraits(action) {
     /* rolltypes
       BoneHead = 20,
       ReallyStupid = 21,
@@ -799,34 +800,22 @@ import { Roll } from "../../js/rolls";
       Loner = 23
       TakeRoot = 40,
       Bloodlust = 50,
- 
+
     */
-    const target = document.getElementById(`pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`);
-    let elements = target.getElementsByClassName("Stupidity");
+    square = setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y);
 
     if (action.Results.BoardActionResult.ResultType === 0) {
       //success
-      while (elements.length > 0) {
-        target.removeChild(elements[0]);
-      }
+      delete square.player.stupidity;
       return;
     } else {
       //failure
-      if (elements.length === 0) {
-        const stateSprite = document.createElement("div");
-        stateSprite.classList.add("Stupidity");
-        if (action.Results.BoardActionResult.RollType === 40) {
-          //take root
-          stateSprite.classList.add("Rooted");
-        } else if (action.Results.BoardActionResult.RollType === 20) {
-          //bonehead
-          stateSprite.classList.add("BoneHeaded");
-        } else if (action.Results.BoardActionResult.RollType === 21) {
-          //really stupid
-          stateSprite.classList.add("Stupid");
-        }
-        if (stateSprite.classList.length > 1) target.appendChild(stateSprite);
+      STUPID_TYPES = {
+        [ROLL.BoneHead]: 'BoneHeaded',
+        [ROLL.ReallyStupid]: 'Stupid',
+        [ROLL.TakeRoot]: 'Rooted',
       }
+      square.player.stupidity = STUPID_TYPES[action.Results.BoardActionResult.RollType];
     }
   }
 
@@ -860,7 +849,7 @@ import { Roll } from "../../js/rolls";
   function handleTakeDamage(action) {
     if (!action.Results.BoardActionResult.IsOrderCompleted) return;
 
-    let player;
+    let player, playerSquareIndex;
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
@@ -869,6 +858,7 @@ import { Roll } from "../../js/rolls";
       if (square.player && square.player.id == action.PlayerId) {
         player = square.player;
         pitch[idx] = square;  // Force svelte to update
+        playerSquareIndex = idx;
       }
     });
 
@@ -888,8 +878,8 @@ import { Roll } from "../../js/rolls";
           //knocked out
           let team = player.team;
           let dugout = team == 'home' ? homeTeam.dugout : awayTeam.dugout;
-            dugout.ko.push(player);
-            delete cell.player;
+          dugout.ko.push(player);
+          delete pitch[playerSquareIndex].player;
         }
         break;
       case 8: //casualty
@@ -897,8 +887,8 @@ import { Roll } from "../../js/rolls";
         let team = player.team;
         let dugout = team == 'home' ? homeTeam.dugout : awayTeam.dugout;
         dugout.cas.push(player);
-        delete cell.player;
-        cell.cell.blood = Math.floor(4 * Math.random() + 1);
+        delete pitch[playerSquareIndex].player;
+        pitch[playerSquareIndex].cell.blood = Math.floor(4 * Math.random() + 1);
         break;
       case 25: //regeneration
     }
@@ -954,11 +944,23 @@ import { Roll } from "../../js/rolls";
   <link rel="stylesheet" href="/styles/sprite.css" />
 </svelte:head>
 
-<HomeDugout {homeTeam} />
-<Pitch {pitch} {homeTeam} {awayTeam} />
-<AwayDugout {awayTeam}/>
+<FixedRatio width={1335} height={1061}>
+  <div class="pitch">
+    <HomeDugout {homeTeam} />
+    <Pitch {pitch} {homeTeam} {awayTeam} />
+    <AwayDugout {awayTeam}/>
+  </div>
+</FixedRatio>
 
 <style>
+  .pitch {
+    background-image: url('/images/pitch.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+    position:relative;
+  }
   @font-face {
     font-family: "trump_town_proregular";
     src: url("Trump_Town_Pro-webfont.woff") format("woff");

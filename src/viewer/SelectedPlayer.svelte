@@ -1,21 +1,34 @@
+<script>
+import FixedRatio from "./FixedRatio.svelte";
 
-<div id="selectedPlayerData">
-  <div id="selectedPlayerName" />
-  <div>
-    <div class="grid_stat">MV</div>
-    <div class="grid_stat" id="selectPlayer-MV" />
-    <div class="grid_stat">ST</div>
-    <div class="grid_stat" id="selectPlayer-ST" />
-    <div class="grid_stat">AG</div>
-    <div class="grid_stat" id="selectPlayer-AG" />
-    <div class="grid_stat">AV</div>
-    <div class="grid_stat" id="selectPlayer-AV" />
+</script>
+
+<FixedRatio width={207} height={317}>
+  <div id="selectedPlayerData">
+    <div id="selectedPlayerName" />
+    <div>
+      <div class="grid_stat">MV</div>
+      <div class="grid_stat" id="selectPlayer-MV" />
+      <div class="grid_stat">ST</div>
+      <div class="grid_stat" id="selectPlayer-ST" />
+      <div class="grid_stat">AG</div>
+      <div class="grid_stat" id="selectPlayer-AG" />
+      <div class="grid_stat">AV</div>
+      <div class="grid_stat" id="selectPlayer-AV" />
+    </div>
+    <div id="selectedPlayerCAS" />
+    <div id="skills" />
   </div>
-  <div id="selectedPlayerCAS" />
-  <div id="skills" />
-</div>
+</FixedRatio>
 <style>
 
+#selectedPlayerData {
+  background-image: url("/images/card.png");
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  width: 100%;
+  height: 100%;
+}
 .skill {
     background: url("/images/skills.png") no-repeat;
     width: 64px;
