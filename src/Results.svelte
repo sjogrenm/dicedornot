@@ -1,16 +1,34 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import embed from "vega-embed";
   import * as vega from "vega";
   import vegaSpec from "../js/vega-spec.js";
   const dispatch = createEventDispatcher();
 
-  console.log("spec", vegaSpec);
+  export let rolls, replayStepIndex, selectedRoll, replayStart, replayEnd;
+  let view, playHead;
 
-  export let rolls;
-  $: {
+  onMount(() => {
+    console.log("Results onMount");
     renderChart();
+    console.log("Results onMount chart rendered");
+    return () => console.log("destroyed");
+  });
+
+  $: {
+    console.log("Results reactive");
+    if (rolls && replayStepIndex) {
+      let nextRoll = rolls.findIndex(roll => {
+        return replayStepIndex < roll.stepIndex;
+      });
+      playHead = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
+    }
+    if (view && playHead) {
+      var changeSet = vega.changeset().remove(() => true).insert([{rollIndex: playHead}]);
+      view = view.change("playHead", changeSet).run();
+    }
   }
+
 
   function renderChart() {
     const valid = rolls.filter((roll) => {
@@ -41,11 +59,14 @@
     embed("#chart", vegaSpec).then((result) => {
       result.view.addEventListener("click", function (event, item) {
         if (item) {
-          dispatch("rollClicked", { rollIndex: item.datum.rollIndex });
+          selectedRoll = item.datum.rollIndex;
+          replayStart = rolls[selectedRoll].stepIndex;
+          replayEnd = rolls[selectedRoll+1].stepIndex;
+          console.log("Results clicked");
         }
       });
 
-      var view = result.view;
+      view = result.view;
       view = result.view.insert("actual", actuals).run();
       view = view.insert("simulated", actuals).run();
 
@@ -65,7 +86,7 @@
           window.setTimeout(addValues, 200);
         }
       }
-      // addValues();
+      addValues();
     });
   }
 </script>

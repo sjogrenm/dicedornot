@@ -16,6 +16,7 @@ export const replay = {
       stepIndex++
     ) {
       var replayStep = data.Replay.ReplayStep[stepIndex];
+      replayStep.index = stepIndex;
       // extractPlayerDetails(replayStep, playerDetails);
       // extractActionsFromStep(replayStep, rolls);
       rolls = rolls.concat(Roll.fromReplayStep(

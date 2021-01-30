@@ -122,6 +122,20 @@ const vegaSpec = {
       ]
     },
     {
+      data: { name: 'playHead' },
+      mark: { type: 'rule' },
+      encoding: {
+        x: {
+          type: 'quantitative',
+          field: 'rollIndex',
+          title: 'Action',
+          axis: {
+            labelExpr: 'floor(datum.label)'
+          }
+        },
+      }
+    },
+    {
       data: { name: 'actual' },
       transform: [
         {

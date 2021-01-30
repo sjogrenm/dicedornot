@@ -14,6 +14,8 @@
   let error = false;
   let replay;
   let selectedRoll;
+  let replayStepIndex = 0;
+  let replayStart, replayEnd;
   $: {
     console.log("Replay", replay);
   }
@@ -99,14 +101,20 @@
           <div class="col-8">
             <Results
               rolls={replay.rolls}
-              on:rollClicked={(e) => (selectedRoll = e.detail.rollIndex)}
+              {replayStepIndex}
+              bind:replayStart
+              bind:replayEnd
+              bind:selectedRoll
             />
             <Viewer
               replaySteps={replay && replay.fullReplay.ReplayStep}
+              bind:replayStepIndex
+              {replayStart}
+              {replayEnd}
             />
           </div>
           <div class="col-4">
-            <RollDetails rolls={replay.rolls} bind:selectedRoll />
+            <RollDetails rolls={replay.rolls} {selectedRoll} />
           </div>
         </div>
       </div>

@@ -1,10 +1,26 @@
 <script>
   import FixedRatio from "./FixedRatio.svelte";
+  import {WEATHER} from '../../js/constants.js';
   export let weather;
+
+  const weatherText = {
+    [WEATHER.Nice]: 'perfect blood bowl weather',
+    [WEATHER.SwelteringHeat]: 'sweltering heat!',
+    [WEATHER.VerySunny]: 'very sunny',
+    [WEATHER.PouringRain]: 'pouring rain',
+    [WEATHER.Blizzard]: 'blizzard go brrrr',
+  }
+  const weatherClass = {
+    [WEATHER.Nice]: 'nice',
+    [WEATHER.SwelteringHeat]: 'heat',
+    [WEATHER.VerySunny]: 'sunny',
+    [WEATHER.PouringRain]: 'rain',
+    [WEATHER.Blizzard]: 'blizzard',
+  }
 </script>
 
 <FixedRatio>
-  <div class={`weather sprite ${weather}`} title="sweltering heat!" />
+  <div class={`weather sprite ${weatherClass[weather]}`} title={weatherText[weather]} />
 </FixedRatio>
 
 <style>
@@ -24,7 +40,7 @@
   .sunny {
     --spX: 39;
   }
-  .perfect {
+  .nice {
     --spX: 78;
   }
   .rain {

@@ -9,20 +9,22 @@
     ACTION_TYPE,
     Casualties,
     ROLL,
+    WEATHER,
   } from "../../js/constants.js";
   import { onMount, tick } from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
-  export let replaySteps;
+  export let replaySteps, replayStepIndex, replayStart, replayEnd;
   let queue,
     lastPlayerId,
     lastChainPush,
-    races,
-    homeTeam,
-    awayTeam,
-    pitch,
+    races = [],
+    homeTeam = {},
+    awayTeam = {},
+    pitch = {},
     blitzerId,
-    banner;
+    banner,
+    weather;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -31,24 +33,39 @@
     [SITUATION.SentOff]: "cas",
   };
 
-  $: initQueue();
+   // pass as arguments to force queue to reset when any arguments change
+  $: (() => {queue = [];})(replaySteps, replayStart, replayEnd);
 
   onMount(() => {
+    console.log("Viewer onMount start");
     processQueue();
+    console.log("Viewer onMount queue started");
     return () => console.log("destroyed");
   });
 
-  function initQueue() {
-    queue = [...replaySteps];
-    lastPlayerId = 0;
-    lastChainPush = null;
-    races = [];
-    homeTeam = {};
-    awayTeam = {};
-    pitch = {};
+  async function initQueue(replaySteps, replayStart, replayEnd) {
+    replayStart = replayStart || 0;
+    replayEnd = Math.max(replayEnd || replaySteps.length, replayStart + 1);
+
+    queue = replaySteps.slice(
+      replayStart,
+      replayEnd,
+    );
+    if (replayStart > 0) {
+      await resetFromBoardState(replaySteps[replayStart-1].BoardState);
+      console.log(replaySteps[replayStart-1].BoardState, pitch, homeTeam, awayTeam);
+    } else {
+      lastPlayerId = 0;
+      lastChainPush = null;
+      races = [];
+      homeTeam = {};
+      awayTeam = {};
+      pitch = {};
+      weather = WEATHER.Nice;
+    }
   }
 
-  function resetFromBoardState(boardState) {
+  async function resetFromBoardState(boardState) {
     clearTemporaryState();
     blitzerId = boardState.BlitzerId;
     homeTeam = processTeam(
@@ -64,6 +81,7 @@
     ).filter((v, i, a) => a.indexOf(v) === i);
     setPlayerStates(boardState);
     setBallPosition(boardState);
+    await tick();
   }
 
   function processTeam(team, active) {
@@ -231,7 +249,7 @@
     handle /*PassBlockLeapMove = 44*/,
     handle /*PassBlockLeap = 45*/,
     handle /*FansNumber = 46*/,
-    handle /*InitialWeather = 47*/,
+    handleWeather /*InitialWeather = 47*/,
     handle /*SwelteringHeat = 48*/,
     handle /*Feed = 49*/,
     handle /*BombExplosionGenerator = 50*/,
@@ -274,10 +292,11 @@
   async function processQueue() {
     while (true) {
       if (queue.length === 0) {
-        initQueue();
+        await initQueue(replaySteps, replayStepIndex, replayStart, replayEnd);
       }
 
       const replayStep = queue.shift();
+      replayStepIndex = replayStep.index;
 
       for (const boardAction of ensureList(replayStep.RulesEventBoardAction)) {
         if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results
@@ -303,7 +322,7 @@
         await sleep(timing);
       }
       if (replayStep.BoardState) {
-        resetFromBoardState(replayStep.BoardState);
+        await resetFromBoardState(replayStep.BoardState);
       }
     }
   }
@@ -464,57 +483,6 @@
     }
   }
 
-  function checkWeather() {
-    const weather = document.getElementById("weather");
-    ["heat", "sunny", "perfect", "rain", "blizzard"].map((x) =>
-      this.cleanClass(x)
-    );
-    switch (this.boardState.weather) {
-      case 0:
-        weather.classList.add("perfect");
-        weather.title = "perfect blood bowl weather";
-        break;
-      case 1:
-        weather.classList.add("heat");
-        weather.title = "sweltering heat!";
-        break;
-      case 2:
-        weather.classList.add("sunny");
-        weather.title = "very sunny";
-        break;
-      case 3:
-        weather.classList.add("rain");
-        weather.title = "pouring rain";
-        break;
-      case 4:
-        weather.classList.add("blizzard");
-        weather.title = "blizzard go brrrr";
-        break;
-    }
-  }
-
-  function checkBall() {
-    const ball = this.boardState.ball;
-    let sprite = document.getElementById("ball");
-    if (!sprite) {
-      sprite = document.createElement("div");
-      sprite.id = "ball";
-    }
-
-    if (ball.held) sprite.classList.add("held");
-    else sprite.classList.remove("held");
-
-    const target = document.getElementById(`pos_${ball.x}_${ball.y}`);
-    if (target) target.appendChild(sprite);
-  }
-  function handleScore() {
-    const homeScore = document.getElementById("homeScore");
-    const awayScore = document.getElementById("awayScore");
-
-    homeScore.innerHTML = this.boardState.homeTeam.score;
-    awayScore.innerHTML = this.boardState.awayTeam.score;
-  }
-
   function selectPlayer(e) {
     const playerId = Number(e.originalTarget.id.replace("player_", ""));
     const team =
@@ -583,6 +551,19 @@
     });
   }
 
+  function handleWeather(action) {
+    const dice = translateStringNumberList(
+      action.Results.BoardActionResult.CoachChoices.ListDices
+    );
+    const diceSums = {
+      2: WEATHER.SwelteringHeat,
+      3: WEATHER.VerySunny,
+      11: WEATHER.PouringRain,
+      12: WEATHER.Blizzard,
+    };
+    weather = diceSums[dice[0] + dice[1]] || WEATHER.Nice;
+  }
+
   function handleActivate(action) {
     clearTemporaryState();
     Object.entries(pitch).forEach(([idx, square]) => {
@@ -607,7 +588,10 @@
   }
 
   function handleBall(action) {
-    setPitchSquare(action.Order.CellFrom.x, action.Order.CellFrom.y).ball = null;
+    setPitchSquare(
+      action.Order.CellFrom.x,
+      action.Order.CellFrom.y
+    ).ball = null;
     let to = action.Order.CellTo.Cell;
     setPitchSquare(to.x, to.y).ball = {
       held: false,
@@ -624,7 +608,7 @@
     let toPlayer = toSquare.player;
 
     Object.values(pitch).forEach((square) => {
-      (square.player || {}).dice = null;
+      square.dice = null;
     });
 
     if (action.Results.BoardActionResult.RollType === ROLL.Block) {
@@ -677,24 +661,24 @@
         targetSquare.player = toPlayer;
         toSquare.player = null;
       } else {
-        ensureList(action.Results.BoardActionResult.CoachChoices.ListCells.Cell).forEach(
-          (cell) => {
-            let square = setPitchSquare(cell.x, cell.y);
-            square.cell = square.cell || {};
-            square.cell.pushbackChoice = true;
+        ensureList(
+          action.Results.BoardActionResult.CoachChoices.ListCells.Cell
+        ).forEach((cell) => {
+          let square = setPitchSquare(cell.x, cell.y);
+          square.cell = square.cell || {};
+          square.cell.pushbackChoice = true;
 
-            if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
-              throw "Unexpected surf as a choice";
-              //surf
-              const target = this.getAvailableGridItem(
-                action.ActivePlayerId,
-                1,
-                action.ActivePlayerId < 21 ? "home" : "away"
-              );
-              target.appendChild(sprite);
-            }
+          if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
+            throw "Unexpected surf as a choice";
+            //surf
+            const target = this.getAvailableGridItem(
+              action.ActivePlayerId,
+              1,
+              action.ActivePlayerId < 21 ? "home" : "away"
+            );
+            target.appendChild(sprite);
           }
-        );
+        });
       }
     }
     if (action.Results.BoardActionResult.RollType === ROLL.FollowUp) {
@@ -729,8 +713,6 @@
     }
 
     ["moving", "blitz", "done"].map(this.cleanClass);
-
-    this.checkWeather();
 
     this.lastPlayerId = 0;
 
@@ -947,7 +929,9 @@
         let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
         dugout.cas.push(player);
         pitch[playerSquareIndex].player = null;
-        pitch[playerSquareIndex].blood = {blood: Math.floor(4 * Math.random() + 1)};
+        pitch[playerSquareIndex].blood = {
+          blood: Math.floor(4 * Math.random() + 1),
+        };
         break;
       case 25: //regeneration
     }
@@ -973,7 +957,7 @@
     <Banner {banner} />
   {/if}
   <div class="pitch">
-    <HomeDugout {homeTeam} />
+    <HomeDugout {homeTeam} {weather} />
     <Pitch {pitch} {homeTeam} {awayTeam} />
     <AwayDugout {awayTeam} />
   </div>

@@ -5,9 +5,10 @@
   let open = false;
   let groupedRolls;
   $: {
-    updateRollLog();
+    console.log("Roll Details reactive");
+    updateRollLog(rolls, selectedRoll);
   }
-  function updateRollLog() {
+  function updateRollLog(rolls, selectedRoll) {
     groupedRolls = rolls.reduce((groups, roll) => {
       const lastGroup = groups[groups.length - 1];
       const lastRoll = lastGroup && lastGroup[lastGroup.length - 1];
