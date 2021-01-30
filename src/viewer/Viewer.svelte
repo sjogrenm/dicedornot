@@ -322,6 +322,9 @@
 
         await step();
       }
+      if (replayStep.RulesEventEndTurn) {
+        handleEndTurn(replayStep.RulesEventEndTurn);
+      }
       if (replayStep.BoardState) {
         await resetFromBoardState(replayStep.BoardState);
       }
@@ -709,32 +712,14 @@
     ).ball = { held: true };
   }
 
-  function handleEndTurn(state) {
-    if (state.turnover) {
+  async function handleEndTurn(endTurn) {
+    if (endTurn.Turnover) {
       banner = "turnover";
+      clearTemporaryState();
+      await step(5);
+      banner = null;
+      await tick();
     }
-
-    ["moving", "blitz", "done"].map(this.cleanClass);
-
-    this.lastPlayerId = 0;
-
-    this.boardState = state.boardState;
-    this.boardState.homeTeam.players.map((p) => this.placePlayer(p, "home"));
-    this.boardState.awayTeam.players.map((p) => this.placePlayer(p, "away"));
-    this.activeTeam = state.playingTeam;
-
-    const turn = document.getElementById(
-      this.activeTeam === 0 ? "homeTurn" : "awayTurn"
-    );
-
-    turn.innerHTML =
-      this.activeTeam === 0
-        ? this.boardState.homeTeam.turn
-        : this.boardState.awayTeam.turn;
-
-    this.cleanClass("active-turn");
-
-    turn.classList.add("active-turn");
   }
 
   async function handleFoul(action) {
@@ -935,8 +920,9 @@
   async function handleTouchdown() {
     banner = "touchdown";
     clearTemporaryState();
-    await sleep(500);
+    await step(5);
     banner = null;
+    await tick();
   }
 </script>
 
@@ -948,14 +934,14 @@
 </svelte:head>
 
 <FixedRatio width={1335} height={1061}>
-  {#if banner}
-    <Banner {banner} />
-  {/if}
   <div class="pitch">
     <HomeDugout {homeTeam} {weather} />
     <Pitch {pitch} {homeTeam} {awayTeam} />
     <AwayDugout {awayTeam} />
   </div>
+  {#if banner}
+    <Banner {banner} />
+  {/if}
 </FixedRatio>
 
 <style>

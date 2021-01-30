@@ -12,19 +12,23 @@ import FixedRatio from "./FixedRatio.svelte";
 
 <style>
   .banner {
-    background-image: url("/images/banner.png");
-    background-repeat: no-repeat;
     width: 75%;
     display: inline-block;
     position: absolute;
+    top: 25%;
+    left: 12.5%;
   }
   .sprite {
+    background-image: url("/images/banner.png");
+    background-repeat: no-repeat;
     --imW: 1024;
     --imH: 1024;
     --spW: 1024;
     --spH: 512;
     --spX: 0;
     --spY: 0;
+    width: 100%;
+    height: 100%;
   }
   .turnover {
     --spY: 539;
