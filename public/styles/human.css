@@ -1,9 +1,11 @@
 .human.home {
   background-image: url("/images/players/human/home.png");
+  background-repeat: no-repeat;
 }
 
 .human.away {
   background-image: url("/images/players/human/away.png");
+  background-repeat: no-repeat;
 }
 
 .human.sprite {

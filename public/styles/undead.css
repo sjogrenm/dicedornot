@@ -1,23 +1,83 @@
-:root{--um:-28px;--ul:-30px}
+.undead.sprite {
+  --imW: 60;
+  --imH: 368;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.undead{width: calc(-1 * var(--um));height: calc(-1 * var(--um));display: inline-block;background-position-x: 0px;}
-.undead.mummy1,.undead.mummy2 {width: calc(-1 * var(--ul));height: calc(-1 * var(--ul))}
+.undead.mummy1, .undead.mummy2 {
+  --spW: 30;
+  --spH: 30;
+  --spScale: 95%;
+}
 
-.undead.home {background: url("/images/players/undead/home.png") no-repeat;}
-.undead.away {background: url("/images/players/undead/away.png") no-repeat;}
+.undead.home {
+  background-image: url("/images/players/undead/home.png");
+  background-repeat: no-repeat;
+}
 
-.undead.zombie1{background-position-y: 0px;}
-.undead.zombie2{background-position-y: var(--um);}
-.undead.zombie3{background-position-y: calc(2 * var(--um));}
-.undead.zombie4{background-position-y: calc(3 * var(--um));}
-.undead.skeleton1{background-position-y: calc(4 * var(--um));}
-.undead.skeleton2{background-position-y: calc(5 * var(--um));}
-.undead.skeleton3{background-position-y: calc(6 * var(--um));}
-.undead.wight1{background-position-y: calc(7 * var(--um));}
-.undead.wight2{background-position-y: calc(8 * var(--um));}
-.undead.ghoul1{background-position-y: calc(9 * var(--um));}
-.undead.ghoul2{background-position-y: calc(10 * var(--um));}
-.undead.mummy1{background-position-y: calc(11 * var(--um));}
-.undead.mummy2{background-position-y: calc(11 * var(--um) + var(--ul));}
-.undead.moving,.undead.prone,.undead.stunned {background-position-x: var(--um);}
-.undead.mummy1.moving,.undead.mummy1.prone,.undead.mummy1.stunned,.undead.mummy2.moving,.undead.mummy2.prone,.undead.mummy2.stunned {background-position-x: var(--ul);}
+.undead.away {
+  background-image: url("/images/players/undead/away.png");
+  background-repeat: no-repeat;
+}
+
+.undead.zombie2 {
+  --spY: 28;
+}
+
+.undead.zombie3 {
+  --spY: calc(2 * 28);
+}
+
+.undead.zombie4 {
+  --spY: calc(3 * 28);
+}
+
+.undead.skeleton1 {
+  --spY: calc(4 * 28);
+}
+
+.undead.skeleton2 {
+  --spY: calc(5 * 28);
+}
+
+.undead.skeleton3 {
+  --spY: calc(6 * 28);
+}
+
+.undead.wight1 {
+  --spY: calc(7 * 28);
+}
+
+.undead.wight2 {
+  --spY: calc(8 * 28);
+}
+
+.undead.ghoul1 {
+  --spY: calc(9 * 28);
+}
+
+.undead.ghoul2 {
+  --spY: calc(10 * 28);
+}
+
+.undead.mummy1 {
+  --spY: calc(11 * 28);
+}
+
+.undead.mummy2 {
+  --spY: calc(11 * 28 + 30);
+}
+
+.undead.moving, .undead.prone, .undead.stunned {
+  --spX: 28;
+}
+
+.undead.mummy1.moving, .undead.mummy1.prone, .undead.mummy1.stunned, .undead.mummy2.moving, .undead.mummy2.prone, .undead.mummy2.stunned {
+  --spX: 30;
+}

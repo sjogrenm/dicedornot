@@ -1,34 +1,135 @@
-:root{--orm:-28px;--orl:-32px;--orxl:-38px;}
+:root {
+  --orm: 28;
+  --orl: 32;
+  --orxl: 38;
+}
 
-.orc.home {background: url("/images/players/orc/home.png") no-repeat;}
-.orc.away {background: url("/images/players/orc/away.png") no-repeat;}
+.orc.home {
+  background-image: url("/images/players/orc/home.png");
+  background-repeat: no-repeat;
+}
 
-.orc{width: calc(-1 * var(--orm)); height: calc(-1 * var(--orm)); display: inline-block; background-position-x: 0px;}
-.orc.blocker1,.orc.blocker2,.orc.blocker3,.orc.blocker4{width: calc(-1 * var(--orl)); height: calc(-1 * var(--orl));}
-.orc.troll{width: calc(-1 * var(--orxl)); height: calc(-1 * var(--orxl));}
+.orc.away {
+  background-image: url("/images/players/orc/away.png");
+  background-repeat: no-repeat;
+}
 
-.orc.lineman1{background-position-y: 0px;}
-.orc.lineman2{background-position-y: var(--orm);}
-.orc.lineman3{background-position-y: calc(2 * var(--orm));}
-.orc.blitzer1{background-position-y: calc(3 * var(--orm));}
-.orc.blitzer2{background-position-y: calc(4 * var(--orm));}
-.orc.blitzer3{background-position-y: calc(5 * var(--orm));}
-.orc.thrower1{background-position-y: calc(6 * var(--orm));}
-.orc.thrower2{background-position-y: calc(7 * var(--orm));}
-.orc.goblin1{background-position-y: calc(8 * var(--orm));}
-.orc.goblin2{background-position-y: calc(9 * var(--orm));}
-.orc.blocker1{background-position-y: calc(10 * var(--orm));}
-.orc.blocker2{background-position-y: calc(10 * var(--orm) + var(--orl));}
-.orc.blocker3{background-position-y: calc(10 * var(--orm) + 2 * var(--orl));}
-.orc.blocker4{background-position-y: calc(10 * var(--orm) + 3 * var(--orl));}
-.orc.troll{background-position-y: calc(10 * var(--orm) + 4 * var(--orl));}
+.orc.sprite {
+  --imW: 76;
+  --imH: 446;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.orc.moving{background-position-x: var(--orm);}
-.orc.blocker1.moving,.orc.blocker2.moving,.orc.blocker3.moving,.orc.blocker4.moving{background-position-x: var(--orl);}
-.orc.troll.moving{background-position-x: var(--orxl);}
-.orc.prone{background-position-x: var(--orm);}
-.orc.blocker1.prone,.orc.blocker2.prone,.orc.blocker3.prone,.orc.blocker4.prone{background-position-x: var(--orl);}
-.orc.troll.prone{background-position-x: var(--orxl);}
-.orc.stunned{background-position-x: var(--orm);}
-.orc.blocker1.stunned,.orc.blocker2.stunned,.orc.blocker3.stunned,.orc.blocker4.stunned{background-position-x: var(--orl);}
-.orc.troll.stunned{background-position-x: var(--orxl);}
+.orc.goblin1, .orc.goblin2 {
+  --spScale: 60%;
+}
+
+.orc.blocker1, .orc.blocker2, .orc.blocker3, .orc.blocker4 {
+  --spScale: 85%;
+  --spW: 32;
+  --spH: 32;
+}
+
+.orc.troll {
+  --spScale: 95%;
+  --spW: 38;
+  --spH: 38;
+}
+
+.orc.lineman2 {
+  --spY: 28;
+}
+
+.orc.lineman3 {
+  --spY: 56;
+}
+
+.orc.blitzer1 {
+  --spY: 84;
+}
+
+.orc.blitzer2 {
+  --spY: 112;
+}
+
+.orc.blitzer3 {
+  --spY: 140;
+}
+
+.orc.thrower1 {
+  --spY: 168;
+}
+
+.orc.thrower2 {
+  --spY: 196;
+}
+
+.orc.goblin1 {
+  --spY: 224;
+}
+
+.orc.goblin2 {
+  --spY: 252;
+}
+
+.orc.blocker1 {
+  --spY: 280;
+}
+
+.orc.blocker2 {
+  --spY: 312;
+}
+
+.orc.blocker3 {
+  --spY: 344;
+}
+
+.orc.blocker4 {
+  --spY: 376;
+}
+
+.orc.troll {
+  --spY: 408;
+}
+
+.orc.moving {
+  --spX: var(--orm);
+}
+
+.orc.blocker1.moving, .orc.blocker2.moving, .orc.blocker3.moving, .orc.blocker4.moving {
+  --spX: var(--orl);
+}
+
+.orc.troll.moving {
+  --spX: var(--orxl);
+}
+
+.orc.prone {
+  --spX: var(--orm);
+}
+
+.orc.blocker1.prone, .orc.blocker2.prone, .orc.blocker3.prone, .orc.blocker4.prone {
+  --spX: var(--orl);
+}
+
+.orc.troll.prone {
+  --spX: var(--orxl);
+}
+
+.orc.stunned {
+  --spX: var(--orm);
+}
+
+.orc.blocker1.stunned, .orc.blocker2.stunned, .orc.blocker3.stunned, .orc.blocker4.stunned {
+  --spX: var(--orl);
+}
+
+.orc.troll.stunned {
+  --spX: var(--orxl);
+}
