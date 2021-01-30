@@ -4,15 +4,17 @@
   import Player from "./Player.svelte";
   import Ball from "./Ball.svelte";
   import DiceResult from "./DiceResult.svelte";
+  import Foul from "./Foul.svelte";
   import About from "../About.svelte";
   export let id, row, column, width, height, pitch, homeLogo, awayLogo;
   let player = null,
     cell = null,
     ball = null,
-    dice = null;
+    dice = null,
+    foul = false;
 
   $: {
-    ({ player, cell, ball, dice } = pitch[`${column}-${row}`] || {});
+    ({ player, cell, ball, dice, foul } = pitch[`${column}-${row}`] || {});
   };
 </script>
 
@@ -31,6 +33,9 @@
   {/if}
   {#if dice}
     <DiceResult {dice} />
+  {/if}
+  {#if foul}
+    <Foul/>
   {/if}
   {#if ball}
     <Ball {...ball} />

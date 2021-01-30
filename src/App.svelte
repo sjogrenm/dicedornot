@@ -70,6 +70,8 @@
           on:replayLoaded={(e) => {
             loading = false;
             replay = e.detail;
+            replayStart = null;
+            replayEnd = null;
             console.log(e);
           }}
           on:replayLoading={() => {

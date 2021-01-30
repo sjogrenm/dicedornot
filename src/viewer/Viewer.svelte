@@ -24,7 +24,8 @@
     pitch = {},
     blitzerId,
     banner,
-    weather;
+    weather,
+    timing = 300;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -291,6 +292,11 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  async function step(ticks) {
+    await tick();
+    await sleep(timing * (ticks || 1));
+  }
+
   async function processQueue() {
     while (true) {
       if (queue.length === 0) {
@@ -304,13 +310,6 @@
         if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results
 
         const action = actions[boardAction.ActionType || 0];
-        let timing = 350;
-        if (
-          [ACTION_TYPE.Block, ACTION_TYPE.Blitz, ACTION_TYPE.Pass].includes(
-            boardAction.ActionType
-          )
-        )
-          timing *= 2;
 
         try {
           action(boardAction);
@@ -321,7 +320,7 @@
           throw error;
         }
 
-        await sleep(timing);
+        await step();
       }
       if (replayStep.BoardState) {
         await resetFromBoardState(replayStep.BoardState);
@@ -546,6 +545,7 @@
     Object.entries(pitch).forEach(([idx, square]) => {
       square.dice = null;
       square.cell = null;
+      square.foul = false;
       if (square.player) {
         square.player.moving = false;
       }
@@ -737,18 +737,11 @@
     turn.classList.add("active-turn");
   }
 
-  function handleFoul(state) {
-    const target = document.getElementById(
-      `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
-    );
+  async function handleFoul(action) {
+    const targetSquare = setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y);
 
-    if (action.Results.BoardActionResult.RollType === 0) {
-      let div = document.createElement("div");
-      div.classList.add("dice");
-      div.classList.add("d1h");
-      div.classList.add("foul");
-      target.prepend(div);
-    }
+    targetSquare.foul = true;
+    await step();
   }
   function handleFrontToBack(action) {
     let player = setPlayer(action.PlayerId);

@@ -1,6 +1,4 @@
 <script>
-  import FixedRatio from "./FixedRatio.svelte";
-
   export let dice;
 
   const blockDice = [
@@ -13,9 +11,11 @@
 </script>
 
 <div class="dice-container">
-  {#each dice as die}
-    <div class="dice sprite d{dice.length}h {blockDice[die]}" />
-  {/each}
+  {#if dice}
+    {#each dice as die}
+      <div class="dice sprite d{dice.length}h {blockDice[die]}" />
+    {/each}
+  {/if}
 </div>
 
 <style>
@@ -96,8 +96,4 @@
     --spY: 25;
   }
 
-  .foul {
-    --spX: 25;
-    --spY: 50;
-  }
 </style>
