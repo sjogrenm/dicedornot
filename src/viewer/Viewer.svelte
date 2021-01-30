@@ -34,7 +34,10 @@
   };
 
    // pass as arguments to force queue to reset when any arguments change
-  $: (() => {queue = [];})(replaySteps, replayStart, replayEnd);
+  $: (() => {
+    queue = [];
+    console.log("Emptied queue", replaySteps, replayStart, replayEnd);
+  })(replaySteps, replayStart, replayEnd);
 
   onMount(() => {
     console.log("Viewer onMount start");
@@ -51,9 +54,9 @@
       replayStart,
       replayEnd,
     );
+    console.log("Resetting queue", {replayStart, replayEnd, queue});
     if (replayStart > 0) {
       await resetFromBoardState(replaySteps[replayStart-1].BoardState);
-      console.log(replaySteps[replayStart-1].BoardState, pitch, homeTeam, awayTeam);
     } else {
       lastPlayerId = 0;
       lastChainPush = null;
@@ -292,7 +295,7 @@
   async function processQueue() {
     while (true) {
       if (queue.length === 0) {
-        await initQueue(replaySteps, replayStepIndex, replayStart, replayEnd);
+        await initQueue(replaySteps, replayStart, replayEnd);
       }
 
       const replayStep = queue.shift();
@@ -302,7 +305,7 @@
         if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results
 
         const action = actions[boardAction.ActionType || 0];
-        let timing = 50;
+        let timing = 350;
         if (
           [ACTION_TYPE.Block, ACTION_TYPE.Blitz, ACTION_TYPE.Pass].includes(
             boardAction.ActionType

@@ -62,7 +62,7 @@
           selectedRoll = item.datum.rollIndex;
           replayStart = rolls[selectedRoll].stepIndex;
           replayEnd = rolls[selectedRoll+1].stepIndex;
-          console.log("Results clicked");
+          console.log("Results clicked", {selectedRoll, replayStart, replayEnd});
         }
       });
 
