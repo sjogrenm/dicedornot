@@ -45,5 +45,5 @@
 }
 
 .human.moving, .human.prone, .human.stunned {
-  --spX: var(--spS);
+  --spX: var(--spW);
 }
