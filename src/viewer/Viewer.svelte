@@ -36,7 +36,10 @@
    // pass as arguments to force queue to reset when any arguments change
   $: (() => {
     queue = [];
-    console.log("Emptied queue", replaySteps, replayStart, replayEnd);
+    console.log("About to reset queue", {replayStart, replayEnd});
+    replayStart = replayStart || 0;
+    replayEnd = Math.max(replayEnd || replaySteps.length, replayStart + 1);
+    console.log("Resetting queue", {replayStart, replayEnd, queue: replaySteps.slice(replayStart, replayEnd)});
   })(replaySteps, replayStart, replayEnd);
 
   onMount(() => {
@@ -47,14 +50,10 @@
   });
 
   async function initQueue(replaySteps, replayStart, replayEnd) {
-    replayStart = replayStart || 0;
-    replayEnd = Math.max(replayEnd || replaySteps.length, replayStart + 1);
-
     queue = replaySteps.slice(
       replayStart,
       replayEnd,
     );
-    console.log("Resetting queue", {replayStart, replayEnd, queue});
     if (replayStart > 0) {
       await resetFromBoardState(replaySteps[replayStart-1].BoardState);
     } else {
