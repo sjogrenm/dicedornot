@@ -1,0 +1,51 @@
+.amazon.sprite {
+  --imH: 196;
+  --imW: 56;
+  --spW: 27;
+  --spH: 27;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
+
+.amazon.home {
+  background-image: url("/images/players/amazon/home.png");
+}
+
+.amazon.away {
+  background-image: url("/images/players/amazon/away.png");
+}
+
+.amazon.catcher1 {
+  --spY: 0;
+}
+
+.amazon.catcher2 {
+  --spY: 28;
+}
+
+.amazon.lineman1 {
+  --spY: 56;
+}
+
+.amazon.lineman2 {
+  --spY: 84;
+}
+
+.amazon.thrower {
+  --spY: 112;
+}
+
+.amazon.blitzer1 {
+  --spY: 140;
+}
+
+.amazon.blitzer2 {
+  --spY: 168;
+}
+
+.amazon.moving, .amazon.prone, .amazon.stunned {
+  --spX: 28;
+}

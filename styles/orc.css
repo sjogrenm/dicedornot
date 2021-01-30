@@ -1,0 +1,135 @@
+:root {
+  --orm: 28;
+  --orl: 32;
+  --orxl: 38;
+}
+
+.orc.home {
+  background-image: url("/images/players/orc/home.png");
+  background-repeat: no-repeat;
+}
+
+.orc.away {
+  background-image: url("/images/players/orc/away.png");
+  background-repeat: no-repeat;
+}
+
+.orc.sprite {
+  --imW: 76;
+  --imH: 446;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
+
+.orc.goblin1, .orc.goblin2 {
+  --spScale: 60%;
+}
+
+.orc.blocker1, .orc.blocker2, .orc.blocker3, .orc.blocker4 {
+  --spScale: 85%;
+  --spW: 32;
+  --spH: 32;
+}
+
+.orc.troll {
+  --spScale: 95%;
+  --spW: 38;
+  --spH: 38;
+}
+
+.orc.lineman2 {
+  --spY: 28;
+}
+
+.orc.lineman3 {
+  --spY: 56;
+}
+
+.orc.blitzer1 {
+  --spY: 84;
+}
+
+.orc.blitzer2 {
+  --spY: 112;
+}
+
+.orc.blitzer3 {
+  --spY: 140;
+}
+
+.orc.thrower1 {
+  --spY: 168;
+}
+
+.orc.thrower2 {
+  --spY: 196;
+}
+
+.orc.goblin1 {
+  --spY: 224;
+}
+
+.orc.goblin2 {
+  --spY: 252;
+}
+
+.orc.blocker1 {
+  --spY: 280;
+}
+
+.orc.blocker2 {
+  --spY: 312;
+}
+
+.orc.blocker3 {
+  --spY: 344;
+}
+
+.orc.blocker4 {
+  --spY: 376;
+}
+
+.orc.troll {
+  --spY: 408;
+}
+
+.orc.moving {
+  --spX: var(--orm);
+}
+
+.orc.blocker1.moving, .orc.blocker2.moving, .orc.blocker3.moving, .orc.blocker4.moving {
+  --spX: var(--orl);
+}
+
+.orc.troll.moving {
+  --spX: var(--orxl);
+}
+
+.orc.prone {
+  --spX: var(--orm);
+}
+
+.orc.blocker1.prone, .orc.blocker2.prone, .orc.blocker3.prone, .orc.blocker4.prone {
+  --spX: var(--orl);
+}
+
+.orc.troll.prone {
+  --spX: var(--orxl);
+}
+
+.orc.stunned {
+  --spX: var(--orm);
+}
+
+.orc.blocker1.stunned, .orc.blocker2.stunned, .orc.blocker3.stunned, .orc.blocker4.stunned {
+  --spX: var(--orl);
+}
+
+.orc.troll.stunned {
+  --spX: var(--orxl);
+}

@@ -1,0 +1,30 @@
+:root{--nom:-28px;--nol:-32px;--noxl:-38px;}
+
+.norse.home {background: url("/images/players/norse/home.png") no-repeat;}
+.norse.away {background: url("/images/players/norse/away.png") no-repeat;}
+
+.norse{width: calc(-1 * var(--nom)); height: calc(-1 * var(--nom)); display: inline-block; background-position-x: 0px;}
+.norse.ulfwerener1,.norse.ulfwerener1{width: calc(-1 * var(--nol)); height: calc(-1 * var(--nol));}
+.norse.yhetee{width: calc(-1 * var(--noxl)); height: calc(-1 * var(--noxl));}
+
+.norse.lineman1{background-position-y: 0px;}
+.norse.lineman2{background-position-y: var(--nom);}
+.norse.lineman3{background-position-y: calc(2 * var(--nom));}
+.norse.lineman4{background-position-y: calc(3 * var(--nom));}
+.norse.runner{background-position-y: calc(4 * var(--nom));}
+.norse.berserker1{background-position-y: calc(5 * var(--nom));}
+.norse.berserker2{background-position-y: calc(6 * var(--nom));}
+.norse.thrower{background-position-y: calc(7 * var(--nom));}
+.norse.ulfwerener1{background-position-y: calc(8 * var(--nom));}
+.norse.ulfwerener2{background-position-y: calc(8 * var(--nom) + var(--nol));}
+.norse.yhetee{background-position-y: calc(8 * var(--nom) + 2 * var(--nol));}
+
+.norse.moving{background-position-x: var(--nom);}
+.norse.ulfwerener1.moving,.norse.ulfwerener2.moving{background-position-x: var(--nol);}
+.norse.yhetee.moving{background-position-x: var(--noxl);}
+.norse.prone{background-position-x: var(--nom);}
+.norse.ulfwerener1.prone,.norse.ulfwerener2.prone{background-position-x: var(--nol);}
+.norse.yhetee.prone{background-position-x: var(--noxl);}
+.norse.stunned{background-position-x: var(--nom);}
+.norse.ulfwerener1.stunned,.norse.ulfwerener2.stunned{background-position-x: var(--nol);}
+.norse.yhetee.stunned{background-position-x: var(--noxl);}

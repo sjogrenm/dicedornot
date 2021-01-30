@@ -1,0 +1,51 @@
+.human.home {
+  background-image: url("/images/players/human/home.png");
+  background-repeat: no-repeat;
+}
+
+.human.away {
+  background-image: url("/images/players/human/away.png");
+  background-repeat: no-repeat;
+}
+
+.human.sprite {
+  --imH: 178;
+  --imW: 76;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
+
+.human.ogre {
+  --spW: 38;
+  --spH: 38;
+  --spScale: 100%;
+}
+
+.human.lineman2 {
+  --spY: 29;
+}
+
+.human.thrower {
+  --spY: 57;
+}
+
+.human.blitzer {
+  --spY: 85;
+}
+
+.human.catcher {
+  --spY: 113;
+}
+
+.human.ogre {
+  --spY: 141;
+}
+
+.human.moving, .human.prone, .human.stunned {
+  --spX: var(--spW);
+}

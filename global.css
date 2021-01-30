@@ -62,3 +62,8 @@ button:not(:disabled):active {
 button:focus {
   border-color: #666;
 }
+
+@font-face {
+  font-family: "Nuffle";
+  src: url("/fonts/Nuffle-OVwjO.ttf");
+}

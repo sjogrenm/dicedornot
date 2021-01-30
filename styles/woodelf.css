@@ -1,0 +1,23 @@
+:root{--wm:-28px;--wl:-40px}
+
+.woodelf{width: calc(-1 * var(--wm));height: calc(-1 * var(--wm));display: inline-block;background-position-x: 0px;}
+.woodelf.tree {width: calc(-1 * var(--wl));height: calc(-1 * var(--wl))}
+
+.woodelf.home {background: url("/images/players/woodelf/home.png") no-repeat;}
+.woodelf.away {background: url("/images/players/woodelf/away.png") no-repeat;}
+
+.woodelf.lineman1{background-position-y: 0px;}
+.woodelf.lineman2{background-position-y: var(--wm);}
+.woodelf.lineman3{background-position-y: calc(2 * var(--wm));}
+.woodelf.lineman4{background-position-y: calc(3 * var(--wm));}
+.woodelf.catcher1{background-position-y: calc(4 * var(--wm));}
+.woodelf.catcher2{background-position-y: calc(5 * var(--wm));}
+.woodelf.catcher3{background-position-y: calc(6 * var(--wm));}
+.woodelf.catcher4{background-position-y: calc(7 * var(--wm));}
+.woodelf.thrower1{background-position-y: calc(8 * var(--wm));}
+.woodelf.thrower2{background-position-y: calc(9 * var(--wm));}
+.woodelf.wardancer1{background-position-y: calc(10 * var(--wm));}
+.woodelf.wardancer2{background-position-y: calc(11 * var(--wm));}
+.woodelf.tree{background-position-y: calc(12 * var(--wm));}
+.woodelf.moving,.woodelf.prone,.woodelf.stunned {background-position-x: var(--wm);}
+.woodelf.tree.moving,.woodelf.tree.prone,.woodelf.tree.stunned {background-position-x: var(--wl);}

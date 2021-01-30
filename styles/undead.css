@@ -1,0 +1,83 @@
+.undead.sprite {
+  --imW: 60;
+  --imH: 368;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
+
+.undead.mummy1, .undead.mummy2 {
+  --spW: 30;
+  --spH: 30;
+  --spScale: 95%;
+}
+
+.undead.home {
+  background-image: url("/images/players/undead/home.png");
+  background-repeat: no-repeat;
+}
+
+.undead.away {
+  background-image: url("/images/players/undead/away.png");
+  background-repeat: no-repeat;
+}
+
+.undead.zombie2 {
+  --spY: 28;
+}
+
+.undead.zombie3 {
+  --spY: calc(2 * 28);
+}
+
+.undead.zombie4 {
+  --spY: calc(3 * 28);
+}
+
+.undead.skeleton1 {
+  --spY: calc(4 * 28);
+}
+
+.undead.skeleton2 {
+  --spY: calc(5 * 28);
+}
+
+.undead.skeleton3 {
+  --spY: calc(6 * 28);
+}
+
+.undead.wight1 {
+  --spY: calc(7 * 28);
+}
+
+.undead.wight2 {
+  --spY: calc(8 * 28);
+}
+
+.undead.ghoul1 {
+  --spY: calc(9 * 28);
+}
+
+.undead.ghoul2 {
+  --spY: calc(10 * 28);
+}
+
+.undead.mummy1 {
+  --spY: calc(11 * 28);
+}
+
+.undead.mummy2 {
+  --spY: calc(11 * 28 + 30);
+}
+
+.undead.moving, .undead.prone, .undead.stunned {
+  --spX: 28;
+}
+
+.undead.mummy1.moving, .undead.mummy1.prone, .undead.mummy1.stunned, .undead.mummy2.moving, .undead.mummy2.prone, .undead.mummy2.stunned {
+  --spX: 30;
+}

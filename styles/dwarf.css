@@ -1,0 +1,22 @@
+:root{--dwm:-28px;--dwl:-38px;}
+
+.dwarf.home {background: url("/images/players/dwarf/home.png") no-repeat;}
+.dwarf.away {background: url("/images/players/dwarf/away.png") no-repeat;}
+
+.dwarf{width: calc(-1 * var(--dwm)); height: calc(-1 * var(--dwm)); display: inline-block; background-position-x: 0px;}
+.dwarf.deathroller{width: calc(-1 * var(--dwl)); height: calc(-1 * var(--dwl));}
+
+.dwarf.longbeard1{background-position-y: 0px;}
+.dwarf.longbeard2{background-position-y: var(--dwm);}
+.dwarf.longbeard3{background-position-y: calc(2 * var(--dwm));}
+.dwarf.blitzer1{background-position-y: calc(3 * var(--dwm));}
+.dwarf.blitzer2{background-position-y: calc(4 * var(--dwm));}
+.dwarf.runner1{background-position-y: calc(5 * var(--dwm));}
+.dwarf.runner2{background-position-y: calc(6 * var(--dwm));}
+.dwarf.runner3{background-position-y: calc(7 * var(--dwm));}
+.dwarf.trollslayer1{background-position-y: calc(8 * var(--dwm));}
+.dwarf.trollslayer2{background-position-y: calc(9 * var(--dwm)) ;}
+.dwarf.deathroller{background-position-y: calc(10 * var(--dwm));}
+
+.dwarf.moving,.dwarf.prone,.dwarf.stunned{background-position-x: var(--dwm);}
+.dwarf.deathroller.moving,.dwarf.deathroller.prone,.dwarf.deathroller.stunned{background-position-x: var(--dwl);}

@@ -1,0 +1,69 @@
+.khemri.home {
+  background: url("/images/players/khemri/home.png") no-repeat;
+}
+
+.khemri.away {
+  background: url("/images/players/khemri/away.png") no-repeat;
+}
+
+.khemri.sprite {
+  --imH: 284;
+  --imW: 60;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
+
+.khemri.mummy1, .khemri.mummy2 {
+  --spScale: 100%;
+  --spW: 30;
+  --spH: 30;
+}
+
+.khemri.lineman2 {
+  --imY: 28;
+}
+
+.khemri.lineman3 {
+  --imY: 56;
+}
+
+.khemri.lineman4 {
+  --imY: 84;
+}
+
+.khemri.thrower1 {
+  --imY: 112;
+}
+
+.khemri.thrower2 {
+  --imY: 140;
+}
+
+.khemri.blitzer1 {
+  --imY: 168;
+}
+
+.khemri.blitzer2 {
+  --imY: 196;
+}
+
+.khemri.mummy1 {
+  --imY: 224;
+}
+
+.khemri.mummy2 {
+  --imY: 254;
+}
+
+.khemri.moving, .khemri.prone, .khemri.stunned {
+  --imX: 28;
+}
+
+.khemri.mummy1.moving, .khemri.mummy2.moving, .khemri.mummy1.prone, .khemri.mummy2.prone, .khemri.mummy1.stunned, .khemri.mummy2.stunned {
+  --imX: 30;
+}
