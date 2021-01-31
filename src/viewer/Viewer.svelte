@@ -313,18 +313,21 @@
       for (const boardAction of ensureList(replayStep.RulesEventBoardAction)) {
         if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results
 
-        const action = actions[boardAction.ActionType || 0];
+        for (const boardActionResult of ensureList(boardAction.Results.BoardActionResult)) {
 
-        try {
-          action(boardAction);
-          await tick();
-        } catch (error) {
-          await tick();
-          console.error("Action failed", { error, boardAction });
-          throw error;
+          const action = actions[boardAction.ActionType || 0];
+
+          try {
+            action(boardAction, boardActionResult);
+            await tick();
+          } catch (error) {
+            await tick();
+            console.error("Action failed", { error, boardAction });
+            throw error;
+          }
+
+          await step();
         }
-
-        await step();
       }
       if (replayStep.RulesEventEndTurn) {
         handleEndTurn(replayStep.RulesEventEndTurn);
@@ -560,9 +563,9 @@
     });
   }
 
-  function handleWeather(action) {
+  function handleWeather(action, actionResult) {
     const dice = translateStringNumberList(
-      action.Results.BoardActionResult.CoachChoices.ListDices
+      actionResult.CoachChoices.ListDices
     );
     const diceSums = {
       2: WEATHER.SwelteringHeat,
@@ -604,7 +607,7 @@
     };
   }
 
-  function handleBlock(action) {
+  async function handleBlock(action, actionResult) {
     let from = action.Order.CellFrom;
     let fromSquare = setPitchSquare(from);
     (fromSquare.cell = fromSquare.cell || {}).active = true;
@@ -617,29 +620,30 @@
       square.dice = null;
     });
 
-    if (action.Results.BoardActionResult.RollType === ROLL.Block) {
+    if (actionResult.RollType === ROLL.Block) {
       let target = setPitchSquare(action.Order.CellTo.Cell);
       if (!target.cell) {
         target.cell = {};
       }
       target.cell.target = true;
 
-      if (action.Results.BoardActionResult.IsOrderCompleted) {
+      if (actionResult.IsOrderCompleted) {
         target["dice"] = [
           translateStringNumberList(
-            action.Results.BoardActionResult.CoachChoices.ListDices
+            actionResult.CoachChoices.ListDices
           )[0],
         ];
       } else {
         let dice = translateStringNumberList(
-          action.Results.BoardActionResult.CoachChoices.ListDices
+          actionResult.CoachChoices.ListDices
         );
         target.dice = dice.slice(0, dice.length / 2);
       }
+      await step(2);
     }
-    if (action.Results.BoardActionResult.RollType === ROLL.Push) {
+    if (actionResult.RollType === ROLL.Push) {
       //pushback
-      if (action.Results.BoardActionResult.IsOrderCompleted) {
+      if (actionResult.IsOrderCompleted) {
         Object.values(pitch).forEach((square) => {
           if (square.cell) {
             square.cell.pushbackChoice = false;
@@ -648,7 +652,7 @@
         });
 
         let pushTarget = ensureList(
-          action.Results.BoardActionResult.CoachChoices.ListCells.Cell
+          actionResult.CoachChoices.ListCells.Cell
         )[0];
         let targetSquare = setPitchSquare(pushTarget);
         if (lastChainPush) {
@@ -665,7 +669,7 @@
         toSquare.player = null;
       } else {
         ensureList(
-          action.Results.BoardActionResult.CoachChoices.ListCells.Cell
+          actionResult.CoachChoices.ListCells.Cell
         ).forEach((cell) => {
           let square = setPitchSquare(cell);
           square.cell = square.cell || {};
@@ -684,13 +688,13 @@
         });
       }
     }
-    if (action.Results.BoardActionResult.RollType === ROLL.FollowUp) {
+    if (actionResult.RollType === ROLL.FollowUp) {
       //follow up
-      if (action.Results.BoardActionResult.IsOrderCompleted) {
+      if (actionResult.IsOrderCompleted) {
         const from = action.Order.CellFrom;
         const fromSquare = setPitchSquare(from);
         const target = ensureList(
-          action.Results.BoardActionResult.CoachChoices.ListCells.Cell
+          actionResult.CoachChoices.ListCells.Cell
         )[0];
         const targetSquare = (setPitchSquare(target).player =
           fromSquare.player);
@@ -699,9 +703,9 @@
     }
   }
 
-  function handleCatch(action) {
-    if (!action.Results.BoardActionResult.IsOrderCompleted) return;
-    if (action.Results.BoardActionResult.ResultType !== 0) return;
+  function handleCatch(action, actionResult) {
+    if (!actionResult.IsOrderCompleted) return;
+    if (actionResult.ResultType !== 0) return;
 
     Object.values(pitch).forEach((cell) => (cell["ball"] = null));
     setPitchSquare(action.Order.CellTo.Cell).ball = { held: true };
@@ -746,7 +750,7 @@
     this.handleMove(action);
   }
 
-  function handleMove(action) {
+  function handleMove(action, actionResult) {
     let player = setPlayer(action.PlayerId);
     let squareFrom = setPitchSquare(action.Order.CellFrom);
     let squareTo = setPitchSquare(action.Order.CellTo.Cell);
@@ -754,7 +758,7 @@
     player.prone = false;
     player.moving = true;
     if (
-      action.Results.BoardActionResult.IsOrderCompleted &&
+      actionResult.IsOrderCompleted &&
       squareTo != squareFrom
     ) {
       squareTo.player = player;
@@ -765,20 +769,20 @@
     squareFrom.cell.moved = true;
     squareFrom.cell.active = false;
 
-    if (action.Results.BoardActionResult.IsOrderCompleted) {
+    if (actionResult.IsOrderCompleted) {
       squareTo.cell = squareTo.cell || {};
       squareTo.cell.active = true;
     }
 
     if (
-      action.Results.BoardActionResult.RollType &&
+      actionResult.RollType &&
       [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(
-        action.Results.BoardActionResult.RollType
+        actionResult.RollType
       )
     ) {
       //Dodge, GFI, Leap
       squareTo.cell = squareTo.cell || {};
-      squareTo.cell.plus = action.Results.BoardActionResult.Requirement;
+      squareTo.cell.plus = actionResult.Requirement;
     }
 
     if (player.id == blitzerId) {
@@ -790,7 +794,7 @@
     }
   }
 
-  function handleNegaTraits(action) {
+  function handleNegaTraits(action, actionResult) {
     /* rolltypes
       BoneHead = 20,
       ReallyStupid = 21,
@@ -802,7 +806,7 @@
     */
     let square = setPitchSquare(action.Order.CellTo.Cell);
 
-    if (action.Results.BoardActionResult.ResultType === 0) {
+    if (actionResult.ResultType === 0) {
       //success
       square.player.stupidity = null;
       return;
@@ -814,19 +818,19 @@
         [ROLL.TakeRoot]: "Rooted",
       };
       square.player.stupidity =
-        STUPID_TYPES[action.Results.BoardActionResult.RollType];
+        STUPID_TYPES[actionResult.RollType];
     }
   }
 
-  function handlePass(action) {
-    if (!action.Results.BoardActionResult.IsOrderCompleted) {
+  function handlePass(action, actionResult) {
+    if (!actionResult.IsOrderCompleted) {
       return;
     }
 
     let sprite = document.getElementById("ball");
     sprite.classList.remove("held");
 
-    if (action.Results.BoardActionResult.ResultType === 0) {
+    if (actionResult.ResultType === 0) {
       //success
       const target = document.getElementById(
         `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
@@ -837,10 +841,10 @@
     }
   }
 
-  function handlePickup(action) {
+  function handlePickup(action, actionResult) {
     if (
-      action.Results.BoardActionResult.IsOrderCompleted &&
-      action.Results.BoardActionResult.ResultType === 0
+      actionResult.IsOrderCompleted &&
+      actionResult.ResultType === 0
     )
       Object.values(pitch).forEach((square) => {
         if (square["ball"]) {
@@ -850,8 +854,8 @@
       });
   }
 
-  function handleTakeDamage(action) {
-    if (!action.Results.BoardActionResult.IsOrderCompleted) return;
+  function handleTakeDamage(action, actionResult) {
+    if (!actionResult.IsOrderCompleted) return;
 
     let player, playerSquareIndex;
 
@@ -866,19 +870,19 @@
       }
     });
 
-    switch (action.Results.BoardActionResult.RollType) {
+    switch (actionResult.RollType) {
       case 3: //armor
-        if (action.Results.BoardActionResult.ResultType === 1) {
+        if (actionResult.ResultType === 1) {
           // armor failed
           //knocked down
           player.prone = true;
         }
         break;
       case 4: //injury
-        if (action.Results.BoardActionResult.SubResultType === 2) {
+        if (actionResult.SubResultType === 2) {
           //stunned
           player.stunned = true;
-        } else if (action.Results.BoardActionResult.SubResultType === 3) {
+        } else if (actionResult.SubResultType === 3) {
           //knocked out
           let team = player.team;
           let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
