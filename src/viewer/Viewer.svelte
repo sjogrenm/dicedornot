@@ -10,6 +10,7 @@
     Casualties,
     ROLL,
     WEATHER,
+RESULT_TYPE,
   } from "../../js/constants.js";
   import { onMount, tick } from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
@@ -747,7 +748,7 @@
   }
 
   function handleLeap(action) {
-    this.handleMove(action);
+    handleMove(action);
   }
 
   function handleMove(action, actionResult) {
@@ -761,8 +762,8 @@
       actionResult.IsOrderCompleted &&
       squareTo != squareFrom
     ) {
-      squareTo.player = player;
       squareFrom.player = null;
+      squareTo.player = player;
     }
 
     squareFrom.cell = squareFrom.cell || {};
@@ -789,8 +790,9 @@
       player.blitz = true;
     }
     if (squareFrom.ball) {
-      squareTo.ball = squareFrom.ball;
+      let ball = squareFrom.ball;
       squareFrom.ball = null;
+      squareTo.ball = ball;
     }
   }
 
@@ -806,7 +808,7 @@
     */
     let square = setPitchSquare(action.Order.CellTo.Cell);
 
-    if (actionResult.ResultType === 0) {
+    if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
       square.player.stupidity = null;
       return;
@@ -822,29 +824,28 @@
     }
   }
 
-  function handlePass(action, actionResult) {
+  async function handlePass(action, actionResult) {
     if (!actionResult.IsOrderCompleted) {
       return;
     }
 
-    let sprite = document.getElementById("ball");
-    sprite.classList.remove("held");
+    let from = setPitchSquare(action.Order.CellFrom);
+    from.ball.held = false;
+    await tick();
 
-    if (actionResult.ResultType === 0) {
+    if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
-      const target = document.getElementById(
-        `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
-      );
-
-      target.appendChild(sprite);
-      return;
+      let target = setPitchSquare(action.Order.CellTo.Cell);
+      target.ball = from.ball;
+      from.ball = null;
+      await step();
     }
   }
 
   function handlePickup(action, actionResult) {
     if (
       actionResult.IsOrderCompleted &&
-      actionResult.ResultType === 0
+      actionResult.ResultType === RESULT_TYPE.Passed
     )
       Object.values(pitch).forEach((square) => {
         if (square["ball"]) {

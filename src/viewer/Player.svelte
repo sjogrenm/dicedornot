@@ -1,4 +1,8 @@
 <script>
+import { onMount } from 'svelte';
+
+	import { quintOut } from 'svelte/easing';
+	import { crossfade, scale } from 'svelte/transition';
   export let id,
     race,
     model,
@@ -10,26 +14,36 @@
     blitz = false,
     cas = null,
     stupidity = null;
-    let classes;
+    let classes, key;
 
     $: {
       classes = [race, model, team, 'sprite'].concat(stupidity ? [stupidity] : []).join(' ');
+      key = `player_${id}`;
     }
+
+	const [send, receive] = crossfade({
+    duration: d => Math.sqrt(d * 200),
+    fallback: scale
+	});
 </script>
 
+{#key key}
 <div
-  id="player_{id}"
+  id={key}
   class={classes}
   class:done
   class:moving
   class:stunned
   class:prone
   class:blitz
+	in:receive="{{key: key}}"
+	out:send="{{key: key}}"
 >
   {#if cas}
     <img src={`/images/skills/${cas}.png`} alt={cas} />
   {/if}
 </div>
+{/key}
 
 <!-- image.src = `https://cdn2.rebbl.net/images/skills/${
   Casualties[Math.max(...p.sustainedCasualties)].icon
