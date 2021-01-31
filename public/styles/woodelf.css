@@ -1,23 +1,88 @@
-:root{--wm:-28px;--wl:-40px}
+:root {
+  --wm: 28;
+  --wl: 40;
+}
 
-.woodelf{width: calc(-1 * var(--wm));height: calc(-1 * var(--wm));display: inline-block;background-position-x: 0px;}
-.woodelf.tree {width: calc(-1 * var(--wl));height: calc(-1 * var(--wl))}
+.woodelf.sprite {
+  --imW: 80;
+  --imH: 416;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.woodelf.home {background: url("/images/players/woodelf/home.png") no-repeat;}
-.woodelf.away {background: url("/images/players/woodelf/away.png") no-repeat;}
+.woodelf.tree {
+  --spScale: 100%;
+  --spW: 40;
+  --spH: 40;
+}
 
-.woodelf.lineman1{background-position-y: 0px;}
-.woodelf.lineman2{background-position-y: var(--wm);}
-.woodelf.lineman3{background-position-y: calc(2 * var(--wm));}
-.woodelf.lineman4{background-position-y: calc(3 * var(--wm));}
-.woodelf.catcher1{background-position-y: calc(4 * var(--wm));}
-.woodelf.catcher2{background-position-y: calc(5 * var(--wm));}
-.woodelf.catcher3{background-position-y: calc(6 * var(--wm));}
-.woodelf.catcher4{background-position-y: calc(7 * var(--wm));}
-.woodelf.thrower1{background-position-y: calc(8 * var(--wm));}
-.woodelf.thrower2{background-position-y: calc(9 * var(--wm));}
-.woodelf.wardancer1{background-position-y: calc(10 * var(--wm));}
-.woodelf.wardancer2{background-position-y: calc(11 * var(--wm));}
-.woodelf.tree{background-position-y: calc(12 * var(--wm));}
-.woodelf.moving,.woodelf.prone,.woodelf.stunned {background-position-x: var(--wm);}
-.woodelf.tree.moving,.woodelf.tree.prone,.woodelf.tree.stunned {background-position-x: var(--wl);}
+.woodelf.home {
+  background-image: url("/images/players/woodelf/home.png");
+  background-repeat: no-repeat;
+}
+
+.woodelf.away {
+  background-image: url("/images/players/woodelf/away.png");
+  background-repeat: no-repeat;
+}
+
+.woodelf.lineman2 {
+  --spY: var(--wm);
+}
+
+.woodelf.lineman3 {
+  --spY: calc(2 * var(--wm));
+}
+
+.woodelf.lineman4 {
+  --spY: calc(3 * var(--wm));
+}
+
+.woodelf.catcher1 {
+  --spY: calc(4 * var(--wm));
+}
+
+.woodelf.catcher2 {
+  --spY: calc(5 * var(--wm));
+}
+
+.woodelf.catcher3 {
+  --spY: calc(6 * var(--wm));
+}
+
+.woodelf.catcher4 {
+  --spY: calc(7 * var(--wm));
+}
+
+.woodelf.thrower1 {
+  --spY: calc(8 * var(--wm));
+}
+
+.woodelf.thrower2 {
+  --spY: calc(9 * var(--wm));
+}
+
+.woodelf.wardancer1 {
+  --spY: calc(10 * var(--wm));
+}
+
+.woodelf.wardancer2 {
+  --spY: calc(11 * var(--wm));
+}
+
+.woodelf.tree {
+  --spY: calc(12 * var(--wm));
+}
+
+.woodelf.moving, .woodelf.prone, .woodelf.stunned {
+  --spX: var(--wm);
+}
+
+.woodelf.tree.moving, .woodelf.tree.prone, .woodelf.tree.stunned {
+  --spX: var(--wl);
+}
