@@ -34,13 +34,17 @@
     [SITUATION.SentOff]: "cas",
   };
 
-   // pass as arguments to force queue to reset when any arguments change
+  // pass as arguments to force queue to reset when any arguments change
   $: (() => {
     queue = [];
-    console.log("About to reset queue", {replayStart, replayEnd});
+    console.log("About to reset queue", { replayStart, replayEnd });
     replayStart = replayStart || 0;
     replayEnd = Math.max(replayEnd || replaySteps.length, replayStart + 1);
-    console.log("Resetting queue", {replayStart, replayEnd, queue: replaySteps.slice(replayStart, replayEnd)});
+    console.log("Resetting queue", {
+      replayStart,
+      replayEnd,
+      queue: replaySteps.slice(replayStart, replayEnd),
+    });
   })(replaySteps, replayStart, replayEnd);
 
   onMount(() => {
@@ -51,12 +55,9 @@
   });
 
   async function initQueue(replaySteps, replayStart, replayEnd) {
-    queue = replaySteps.slice(
-      replayStart,
-      replayEnd,
-    );
+    queue = replaySteps.slice(replayStart, replayEnd);
     if (replayStart > 0) {
-      await resetFromBoardState(replaySteps[replayStart-1].BoardState);
+      await resetFromBoardState(replaySteps[replayStart - 1].BoardState);
     } else {
       lastPlayerId = 0;
       lastChainPush = null;
@@ -104,8 +105,9 @@
     };
   }
 
-  function setPitchSquare(x, y) {
-    let square = (pitch[`${x}-${y}`] = pitch[`${x}-${y}`] || {});
+  function setPitchSquare(cell) {
+    let square = (pitch[`${cell.x || 0}-${cell.y || 0}`] =
+      pitch[`${cell.x || 0}-${cell.y || 0}`] || {});
     return square;
   }
   function setPlayer(id) {
@@ -181,7 +183,7 @@
     switch (p.Situation) {
       case SITUATION.Active:
         player.done = p.CanAct != 1;
-        setPitchSquare(p.Cell.x, p.Cell.y).player = player;
+        setPitchSquare(p.Cell).player = player;
         break;
       default:
         if (team == "home") {
@@ -200,7 +202,9 @@
     });
 
     if (x != -1 && y != -1) {
-      setPitchSquare(x, y).ball = { held: boardState.Ball.IsHeld == 1 };
+      setPitchSquare(boardState.Ball.Cell).ball = {
+        held: boardState.Ball.IsHeld == 1,
+      };
     }
   }
 
@@ -593,23 +597,20 @@
   }
 
   function handleBall(action) {
-    setPitchSquare(
-      action.Order.CellFrom.x,
-      action.Order.CellFrom.y
-    ).ball = null;
+    setPitchSquare(action.Order.CellFrom).ball = null;
     let to = action.Order.CellTo.Cell;
-    setPitchSquare(to.x, to.y).ball = {
+    setPitchSquare(to).ball = {
       held: false,
     };
   }
 
   function handleBlock(action) {
     let from = action.Order.CellFrom;
-    let fromSquare = setPitchSquare(from.x, from.y);
+    let fromSquare = setPitchSquare(from);
     (fromSquare.cell = fromSquare.cell || {}).active = true;
 
     let to = action.Order.CellTo.Cell;
-    let toSquare = setPitchSquare(to.x, to.y);
+    let toSquare = setPitchSquare(to);
     let toPlayer = toSquare.player;
 
     Object.values(pitch).forEach((square) => {
@@ -617,10 +618,7 @@
     });
 
     if (action.Results.BoardActionResult.RollType === ROLL.Block) {
-      let target = setPitchSquare(
-        action.Order.CellTo.Cell.x,
-        action.Order.CellTo.Cell.y
-      );
+      let target = setPitchSquare(action.Order.CellTo.Cell);
       if (!target.cell) {
         target.cell = {};
       }
@@ -652,7 +650,7 @@
         let pushTarget = ensureList(
           action.Results.BoardActionResult.CoachChoices.ListCells.Cell
         )[0];
-        let targetSquare = setPitchSquare(pushTarget.x, pushTarget.y);
+        let targetSquare = setPitchSquare(pushTarget);
         if (lastChainPush) {
           toPlayer = lastChainPush;
         }
@@ -669,7 +667,7 @@
         ensureList(
           action.Results.BoardActionResult.CoachChoices.ListCells.Cell
         ).forEach((cell) => {
-          let square = setPitchSquare(cell.x, cell.y);
+          let square = setPitchSquare(cell);
           square.cell = square.cell || {};
           square.cell.pushbackChoice = true;
 
@@ -690,11 +688,11 @@
       //follow up
       if (action.Results.BoardActionResult.IsOrderCompleted) {
         const from = action.Order.CellFrom;
-        const fromSquare = setPitchSquare(from.x, from.y);
+        const fromSquare = setPitchSquare(from);
         const target = ensureList(
           action.Results.BoardActionResult.CoachChoices.ListCells.Cell
         )[0];
-        const targetSquare = (setPitchSquare(target.x, target.y).player =
+        const targetSquare = (setPitchSquare(target).player =
           fromSquare.player);
         fromSquare.player = null;
       }
@@ -706,10 +704,7 @@
     if (action.Results.BoardActionResult.ResultType !== 0) return;
 
     Object.values(pitch).forEach((cell) => (cell["ball"] = null));
-    setPitchSquare(
-      action.Order.CellTo.Cell.x,
-      action.Order.CellTo.Cell.y
-    ).ball = { held: true };
+    setPitchSquare(action.Order.CellTo.Cell).ball = { held: true };
   }
 
   async function handleEndTurn(endTurn) {
@@ -723,7 +718,7 @@
   }
 
   async function handleFoul(action) {
-    const targetSquare = setPitchSquare(action.Order.CellTo.Cell.x, action.Order.CellTo.Cell.y);
+    const targetSquare = setPitchSquare(action.Order.CellTo.Cell);
 
     targetSquare.foul = true;
     await step();
@@ -734,18 +729,15 @@
     player.prone = true;
   }
 
-  function handleHandoff(state) {
-    let sprite = document.getElementById("ball");
-    sprite.classList.remove("held");
-    const target = document.getElementById(
-      `pos_${action.Order.CellTo.Cell.x}_${action.Order.CellTo.Cell.y}`
-    );
-    target.appendChild(sprite);
+  function handleHandoff(action) {
+    let from = setPitchSquare(action.Order.CellFrom);
+    let to = setPitchSquare(action.Order.CellTo.Cell);
+    to.ball = from.ball;
+    from.ball = null;
   }
 
   function handleKickoff(action) {
-    let { x, y } = action.Order.CellTo.Cell;
-    let square = (setPitchSquare(x, y).ball = {
+    let square = (setPitchSquare(action.Order.CellTo.Cell).ball = {
       held: false,
     });
   }
@@ -756,14 +748,8 @@
 
   function handleMove(action) {
     let player = setPlayer(action.PlayerId);
-    let squareFrom = setPitchSquare(
-      action.Order.CellFrom.x,
-      action.Order.CellFrom.y
-    );
-    let squareTo = setPitchSquare(
-      action.Order.CellTo.Cell.x,
-      action.Order.CellTo.Cell.y
-    );
+    let squareFrom = setPitchSquare(action.Order.CellFrom);
+    let squareTo = setPitchSquare(action.Order.CellTo.Cell);
 
     player.prone = false;
     player.moving = true;
@@ -814,10 +800,7 @@
       Bloodlust = 50,
 
     */
-    let square = setPitchSquare(
-      action.Order.CellTo.Cell.x,
-      action.Order.CellTo.Cell.y
-    );
+    let square = setPitchSquare(action.Order.CellTo.Cell);
 
     if (action.Results.BoardActionResult.ResultType === 0) {
       //success

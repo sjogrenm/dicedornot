@@ -97,7 +97,7 @@
     {#if replay}
       <div class="container-fluid" role="main">
         <div class="row">
-          <Summary gameDetails={replay.gameDetails} />
+          <Summary gameDetails={replay.gameDetails} filename={replay.fullReplay.filename} />
         </div>
         <div class="row">
           <div class="col-8">

@@ -15,6 +15,7 @@
         files[0],
         function (jsonObj) {
           console.log("Preparing to process replay json...");
+          jsonObj.Replay.filename = files[0].name;
           const replayData = replay.processReplay(jsonObj);
 
           dispatch("replayLoaded", replayData);

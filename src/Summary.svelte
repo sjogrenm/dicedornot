@@ -1,5 +1,5 @@
 <script>
-  export let gameDetails;
+  export let gameDetails, filename;
   import { RACE_NAMES } from "../js/constants.js";
 </script>
 
@@ -46,6 +46,10 @@
   .league-name {
     text-align: center;
   }
+  .filename {
+    text-align: center;
+    font-weight: bold;
+  }
 
   #summary {
     padding: 20px 0px;
@@ -53,6 +57,11 @@
 </style>
 
 <div id="summary" class="container">
+  <div class="row filename">
+    <div class="col-sm-12">
+      {filename}
+    </div>
+  </div>
   <div class="row league-name">
     <div class="col-sm-12">
       League:
