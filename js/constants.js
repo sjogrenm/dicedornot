@@ -264,7 +264,7 @@ export const ACTION_TYPE = {
 };
 
 export const RESULT_TYPE = {
-  Passed: 0, //Skilltest Passed
+  Passed: undefined, //Skilltest Passed
   FailNoTurnover: 1, //Failed with Skill Reroll -> Failed no Turnover (Wild Animal Fail ect)
   FailTeamRR: 2, //Failed with Possible Reroll
   FailFinal: 3 //Failed No Reroll -> Final!

@@ -216,6 +216,10 @@ export class Roll {
     return args;
   }
 
+  get startIndex() {
+    return this.stepIndex;
+  }
+
   get activeTeam() {
     return this.finalBoardState.activeTeam;
   }

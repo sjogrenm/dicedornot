@@ -1,7 +1,7 @@
 <script>
 
   import Player from "./Player.svelte";
-  export let dugout, id, row, column, width, height, casType, send, receive;
+  export let dugout, row, column, width, height, casType, send, receive;
   let player = null, players;
 
   $: {
@@ -18,7 +18,7 @@
   };
 </script>
 
-<div {id} class="pitch-square">
+<div class="pitch-square">
   {#if player}
     <Player {...player} {send} {receive} />
   {/if}

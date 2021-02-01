@@ -15,12 +15,11 @@
     let classes, key;
 
     $: {
-      classes = [race, model, team, 'sprite'].concat(stupidity ? [stupidity] : []).join(' ');
+      classes = [race, model, team, 'sprite'].join(' ');
       key = `player_${id}`;
     }
 </script>
 
-{#key key}
 <div
   id={key}
   class={classes}
@@ -35,8 +34,10 @@
   {#if cas}
     <img src={`/images/skills/${cas}.png`} alt={cas} />
   {/if}
+  {#if stupidity}
+    <div class={stupidity}></div>
+  {/if}
 </div>
-{/key}
 
 <!-- image.src = `https://cdn2.rebbl.net/images/skills/${
   Casualties[Math.max(...p.sustainedCasualties)].icon

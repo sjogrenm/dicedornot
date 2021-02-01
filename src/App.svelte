@@ -114,7 +114,7 @@
             />
           </div>
           <div class="col-4">
-            <RollDetails rolls={replay.rolls} {replayStepIndex} />
+            <RollDetails rolls={replay.rolls} {replayStepIndex} bind:replayStart bind:replayEnd />
           </div>
         </div>
       </div>

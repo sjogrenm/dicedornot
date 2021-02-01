@@ -20,7 +20,6 @@ RESULT_TYPE,
   import {timing} from '../stores.js';
   export let replaySteps, replayStepIndex, replayStart, replayEnd;
   let queue,
-    lastPlayerId,
     lastChainPush,
     races = [],
     homeTeam = {},
@@ -38,7 +37,7 @@ RESULT_TYPE,
   };
 
 	const [send, receive] = crossfade({
-    duration: d => $timing * .5,
+    duration: $timing * .5,
     easing: sineInOut,
 
 		fallback(node, params) {
@@ -81,7 +80,6 @@ RESULT_TYPE,
     if (replayStart > 0) {
       await resetFromBoardState(replaySteps[replayStart - 1].BoardState);
     } else {
-      lastPlayerId = 0;
       lastChainPush = null;
       races = [];
       homeTeam = {};
@@ -89,6 +87,7 @@ RESULT_TYPE,
       pitch = {};
       weather = WEATHER.Nice;
     }
+    await step(3);
   }
 
   async function resetFromBoardState(boardState) {
@@ -340,7 +339,7 @@ RESULT_TYPE,
           const action = actions[boardAction.ActionType || 0];
 
           try {
-            action(boardAction, boardActionResult);
+            await action(boardAction, boardActionResult);
             await tick();
           } catch (error) {
             await tick();
@@ -612,13 +611,9 @@ RESULT_TYPE,
           square.cell.active = true;
           square.player.prone = false;
         }
-        if (square.player.id == lastPlayerId) {
-          square.player.done = true;
-        }
         pitch[idx] = square;
       }
     });
-    lastPlayerId = action.PlayerId;
   }
 
   function handleBall(action) {
@@ -661,7 +656,7 @@ RESULT_TYPE,
         );
         target.dice = dice.slice(0, dice.length / 2);
       }
-      await step(2);
+      await step(4);
     }
     if (actionResult.RollType === ROLL.Push) {
       //pushback
@@ -832,7 +827,6 @@ RESULT_TYPE,
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
       square.player.stupidity = null;
-      return;
     } else {
       //failure
       const STUPID_TYPES = {

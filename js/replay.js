@@ -38,7 +38,10 @@ export const replay = {
       }
       return rolls;
     }, []);
-    rolls.forEach((roll, idx) => (roll.rollIndex = idx));
+    rolls.forEach((roll, idx) => {
+      roll.rollIndex = idx;
+      roll.endIndex = rolls[idx + 1] ? rolls[idx + 1].startIndex - 1 : null;
+    });
 
     return {
       fullReplay: data.Replay,

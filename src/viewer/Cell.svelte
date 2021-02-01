@@ -9,29 +9,31 @@
     send,
     receive;
   import { timing } from "../stores.js";
+  let inFn, outFn, inParms, outParms, plusClass = "";
 
-  $: plusClass = plus ? `plus${plus}` : "";
+  $: {
+    plusClass = plus ? `plus${plus}` : "";
+    if (active) {
+      inFn = receive;
+      outFn = send;
+      inParms = outParms = {key: "active-cell"};
+    } else {
+      inFn = outFn = fade;
+      inParms = outParms = {duration: $timing * 0.1};
+    }
+  }
 </script>
 
-{#if active}
-  <div
-    id={`cell_${column}_${row}`}
-    class="cell sprite"
-    class:active
-    in:receive={{ key: "active-cell" }}
-    out:send={{ key: "active-cell" }}
-  />
-{:else}
-  <div
-    id={`cell_${column}_${row}`}
-    class={`cell sprite ${plusClass}`}
-    class:target
-    class:moved
-    class:pushback-choice={pushbackChoice}
-    in:fade={{ duration: $timing * 0.1 }}
-    out:fade={{ duration: $timing * 0.1 }}
-  />
-{/if}
+<div
+  id={`cell_${column}_${row}`}
+  class={`cell sprite ${plusClass}`}
+  class:target
+  class:moved
+  class:active
+  class:pushback-choice={pushbackChoice}
+  in:inFn={inParms}
+  out:outFn={outParms}
+/>
 
 <style>
   .cell {
