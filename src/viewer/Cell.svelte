@@ -5,15 +5,17 @@
     target = false,
     pushbackChoice = false,
     moved = false,
+    row, column,
     send,
     receive;
   import { timing } from "../stores.js";
 
-  $: plusClass = !active && plus ? `plus${plus}` : "";
+  $: plusClass = plus ? `plus${plus}` : "";
 </script>
 
 {#if active}
   <div
+    id={`cell_${column}_${row}`}
     class="cell sprite"
     class:active
     in:receive={{ key: "active-cell" }}
@@ -21,6 +23,7 @@
   />
 {:else}
   <div
+    id={`cell_${column}_${row}`}
     class={`cell sprite ${plusClass}`}
     class:target
     class:moved

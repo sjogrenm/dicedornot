@@ -11,13 +11,17 @@
 </script>
 
 <div class="pitch">
-  <Grid
-    width={26}
-    height={15}
-    prefix="pos"
-    component={PitchSquare}
-    componentProps={{ homeLogo, awayLogo, pitch, send, receive }}
-  />
+  <Grid width={26} height={15} let:row let:column>
+    <PitchSquare
+      {homeLogo}
+      {awayLogo}
+      {pitch}
+      {send}
+      {receive}
+      {row}
+      {column}
+    />
+  </Grid>
 </div>
 
 <style>

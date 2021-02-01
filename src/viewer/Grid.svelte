@@ -1,32 +1,34 @@
+<script>
+  import FixedRatio from "./FixedRatio.svelte";
+  export let width,
+    height;
+</script>
+
 <FixedRatio {width} {height}>
-  <div class="grid" style="grid-template-columns: repeat({width}, minmax(0, 1fr));  grid-template-rows: repeat({height}, minmax(0, 1fr));">
+  <div
+    class="grid"
+    style="grid-template-columns: repeat({width}, minmax(0, 1fr));  grid-template-rows: repeat({height}, minmax(0, 1fr));"
+  >
     {#each Array(height) as _r, row (row)}
       {#each Array(width) as _c, column (column)}
-        {#if component}
-          <svelte:component this={component} {row} {column} {width} {height} {...componentProps} id="{prefix}_{column}_{row}"/>
-        {:else}
-          <div class="grid-item" id="{prefix}_{column}_{row}"/>
-        {/if}
+        <slot {row} {column}>
+          <div class="grid-item" class:row class:column />
+        </slot>
       {/each}
     {/each}
   </div>
 </FixedRatio>
 
-<script>
-import FixedRatio from "./FixedRatio.svelte"
-  export let prefix, width, height, component=null, componentProps={};
-</script>
-
 <style>
-.grid {
-  display: grid;
-  justify-items: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-}
+  .grid {
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
 
-.grid-item {
+  .grid-item {
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;

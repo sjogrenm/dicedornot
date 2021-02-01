@@ -2,8 +2,8 @@
   import Grid from "./Grid.svelte";
 </script>
 
-<Grid width={10} height={3} prefix="dice">
-  <div class="grid_item_dice">
+<Grid width={10} height={3}>
+  <!-- <div class="grid_item_dice">
     <div class="inducement wizard" />
   </div>
   <div class="grid_item_dice">
@@ -11,7 +11,7 @@
   </div>
   <div class="grid_item_dice">
     <div class="reroll" />
-  </div>
+  </div> -->
 </Grid>
 
 <style>
