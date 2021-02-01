@@ -13,7 +13,6 @@
 </FixedRatio>
 
 <script>
-  import AwayBench from "./AwayBench.svelte";
 import FixedRatio from "./FixedRatio.svelte"
   export let prefix, width, height, component=null, componentProps={};
 </script>

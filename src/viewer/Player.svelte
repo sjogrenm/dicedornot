@@ -1,8 +1,4 @@
 <script>
-import { onMount } from 'svelte';
-
-	import { quintOut } from 'svelte/easing';
-	import { crossfade, scale } from 'svelte/transition';
   export let id,
     race,
     model,
@@ -13,18 +9,15 @@ import { onMount } from 'svelte';
     prone = false,
     blitz = false,
     cas = null,
-    stupidity = null;
+    stupidity = null,
+    send,
+    receive;
     let classes, key;
 
     $: {
       classes = [race, model, team, 'sprite'].concat(stupidity ? [stupidity] : []).join(' ');
       key = `player_${id}`;
     }
-
-	const [send, receive] = crossfade({
-    duration: d => Math.sqrt(d * 200),
-    fallback: scale
-	});
 </script>
 
 {#key key}
@@ -37,7 +30,7 @@ import { onMount } from 'svelte';
   class:prone
   class:blitz
 	in:receive="{{key: key}}"
-	out:send="{{key: key}}"
+  out:send="{{key: key}}"
 >
   {#if cas}
     <img src={`/images/skills/${cas}.png`} alt={cas} />

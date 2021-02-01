@@ -1,20 +1,34 @@
 <script>
+  import { fade } from "svelte/transition";
   export let plus = null,
     active = false,
     target = false,
     pushbackChoice = false,
-    moved = false;
+    moved = false,
+    send,
+    receive;
+  import { timing } from "../stores.js";
 
-  $: plusClass = (!active && plus) ? `plus${plus}` : "";
+  $: plusClass = !active && plus ? `plus${plus}` : "";
 </script>
 
-<div
-  class={`cell sprite ${plusClass}`}
-  class:active
-  class:target
-  class:moved
-  class:pushback-choice={pushbackChoice}
-/>
+{#if active}
+  <div
+    class="cell sprite"
+    class:active
+    in:receive={{ key: "active-cell" }}
+    out:send={{ key: "active-cell" }}
+  />
+{:else}
+  <div
+    class={`cell sprite ${plusClass}`}
+    class:target
+    class:moved
+    class:pushback-choice={pushbackChoice}
+    in:fade={{ duration: $timing * 0.1 }}
+    out:fade={{ duration: $timing * 0.1 }}
+  />
+{/if}
 
 <style>
   .cell {
@@ -75,7 +89,7 @@
     --spX: 300;
     --spY: 50;
   }
-  
+
   .blood {
     background: url("/images/blood.png") no-repeat;
     --spW: 40;

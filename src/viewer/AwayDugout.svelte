@@ -3,7 +3,7 @@
   import AwayBench from "./AwayBench.svelte";
   import TeamAids from "./TeamAids.svelte";
 
-  export let awayTeam;
+  export let awayTeam, send, receive;
 
 </script>
 
@@ -13,7 +13,7 @@
   <div class="turn" class:active={awayTeam.active}>{awayTeam.turn}</div>
   <div class="name">{awayTeam.name}</div>
   <img class="logo" src="/images/logo/256x256/logo_{awayTeam.logo}.png" alt="Logo: {awayTeam.logo}"/>
-  <AwayBench dugout={awayTeam.dugout}/>
+  <AwayBench dugout={awayTeam.dugout} {send} {receive}/>
 </div>
 
 <style>

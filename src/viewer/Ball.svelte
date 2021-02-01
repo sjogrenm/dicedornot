@@ -1,6 +1,16 @@
 <script>
-  export let held=false;
+  export let held = false,
+    send,
+    receive;
 </script>
+
+<div
+  id="ball"
+  class:held
+  in:receive={{ key: "ball" }}
+  out:send={{ key: "ball" }}
+/>
+
 <style>
   #ball {
     background-image: url("/images/ball.png");
@@ -20,6 +30,3 @@
     z-index: 1;
   }
 </style>
-
-
-<div id="ball" class:held/>

@@ -1,11 +1,13 @@
 <script>
   import Turn from "./Turn.svelte";
-  export let rolls;
-  export let selectedRoll = null;
+  export let rolls, replayStepIndex;
   let open = false;
-  let groupedRolls;
+  let groupedRolls, selectedRoll;
   $: {
-    console.log("Roll Details reactive");
+    let nextRoll = rolls.findIndex(roll => {
+      return replayStepIndex < roll.stepIndex;
+    });
+    selectedRoll = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
     updateRollLog(rolls, selectedRoll);
   }
   function updateRollLog(rolls, selectedRoll) {

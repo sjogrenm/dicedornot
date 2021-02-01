@@ -1,4 +1,6 @@
 <script>
+	import { quintOut, sineInOut } from 'svelte/easing';
+  import { crossfade, fade } from "svelte/transition";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
@@ -15,6 +17,7 @@ RESULT_TYPE,
   import { onMount, tick } from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
+  import {timing} from '../stores.js';
   export let replaySteps, replayStepIndex, replayStart, replayEnd;
   let queue,
     lastPlayerId,
@@ -25,8 +28,7 @@ RESULT_TYPE,
     pitch = {},
     blitzerId,
     banner,
-    weather,
-    timing = 300;
+    weather;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -35,6 +37,25 @@ RESULT_TYPE,
     [SITUATION.SentOff]: "cas",
   };
 
+	const [send, receive] = crossfade({
+    duration: d => $timing * .5,
+    easing: sineInOut,
+
+		fallback(node, params) {
+			const style = getComputedStyle(node);
+			const transform = style.transform === 'none' ? '' : style.transform;
+
+			return {
+				duration: $timing * .5,
+				easing: sineInOut,
+				css: t => `
+					transform: ${transform} scale(${t});
+					opacity: ${t}
+				`
+			};
+		}
+	});
+  
   // pass as arguments to force queue to reset when any arguments change
   $: (() => {
     queue = [];
@@ -299,7 +320,7 @@ RESULT_TYPE,
 
   async function step(ticks) {
     await tick();
-    await sleep(timing * (ticks || 1));
+    await sleep($timing * (ticks || 1));
   }
 
   async function processQueue() {
@@ -923,9 +944,9 @@ RESULT_TYPE,
 
 <FixedRatio width={1335} height={1061}>
   <div class="pitch">
-    <HomeDugout {homeTeam} {weather} />
-    <Pitch {pitch} {homeTeam} {awayTeam} />
-    <AwayDugout {awayTeam} />
+    <HomeDugout {homeTeam} {weather} {send} {receive}/>
+    <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive}/>
+    <AwayDugout {awayTeam} {send} {receive}/>
   </div>
   {#if banner}
     <Banner {banner} />

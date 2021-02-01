@@ -5,12 +5,12 @@ import TeamAids from "./TeamAids.svelte";
 import SelectedPlayer from "./SelectedPlayer.svelte";
 import Weather from "./Weather.svelte";
 
-export let homeTeam, weather;
+export let homeTeam, weather, send, receive;
 
 </script>
 
 <div class="dugout">
-  <HomeBench dugout={homeTeam.dugout}/>
+  <HomeBench dugout={homeTeam.dugout} {send} {receive}/>
   <img src="/images/logo/256x256/logo_{homeTeam.logo}.png" alt="Logo: {homeTeam.logo}" class="logo"/>
   <div class="name">{homeTeam.name}</div>
   <div class="score"><p>{homeTeam.score}</p></div>

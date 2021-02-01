@@ -1,12 +1,12 @@
 <script>
   import CasBox from './CasBox.svelte';
-  export let dugout;
+  export let dugout, send, receive;
 </script>
 
 <div class="bench">
-  <CasBox casType="cas" {dugout}/>
-  <CasBox casType="ko" {dugout}/>
-  <CasBox casType="reserve" {dugout}/>
+  <CasBox casType="cas" {dugout} {send} {receive}/>
+  <CasBox casType="ko" {dugout} {send} {receive}/>
+  <CasBox casType="reserve" {dugout} {send} {receive}/>
 </div>
 
 <style>

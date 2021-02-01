@@ -13,7 +13,6 @@
   let loading = false;
   let error = false;
   let replay;
-  let selectedRoll;
   let replayStepIndex = 0;
   let replayStart, replayEnd;
   $: {
@@ -106,7 +105,6 @@
               {replayStepIndex}
               bind:replayStart
               bind:replayEnd
-              bind:selectedRoll
             />
             <Viewer
               replaySteps={replay && replay.fullReplay.ReplayStep}
@@ -116,7 +114,7 @@
             />
           </div>
           <div class="col-4">
-            <RollDetails rolls={replay.rolls} {selectedRoll} />
+            <RollDetails rolls={replay.rolls} {replayStepIndex} />
           </div>
         </div>
       </div>

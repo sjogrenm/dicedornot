@@ -16,7 +16,6 @@
   });
 
   $: {
-    console.log("Results reactive");
     if (rolls && replayStepIndex) {
       let nextRoll = rolls.findIndex(roll => {
         return replayStepIndex < roll.stepIndex;

@@ -5,8 +5,7 @@
   import Ball from "./Ball.svelte";
   import DiceResult from "./DiceResult.svelte";
   import Foul from "./Foul.svelte";
-  import About from "../About.svelte";
-  export let id, row, column, width, height, pitch, homeLogo, awayLogo;
+  export let id, row, column, width, height, pitch, homeLogo, awayLogo, send, receive;
   let player = null,
     cell = null,
     ball = null,
@@ -26,10 +25,10 @@
     <TeamLogo logo={awayLogo.toLowerCase()} />
   {/if}
   {#if cell}
-    <Cell {...cell} />
+    <Cell {...cell} {send} {receive} />
   {/if}
   {#if player}
-    <Player {...player} />
+    <Player {...player} {send} {receive} />
   {/if}
   {#if dice}
     <DiceResult {dice} />
@@ -38,7 +37,7 @@
     <Foul/>
   {/if}
   {#if ball}
-    <Ball {...ball} />
+    <Ball {...ball} {send} {receive} />
   {/if}
 </div>
 
