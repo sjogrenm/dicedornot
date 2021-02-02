@@ -18,7 +18,7 @@ RESULT_TYPE,
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
   import {timing} from '../stores.js';
-  export let replaySteps, replayStepIndex, replayStart, replayEnd;
+  export let replaySteps, replayStepIndex = 0, replayStart, replayEnd;
   let queue,
     lastChainPush,
     races = [],
@@ -91,7 +91,6 @@ RESULT_TYPE,
   }
 
   async function resetFromBoardState(boardState) {
-    clearTemporaryState();
     blitzerId = boardState.BlitzerId;
     homeTeam = processTeam(
       boardState.ListTeams.TeamState[0],
@@ -319,7 +318,11 @@ RESULT_TYPE,
 
   async function step(ticks) {
     await tick();
-    await sleep($timing * (ticks || 1));
+    let sleepTime = $timing * (ticks || 1);
+    if (replayStepIndex < replayStart || replayStepIndex > replayEnd) {
+      sleepTime *= .1;
+    }
+    await sleep(sleepTime);
   }
 
   async function processQueue() {
@@ -707,13 +710,14 @@ RESULT_TYPE,
       //follow up
       if (actionResult.IsOrderCompleted) {
         const from = action.Order.CellFrom;
-        const fromSquare = setPitchSquare(from);
         const target = ensureList(
           actionResult.CoachChoices.ListCells.Cell
         )[0];
-        const targetSquare = (setPitchSquare(target).player =
-          fromSquare.player);
-        fromSquare.player = null;
+        if (from.x != target.x || from.y != target.y) {
+          const fromSquare = setPitchSquare(from);
+          setPitchSquare(target).player = fromSquare.player;
+          fromSquare.player = null;
+        }
       }
     }
   }
