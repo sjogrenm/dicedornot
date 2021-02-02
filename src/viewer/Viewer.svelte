@@ -106,7 +106,7 @@ RESULT_TYPE,
     ).filter((v, i, a) => a.indexOf(v) === i);
     setPlayerStates(boardState);
     setBallPosition(boardState);
-    await tick();
+    await step();
   }
 
   function processTeam(team, active) {
@@ -340,14 +340,12 @@ RESULT_TYPE,
 
           try {
             await action(boardAction, boardActionResult);
-            await tick();
+            await step();
           } catch (error) {
-            await tick();
+            await step();
             console.error("Action failed", { error, boardAction });
             throw error;
           }
-
-          await step();
         }
       }
       if (replayStep.RulesEventEndTurn) {
@@ -734,7 +732,7 @@ RESULT_TYPE,
       clearTemporaryState();
       await step(5);
       banner = null;
-      await tick();
+      await step();
     }
   }
 
@@ -846,7 +844,7 @@ RESULT_TYPE,
 
     let from = setPitchSquare(action.Order.CellFrom);
     from.ball.held = false;
-    await tick();
+    await step();
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
@@ -925,7 +923,7 @@ RESULT_TYPE,
     clearTemporaryState();
     await step(5);
     banner = null;
-    await tick();
+    await step(0);
   }
 </script>
 
