@@ -47,16 +47,9 @@
   <title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
   <link
     rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
-    integrity="sha256-L/W5Wfqfa0sdBNIKN9cG6QA5F2qx4qICmU2VgLruv9Y="
-    crossorigin="anonymous"
+    href="/styles/bootstrap.min.css"
   />
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/datatables@1.10.18/media/css/jquery.dataTables.min.css"
-    integrity="sha256-YY1izqyhIj4W3iyJOaGWOpXDSwrHWFL4Nfk+W0LyCHE="
-    crossorigin="anonymous"
-  />
+  <link rel="stylesheet" href="/styles/theme.css" />
 </svelte:head>
 
 <body>
@@ -96,7 +89,10 @@
     {#if replay}
       <div class="container-fluid" role="main">
         <div class="row">
-          <Summary gameDetails={replay.gameDetails} filename={replay.fullReplay.filename} />
+          <Summary
+            gameDetails={replay.gameDetails}
+            filename={replay.fullReplay.filename}
+          />
         </div>
         <div class="row">
           <div class="col-8">
@@ -114,7 +110,12 @@
             />
           </div>
           <div class="col-4">
-            <RollDetails rolls={replay.rolls} {replayStepIndex} bind:replayStart bind:replayEnd />
+            <RollDetails
+              rolls={replay.rolls}
+              {replayStepIndex}
+              bind:replayStart
+              bind:replayEnd
+            />
           </div>
         </div>
       </div>

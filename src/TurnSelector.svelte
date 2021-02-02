@@ -46,21 +46,26 @@
     padding: 0;
   }
 
-  .team.current {
-    text-shadow: -0.06ex 0 black, 0.06ex 0 black;
+  .team-0.current {
+    background-color: var(--team0-grey-9);
+  }
+  .team-1.current {
+    background-color: var(--team1-grey-9);
   }
   .team-0.active {
-    background-color: hsl(240, 100%, 80%);
+    background-color: var(--team0-color-5);
   }
   .team-1.active {
-    background-color: hsl(39, 100%, 70%);
+    background-color: var(--team1-color-5);
   }
   .team-0 {
-    background-color: hsl(240, 100%, 95%);
-    border-color: hsl(240, 100%, 50%);
+    background-color: var(--team0-color-3);
+    border-color: var(--team0-color-9);
+    color: var(--team0-grey-9);
   }
   .team-1 {
-    background-color: hsl(39, 100%, 90%);
-    border-color: hsl(39, 100%, 50%);
+    background-color: var(--team1-color-3);
+    border-color: var(--team1-color-9);
+    color: var(--team1-grey-9);
   }
 </style>

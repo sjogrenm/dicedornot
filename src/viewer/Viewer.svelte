@@ -77,6 +77,7 @@ RESULT_TYPE,
 
   async function initQueue(replaySteps, replayStart, replayEnd) {
     queue = replaySteps.slice(replayStart, replayEnd);
+    clearTemporaryState();
     if (replayStart > 0) {
       await resetFromBoardState(replaySteps[replayStart - 1].BoardState);
     } else {
@@ -327,11 +328,12 @@ RESULT_TYPE,
 
   async function processQueue() {
     while (true) {
-      if (queue.length === 0) {
+      let replayStep = queue.shift();
+      if (!replayStep) {
         await initQueue(replaySteps, replayStart, replayEnd);
+        replayStep = queue.shift();
       }
 
-      const replayStep = queue.shift();
       replayStepIndex = replayStep.index;
 
       for (const boardAction of ensureList(replayStep.RulesEventBoardAction)) {

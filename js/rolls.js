@@ -701,13 +701,17 @@ class BlockRoll extends Roll {
 
   isDependentRoll(roll) {
     return (
-      [PushRoll, FollowUpRoll, MoveAction].includes(
+      [PushRoll, FollowUpRoll].includes(
         roll.constructor
       )
     ) || (
-      [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
-      !roll.isFoul
-    ) || (roll.rollType === this.rollType && roll.rollStatus == ROLL_STATUS.RerollTaken);
+        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) && // Include following armor/injury/cas rolls
+        !roll.isFoul
+      ) || (
+        roll.rollType === this.rollType && roll.rollStatus == ROLL_STATUS.RerollTaken
+      ) || (
+        roll.constructor == MoveAction && this.activeTeam.id == roll.activeTeam.id
+      );
   }
 
   static dice(boardActionResult) {
@@ -811,7 +815,7 @@ class BlockRoll extends Roll {
       case BLOCK.Push:
         return (
           defenderSkills.includes(SKILL.StandFirm)
-          ? new SingleValue('Stand Firm', 0)
+            ? new SingleValue('Stand Firm', 0)
             : this.knockdownValue(defender, false).product(new SingleValue('Push', 0.33)).named(`Push(${defender.name})`)
         ).add(expected ? this.dependentMoveValues : null);
       case BLOCK.DefenderStumbles:
@@ -821,7 +825,7 @@ class BlockRoll extends Roll {
         ) {
           return (
             defenderSkills.includes(SKILL.StandFirm)
-            ? new SingleValue('Stand Firm', 0)
+              ? new SingleValue('Stand Firm', 0)
               : this.knockdownValue(defender, false).product(new SingleValue('Push', 0.33)).named(`Push(${defender.name})`)
           ).add(expected ? this.dependentMoveValues : null);
         } else {
@@ -1048,12 +1052,14 @@ class ModifiedD6SumRoll extends Roll {
         roll.rollStatus
       )
     ) || (
-      this.constructor.canCauseInjury &&
-      [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) &&
-      !roll.isFoul
+        this.constructor.canCauseInjury &&
+        [ArmorRoll, InjuryRoll, CasualtyRoll].includes(roll.constructor) &&
+        !roll.isFoul
       ) || (
-        this.constructor.includeFollowingMoves && roll.constructor == MoveAction
-    );
+      this.constructor.includeFollowingMoves &&
+      roll.constructor == MoveAction &&
+      roll.activeTeam.id == this.activeTeam.id
+      );
   };
 }
 

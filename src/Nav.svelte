@@ -35,7 +35,7 @@
 } 
 </style>
 <nav
-  class="navbar-dark bg-dark sidenav">
+  class="navbar-dark bg-primary sidenav">
   <a class="navbar-brand" href="/#">Diced or Not</a>
     <ul class="navbar-nav">
       <li class="nav-item"><a class="nav-link" href="#about">About</a></li>

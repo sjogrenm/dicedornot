@@ -52,7 +52,7 @@
 
 {#if selectedRoll && currentTurnRolls && currentTurnRolls.length > 0}
 <div class="details-list">
-  <Turn rolls={currentTurnRolls} {selectedRoll}/>
+  <Turn rolls={currentTurnRolls} {selectedRoll} bind:replayStart bind:replayEnd/>
 </div>
 {/if}
 

@@ -1,19 +1,25 @@
 <script>
   import Roll from "./Roll.svelte";
-  export let rolls;
-  export let selectedRoll;
+  export let rolls, selectedRoll, replayStart, replayEnd;
+  function handleClick(roll) {
+    return () => {
+      replayStart = roll.startIndex;
+      replayEnd = roll.endIndex;
+    };
+  }
 </script>
 
 <style>
 </style>
 
-<ul class="list-group">
+<div class="list-group">
   {#each rolls as roll (roll.rollIndex)}
-    <li
+    <button
       class="list-group-item list-group-item-action"
       class:active={selectedRoll == roll.rollIndex}
+      on:click={handleClick(roll)}
       >
       <Roll {roll} selected={selectedRoll == roll.rollIndex}/>
-    </li>
+    </button>
   {/each}
-</ul>
+  </div>
