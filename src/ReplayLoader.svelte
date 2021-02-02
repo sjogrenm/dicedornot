@@ -3,6 +3,8 @@
   import { io } from "../js/io.js";
   import { replay } from "../js/replay.js";
 
+  export let button = "primary";
+
   const dispatch = createEventDispatcher();
 
   let input;
@@ -53,7 +55,7 @@
 </style>
 
 <div class="text-center">
-  <span id="file-input-button" class="btn btn-primary btn-file centered">
+  <span id="file-input-button" class={`btn btn-${button} btn-file centered`}>
     Select Replay
     <input
       bind:this={input}

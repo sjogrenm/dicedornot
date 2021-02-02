@@ -45,55 +45,15 @@
     content="Blood Bowl 2 replay luck analyzer. Use it to decide whether you actually got diced."
   />
   <title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
-  <link
-    rel="stylesheet"
-    href="/styles/bootstrap.min.css"
-  />
+  <link rel="stylesheet" href="/styles/bootstrap.min.css" />
   <link rel="stylesheet" href="/styles/theme.css" />
 </svelte:head>
 
 <body>
-  <Nav />
+  <Nav bind:loading bind:replay bind:replayStart bind:replayEnd />
   <div id="content">
-    <div class="container-flex">
-      <div class="jumbotron">
-        <About />
-        <ReplayLoader
-          on:replayLoaded={(e) => {
-            loading = false;
-            replay = e.detail;
-            replayStart = null;
-            replayEnd = null;
-            console.log(e);
-          }}
-          on:replayLoading={() => {
-            replay = null;
-            error = false;
-            loading = true;
-          }}
-          on:replayError={() => {
-            loading = false;
-            error = true;
-            replay = null;
-          }}
-        />
-      </div>
-
-      {#if loading}
-        <Loading />
-      {/if}
-      {#if error}
-        <Error />
-      {/if}
-    </div>
     {#if replay}
       <div class="container-fluid" role="main">
-        <div class="row">
-          <Summary
-            gameDetails={replay.gameDetails}
-            filename={replay.fullReplay.filename}
-          />
-        </div>
         <div class="row">
           <div class="col-8">
             <Results
@@ -102,6 +62,17 @@
               bind:replayStart
               bind:replayEnd
             />
+          </div>
+
+          <div class="col-4">
+            <Summary
+              gameDetails={replay.gameDetails}
+              filename={replay.fullReplay.filename}
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-8">
             <Viewer
               replaySteps={replay && replay.fullReplay.ReplayStep}
               bind:replayStepIndex
@@ -121,6 +92,38 @@
       </div>
       <div class="container" role="main">
         <Explanation />
+      </div>
+    {:else}
+      <div class="container-flex">
+        <div class="jumbotron">
+          <About />
+          <ReplayLoader
+            on:replayLoaded={(e) => {
+              loading = false;
+              replay = e.detail;
+              replayStart = null;
+              replayEnd = null;
+              console.log(e);
+            }}
+            on:replayLoading={() => {
+              replay = null;
+              error = false;
+              loading = true;
+            }}
+            on:replayError={() => {
+              loading = false;
+              error = true;
+              replay = null;
+            }}
+          />
+        </div>
+
+        {#if loading}
+          <Loading />
+        {/if}
+        {#if error}
+          <Error />
+        {/if}
       </div>
     {/if}
 

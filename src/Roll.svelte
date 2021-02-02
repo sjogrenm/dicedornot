@@ -47,7 +47,7 @@
   </ul>
 </details>
 {:else}
-  <div class='.roll-min'>
+  <div>
   {roll.jointDescription}
   {roll.valueWithDependents.valueString}
   {roll.possibleOutcomes.valueString}

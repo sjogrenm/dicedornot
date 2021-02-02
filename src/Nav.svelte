@@ -1,48 +1,79 @@
-<style>
-   /* The side navigation menu */
-.sidenav {
-  height: 100%;
-  width: 200px;
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  background-color: #111;
-  overflow-x: hidden;
-  padding-top: 20px;
-  padding-left: 20px;
-}
+<script>
+  import ReplayLoader from "./ReplayLoader.svelte";
+  export let loading, replay, replayStart, replayEnd;
+</script>
 
-/* The navigation menu links */
-.sidenav li {
-  padding: 8px 8px 8px 32px;
-  text-decoration: none;
-  font-size: 25px;
-  color: #818181;
-  display: block;
-  transition: 0.3s;
-}
-
-/* When you mouse over the navigation links, change their color */
-.sidenav a:hover {
-  color: #f1f1f1;
-}
-
-/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
-@media screen and (max-height: 450px) {
-  .sidenav {padding-top: 15px;}
-  .sidenav a {font-size: 18px;}
-} 
-</style>
-<nav
-  class="navbar-dark bg-primary sidenav">
+<nav class="navbar-dark bg-primary sidenav">
   <a class="navbar-brand" href="/#">Diced or Not</a>
-    <ul class="navbar-nav">
-      <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
-      <li class="dropdown"><a class="nav-link" href="#summary">Replay</a></li>
-      <li class="nav-item">
-        <a class="nav-link" href="#explanation">Explain?</a>
-      </li>
-      <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-    </ul>
+  <ul class="navbar-nav">
+    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+    <li class="dropdown"><a class="nav-link" href="#summary">Replay</a></li>
+    <li class="nav-item">
+      <a class="nav-link" href="#explanation">Explain?</a>
+    </li>
+    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+    {#if replay}
+      <ReplayLoader
+        button="secondary"
+        on:replayLoaded={(e) => {
+          loading = false;
+          replay = e.detail;
+          replayStart = null;
+          replayEnd = null;
+          console.log(e);
+        }}
+        on:replayLoading={() => {
+          replay = null;
+          error = false;
+          loading = true;
+        }}
+        on:replayError={() => {
+          loading = false;
+          error = true;
+          replay = null;
+        }}
+      />
+    {/if}
+  </ul>
 </nav>
+
+<style>
+  /* The side navigation menu */
+  .sidenav {
+    height: 100%;
+    width: 200px;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    padding-top: 20px;
+    padding-left: 20px;
+  }
+
+  /* The navigation menu links */
+  .sidenav li {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+  }
+
+  /* When you mouse over the navigation links, change their color */
+  .sidenav a:hover {
+    color: #f1f1f1;
+  }
+
+  /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+  @media screen and (max-height: 450px) {
+    .sidenav {
+      padding-top: 15px;
+    }
+    .sidenav a {
+      font-size: 18px;
+    }
+  }
+</style>

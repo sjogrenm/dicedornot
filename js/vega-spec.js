@@ -1,11 +1,12 @@
-import { valueArray } from "vega-lite/build/src/channeldef";
-
-const breakPoints = [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5]
-
 const vegaSpec = {
   $schema: 'https://vega.github.io/schema/vega-lite/v4.json',
   width: 'container',
-  height: 500,
+  height: 'container',
+  config: {
+    range: {
+      category: ['#db0000', '#5252ff'],
+    }
+  },
   layer: [
     {
       data: { name: 'simulated' },
