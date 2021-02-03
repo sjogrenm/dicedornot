@@ -1,8 +1,13 @@
 <script>
+  import {selectedPlayer} from "../stores.js";
+  import { Popover } from 'sveltestrap';
+  import SelectedPlayer from "./SelectedPlayer.svelte";
+
   export let id,
     race,
     model,
     team,
+    data,
     done = false,
     moving = false,
     stunned = false,
@@ -30,6 +35,10 @@
   class:blitz
 	in:receive="{{key: key}}"
   out:send="{{key: key}}"
+  on:click={() => {
+    console.log("Clicked player", {player: data})
+    $selectedPlayer = data;
+  }}
 >
   {#if cas}
     <img src={`/images/skills/${cas}.png`} alt={cas} />
@@ -38,11 +47,23 @@
     <div class={stupidity}></div>
   {/if}
 </div>
+<Popover
+  trigger="hover"
+  placement="right"
+  target={key}
+>
+  <div class='player-card'>
+    <SelectedPlayer player={data}/>
+  </div>
+</Popover>
 
 <!-- image.src = `https://cdn2.rebbl.net/images/skills/${
   Casualties[Math.max(...p.sustainedCasualties)].icon
 }.png`; -->
 <style>
+  .player-card {
+    width: 10vw;
+  }
   .reverse {
     transform: scaleX(-1);
   }

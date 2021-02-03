@@ -1,35 +1,72 @@
 <script>
-import FixedRatio from "./FixedRatio.svelte";
-
+  export let player;
 </script>
 
-<FixedRatio width={207} height={317}>
-  <div id="selectedPlayerData">
-    <div id="selectedPlayerName" />
-    <div>
-      <div class="grid_stat">MV</div>
-      <div class="grid_stat" id="selectPlayer-MV" />
-      <div class="grid_stat">ST</div>
-      <div class="grid_stat" id="selectPlayer-ST" />
-      <div class="grid_stat">AG</div>
-      <div class="grid_stat" id="selectPlayer-AG" />
-      <div class="grid_stat">AV</div>
-      <div class="grid_stat" id="selectPlayer-AV" />
-    </div>
-    <div id="selectedPlayerCAS" />
-    <div id="skills" />
+{#if player}
+  <div class="player-card">
+    <svg width="100%" height="100%" viewBox="0 0 207 317" preserveAspectRatio="xMinYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <image href="/images/card.png" height="100%"/>
+      <text class="name" x="18" y="36">{player.Data.Name}</text>
+      <text class="stat mv" x="18" y="75"  text-anchor="middle">MV</text>
+      <text class="stat mv value" x="18" y="106"  text-anchor="middle">{player.Data.Ma}</text>
+      <text class="stat st" x="18" y="140" text-anchor="middle">ST</text>
+      <text class="stat st value" x="18" y="174" text-anchor="middle">{player.Data.St}</text>
+      <text class="stat ag" x="18" y="204" text-anchor="middle">AG</text>
+      <text class="stat ag value" x="18" y="238" text-anchor="middle">{player.Data.Ag}</text>
+      <text class="stat av" x="18" y="273" text-anchor="middle">AV</text>
+      <text class="stat av value" x="18" y="306" text-anchor="middle">{player.Data.Av}</text>
+    </svg>
   </div>
-</FixedRatio>
-<style>
+  <!-- <FixedRatio width={207} height={317}>
+    <div class="player-data">
+      <div class="name" />
+      <div class="stats">
+        <div class="grid_stat mv"><ScaledText width={14} height={10}>MV</ScaledText></div>
+        <div class="grid_stat value mv">{player.Data.Ma}</div>
+        <div class="grid_stat st">ST</div>
+        <div class="grid_stat value st">{player.Data.St}</div>
+        <div class="grid_stat ag">AG</div>
+        <div class="grid_stat value ag">{player.Data.Ag}</div>
+        <div class="grid_stat av">AV</div>
+        <div class="grid_stat value av">{player.Data.Av}</div>
+      </div>
+      <div id="selectedPlayerCAS" />
+      <div id="skills" />
+    </div>
+  </FixedRatio> -->
+{/if}
 
-#selectedPlayerData {
-  background-image: url("/images/card.png");
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  width: 100%;
-  height: 100%;
-}
-.skill {
+<style> 
+  .player-card {
+    font-family: "Nuffle";
+  }
+  .stat.value {
+    fill: var(--gray-0);
+    font-size: 30px;
+  }
+  .stat {
+    fill: var(--gray-2);
+    font-size: 16px;
+  }
+  .name {
+    fill: var(--gray-0);
+    font-size: 18px;
+  }
+  .stats {
+    top: 17%;
+    height: 83%;
+    width: 18%;
+    position: relative;
+  }
+  .player-data {
+    background-image: url("/images/card.png");
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .skill {
     background: url("/images/skills.png") no-repeat;
     width: 64px;
     height: 64px;
@@ -480,5 +517,4 @@ import FixedRatio from "./FixedRatio.svelte";
     background-position-x: -508px;
     background-position-y: -948px;
   }
-
 </style>

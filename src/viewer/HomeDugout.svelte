@@ -4,6 +4,7 @@ import HomeBench from "./HomeBench.svelte";
 import TeamAids from "./TeamAids.svelte";
 import SelectedPlayer from "./SelectedPlayer.svelte";
 import Weather from "./Weather.svelte";
+import {selectedPlayer} from "../stores.js";
 
 export let homeTeam, weather, send, receive;
 
@@ -16,7 +17,9 @@ export let homeTeam, weather, send, receive;
   <div class="score"><p>{homeTeam.score}</p></div>
   <div class="turn" class:active={homeTeam.active}><p>{homeTeam.turn}</p></div>
   <div class="aids"><TeamAids /></div>
-  <div class="selected"><SelectedPlayer /></div>
+  {#if $selectedPlayer}
+  <div class="selected"><SelectedPlayer player={$selectedPlayer}/></div>
+  {/if}
   <div class="weather"><Weather {weather}/></div>
 </div>
 

@@ -12,7 +12,7 @@
     Casualties,
     ROLL,
     WEATHER,
-RESULT_TYPE,
+    RESULT_TYPE,
   } from "../../js/constants.js";
   import { onMount, tick } from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
@@ -167,6 +167,7 @@ RESULT_TYPE,
     let player = getPlayerType(p.Id, p.Data.IdPlayerTypes);
     player.id = p.Id;
     player.team = team;
+    player.data = p;
 
     switch (p.Status) {
       case 1: //Prone
@@ -516,59 +517,6 @@ RESULT_TYPE,
       d.classList.add("used");
       target.childNodes[target.childElementCount - 1 - n++].append(d);
     }
-  }
-
-  function selectPlayer(e) {
-    const playerId = Number(e.originalTarget.id.replace("player_", ""));
-    const team =
-      playerId > 30 ? this.boardState.awayTeam : this.boardState.homeTeam;
-
-    const player = team.players.find((p) => p.id === playerId);
-
-    let target = document.getElementById("skills");
-    let elements = target.getElementsByClassName("skill");
-    while (elements.length > 0) {
-      elements[0].remove();
-    }
-
-    player.skills.map((skill) => {
-      const d = document.createElement("div");
-      d.classList.add("skill");
-      d.classList.add(GetCssSkill(skill));
-      target.append(d);
-    });
-
-    target = document.getElementById("selectPlayer-MV");
-    target.innerHTML = player.ma;
-    target = document.getElementById("selectPlayer-ST");
-    target.innerHTML = player.st;
-    target = document.getElementById("selectPlayer-AG");
-    target.innerHTML = player.ag;
-    target = document.getElementById("selectPlayer-AV");
-    target.innerHTML = player.av;
-    target = document.getElementById("selectedPlayerName");
-    target.innerHTML = player.name;
-
-    target = document.getElementById("selectedPlayerCAS");
-    elements = target.getElementsByClassName("cas");
-    while (elements.length > 0) {
-      elements[0].remove();
-    }
-
-    player.existingCasualties.map((cas) => {
-      const d = new Image(20, 20);
-      d.classList.add("cas");
-      d.src = `https://cdn2.rebbl.net/images/skills/${Casualties[cas].icon}.png`;
-      target.appendChild(d);
-    });
-    player.sustainedCasualties.map((cas) => {
-      const d = new Image(20, 20);
-      d.classList.add("cas");
-      d.src = `https://cdn2.rebbl.net/images/skills/${Casualties[cas].icon}.png`;
-      target.appendChild(d);
-    });
-    target = document.getElementById("selectedPlayerData");
-    target.style.setProperty("display", "block");
   }
 
   function handle(state) {
