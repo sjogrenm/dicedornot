@@ -67,3 +67,7 @@ button:focus {
   font-family: "Nuffle";
   src: url("/fonts/Nuffle-OVwjO.ttf");
 }
+
+.popover-body {
+  padding: 0;
+}
