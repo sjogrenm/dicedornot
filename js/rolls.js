@@ -1543,7 +1543,7 @@ class CasualtyRoll extends Roll {
   }
 }
 
-class MoveAction extends Roll {
+export class MoveAction extends Roll {
   static rollName = "Move";
   static ignore(xml) {
     return manhattan(xml.action.Order.CellFrom, xml.action.Order.CellTo.Cell) == 0;
@@ -1560,6 +1560,10 @@ class MoveAction extends Roll {
     const from = this.cellFrom;
     const to = moves[moves.length - 1].cellTo;
     return `Move: [${this.activePlayer.team.shortName}] ${this.activePlayer.name} - (${from.x || 0}, ${from.y || 0}) \u2192 (${to.x || 0}, ${to.y || 0})`;
+  }
+
+  get shortDescription() {
+    return this.jointDescription;
   }
   isDependentRoll(roll) {
     return roll.constructor == MoveAction && this.activePlayer.id == roll.activePlayer.id;

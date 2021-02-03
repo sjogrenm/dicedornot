@@ -1,4 +1,4 @@
-import { Roll } from "./rolls.js";
+import { Roll, MoveAction } from "./rolls.js";
 
 export const replay = {
   processReplay: function (data) {
@@ -25,23 +25,37 @@ export const replay = {
         replayStep
       ));
     }
-    console.log("Extracted rolls...", rolls);
+    console.log("Extracted rolls...", { rolls });
     rolls = rolls.filter((roll) => !roll.ignore);
     rolls = rolls.reduce((rolls, nextRoll) =>  {
-      if (
-        rolls.length > 0 &&
-        rolls[rolls.length - 1].isDependentRoll(nextRoll)
-      ) {
-        rolls[rolls.length - 1].dependentRolls.push(nextRoll);
-      } else {
-        rolls.push(nextRoll);
+      if (rolls.length == 0) {
+        return [nextRoll];
       }
+      let lastRoll = rolls[rolls.length - 1];
+      if (nextRoll instanceof MoveAction && lastRoll instanceof MoveAction && nextRoll.activePlayer.id == lastRoll.activePlayer.id && nextRoll.turn == lastRoll.turn) {
+        lastRoll.cellTo = nextRoll.cellTo;
+        return rolls;
+      }
+      let lastDependentRoll = lastRoll.dependentRolls && lastRoll.dependentRolls[lastRoll.dependentRolls.length - 1];
+      if (nextRoll instanceof MoveAction && lastDependentRoll instanceof MoveAction && nextRoll.activePlayer.id == lastDependentRoll.activePlayer.id && nextRoll.turn == lastRoll.turn) {
+        lastDependentRoll.cellTo = nextRoll.cellTo;
+        return rolls;
+      }
+
+      if (
+        lastRoll.isDependentRoll(nextRoll)
+      ) {
+        lastRoll.dependentRolls.push(nextRoll);
+        return rolls;
+      }
+      rolls.push(nextRoll);
       return rolls;
     }, []);
     rolls.forEach((roll, idx) => {
       roll.rollIndex = idx;
       roll.endIndex = rolls[idx + 1] ? rolls[idx + 1].startIndex - 1 : null;
     });
+    console.log("Transformed rolls...", { rolls });
 
     return {
       fullReplay: data.Replay,
