@@ -17,7 +17,7 @@
     currentTurnRolls = rollsByTurn.find(turnRolls => {
       let startIndex = turnRolls[0].startIndex;
       let endIndex = turnRolls[turnRolls.length - 1].endIndex;
-      return startIndex <= replayStepIndex && endIndex >= replayStepIndex;
+      return startIndex <= replayStepIndex && endIndex > replayStepIndex;
     });
     turns = rollsByTurn.length;
   }

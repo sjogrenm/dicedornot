@@ -10,7 +10,7 @@
     teamName = rolls[0].activeTeam.name;
     startIndex = rolls[0].startIndex;
     endIndex = rolls[rolls.length - 1].endIndex;
-    current = startIndex <= replayStepIndex && endIndex >= replayStepIndex;
+    current = startIndex <= replayStepIndex && endIndex > replayStepIndex;
     active =
       current ||
       ((!replayStart || replayStart <= startIndex) &&
