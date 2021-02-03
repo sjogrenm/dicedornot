@@ -47,10 +47,10 @@
   }
 
   .team-0.current {
-    background-color: var(--team0-grey-9);
+    text-shadow: -0.06ex 0 var(--team0-gray-9), 0.06ex 0 var(--team0-gray-9);
   }
   .team-1.current {
-    background-color: var(--team1-grey-9);
+    text-shadow: -0.06ex 0 var(--team1-gray-9), 0.06ex 0 var(--team1-gray-9);
   }
   .team-0.active {
     background-color: var(--team0-color-5);
@@ -61,11 +61,11 @@
   .team-0 {
     background-color: var(--team0-color-3);
     border-color: var(--team0-color-9);
-    color: var(--team0-grey-9);
+    color: var(--team0-gray-9);
   }
   .team-1 {
     background-color: var(--team1-color-3);
     border-color: var(--team1-color-9);
-    color: var(--team1-grey-9);
+    color: var(--team1-gray-9);
   }
 </style>
