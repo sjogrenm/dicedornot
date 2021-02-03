@@ -4,7 +4,7 @@
 </script>
 
 <nav class="navbar-dark bg-primary sidenav">
-  <a class="navbar-brand" href="/#">Diced or Not</a>
+  <a class="navbar-brand" href="/#"><img class="logo" src="/dicedornot-logo.svg" alt=""/>Diced or Not</a>
   <ul class="navbar-nav">
     <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
     <li class="dropdown"><a class="nav-link" href="#summary">Replay</a></li>
@@ -38,6 +38,10 @@
 </nav>
 
 <style>
+  .logo {
+    width: 3em;
+    height: 3em;
+  }
   /* The side navigation menu */
   .sidenav {
     height: 100%;
@@ -56,7 +60,7 @@
   .sidenav li {
     padding: 8px 8px 8px 32px;
     text-decoration: none;
-    font-size: 25px;
+    font-size: 1em;
     color: #818181;
     display: block;
     transition: 0.3s;

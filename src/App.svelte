@@ -45,7 +45,6 @@
     content="Blood Bowl 2 replay luck analyzer. Use it to decide whether you actually got diced."
   />
   <title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
-  <link rel="stylesheet" href="/styles/bootstrap.min.css" />
   <link rel="stylesheet" href="/styles/theme.css" />
 </svelte:head>
 
@@ -90,7 +89,7 @@
           </div>
         </div>
       </div>
-      <div class="container" role="main">
+      <div class="container mt-4" role="main">
         <Explanation />
       </div>
     {:else}
