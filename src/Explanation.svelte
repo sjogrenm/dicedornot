@@ -93,48 +93,5 @@
         </dd>
       </dl>
     </div>
-    <div>
-      <h2>To Do</h2>
-      <div>
-        <h3>Value calculation changes</h3>
-        <ul>
-          <li>Add points when a touchdown is scored.</li>
-          <li>Count net change in points between rolls.</li>
-          <li>
-            Handle the value of team rerolls, and the expected results of
-            rerolling.
-          </li>
-          <li>Account for Bribe use in Fouls.</li>
-          <li>Compute player value by using actual TV values.</li>
-          <li>Adjust player value based on distance to endzone.</li>
-          <li>Include Piling-On in block expected value calculations.</li>
-          <li>
-            Make sure armor/injury rolls make use of Mighty Blow in expected
-            value calculations.
-          </li>
-          <li>
-            Make sure that Claw is properly accounted for in possible outcome
-            calculations.
-          </li>
-          <li>
-            Make sure that Dirty Player is properly accountef for in possibel
-            outcome calculations.
-          </li>
-        </ul>
-      </div>
-      <div>
-        <h3>Display improvements</h3>
-        <ul>
-          <li>Add thumbnails of the board state across the game.</li>
-          <li>
-            Make the Dice logs less verbose by making player stats popups.
-          </li>
-          <li>
-            Display the full range of expected values and their probablities on
-            the graph.
-          </li>
-        </ul>
-      </div>
-    </div>
   </div>
 </div>

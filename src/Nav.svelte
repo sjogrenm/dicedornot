@@ -6,11 +6,12 @@
 <nav class="navbar-dark bg-primary sidenav">
   <a class="navbar-brand" href="/#"><img class="logo" src="/dicedornot-logo.svg" alt=""/>Diced or Not</a>
   <ul class="navbar-nav">
-    <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+    {#if replay}
     <li class="dropdown"><a class="nav-link" href="#summary">Replay</a></li>
     <li class="nav-item">
       <a class="nav-link" href="#explanation">Explain?</a>
     </li>
+    {/if}
     <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
     {#if replay}
       <ReplayLoader

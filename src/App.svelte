@@ -9,6 +9,7 @@
   import About from "./About.svelte";
   import Nav from "./Nav.svelte";
   import Viewer from "./viewer/Viewer.svelte";
+  import {Row, Col, Container} from 'sveltestrap';
 
   let loading = false;
   let error = false;
@@ -52,43 +53,43 @@
   <Nav bind:loading bind:replay bind:replayStart bind:replayEnd />
   <div id="content">
     {#if replay}
-      <div class="container-fluid" role="main">
-        <div class="row">
-          <div class="col-8">
+      <Container fluid role="main">
+        <Row>
+          <Col lg="8" class="order-lg-1 order-12">
             <Results
               rolls={replay.rolls}
               {replayStepIndex}
               bind:replayStart
               bind:replayEnd
             />
-          </div>
+          </Col>
 
-          <div class="col-4">
+          <Col lg="4" class="order-lg-12 order-1">
             <Summary
               gameDetails={replay.gameDetails}
               filename={replay.fullReplay.filename}
             />
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-8">
+          </Col>
+        </Row>
+        <Row>
+          <Col lg="8">
             <Viewer
               replaySteps={replay && replay.fullReplay.ReplayStep}
               bind:replayStepIndex
               {replayStart}
               {replayEnd}
             />
-          </div>
-          <div class="col-4">
+          </Col>
+          <Col lg="4">
             <RollDetails
               rolls={replay.rolls}
               {replayStepIndex}
               bind:replayStart
               bind:replayEnd
             />
-          </div>
-        </div>
-      </div>
+          </Col>
+        </Row>
+      </Container>
       <div class="container mt-4" role="main">
         <Explanation />
       </div>
