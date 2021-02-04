@@ -714,8 +714,8 @@
     });
   }
 
-  function handleLeap(action) {
-    handleMove(action);
+  function handleLeap(action, actionResult) {
+    handleMove(action, actionResult);
   }
 
   function handleMove(action, actionResult) {
