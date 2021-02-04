@@ -1,12 +1,19 @@
 <script>
   export let player;
+  let name, color;
+  let colorRE = /\[colour='([0-9a-f]{8})'\]/i;
+  $: {
+    name = player.Data.Name.replace(colorRE, '');
+    let colorMatch = player.Data.Name.match(colorRE);
+    color = colorMatch ? `#${colorMatch[1].slice(2, 8)}` : 'var(--gray-0)';
+  }
 </script>
 
 {#if player}
   <div class="player-card">
     <svg width="100%" height="100%" viewBox="0 0 207 317" preserveAspectRatio="xMinYMid meet" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
       <image href="/images/card.png" height="100%"/>
-      <text class="name" x="18" y="36">{player.Data.Name}</text>
+      <text class="name" x="18" y="36" style={`fill: ${color}`}>{name}</text>
       <text class="stat mv" x="18" y="75"  text-anchor="middle">MV</text>
       <text class="stat mv value" x="18" y="106"  text-anchor="middle">{player.Data.Ma}</text>
       <text class="stat st" x="18" y="140" text-anchor="middle">ST</text>
@@ -49,7 +56,6 @@
     font-size: 16px;
   }
   .name {
-    fill: var(--gray-0);
     font-size: 18px;
   }
   .stats {

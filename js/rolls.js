@@ -79,7 +79,7 @@ class Player {
   constructor(team, playerState, boardState) {
     this.team = team;
     this.id = playerState.Data.Id;
-    this.name = playerState.Data.Name;
+    this.name = playerState.Data.Name.replace(/\[colour='[0-9a-f]{8}'\]/i, '');
     this.cell = playerState.Cell;
     this.situation = playerState.Situation;
     this.playerState = playerState;
