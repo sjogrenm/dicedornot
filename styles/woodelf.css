@@ -29,6 +29,8 @@
 .woodelf.away {
   background-image: url("/images/players/woodelf/away.png");
   background-repeat: no-repeat;
+  --imW: 80;
+  --imH: 376;
 }
 
 .woodelf.lineman2 {
