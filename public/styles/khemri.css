@@ -1,9 +1,11 @@
 .khemri.home {
-  background: url("/images/players/khemri/home.png") no-repeat;
+  background-image: url("/images/players/khemri/home.png");
+  background-repeat: no-repeat;
 }
 
 .khemri.away {
-  background: url("/images/players/khemri/away.png") no-repeat;
+  background-image: url("/images/players/khemri/away.png");
+  background-repeat: no-repeat;
 }
 
 .khemri.sprite {
@@ -25,39 +27,39 @@
 }
 
 .khemri.lineman2 {
-  --imY: 28;
+  --spY: 28;
 }
 
 .khemri.lineman3 {
-  --imY: 56;
+  --spY: 56;
 }
 
 .khemri.lineman4 {
-  --imY: 84;
+  --spY: 84;
 }
 
 .khemri.thrower1 {
-  --imY: 112;
+  --spY: 112;
 }
 
 .khemri.thrower2 {
-  --imY: 140;
+  --spY: 140;
 }
 
 .khemri.blitzer1 {
-  --imY: 168;
+  --spY: 168;
 }
 
 .khemri.blitzer2 {
-  --imY: 196;
+  --spY: 196;
 }
 
 .khemri.mummy1 {
-  --imY: 224;
+  --spY: 224;
 }
 
 .khemri.mummy2 {
-  --imY: 254;
+  --spY: 254;
 }
 
 .khemri.moving, .khemri.prone, .khemri.stunned {
