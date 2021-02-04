@@ -1,6 +1,6 @@
 <script>
-	import { quintOut, sineInOut } from 'svelte/easing';
-  import { crossfade, fade } from "svelte/transition";
+	import { sineInOut } from 'svelte/easing';
+  import { crossfade } from "svelte/transition";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
