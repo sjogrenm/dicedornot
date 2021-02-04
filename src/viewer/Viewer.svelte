@@ -6,18 +6,17 @@
   import Pitch from "./Pitch.svelte";
   import {
     SITUATION,
-    getPlayerType,
     RACE_SLUG,
     ACTION_TYPE,
-    Casualties,
     ROLL,
     WEATHER,
     RESULT_TYPE,
-  } from "../../js/constants.js";
+  } from "../constants.js";
   import { onMount, tick } from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
   import {timing} from '../stores.js';
+  import {translateStringNumberList, ensureList} from '../replay-utils.js';
   export let replaySteps, replayStepIndex = 0, replayStart, replayEnd;
   let queue,
     lastChainPush,
@@ -136,7 +135,7 @@
   function setPlayer(id) {
     let player;
     Object.entries(pitch).forEach(([idx, square]) => {
-      if (square.player && square.player.id == id) {
+      if (square.player && square.player.data.Id == id) {
         pitch[idx] = square;
         player = square.player;
       }
@@ -166,55 +165,14 @@
   }
 
   function placePlayer(p, team) {
-    let player = getPlayerType(p.Id, p.Data.IdPlayerTypes);
-    player.id = p.Id;
-    player.team = team;
-    player.data = p;
-
-    switch (p.Status) {
-      case 1: //Prone
-        player.prone = true;
-        break;
-      case 2: //Stunned
-        player.stunned = true;
-        break;
-    }
-
-    if (p.disabled) {
-      if (p.usedSkills.indexOf(20) > -1) {
-        //take root
-        player.disabled = "Rooted";
-      } else if (p.usedSkills.indexOf(31) > -1) {
-        //bonehead
-        player.disabled = "BoneHeaded";
-      } else if (p.usedSkills.indexOf(51) > -1) {
-        //really stupid
-        player.disabled = "Stupid";
-      }
-    }
-
-    if (p.Situation >= SITUATION.Casualty) {
-      if (p.Situation === SITUATION.Casualty) {
-        player.cas =
-          Casualties[
-            Math.max(...translateStringNumberList(p.ListCasualties))
-          ].icon;
-      } else {
-        player.cas = "Expelled";
-      }
-    }
-
     switch (p.Situation) {
       case SITUATION.Active:
-        player.done = p.CanAct != 1;
-        setPitchSquare(p.Cell).player = player;
+        setPitchSquare(p.Cell).player = {data: p};
         break;
       default:
-        if (team == "home") {
-          homeTeam.dugout[DUGOUT_POSITIONS[p.Situation]].push(player);
-        } else {
-          awayTeam.dugout[DUGOUT_POSITIONS[p.Situation]].push(player);
-        }
+        (team == "home" ? homeTeam : awayTeam).dugout[
+          DUGOUT_POSITIONS[p.Situation]
+        ].push({data: p});
         break;
     }
   }
@@ -292,29 +250,6 @@
     handle /*HailMaryBomb = 56*/,
     handleEndTurn /*Turnover = 58*/,
   ];
-
-  function ensureList(objOrList) {
-    if (objOrList && objOrList.length) {
-      return objOrList;
-    } else if (objOrList) {
-      return [objOrList];
-    } else {
-      return [];
-    }
-  }
-
-  function translateStringNumberList(str) {
-    if (!str) return [];
-
-    var stripped = str.substring(1, str.length - 1);
-    var textList = stripped.split(",");
-
-    var numberList = [];
-    for (var i = 0; i < textList.length; i++) {
-      numberList.push(parseInt(textList[i]));
-    }
-    return numberList;
-  }
 
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -557,7 +492,7 @@
         square.cell.active = false;
       }
       if (square.player) {
-        if (square.player.id == action.ActivePlayerId) {
+        if (square.player.data.Id == action.ActivePlayerId) {
           if (!square.cell) {
             square.cell = {};
           }
@@ -753,7 +688,7 @@
       squareTo.cell.plus = actionResult.Requirement;
     }
 
-    if (player.id == blitzerId) {
+    if (player.data.Id == blitzerId) {
       player.blitz = true;
     }
     if (squareFrom.ball) {
@@ -830,7 +765,7 @@
       if (square.cell) {
         square.cell.target = null;
       }
-      if (square.player && square.player.id == action.PlayerId) {
+      if (square.player && square.player.data.Id == action.PlayerId) {
         player = square.player;
         pitch[idx] = square; // Force svelte to update
         playerSquareIndex = idx;

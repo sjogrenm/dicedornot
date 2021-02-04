@@ -1,6 +1,6 @@
 <script>
   export let gameDetails, filename;
-  import { RACE_NAMES } from "../js/constants.js";
+  import { RACE_NAMES } from "./constants.js";
 </script>
 
 <div id="summary" class="container">

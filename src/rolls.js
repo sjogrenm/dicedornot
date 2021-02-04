@@ -9,6 +9,7 @@ import {
   BLOCK,
   BLOCK_DIE,
 } from './constants.js';
+import { translateStringNumberList, ensureList } from './replay-utils.js';
 import {
   SingleValue,
   SimpleDistribution,
@@ -21,16 +22,6 @@ import { weightedQuantile } from './utils.js';
 import _ from 'underscore';
 
 // TODO: Switch over to using dice.js for better clarity
-
-function ensureList(objOrList) {
-  if (objOrList && objOrList.length) {
-    return objOrList;
-  } else if (objOrList) {
-    return [objOrList];
-  } else {
-    return [];
-  }
-}
 
 function sample(list) {
   return list[Math.floor(Math.random() * list.length)];
@@ -86,7 +77,7 @@ class Player {
     this.canAct =
       playerState.CanAct == 1 && this.situation === SITUATION.Active;
     this.skills =
-      Roll.translateStringNumberList(playerState.Data.ListSkills) || [];
+      translateStringNumberList(playerState.Data.ListSkills) || [];
     this.isBallCarrier = manhattan(boardState.Ball.Cell, this.cell) == 0 && boardState.Ball.IsHeld == 1;
   }
 
@@ -282,7 +273,7 @@ export class Roll {
   }
 
   static dice(boardActionResult) {
-    return this.translateStringNumberList(
+    return translateStringNumberList(
       boardActionResult.CoachChoices.ListDices
     );
   }
@@ -357,19 +348,6 @@ export class Roll {
       netValue: outcomeValue - this.expectedValue,
       rollIndex: this.rollIndex
     };
-  }
-
-  static translateStringNumberList(str) {
-    if (!str) return [];
-
-    var stripped = str.substring(1, str.length - 1);
-    var textList = stripped.split(',');
-
-    var numberList = [];
-    for (var i = 0; i < textList.length; i++) {
-      numberList.push(parseInt(textList[i]));
-    }
-    return numberList;
   }
 
   static fromReplayStep(initialBoard, stepIndex, replayStep) {

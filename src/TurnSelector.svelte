@@ -1,5 +1,5 @@
 <script>
-  import { replay } from "../js/replay";
+  import { replay } from "./replay";
 
   export let rolls, replayStepIndex, replayStart, replayEnd;
   let turn, teamId, teamName, current, active, startIndex, endIndex;

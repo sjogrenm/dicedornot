@@ -1,6 +1,6 @@
 <script>
   import FixedRatio from "./FixedRatio.svelte";
-  import {WEATHER} from '../../js/constants.js';
+  import {WEATHER} from "../constants.js";
   export let weather;
 
   const weatherText = {

@@ -1,7 +1,7 @@
 <script>
   import { createEventDispatcher } from "svelte";
-  import { io } from "../js/io.js";
-  import { replay } from "../js/replay.js";
+  import { io } from "./io.js";
+  import { replay } from "./replay.js";
 
   export let button = "primary";
 

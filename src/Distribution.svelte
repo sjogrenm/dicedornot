@@ -5,7 +5,7 @@
     Distribution,
     ComparativeDistribution,
     BinFuncDistribution,
-  } from "../js/distribution.js";
+  } from "./distribution.js";
   export let dist;
   let open = false;
 </script>

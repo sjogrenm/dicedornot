@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import embed from "vega-embed";
   import * as vega from "vega";
-  import vegaSpec from "../js/vega-spec.js";
+  import vegaSpec from "./vega-spec.js";
   const dispatch = createEventDispatcher();
 
   export let rolls, replayStepIndex, selectedRoll, replayStart, replayEnd;
