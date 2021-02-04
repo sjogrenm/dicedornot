@@ -646,14 +646,11 @@
           square.cell.pushbackChoice = true;
 
           if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
-            throw "Unexpected surf as a choice";
             //surf
-            const target = this.getAvailableGridItem(
-              action.ActivePlayerId,
-              1,
-              action.ActivePlayerId < 21 ? "home" : "away"
-            );
-            target.appendChild(sprite);
+            let team = toPlayer.team;
+            let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
+            dugout.reserve.push(toPlayer);
+            toSquare.player = null;
           }
         });
       }
