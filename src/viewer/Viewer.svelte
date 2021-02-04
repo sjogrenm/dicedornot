@@ -69,6 +69,8 @@
   })(replaySteps, replayStart, replayEnd);
 
   onMount(() => {
+    let params = new URLSearchParams(window.location.search);
+    $timing = params.get('timing') || 300;
     console.log("Viewer onMount start");
     processQueue();
     console.log("Viewer onMount queue started");
