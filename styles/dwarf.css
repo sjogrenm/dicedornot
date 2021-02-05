@@ -1,22 +1,77 @@
-:root{--dwm:-28px;--dwl:-38px;}
+:root {
+    --dwm: 28;
+    --dwl: 38;
+}
 
-.dwarf.home {background: url("/images/players/dwarf/home.png") no-repeat;}
-.dwarf.away {background: url("/images/players/dwarf/away.png") no-repeat;}
+.dwarf.home {
+    background-image: url("/images/players/dwarf/home.png");
+    background-repeat: no-repeat;
+}
 
-.dwarf{width: calc(-1 * var(--dwm)); height: calc(-1 * var(--dwm)); display: inline-block; background-position-x: 0px;}
-.dwarf.deathroller{width: calc(-1 * var(--dwl)); height: calc(-1 * var(--dwl));}
+.dwarf.away {
+    background-image: url("/images/players/dwarf/away.png");
+    background-repeat: no-repeat;
+}
 
-.dwarf.longbeard1{background-position-y: 0px;}
-.dwarf.longbeard2{background-position-y: var(--dwm);}
-.dwarf.longbeard3{background-position-y: calc(2 * var(--dwm));}
-.dwarf.blitzer1{background-position-y: calc(3 * var(--dwm));}
-.dwarf.blitzer2{background-position-y: calc(4 * var(--dwm));}
-.dwarf.runner1{background-position-y: calc(5 * var(--dwm));}
-.dwarf.runner2{background-position-y: calc(6 * var(--dwm));}
-.dwarf.runner3{background-position-y: calc(7 * var(--dwm));}
-.dwarf.trollslayer1{background-position-y: calc(8 * var(--dwm));}
-.dwarf.trollslayer2{background-position-y: calc(9 * var(--dwm)) ;}
-.dwarf.deathroller{background-position-y: calc(10 * var(--dwm));}
+.dwarf.sprite {
+  --imH: 318;
+  --imW: 76;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.dwarf.moving,.dwarf.prone,.dwarf.stunned{background-position-x: var(--dwm);}
-.dwarf.deathroller.moving,.dwarf.deathroller.prone,.dwarf.deathroller.stunned{background-position-x: var(--dwl);}
+.dwarf.deathroller {
+  --spW: 38;
+  --spH: 38;
+  --spScale: 95%;
+}
+
+.dwarf.longbeard2 {
+    --spY: var(--dwm);
+}
+
+.dwarf.longbeard3 {
+    --spY: calc(2 * var(--dwm));
+}
+
+.dwarf.blitzer1 {
+    --spY: calc(3 * var(--dwm));
+}
+
+.dwarf.blitzer2 {
+    --spY: calc(4 * var(--dwm));
+}
+
+.dwarf.runner1 {
+    --spY: calc(5 * var(--dwm));
+}
+
+.dwarf.runner2 {
+    --spY: calc(6 * var(--dwm));
+}
+
+.dwarf.runner3 {
+    --spY: calc(7 * var(--dwm));
+}
+
+.dwarf.trollslayer1 {
+    --spY: calc(8 * var(--dwm));
+}
+
+.dwarf.trollslayer2 {
+    --spY: calc(9 * var(--dwm));
+}
+
+.dwarf.deathroller {
+    --spY: calc(10 * var(--dwm));
+}
+
+.dwarf.moving, .dwarf.prone, .dwarf.stunned {
+    background-position-x: var(--spW);
+}
+
