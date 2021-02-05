@@ -1,29 +1,82 @@
-:root{--ls:-20px;--ll:-28px;--lxl:-40px;}
+:root {
+  --ls: 20;
+  --ll: 28;
+  --lxl: 40;
+}
 
-.lizardman.home {background: url("/images/players/lizardman/home.png") no-repeat;}
-.lizardman.away {background: url("/images/players/lizardman/away.png") no-repeat;}
+.lizardman.home {
+  background-image: url("/images/players/lizardman/home.png");
+  background-repeat: no-repeat;
+}
 
-.lizardman{width: calc(-1 * var(--ls)); height: calc(-1 * var(--ls)); display: inline-block; background-position-x: 0px;}
-.lizardman.saurus1,.lizardman.saurus2,.lizardman.saurus3,.lizardman.saurus4{width: calc(-1 * var(--ll)); height: calc(-1 * var(--ll));}
-.lizardman.kroxigor1,.lizardman.kroxigor2{width: calc(-1 * var(--lxl)); height: calc(-1 * var(--lxl));}
+.lizardman.away {
+  background-image: url("/images/players/lizardman/away.png");
+  background-repeat: no-repeat;
+}
 
-.lizardman.skink1{background-position-y: 0px;}
-.lizardman.skink2{background-position-y: var(--ls);}
-.lizardman.skink3{background-position-y: calc(2 * var(--ls));}
-.lizardman.skink4{background-position-y: calc(3 * var(--ls));}
-.lizardman.saurus1{background-position-y: calc(4 * var(--ls));}
-.lizardman.saurus2{background-position-y: calc(4 * var(--ls) + var(--ll));}
-.lizardman.saurus3{background-position-y: calc(4 * var(--ls) + 2 * var(--ll));}
-.lizardman.saurus4{background-position-y: calc(4 * var(--ls) + 3 * var(--ll));}
-.lizardman.kroxigor1{background-position-y: calc(4 * var(--ls) + 4 * var(--ll));}
-.lizardman.kroxigor2{background-position-y: calc(4 * var(--ls) + 4 * var(--ll) + var(--lxl));}
+.lizardman.sprite {
+  --imW: 78;
+  --imH: 269;
+  --spX: 0;
+  --spY: 0;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.lizardman.moving{background-position-x: var(--ls);}
-.lizardman.saurus1.moving,.lizardman.saurus2.moving,.lizardman.saurus3.moving,.lizardman.saurus4.moving{background-position-x: var(--ll);}
-.lizardman.kroxigor1.moving,.lizardman.kroxigor2.moving{background-position-x: var(--lxl);}
-.lizardman.prone{background-position-x: var(--ls);}
-.lizardman.saurus1.prone,.lizardman.saurus2.prone,.lizardman.saurus3.prone,.lizardman.saurus4.prone{background-position-x: var(--ll);}
-.lizardman.kroxigor1.prone,.lizardman.kroxigor2.prone{background-position-x: var(--lxl);}
-.lizardman.stunned{background-position-x: var(--ls);}
-.lizardman.saurus1.stunned,.lizardman.saurus2.stunned,.lizardman.saurus3.stunned,.lizardman.saurus4.stunned{background-position-x: var(--ll);}
-.lizardman.kroxigor1.stunned,.lizardman.kroxigor2.stunned{background-position-x: var(--lxl);}
+.lizardman.skink1, .lizardman.skink2, .lizardman.skink3, .lizardman.skink4 {
+  --spW: 20;
+  --spH: 20;
+  --spScale: 60%;
+}
+
+.lizardman.saurus1, .lizardman.saurus2, .lizardman.saurus3, .lizardman.saurus4 {
+  --spW: 28;
+  --spH: 28;
+  --spScale: 90%;
+}
+
+.lizardman.kroxigor1, .lizardman.kroxigor2 {
+  --spW: 40;
+  --spH: 40;
+  --spScale: 100%;
+}
+
+.lizardman.skink2 {
+  --spY: 20;
+}
+
+.lizardman.skink3 {
+  --spY: 40;
+}
+
+.lizardman.skink4 {
+  --spY: 60;
+}
+
+.lizardman.saurus1 {
+  --spY: 80;
+}
+
+.lizardman.saurus2 {
+  --spY: 108;
+}
+
+.lizardman.saurus3 {
+  --spY: 136;
+}
+
+.lizardman.saurus4 {
+  --spY: 164;
+}
+
+.lizardman.kroxigor1 {
+  --spY: 192;
+}
+
+.lizardman.kroxigor2 {
+  --spY: 231;
+}
+
+.lizardman.moving, .lizardman.prone, .lizardman.prone{
+  --spX: var(--spW);
+}
