@@ -4,37 +4,40 @@
   import {translateStringNumberList} from "../replay-utils.js";
 
   export let data,
-    done = null,
-    moving = null,
-    prone = null,
-    stunned = null,
-    blitz = null,
-    stupidity = null,
-    send,
-    receive;
-  let id, race, model, team, classes, key;
+    done = undefined,
+    moving = undefined,
+    prone = undefined,
+    stunned = undefined,
+    blitz = undefined,
+    stupidity = undefined,
+    send = undefined,
+    receive = undefined;
+  let id, race, model, team, classes, key, _done, _prone, _stunned, _stupidity;
 
   $: {
     ({ model, race } = getPlayerType(data.Id, data.Data.IdPlayerTypes));
     id = data.Id;
     team = id > 30 ? "away" : "home";
-    done = done === null ? data.CanAct != 1 : done;
+    _done = done === undefined ? data.CanAct != 1 : done;
 
     classes = [race, model, team, "sprite", "crisp"].join(" ");
     key = `player_${id}`;
-    prone = prone === null ? data.Status === 1 : prone;
-    stunned = stunned === null ? data.Status === 2 : stunned;
-    if (stupidity === null && data.Disabled == 1) {
+    _prone = prone === undefined ? data.Status === 1 : prone;
+    _stunned = stunned === undefined ? data.Status === 2 : stunned;
+    if (data.Data.Name == "Codrus") {
+      console.log({prone, stunned, status: data.Status, _prone, _stunned});
+    }
+    if (stupidity === undefined && data.Disabled == 1) {
       let usedSkills = translateStringNumberList(data.ListUsedSkills);
       if (usedSkills.indexOf(20) > -1) {
         //take root
-        stupidity = "Rooted";
+        _stupidity = "Rooted";
       } else if (usedSkills.indexOf(31) > -1) {
         //bonehead
-        stupidity = "BoneHeaded";
+        _stupidity = "BoneHeaded";
       } else if (usedSkills.indexOf(51) > -1) {
         //really stupid
-        stupidity = "Stupid";
+        _stupidity = "Stupid";
       }
     }
   }
@@ -57,16 +60,16 @@
 
 <div
   class={classes}
-  class:done
+  class:done={_done}
   class:moving
-  class:stunned
-  class:prone
+  class:stunned={_stunned}
+  class:prone={_prone}
   class:blitz
   in:inFn
   out:outFn
 >
-  {#if stupidity}
-    <div class={stupidity} />
+  {#if _stupidity}
+    <div class={_stupidity} />
   {/if}
 </div>
 

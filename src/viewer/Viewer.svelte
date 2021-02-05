@@ -146,13 +146,6 @@
     });
     return player;
   }
-  function getPitchSquare(x, y) {
-    return pitch[`${x}-${y}`] || {};
-  }
-
-  function clearPitch() {
-    pitch = {};
-  }
 
   function setPlayerStates(boardState) {
     Object.values(pitch).forEach((square) => {
