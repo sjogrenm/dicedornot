@@ -42,6 +42,7 @@
   }
 
   function loadRebblReplay(uid) {
+    loading = true;
     fetch(`https://rebbl.net/api/v2/match/${uid}/replay`)
       .then((r) => r.json())
       .then(({ filename }) => {
