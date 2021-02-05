@@ -24,9 +24,6 @@
     key = `player_${id}`;
     _prone = prone === undefined ? data.Status === 1 : prone;
     _stunned = stunned === undefined ? data.Status === 2 : stunned;
-    if (data.Data.Name == "Codrus") {
-      console.log({prone, stunned, status: data.Status, _prone, _stunned});
-    }
     if (stupidity === undefined && data.Disabled == 1) {
       let usedSkills = translateStringNumberList(data.ListUsedSkills);
       if (usedSkills.indexOf(20) > -1) {
