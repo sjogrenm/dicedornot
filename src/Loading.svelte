@@ -12,6 +12,8 @@
 
 <style>
   .progress {
-    padding-top: 10px;
+    margin-top: 1em;
+    height: 2em;
   }
+
 </style>

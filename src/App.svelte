@@ -93,7 +93,7 @@
 
     <footer class="footer" id="contact">
       <div class="container">
-        <p class="text-muted">
+        <p class="text-muted text-center">
           This website is under active development. If you notice issues, please
           post the replay and a description of the problem to
           <a href="https://github.com/cpennington/dicedornot/issues"
@@ -109,23 +109,5 @@
   #content {
     margin-left: 200px;
     position: relative;
-  }
-  .footer {
-    padding-top: 10px;
-    padding-bottom: 10px;
-    background-color: #f5f5f5;
-  }
-
-  .container .text-muted {
-    margin: 10px 0;
-    text-align: center;
-  }
-
-  .text-muted {
-    color: #777;
-  }
-
-  .jumbotron {
-    margin-bottom: 0;
   }
 </style>
