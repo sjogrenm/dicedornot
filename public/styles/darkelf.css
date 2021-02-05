@@ -1,14 +1,45 @@
-:root{--dam:-28px;}
+:root {
+  --dam: 28;
+}
 
-.darkelf.home {background: url("/images/players/darkelf/home.png") no-repeat;}
-.darkelf.away {background: url("/images/players/darkelf/away.png") no-repeat;}
+.darkelf.home {
+  background-image: url("/images/players/darkelf/home.png");
+  background-repeat: no-repeat;
+}
 
-.darkelf{width: calc(-1 * var(--dam)); height: calc(-1 * var(--dam)); display: inline-block; background-position-x: 0px;}
+.darkelf.away {
+  background-image: url("/images/players/darkelf/away.png");
+  background-repeat: no-repeat;
+}
 
-.darkelf.lineman{background-position-y: 0px;}
-.darkelf.runner{background-position-y: var(--dam);}
-.darkelf.blitzer{background-position-y: calc(2 * var(--dam));}
-.darkelf.witchelf{background-position-y: calc(3 * var(--dam));}
-.darkelf.assassin{background-position-y: calc(4 * var(--dam));}
+.darkelf.sprite {
+  --imH: 140;
+  --imW: 56;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.darkelf.moving,.darkelf.prone,.darkelf.stunned{background-position-x: var(--dam);}
+.darkelf.runner {
+  --spY: var(--dam);
+}
+
+.darkelf.blitzer {
+  --spY: calc(2 * var(--dam));
+}
+
+.darkelf.witchelf {
+  --spY: calc(3 * var(--dam));
+}
+
+.darkelf.assassin {
+  --spY: calc(4 * var(--dam));
+}
+
+.darkelf.moving, .darkelf.prone, .darkelf.stunned {
+  --spX: var(--dam);
+}
