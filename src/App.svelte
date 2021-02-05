@@ -74,6 +74,7 @@
         </Row>
       </Container>
       <div class="container mt-4" role="main">
+        <ReplayLoader bind:loading bind:error/>
         <Explanation />
       </div>
     {:else}

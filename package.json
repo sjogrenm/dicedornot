@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@rollup/plugin-json": "^4.1.0",
+    "idb-keyval": "^5.0.2",
     "sirv-cli": "^1.0.0",
     "sveltestrap": "^3.13.0",
     "underscore": "^1.12.0",

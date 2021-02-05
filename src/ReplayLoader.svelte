@@ -18,7 +18,15 @@
     }
   });
 
-  let input;
+  let filePicker, urlPicker;
+  const rebblRE = /https?:\/\/rebbl.net\/rebbl\/match\/([0-9a-f]*)/i;
+
+  function loadURL() {
+    const rebblMatch = urlPicker.value.match(rebblRE);
+    if (rebblMatch) {
+      loadRebblReplay(rebblMatch[1]);
+    }
+  }
 
   function parseReplay(replayFile) {
     io.xmlToJson(
@@ -41,39 +49,47 @@
       );
   }
 
-  function loadRebblReplay(uid) {
+  async function loadRebblReplay(uid) {
     loading = true;
-    fetch(`https://rebbl.net/api/v2/match/${uid}/replay`)
-      .then((r) => r.json())
-      .then(({ filename }) => {
-        fetch(filename)
-          .then((r) => r.blob())
-          .then((blob) => new File([blob], filename))
-          .then(file => parseReplay(file));
-      });
+    let replayFile = await fetch(`https://rebbl.net/api/v2/match/${uid}/replay`).then((r) => r.json());
+    if (replayFile.filename) {
+      const blob = await fetch(replayFile.filename).then((r) => r.blob());
+      const file = new File([blob], replayFile.filename);
+      parseReplay(file);
+    }
   }
 
   function loadReplay() {
     console.log("Preparing to parse XML...");
     loading = true;
     error = null;
-    const files = input.files;
+    const files = filePicker.files;
     if (files.length > 0) {
       parseReplay(files[0])
     }
   }
 </script>
 
-<div class="text-center">
-  <span id="file-input-button" class={`btn btn-${button} btn-file centered`}>
-    Select Replay
-    <input
-      bind:this={input}
-      on:change={loadReplay}
-      type="file"
-      accept=".bbrz,.zip"
-    />
-  </span>
+<div>
+  <div class="row align-items-center justify-content-md-center">
+    <span id="file-input-button" class={`btn btn-${button} btn-file centered`}>
+      Select Replay
+      <input
+        bind:this={filePicker}
+        on:change={loadReplay}
+        type="file"
+        accept=".bbrz,.zip"
+      />
+    </span>
+  </div>
+  <div class="row align-items-center justify-content-md-center pt-2">
+    <div class="col-3">
+      <input bind:this={urlPicker} type="text" class="form-control form-control-sm" placeholder="Paste your rebbl.net match url here..."/>
+    </div>
+    <div class="col-auto">
+      <button class={`btn btn-${button}`} on:click={loadURL}>Load</button>
+    </div>
+  </div>
 </div>
 
 <svelte:head

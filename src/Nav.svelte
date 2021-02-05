@@ -14,13 +14,6 @@
     </li>
     {/if}
     <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-    {#if $replay}
-      <ReplayLoader
-        button="secondary"
-        bind:loading
-        bind:error
-      />
-    {/if}
   </ul>
 </nav>
 
