@@ -1,6 +1,4 @@
-<style>
-</style>
-<p id="about">
+<p id="about" class="lead">
   Welcome to Diced or Not, the Blood Bowl 2 replay dice analyzer! If you've just
   had a particularly good or bad game and you want to know if the dice are to
   blame, this is the site for you. To get started, use the button below to

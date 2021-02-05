@@ -1,4 +1,4 @@
-<div id="loading" class="progress">
+<div class="progress">
   <div
     class="progress-bar progress-bar-striped progress-bar-animated active"
     role="progressbar"
@@ -9,3 +9,9 @@
     Loading...
   </div>
 </div>
+
+<style>
+  .progress {
+    padding-top: 10px;
+  }
+</style>

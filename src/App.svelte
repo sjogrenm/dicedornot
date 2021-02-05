@@ -9,7 +9,7 @@
   import About from "./About.svelte";
   import Nav from "./Nav.svelte";
   import Viewer from "./viewer/Viewer.svelte";
-  import {Row, Col, Container} from 'sveltestrap';
+  import { Row, Col, Container, Jumbotron } from "sveltestrap";
 
   let loading = false;
   let error = false;
@@ -94,8 +94,8 @@
         <Explanation />
       </div>
     {:else}
-      <div class="container-flex">
-        <div class="jumbotron">
+      <div class="container">
+        <Jumbotron>
           <About />
           <ReplayLoader
             on:replayLoaded={(e) => {
@@ -116,14 +116,13 @@
               replay = null;
             }}
           />
-        </div>
-
-        {#if loading}
-          <Loading />
-        {/if}
-        {#if error}
-          <Error />
-        {/if}
+          {#if loading}
+            <Loading />
+          {/if}
+          {#if error}
+            <Error />
+          {/if}
+        </Jumbotron>
       </div>
     {/if}
 
