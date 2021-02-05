@@ -820,6 +820,7 @@
     <link rel="stylesheet" href="/styles/{race}.css" />
   {/each}
   <link rel="stylesheet" href="/styles/sprite.css" />
+  <link rel="stylesheet" href="/styles/skills.css" />
 </svelte:head>
 
 <FixedRatio width={1335} height={1061}>

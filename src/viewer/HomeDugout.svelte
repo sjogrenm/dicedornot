@@ -87,7 +87,11 @@ export let homeTeam, weather, send, receive;
 
   .selected {
     width: 7.5%;
-    left: 86%;
-    position: relative;
+    right: 7%;
+    position: absolute;
+    z-index: 10;
+  }
+  .selected:hover{
+    width: 15%;
   }
 </style>

@@ -4,9 +4,9 @@
 </script>
 
 <div class="bench">
-  <CasBox casType="cas" {dugout} {send} {receive}/>
-  <CasBox casType="ko" {dugout} {send} {receive}/>
-  <CasBox casType="reserve" {dugout} {send} {receive}/>
+  <CasBox team="home" casType="cas" {dugout} {send} {receive}/>
+  <CasBox team="home" casType="ko" {dugout} {send} {receive}/>
+  <CasBox team="home" casType="reserve" {dugout} {send} {receive}/>
 </div>
 
 <style>

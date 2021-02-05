@@ -1,23 +1,35 @@
 <script>
-  import TeamLogo from "./TeamLogo.svelte";
-  import Cell from "./Cell.svelte";
-  import Player from "./Player.svelte";
+  import { Popover } from "sveltestrap";
+  import { selectedPlayer } from "../stores.js";
   import Ball from "./Ball.svelte";
+  import Cell from "./Cell.svelte";
   import DiceResult from "./DiceResult.svelte";
   import Foul from "./Foul.svelte";
+  import Player from "./Player.svelte";
+  import SelectedPlayer from "./SelectedPlayer.svelte";
+  import TeamLogo from "./TeamLogo.svelte";
   export let row, column, pitch, homeLogo, awayLogo, send, receive;
   let player = null,
     cell = null,
     ball = null,
     dice = null,
-    foul = false;
+    foul = false,
+    id;
 
   $: {
     ({ player, cell, ball, dice, foul } = pitch[`${column}-${row}`] || {});
-  };
+    id = `pitch-${row}-${column}`;
+  }
 </script>
 
-<div class="pitch-square">
+<div
+  class="pitch-square"
+  {id}
+  on:click={() => {
+    console.log("Clicked player", { player });
+    $selectedPlayer = player;
+  }}
+>
   {#if column == 0 && row == 7 && homeLogo}
     <TeamLogo logo={homeLogo.toLowerCase()} />
   {/if}
@@ -25,7 +37,7 @@
     <TeamLogo logo={awayLogo.toLowerCase()} />
   {/if}
   {#if cell}
-    <Cell {...cell} {send} {receive} {row} {column}/>
+    <Cell {...cell} {send} {receive} {row} {column} />
   {/if}
   {#if player}
     <Player {...player} {send} {receive} />
@@ -34,24 +46,29 @@
     <DiceResult {dice} />
   {/if}
   {#if foul}
-    <Foul/>
+    <Foul />
   {/if}
   {#if ball}
     <Ball {...ball} {send} {receive} />
   {/if}
 </div>
 
+{#if player}
+  <Popover trigger="hover" placement="right" target={id}>
+    <div class="player-card">
+      <SelectedPlayer {player} />
+    </div>
+  </Popover>
+{/if}
+
 <style>
+  .player-card {
+    width: 10vw;
+  }
   .pitch-square {
     border: 1.5px dashed rgba(255, 255, 255, 0.31);
-    display: -webkit-box;
-    display: -ms-flexbox;
     display: flex;
-    -webkit-box-pack: center;
-    -ms-flex-pack: center;
     justify-content: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
     align-items: center;
     width: 100%;
     height: 100%;

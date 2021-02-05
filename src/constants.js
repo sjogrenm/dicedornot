@@ -163,6 +163,8 @@ export const SKILL_NAME = {
   [SKILL.Animosity]: 'Animosity'
 };
 
+export const SKILL_CSS = Object.fromEntries(Object.entries(SKILL).map(([key, value]) => [value, key]));
+
 export const SITUATION = {
   Active: undefined,
   Reserves: 1,

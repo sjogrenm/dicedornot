@@ -1,0 +1,566 @@
+.skill.sprite {
+  background-image: url("/images/skills.png");
+  background-repeat: no-repeat;
+  --imW: 576;
+  --imH: 1024;
+  --spW: 62;
+  --spH: 62;
+  height: 33%;
+  flex: 0 0 25%;
+  position: relative;
+}
+
+.General {
+  --spX: 4;
+  --spY: 4;
+}
+
+.Agility {
+  --spX: 84;
+  --spY: 4;
+}
+
+.IncreaseMovement {
+  --spX: 164;
+  --spY: 4;
+}
+
+.Extraordinary {
+  --spX: 244;
+  --spY: 4;
+}
+
+.Passing {
+  --spX: 324;
+  --spY: 4;
+}
+
+.Mutation {
+  --spX: 404;
+  --spY: 4;
+}
+
+.Strength {
+  --spX: 484;
+  --spY: 4;
+}
+
+.Animosity {
+  --spX: 4;
+  --spY: 84;
+}
+
+.BallChain {
+  --spX: 76;
+  --spY: 84;
+}
+
+.BigHand {
+  --spX: 148;
+  --spY: 84;
+}
+
+.Block {
+  --spX: 220;
+  --spY: 84;
+}
+
+.BloodLust {
+  --spX: 292;
+  --spY: 84;
+}
+
+.Bombardier {
+  --spX: 364;
+  --spY: 84;
+}
+
+.BoneHead {
+  --spX: 436;
+  --spY: 84;
+}
+
+.BreakTackle {
+  --spX: 508;
+  --spY: 84;
+}
+
+.CardSet {
+  --spX: 4;
+  --spY: 156;
+}
+
+.CardSet2 {
+  --spX: 76;
+  --spY: 156;
+}
+
+.Casualty {
+  --spX: 148;
+  --spY: 156;
+}
+
+.Catch {
+  --spX: 220;
+  --spY: 156;
+}
+
+.Chainsaw {
+  --spX: 292;
+  --spY: 156;
+}
+
+.Claw {
+  --spX: 364;
+  --spY: 156;
+}
+
+.CoachSkill {
+  --spX: 436;
+  --spY: 156;
+}
+
+.CoachSkill2 {
+  --spX: 508;
+  --spY: 156;
+}
+
+.Dauntless {
+  --spX: 4;
+  --spY: 228;
+}
+
+.Dead {
+  --spX: 76;
+  --spY: 228;
+}
+
+.Decay {
+  --spX: 148;
+  --spY: 228;
+}
+
+.DirtyPlayer {
+  --spX: 220;
+  --spY: 228;
+}
+
+.DisturbingPresence {
+  --spX: 292;
+  --spY: 228;
+}
+
+.DivingCatch {
+  --spX: 364;
+  --spY: 228;
+}
+
+.DivingTackle {
+  --spX: 436;
+  --spY: 228;
+}
+
+.DivingTackle2 {
+  --spX: 508;
+  --spY: 228;
+}
+
+.Dodge {
+  --spX: 4;
+  --spY: 300;
+}
+
+.Dots {
+  --spX: 76;
+  --spY: 300;
+}
+
+.DumpOff {
+  --spX: 148;
+  --spY: 300;
+}
+
+.ExtraArms {
+  --spX: 220;
+  --spY: 300;
+}
+
+.FanFavourite {
+  --spX: 292;
+  --spY: 300;
+}
+
+.Fend {
+  --spX: 364;
+  --spY: 300;
+}
+
+.FoulAppearance {
+  --spX: 436;
+  --spY: 300;
+}
+
+.Frenzy {
+  --spX: 508;
+  --spY: 300;
+}
+
+.Grab {
+  --spX: 4;
+  --spY: 372;
+}
+
+.Guard {
+  --spX: 76;
+  --spY: 372;
+}
+
+.HailMaryPass {
+  --spX: 148;
+  --spY: 372;
+}
+
+.Horns {
+  --spX: 220;
+  --spY: 372;
+}
+
+.HypnoticGaze {
+  --spX: 292;
+  --spY: 372;
+}
+
+.IncreaseArmour {
+  --spX: 364;
+  --spY: 372;
+}
+
+.IncreaseStrength {
+  --spX: 436;
+  --spY: 372;
+}
+
+.Juggernaut {
+  --spX: 508;
+  --spY: 372;
+}
+
+.JumpUp {
+  --spX: 4;
+  --spY: 444;
+}
+
+.Kick {
+  --spX: 76;
+  --spY: 444;
+}
+
+.KickOffReturn {
+  --spX: 148;
+  --spY: 444;
+}
+
+.Leader {
+  --spX: 220;
+  --spY: 444;
+}
+
+.Leader2 {
+  --spX: 292;
+  --spY: 444;
+}
+
+.Leap {
+  --spX: 364;
+  --spY: 444;
+}
+
+.Loner {
+  --spX: 436;
+  --spY: 444;
+}
+
+.MightyBlow {
+  --spX: 508;
+  --spY: 444;
+}
+
+.IncreaseAgility {
+  --spX: 4;
+  --spY: 516;
+}
+
+.Accurate {
+  --spX: 4;
+  --spY: 588;
+}
+
+.MVPCondition {
+  --spX: 4;
+  --spY: 660;
+}
+
+.MVPCondition2 {
+  --spX: 4;
+  --spY: 732;
+}
+
+.NegativeLegacySkills {
+  --spX: 4;
+  --spY: 804;
+}
+
+.NegativeRookieSkills {
+  --spX: 4;
+  --spY: 876;
+}
+
+.NervesOfSteel {
+  --spX: 4;
+  --spY: 948;
+}
+
+.NigglingInjury {
+  --spX: 76;
+  --spY: 516;
+}
+
+.NoHands {
+  --spX: 148;
+  --spY: 516;
+}
+
+.NoHands2 {
+  --spX: 220;
+  --spY: 516;
+}
+
+.NurglesRot {
+  --spX: 292;
+  --spY: 516;
+}
+
+.Pass {
+  --spX: 364;
+  --spY: 516;
+}
+
+.PassBlock {
+  --spX: 436;
+  --spY: 516;
+}
+
+.MultipleBlock {
+  --spX: 508;
+  --spY: 516;
+}
+
+.PilingOn {
+  --spX: 76;
+  --spY: 588;
+}
+
+.PositiveLegacySkills {
+  --spX: 76;
+  --spY: 660;
+}
+
+.PositiveRookieSkills {
+  --spX: 76;
+  --spY: 732;
+}
+
+.PrehensileTail {
+  --spX: 76;
+  --spY: 804;
+}
+
+.Pro {
+  --spX: 76;
+  --spY: 876;
+}
+
+.ReallyStupid {
+  --spX: 76;
+  --spY: 948;
+}
+
+.Regeneration {
+  --spX: 148;
+  --spY: 588;
+}
+
+.RightStuff {
+  --spX: 220;
+  --spY: 588;
+}
+
+.Rookie {
+  --spX: 292;
+  --spY: 588;
+}
+
+.SafeThrow {
+  --spX: 364;
+  --spY: 588;
+}
+
+.SecretWeapon {
+  --spX: 436;
+  --spY: 588;
+}
+
+.Shadowing {
+  --spX: 508;
+  --spY: 588;
+}
+
+.SideStep {
+  --spX: 148;
+  --spY: 660;
+}
+
+.SkillsHover {
+  --spX: 148;
+  --spY: 732;
+}
+
+.SkillsSelected {
+  --spX: 148;
+  --spY: 804;
+}
+
+.SneakyGit {
+  --spX: 148;
+  --spY: 876;
+}
+
+.Sponsor {
+  --spX: 148;
+  --spY: 948;
+}
+
+.Sponsor2 {
+  --spX: 220;
+  --spY: 660;
+}
+
+.Sprint {
+  --spX: 292;
+  --spY: 660;
+}
+
+.Stab {
+  --spX: 364;
+  --spY: 660;
+}
+
+.StaffMember {
+  --spX: 436;
+  --spY: 660;
+}
+
+.StaffMember2 {
+  --spX: 508;
+  --spY: 660;
+}
+
+.Stakes {
+  --spX: 220;
+  --spY: 732;
+}
+
+.StandFirm {
+  --spX: 220;
+  --spY: 804;
+}
+
+.AlwaysHungry {
+  --spX: 220;
+  --spY: 876;
+}
+
+.StripBall {
+  --spX: 220;
+  --spY: 948;
+}
+
+.StrongArm {
+  --spX: 292;
+  --spY: 732;
+}
+
+.Structure {
+  --spX: 364;
+  --spY: 732;
+}
+
+.Structure2 {
+  --spX: 436;
+  --spY: 732;
+}
+
+.Stunty {
+  --spX: 508;
+  --spY: 732;
+}
+
+.SureFeet {
+  --spX: 292;
+  --spY: 804;
+}
+
+.SureHands {
+  --spX: 292;
+  --spY: 876;
+}
+
+.Tackle {
+  --spX: 292;
+  --spY: 948;
+}
+
+.TakeRoot {
+  --spX: 364;
+  --spY: 804;
+}
+
+.Tentacles {
+  --spX: 436;
+  --spY: 804;
+}
+
+.ThickSkull {
+  --spX: 508;
+  --spY: 804;
+}
+
+.ThrowTeamMate {
+  --spX: 364;
+  --spY: 876;
+}
+
+.Titchy {
+  --spX: 364;
+  --spY: 948;
+}
+
+.TwoHeads {
+  --spX: 436;
+  --spY: 876;
+}
+
+.VeryLongLegs {
+  --spX: 508;
+  --spY: 876;
+}
+
+.WildAnimal {
+  --spX: 436;
+  --spY: 948;
+}
+
+.Wrestle {
+  --spX: 508;
+  --spY: 948;
+}
