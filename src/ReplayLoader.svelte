@@ -1,35 +1,88 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
   import { io } from "./io.js";
-  import { replay } from "./replay.js";
+  import { replay, replayStart, replayEnd } from "./stores.js";
+  import { processReplay } from "./replay.js";
 
-  export let button = "primary";
+  export let button = "primary",
+    loading,
+    error;
 
-  const dispatch = createEventDispatcher();
+  onMount(() => {
+    if (!$replay) {
+      const params = new URLSearchParams(window.location.search);
+      const rebblUUID = params.get("rebbl");
+      if (rebblUUID) {
+        loadRebblReplay(rebblUUID);
+      }
+    }
+  });
 
   let input;
-  function loadReplay() {
-    console.log("Preparing to parse XML...");
-    dispatch("replayLoading");
-    const files = input.files;
-    if (files.length > 0) {
-      io.xmlToJson(
-        files[0],
+
+  function parseReplay(replayFile) {
+    io.xmlToJson(
+        replayFile,
         function (jsonObj) {
           console.log("Preparing to process replay json...");
-          jsonObj.Replay.filename = files[0].name;
-          const replayData = replay.processReplay(jsonObj);
+          jsonObj.Replay.filename = replayFile.name;
+          const replayData = processReplay(jsonObj);
 
-          dispatch("replayLoaded", replayData);
+          loading = false;
+          $replay = replayData;
+          $replayStart = null;
+          $replayEnd = null;
         },
         function (err) {
-          dispatch("replayError");
+          loading = false;
+          error = err;
           alert(err);
         }
       );
+  }
+
+  function loadRebblReplay(uid) {
+    fetch(`https://rebbl.net/api/v2/match/${uid}/replay`)
+      .then((r) => r.json())
+      .then(({ filename }) => {
+        fetch(filename)
+          .then((r) => r.blob())
+          .then((blob) => new File([blob], filename))
+          .then(file => parseReplay(file));
+      });
+  }
+
+  function loadReplay() {
+    console.log("Preparing to parse XML...");
+    loading = true;
+    error = null;
+    const files = input.files;
+    if (files.length > 0) {
+      parseReplay(files[0])
     }
   }
 </script>
+
+<div class="text-center">
+  <span id="file-input-button" class={`btn btn-${button} btn-file centered`}>
+    Select Replay
+    <input
+      bind:this={input}
+      on:change={loadReplay}
+      type="file"
+      accept=".bbrz,.zip"
+    />
+  </span>
+</div>
+
+<svelte:head
+  ><script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js">
+  </script><script
+    src="https://cdnjs.cloudflare.com/ajax/libs/fast-xml-parser/3.17.1/parser.min.js"
+    integrity="sha512-JtZhe+DT2O3VPwzAMhyOpVY75fn92Zm1ebHVgAdXFf/x+7SfbonV/O7OWLsHkj11+yMtZAXavsuMvCaQS3WXrQ=="
+    crossorigin="anonymous">
+  </script></svelte:head
+>
 
 <style>
   .btn-file {
@@ -53,24 +106,3 @@
     display: block;
   }
 </style>
-
-<div class="text-center">
-  <span id="file-input-button" class={`btn btn-${button} btn-file centered`}>
-    Select Replay
-    <input
-      bind:this={input}
-      on:change={loadReplay}
-      type="file"
-      accept=".bbrz,.zip" />
-  </span>
-</div>
-
-<svelte:head>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js">
-  </script>
-  <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/fast-xml-parser/3.17.1/parser.min.js"
-    integrity="sha512-JtZhe+DT2O3VPwzAMhyOpVY75fn92Zm1ebHVgAdXFf/x+7SfbonV/O7OWLsHkj11+yMtZAXavsuMvCaQS3WXrQ=="
-    crossorigin="anonymous">
-  </script>
-</svelte:head>

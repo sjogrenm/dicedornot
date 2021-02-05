@@ -1,38 +1,24 @@
 <script>
   import ReplayLoader from "./ReplayLoader.svelte";
-  export let loading, replay, replayStart, replayEnd;
+  import {replay} from "./stores.js";
+  export let loading, error
 </script>
 
 <nav class="navbar-dark bg-primary sidenav">
   <a class="navbar-brand" href="/#"><img class="logo" src="/dicedornot-logo.svg" alt=""/>Diced or Not</a>
   <ul class="navbar-nav">
-    {#if replay}
+    {#if $replay}
     <li class="dropdown"><a class="nav-link" href="#summary">Replay</a></li>
     <li class="nav-item">
       <a class="nav-link" href="#explanation">Explain?</a>
     </li>
     {/if}
     <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
-    {#if replay}
+    {#if $replay}
       <ReplayLoader
         button="secondary"
-        on:replayLoaded={(e) => {
-          loading = false;
-          replay = e.detail;
-          replayStart = null;
-          replayEnd = null;
-          console.log(e);
-        }}
-        on:replayLoading={() => {
-          replay = null;
-          error = false;
-          loading = true;
-        }}
-        on:replayError={() => {
-          loading = false;
-          error = true;
-          replay = null;
-        }}
+        bind:loading
+        bind:error
       />
     {/if}
   </ul>

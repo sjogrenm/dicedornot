@@ -1,10 +1,11 @@
 <script>
   import Roll from "./Roll.svelte";
-  export let rolls, selectedRoll, replayStart, replayEnd;
+  import {replayStart, replayEnd} from "./stores.js";
+  export let rolls, selectedRoll;
   function handleClick(roll) {
     return () => {
-      replayStart = roll.startIndex;
-      replayEnd = roll.endIndex;
+      $replayStart = roll.startIndex;
+      $replayEnd = roll.endIndex;
     };
   }
 </script>

@@ -3,10 +3,10 @@
   import embed from "vega-embed";
   import * as vega from "vega";
   import vegaSpec from "./vega-spec.js";
+  import {replayStepIndex, replayStart, replayEnd, replay} from "./stores.js";
   const dispatch = createEventDispatcher();
 
-  export let rolls, replayStepIndex, selectedRoll, replayStart, replayEnd;
-  let view, playHead;
+  let rolls, view, playHead;
 
   onMount(() => {
     console.log("Results onMount");
@@ -16,9 +16,10 @@
   });
 
   $: {
-    if (rolls && replayStepIndex) {
+    rolls = $replay.rolls;
+    if (rolls && $replayStepIndex) {
       let nextRoll = rolls.findIndex(roll => {
-        return replayStepIndex < roll.stepIndex;
+        return $replayStepIndex < roll.stepIndex;
       });
       playHead = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
     }
@@ -58,10 +59,10 @@
     embed("#chart", vegaSpec).then((result) => {
       result.view.addEventListener("click", function (event, item) {
         if (item) {
-          selectedRoll = item.datum.rollIndex;
-          replayStart = rolls[selectedRoll].stepIndex;
-          replayEnd = rolls[selectedRoll+1].stepIndex;
-          console.log("Results clicked", {selectedRoll, replayStart, replayEnd});
+          let selectedRoll = item.datum.rollIndex;
+          $replayStart = rolls[selectedRoll].stepIndex;
+          $replayEnd = rolls[selectedRoll+1].stepIndex;
+          console.log("Results clicked", {selectedRoll, replayStart: $replayStart, replayEnd: $replayEnd});
         }
       });
 

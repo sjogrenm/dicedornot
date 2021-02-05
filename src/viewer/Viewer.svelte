@@ -17,7 +17,7 @@
   import Banner from "./Banner.svelte";
   import {timing} from '../stores.js';
   import {translateStringNumberList, ensureList} from '../replay-utils.js';
-  export let replaySteps, replayStepIndex = 0, replayStart, replayEnd;
+  import {replay, replayStepIndex, replayStart, replayEnd } from '../stores.js';
   let queue,
     lastChainPush,
     races = [],
@@ -26,7 +26,10 @@
     pitch = {},
     blitzerId,
     banner,
-    weather;
+    weather,
+    replaySteps,
+    _replayStart,
+    _replayEnd;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -55,17 +58,18 @@
 	});
   
   // pass as arguments to force queue to reset when any arguments change
-  $: (() => {
+  $: {
+    replaySteps = $replay && $replay.fullReplay.ReplayStep;
     queue = [];
-    console.log("About to reset queue", { replayStart, replayEnd });
-    replayStart = replayStart || 0;
-    replayEnd = Math.max(replayEnd || replaySteps.length, replayStart + 1);
+    console.log("About to reset queue", { replayStart: _replayStart, replayEnd: _replayEnd });
+    _replayStart = $replayStart || 0;
+    _replayEnd = Math.max($replayEnd || replaySteps.length, $replayStart + 1);
     console.log("Resetting queue", {
-      replayStart,
-      replayEnd,
-      queue: replaySteps.slice(replayStart, replayEnd),
+      replayStart: _replayStart,
+      replayEnd: _replayEnd,
+      queue: replaySteps.slice(_replayStart, _replayEnd),
     });
-  })(replaySteps, replayStart, replayEnd);
+  };
 
   onMount(() => {
     let params = new URLSearchParams(window.location.search);
@@ -258,7 +262,7 @@
   async function step(ticks) {
     await tick();
     let sleepTime = $timing * (ticks || 1);
-    if (replayStepIndex < replayStart || replayStepIndex > replayEnd) {
+    if (replayStepIndex < $replayStart || replayStepIndex > $replayEnd) {
       sleepTime *= .1;
     }
     await sleep(sleepTime);
@@ -268,11 +272,11 @@
     while (true) {
       let replayStep = queue.shift();
       if (!replayStep) {
-        await initQueue(replaySteps, replayStart, replayEnd);
+        await initQueue(replaySteps, _replayStart, _replayEnd);
         replayStep = queue.shift();
       }
 
-      replayStepIndex = replayStep.index;
+      $replayStepIndex = replayStep.index;
 
       for (const boardAction of ensureList(replayStep.RulesEventBoardAction)) {
         if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results

@@ -10,14 +10,12 @@
   import Nav from "./Nav.svelte";
   import Viewer from "./viewer/Viewer.svelte";
   import { Row, Col, Container, Jumbotron } from "sveltestrap";
+  import {replay} from "./stores.js"
 
   let loading = false;
   let error = false;
-  let replay;
-  let replayStepIndex = 0;
-  let replayStart, replayEnd;
   $: {
-    console.log("Replay", replay);
+    console.log("Replay", $replay);
   }
 </script>
 
@@ -50,43 +48,28 @@
 </svelte:head>
 
 <body>
-  <Nav bind:loading bind:replay bind:replayStart bind:replayEnd />
+  <Nav bind:loading />
   <div id="content">
-    {#if replay}
+    {#if $replay}
       <Container fluid role="main">
         <Row>
           <Col lg="8" class="order-lg-1 order-12">
-            <Results
-              rolls={replay.rolls}
-              {replayStepIndex}
-              bind:replayStart
-              bind:replayEnd
-            />
+            <Results/>
           </Col>
 
           <Col lg="4" class="order-lg-12 order-1">
             <Summary
-              gameDetails={replay.gameDetails}
-              filename={replay.fullReplay.filename}
+              gameDetails={$replay.gameDetails}
+              filename={$replay.fullReplay.filename}
             />
           </Col>
         </Row>
         <Row>
           <Col lg="8">
-            <Viewer
-              replaySteps={replay && replay.fullReplay.ReplayStep}
-              bind:replayStepIndex
-              {replayStart}
-              {replayEnd}
-            />
+            <Viewer />
           </Col>
           <Col lg="4">
-            <RollDetails
-              rolls={replay.rolls}
-              {replayStepIndex}
-              bind:replayStart
-              bind:replayEnd
-            />
+            <RollDetails />
           </Col>
         </Row>
       </Container>
@@ -97,30 +80,12 @@
       <div class="container">
         <Jumbotron>
           <About />
-          <ReplayLoader
-            on:replayLoaded={(e) => {
-              loading = false;
-              replay = e.detail;
-              replayStart = null;
-              replayEnd = null;
-              console.log(e);
-            }}
-            on:replayLoading={() => {
-              replay = null;
-              error = false;
-              loading = true;
-            }}
-            on:replayError={() => {
-              loading = false;
-              error = true;
-              replay = null;
-            }}
-          />
+          <ReplayLoader bind:loading bind:error/>
           {#if loading}
             <Loading />
           {/if}
           {#if error}
-            <Error />
+            <Error {error}/>
           {/if}
         </Jumbotron>
       </div>

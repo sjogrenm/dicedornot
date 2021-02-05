@@ -1,9 +1,8 @@
 <script>
   import Turn from "./Turn.svelte";
   import TurnSelector from "./TurnSelector.svelte";
-  export let rolls, replayStepIndex, replayStart, replayEnd;
-  let open = false;
-  let rollsByTurn, selectedRoll, turns, currentTurnRolls;
+  import {replay, replayStepIndex} from "./stores.js";
+  let rolls, rollsByTurn, selectedRoll, currentTurnRolls;
 
   function rollForStepIndex(stepIndex) {
     let nextRoll = rolls.findIndex(roll => {
@@ -12,14 +11,14 @@
     return nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
   }
   $: {
-    selectedRoll = rollForStepIndex(replayStepIndex);
+    rolls = $replay.rolls;
+    selectedRoll = rollForStepIndex($replayStepIndex);
     updateRollLog(rolls, selectedRoll);
     currentTurnRolls = rollsByTurn.find(turnRolls => {
       let startIndex = turnRolls[0].startIndex;
       let endIndex = turnRolls[turnRolls.length - 1].endIndex;
-      return startIndex <= replayStepIndex && endIndex > replayStepIndex;
+      return startIndex <= $replayStepIndex && endIndex > $replayStepIndex;
     });
-    turns = rollsByTurn.length;
   }
   function updateRollLog(rolls, selectedRoll) {
     rollsByTurn = rolls.reduce((groups, roll) => {
@@ -45,14 +44,14 @@
 <div>
   <div class="turn-list">
     {#each rollsByTurn as rolls}
-      <TurnSelector {rolls} {replayStepIndex} bind:replayStart bind:replayEnd />
+      <TurnSelector {rolls} />
     {/each}
   </div>
 </div>
 
 {#if selectedRoll && currentTurnRolls && currentTurnRolls.length > 0}
 <div class="details-list">
-  <Turn rolls={currentTurnRolls} {selectedRoll} bind:replayStart bind:replayEnd/>
+  <Turn rolls={currentTurnRolls} {selectedRoll}/>
 </div>
 {/if}
 
