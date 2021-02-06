@@ -1,26 +1,31 @@
 <script>
+  import HomeBench from "./HomeBench.svelte";
+  import TeamAids from "./TeamAids.svelte";
+  import SelectedPlayer from "./SelectedPlayer.svelte";
+  import Weather from "./Weather.svelte";
+  import { selectedPlayer } from "../stores.js";
+  import TeamLogo from "./TeamLogo.svelte";
 
-import HomeBench from "./HomeBench.svelte";
-import TeamAids from "./TeamAids.svelte";
-import SelectedPlayer from "./SelectedPlayer.svelte";
-import Weather from "./Weather.svelte";
-import {selectedPlayer} from "../stores.js";
-
-export let homeTeam, weather, send, receive;
-
+  export let homeTeam, weather, send, receive;
 </script>
 
 <div class="dugout">
-  <HomeBench dugout={homeTeam.dugout} {send} {receive}/>
-  <img src="/images/logo/256x256/logo_{homeTeam.logo}.png" alt="Logo: {homeTeam.logo}" class="logo"/>
-  <div class="name">{homeTeam.name}</div>
-  <div class="score"><p>{homeTeam.score}</p></div>
-  <div class="turn" class:active={homeTeam.active}><p>{homeTeam.turn}</p></div>
-  <div class="aids"><TeamAids /></div>
-  {#if $selectedPlayer}
-  <div class="selected"><SelectedPlayer player={$selectedPlayer}/></div>
+  {#if homeTeam}
+    <HomeBench dugout={homeTeam.dugout} {send} {receive} />
+    <div class="logo">
+      <TeamLogo logo={homeTeam.logo} />
+    </div>
+    <div class="name">{homeTeam.name}</div>
+    <div class="score"><p>{homeTeam.score}</p></div>
+    <div class="turn" class:active={homeTeam.active}><p>{homeTeam.turn}</p></div>
+    <div class="aids"><TeamAids /></div>
   {/if}
-  <div class="weather"><Weather {weather}/></div>
+  {#if $selectedPlayer}
+    <div class="selected"><SelectedPlayer player={$selectedPlayer} /></div>
+  {/if}
+  {#if weather}
+    <div class="weather"><Weather {weather} /></div>
+  {/if}
 </div>
 
 <style>
@@ -29,6 +34,9 @@ export let homeTeam, weather, send, receive;
     width: 3.5%;
     left: 1.5%;
     bottom: 1.5%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   .name {
     font-size: 1.5em;
@@ -47,26 +55,26 @@ export let homeTeam, weather, send, receive;
   }
   .weather {
     position: absolute;
-    right: .5%;
+    right: 0.5%;
     top: 4%;
     width: 5%;
   }
   .turn {
     position: absolute;
-    display:flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     left: 47%;
     font-size: 200%;
     width: 6%;
-    bottom:0;
-    height:50%;
+    bottom: 0;
+    height: 50%;
   }
   .turn.active {
     color: #ffb22e;
   }
   .score {
-    display:flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     position: absolute;
@@ -75,7 +83,7 @@ export let homeTeam, weather, send, receive;
     text-align: center;
     width: 6%;
     top: 0;
-    height:50%;
+    height: 50%;
   }
 
   .aids {
@@ -91,7 +99,7 @@ export let homeTeam, weather, send, receive;
     position: absolute;
     z-index: 10;
   }
-  .selected:hover{
+  .selected:hover {
     width: 15%;
   }
 </style>

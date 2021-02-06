@@ -2,6 +2,7 @@
 
   import AwayBench from "./AwayBench.svelte";
   import TeamAids from "./TeamAids.svelte";
+  import TeamLogo from "./TeamLogo.svelte";
 
   export let awayTeam, send, receive;
 
@@ -12,7 +13,9 @@
   <div class="score">{awayTeam.score}</div>
   <div class="turn" class:active={awayTeam.active}>{awayTeam.turn}</div>
   <div class="name">{awayTeam.name}</div>
-  <img class="logo" src="/images/logo/256x256/logo_{awayTeam.logo}.png" alt="Logo: {awayTeam.logo}"/>
+  <div class="logo">
+    <TeamLogo logo={awayTeam.logo}/>
+  </div>
   <AwayBench dugout={awayTeam.dugout} {send} {receive}/>
 </div>
 
@@ -23,6 +26,9 @@
     width: 3.5%;
     right: 1.5%;
     top: 1.5%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   .name {
     font-size: 1.5em;

@@ -1,4 +1,7 @@
 <script>
+import FixedRatio from "./FixedRatio.svelte";
+
+
   export let logo;
 </script>
 <style>
@@ -9,4 +12,8 @@
   background-size: contain;
 }
 </style>
-<div class="logo" style="background-image: url('/images/logo/256x256/logo_{logo}.png')"/>
+{#if logo}
+  <FixedRatio>
+    <div class="logo" style="background-image: url('/images/logo/256x256/logo_{logo}.png')"/>
+  </FixedRatio>
+{/if}
