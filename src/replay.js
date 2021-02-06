@@ -65,12 +65,10 @@ export function processReplay(data) {
   };
 }
 
-function extractGameDetails(jsonObject) {
+export function extractGameDetails(jsonObject) {
   var firstStep = jsonObject.Replay.ReplayStep[0];
   var lastStep =
     jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1];
-  console.log("Full gameinfo:");
-  console.log(firstStep.GameInfos);
   return {
     //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
     stadiumName: firstStep.GameInfos.NameStadium,

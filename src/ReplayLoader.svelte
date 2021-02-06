@@ -2,15 +2,15 @@
   import { onMount } from "svelte";
   import { io } from "./io.js";
   import { replay, replayStart, replayEnd } from "./stores.js";
-  import { processReplay } from "./replay.js";
-  import { get, set } from "idb-keyval";
+  import { processReplay, extractGameDetails } from "./replay.js";
+  import { get, set, entries } from "idb-keyval";
   import Loading from "./Loading.svelte";
   import Error from "./Error.svelte";
 
   export let button = "primary",
     loading,
     error;
-  const CACHE_VERSION = 1;
+  const CACHE_VERSION = 2;
 
   onMount(() => {
     if (!$replay) {
@@ -32,16 +32,39 @@
     }
   }
 
+  async function cachedReplays() {
+    const allReplays = await entries();
+    const validReplays = allReplays.filter(
+      ([cacheKey, replay]) => replay.CACHE_VERSION === CACHE_VERSION
+    );
+    return validReplays.map(([cacheKey, replayJSON]) => {
+      const firstStep = replayJSON.Replay.ReplayStep[0];
+      const matchResult =
+        replayJSON.Replay.ReplayStep[replayJSON.Replay.ReplayStep.length - 1]
+          .RulesEventGameFinished.MatchResult;
+      return {
+        homeCoach: firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId,
+        homeTeam: firstStep.BoardState.ListTeams.TeamState[0].Data.Name,
+        homeScore: matchResult.Row.HomeScore || 0,
+        awayCoach: firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId,
+        awayTeam: firstStep.BoardState.ListTeams.TeamState[1].Data.Name,
+        awayScore: matchResult.Row.AwayScore || 0,
+        date: new Date(matchResult.Row.Finished),
+        cacheKey,
+      };
+    });
+  }
+
   async function loadFromCache(cacheKey, completeLoad) {
     const jsonReplayData = await get(cacheKey);
-    console.log("Loading from cache", {cacheKey, jsonReplayData});
+    console.log("Loading from cache", { cacheKey, jsonReplayData });
     if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
       loading = false;
       $replay = processReplay(jsonReplayData);
       $replayStart = null;
       $replayEnd = null;
     } else {
-      await completeLoad(cacheKey)
+      await completeLoad(cacheKey);
     }
   }
 
@@ -53,7 +76,7 @@
         jsonReplayData.Replay.filename = replayFile.name;
         jsonReplayData.CACHE_VERSION = CACHE_VERSION;
         set(cacheKey, jsonReplayData);
-        console.log("Setting cache", {cacheKey, jsonReplayData});
+        console.log("Setting cache", { cacheKey, jsonReplayData });
         const replayData = processReplay(jsonReplayData);
 
         loading = false;
@@ -72,7 +95,7 @@
   async function loadRebblReplay(uuid) {
     loading = true;
     error = null;
-    loadFromCache(`rebbl-${uuid}`, async cacheKey => {
+    loadFromCache(`rebbl-${uuid}`, async (cacheKey) => {
       let replayFile = await fetch(
         `https://rebbl.net/api/v2/match/${uuid}/replay`
       ).then((r) => r.json());
@@ -81,7 +104,7 @@
         const file = new File([blob], replayFile.filename);
         parseReplay(file, cacheKey);
       }
-    })
+    });
   }
 
   async function loadReplay() {
@@ -90,7 +113,9 @@
     error = null;
     const files = filePicker.files;
     if (files.length > 0) {
-      loadFromCache(`file-${files[0]}`, cacheKey => parseReplay(files[0], cacheKey))
+      loadFromCache(`file-${files[0].name}`, (cacheKey) =>
+        parseReplay(files[0], cacheKey)
+      );
     }
   }
 </script>
@@ -120,11 +145,43 @@
       <button class={`btn btn-${button}`} on:click={loadURL}>Load</button>
     </div>
   </div>
+  {#await cachedReplays() then replays}
+    {@debug replays}
+    <div class="row align-items-center justify-content-md-center pt-2">
+      <div class="col-auto">
+        <label for="saved-replay-choice">Saved replays:</label>
+      </div>
+      <div class="col-6">
+        <input
+          list="saved-replay-options"
+          id="saved-replay-choice"
+          name="saved-replay-choice"
+          on:input={(ev) => {
+            if (replays.map(replay => replay.cacheKey).includes(ev.data)) {
+              loadFromCache(ev.data, (cacheKey) =>
+                alert(`Unable to load ${cacheKey} from cache`)
+              );
+            }
+          }}
+        />
+
+        <datalist id="saved-replay-options">
+          {#each replays as replay (replay.cacheKey)}
+            <option value={replay.cacheKey}
+              >{replay.homeTeam}
+              {replay.homeScore}-{replay.awayScore}
+              {replay.awayTeam} [{replay.date.toLocaleString()}]</option
+            >
+          {/each}
+        </datalist>
+      </div>
+    </div>
+  {/await}
   {#if loading}
     <Loading />
   {/if}
   {#if error}
-    <Error {error}/>
+    <Error {error} />
   {/if}
 </div>
 
@@ -138,6 +195,9 @@
 >
 
 <style>
+  #saved-replay-choice {
+    width: 100%;
+  }
   .btn-file {
     position: relative;
     overflow: hidden;
