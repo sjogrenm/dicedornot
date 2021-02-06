@@ -1,9 +1,7 @@
 <script>
   import ReplayLoader from "./ReplayLoader.svelte";
-  import Loading from "./Loading.svelte";
   import Summary from "./Summary.svelte";
   import Explanation from "./Explanation.svelte";
-  import Error from "./Error.svelte";
   import RollDetails from "./RollDetails.svelte";
   import Results from "./Results.svelte";
   import About from "./About.svelte";
@@ -82,12 +80,6 @@
         <Jumbotron>
           <About />
           <ReplayLoader bind:loading bind:error/>
-          {#if loading}
-            <Loading />
-          {/if}
-          {#if error}
-            <Error {error}/>
-          {/if}
         </Jumbotron>
       </div>
     {/if}

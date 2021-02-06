@@ -3,6 +3,9 @@
   import { io } from "./io.js";
   import { replay, replayStart, replayEnd } from "./stores.js";
   import { processReplay } from "./replay.js";
+  import { get, set } from "idb-keyval";
+  import Loading from "./Loading.svelte";
+  import Error from "./Error.svelte";
 
   export let button = "primary",
     loading,
@@ -30,28 +33,30 @@
 
   function parseReplay(replayFile) {
     io.xmlToJson(
-        replayFile,
-        function (jsonObj) {
-          console.log("Preparing to process replay json...");
-          jsonObj.Replay.filename = replayFile.name;
-          const replayData = processReplay(jsonObj);
+      replayFile,
+      function (jsonObj) {
+        console.log("Preparing to process replay json...");
+        jsonObj.Replay.filename = replayFile.name;
+        const replayData = processReplay(jsonObj);
 
-          loading = false;
-          $replay = replayData;
-          $replayStart = null;
-          $replayEnd = null;
-        },
-        function (err) {
-          loading = false;
-          error = err;
-          alert(err);
-        }
-      );
+        loading = false;
+        $replay = replayData;
+        $replayStart = null;
+        $replayEnd = null;
+      },
+      function (err) {
+        loading = false;
+        error = err;
+        alert(err);
+      }
+    );
   }
 
   async function loadRebblReplay(uid) {
     loading = true;
-    let replayFile = await fetch(`https://rebbl.net/api/v2/match/${uid}/replay`).then((r) => r.json());
+    let replayFile = await fetch(
+      `https://rebbl.net/api/v2/match/${uid}/replay`
+    ).then((r) => r.json());
     if (replayFile.filename) {
       const blob = await fetch(replayFile.filename).then((r) => r.blob());
       const file = new File([blob], replayFile.filename);
@@ -65,7 +70,7 @@
     error = null;
     const files = filePicker.files;
     if (files.length > 0) {
-      parseReplay(files[0])
+      parseReplay(files[0]);
     }
   }
 </script>
@@ -84,12 +89,23 @@
   </div>
   <div class="row align-items-center justify-content-md-center pt-2">
     <div class="col-3">
-      <input bind:this={urlPicker} type="text" class="form-control form-control-sm" placeholder="Paste your rebbl.net match url here..."/>
+      <input
+        bind:this={urlPicker}
+        type="text"
+        class="form-control form-control-sm"
+        placeholder="Paste your rebbl.net match url here..."
+      />
     </div>
     <div class="col-auto">
       <button class={`btn btn-${button}`} on:click={loadURL}>Load</button>
     </div>
   </div>
+  {#if loading}
+    <Loading />
+  {/if}
+  {#if error}
+    <Error {error}/>
+  {/if}
 </div>
 
 <svelte:head
