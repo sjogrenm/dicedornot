@@ -10,6 +10,7 @@
   export let button = "primary",
     loading,
     error;
+  const CACHE_VERSION = 1;
 
   onMount(() => {
     if (!$replay) {
@@ -31,13 +32,29 @@
     }
   }
 
-  function parseReplay(replayFile) {
+  async function loadFromCache(cacheKey, completeLoad) {
+    const jsonReplayData = await get(cacheKey);
+    console.log("Loading from cache", {cacheKey, jsonReplayData});
+    if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
+      loading = false;
+      $replay = processReplay(jsonReplayData);
+      $replayStart = null;
+      $replayEnd = null;
+    } else {
+      await completeLoad(cacheKey)
+    }
+  }
+
+  async function parseReplay(replayFile, cacheKey) {
     io.xmlToJson(
       replayFile,
-      function (jsonObj) {
+      function (jsonReplayData) {
         console.log("Preparing to process replay json...");
-        jsonObj.Replay.filename = replayFile.name;
-        const replayData = processReplay(jsonObj);
+        jsonReplayData.Replay.filename = replayFile.name;
+        jsonReplayData.CACHE_VERSION = CACHE_VERSION;
+        set(cacheKey, jsonReplayData);
+        console.log("Setting cache", {cacheKey, jsonReplayData});
+        const replayData = processReplay(jsonReplayData);
 
         loading = false;
         $replay = replayData;
@@ -52,25 +69,28 @@
     );
   }
 
-  async function loadRebblReplay(uid) {
+  async function loadRebblReplay(uuid) {
     loading = true;
-    let replayFile = await fetch(
-      `https://rebbl.net/api/v2/match/${uid}/replay`
-    ).then((r) => r.json());
-    if (replayFile.filename) {
-      const blob = await fetch(replayFile.filename).then((r) => r.blob());
-      const file = new File([blob], replayFile.filename);
-      parseReplay(file);
-    }
+    error = null;
+    loadFromCache(`rebbl-${uuid}`, async cacheKey => {
+      let replayFile = await fetch(
+        `https://rebbl.net/api/v2/match/${uuid}/replay`
+      ).then((r) => r.json());
+      if (replayFile.filename) {
+        const blob = await fetch(replayFile.filename).then((r) => r.blob());
+        const file = new File([blob], replayFile.filename);
+        parseReplay(file, cacheKey);
+      }
+    })
   }
 
-  function loadReplay() {
+  async function loadReplay() {
     console.log("Preparing to parse XML...");
     loading = true;
     error = null;
     const files = filePicker.files;
     if (files.length > 0) {
-      parseReplay(files[0]);
+      loadFromCache(`file-${files[0]}`, cacheKey => parseReplay(files[0], cacheKey))
     }
   }
 </script>
