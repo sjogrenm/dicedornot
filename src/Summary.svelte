@@ -15,7 +15,12 @@
       <span id="league-name">{gameDetails.leagueName}</span>
     </div>
   </div>
-  <div id="game-details">
+  <div class="row">
+    <div class="col score">
+      <span id="home-score" class="home">{gameDetails.homeTeam.score}</span> -
+      <span id="away-score" class="away">{gameDetails.awayTeam.score}</span>
+  </div>
+  </div>
     <div class="row">
       <div class="col team-details team-details-left">
         <div class="team-name home">
@@ -62,7 +67,6 @@
         <span id="stadium-type">{gameDetails.stadiumType || "None"}</span>
       </div>
     </div>
-  </div>
 </div>
 
 <style>
