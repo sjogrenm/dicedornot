@@ -1,25 +1,30 @@
 <script>
-	import { sineInOut } from 'svelte/easing';
+  import { onMount, tick } from "svelte";
+  import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";
+  import { Row, Col, ButtonToolbar, Button, Icon } from "sveltestrap";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
   import {
     SITUATION,
     RACE_SLUG,
-    ACTION_TYPE,
     ROLL,
     WEATHER,
     RESULT_TYPE,
+    ACTION_TYPE,
   } from "../constants.js";
-  import { onMount, tick } from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
-  import {timing} from '../stores.js';
-  import {translateStringNumberList, ensureList} from '../replay-utils.js';
-  import {replay, replayStepIndex, replayStart, replayEnd } from '../stores.js';
-  let queue,
-    lastChainPush,
+  import {
+    translateStringNumberList,
+    ensureList,
+    REPLAY_KEY,
+    REPLAY_STEP,
+    ReplayPosition,
+  } from "../replay-utils.js";
+  import { replay, replayCurrent, replayTarget, timing } from "../stores.js";
+  let lastChainPush,
     races = [],
     homeTeam = {},
     awayTeam = {},
@@ -27,9 +32,8 @@
     blitzerId,
     banner,
     weather,
-    replaySteps,
-    _replayStart,
-    _replayEnd;
+    playing = false,
+    skipping = false;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -38,63 +42,31 @@
     [SITUATION.SentOff]: "cas",
   };
 
-	const [send, receive] = crossfade({
-    duration: $timing * .5,
+  const [send, receive] = crossfade({
+    duration: $timing * 0.5,
     easing: sineInOut,
 
-		fallback(node, params) {
-			const style = getComputedStyle(node);
-			const transform = style.transform === 'none' ? '' : style.transform;
+    fallback(node, params) {
+      const style = getComputedStyle(node);
+      const transform = style.transform === "none" ? "" : style.transform;
 
-			return {
-				duration: $timing * .5,
-				easing: sineInOut,
-				css: t => `
+      return {
+        duration: $timing * 0.5,
+        easing: sineInOut,
+        css: (t) => `
 					transform: ${transform} scale(${t});
 					opacity: ${t}
-				`
-			};
-		}
-	});
-  
-  // pass as arguments to force queue to reset when any arguments change
-  $: {
-    replaySteps = $replay && $replay.fullReplay.ReplayStep;
-    queue = [];
-    console.log("About to reset queue", { replayStart: _replayStart, replayEnd: _replayEnd });
-    _replayStart = $replayStart || 0;
-    _replayEnd = Math.max($replayEnd || replaySteps.length, $replayStart + 1);
-    console.log("Resetting queue", {
-      replayStart: _replayStart,
-      replayEnd: _replayEnd,
-      queue: replaySteps.slice(_replayStart, _replayEnd),
-    });
-  };
+				`,
+      };
+    },
+  });
 
   onMount(() => {
     let params = new URLSearchParams(window.location.search);
-    $timing = params.get('timing') || 300;
-    console.log("Viewer onMount start");
-    processQueue();
-    console.log("Viewer onMount queue started");
+    $timing = params.get("timing") || 300;
+    startPlayer();
     return () => console.log("destroyed");
   });
-
-  async function initQueue(replaySteps, replayStart, replayEnd) {
-    queue = replaySteps.slice(replayStart, replayEnd);
-    clearTemporaryState();
-    if (replayStart > 0) {
-      await resetFromBoardState(replaySteps[replayStart - 1].BoardState);
-    } else {
-      lastChainPush = null;
-      races = [];
-      homeTeam = {};
-      awayTeam = {};
-      pitch = {};
-      weather = WEATHER.Nice;
-    }
-    await step(3);
-  }
 
   async function resetFromBoardState(boardState) {
     blitzerId = boardState.BlitzerId;
@@ -164,12 +136,12 @@
   function placePlayer(p, team) {
     switch (p.Situation) {
       case SITUATION.Active:
-        setPitchSquare(p.Cell).player = {data: p};
+        setPitchSquare(p.Cell).player = { data: p };
         break;
       default:
         (team == "home" ? homeTeam : awayTeam).dugout[
           DUGOUT_POSITIONS[p.Situation]
-        ].push({data: p});
+        ].push({ data: p });
         break;
     }
   }
@@ -253,52 +225,141 @@
   }
 
   async function step(ticks) {
+    if (skipping) {
+      return;
+    }
     await tick();
     let sleepTime = $timing * (ticks || 1);
-    if (replayStepIndex < $replayStart || replayStepIndex > $replayEnd) {
-      sleepTime *= .1;
-    }
     await sleep(sleepTime);
   }
 
-  async function processQueue() {
-    while (true) {
-      let replayStep = queue.shift();
-      if (!replayStep) {
-        await initQueue(replaySteps, _replayStart, _replayEnd);
-        replayStep = queue.shift();
-      }
+  async function handleSetupAction(setup) {}
 
-      $replayStepIndex = replayStep.index;
+  async function handleBoardAction(boardAction, boardActionResult) {
+    const action = actions[boardAction.ActionType || 0];
+    try {
+      await action(boardAction, boardActionResult);
+      await step();
+    } catch (error) {
+      await step();
+      console.error("Action failed", { error, boardAction, boardActionResult });
+      throw error;
+    }
+  }
 
-      for (const boardAction of ensureList(replayStep.RulesEventBoardAction)) {
-        if (boardAction.ActionType !== ACTION_TYPE.Block) lastChainPush = null; // chain pushes fall under block results
+  async function handleBoardState(boardState) {
+    await resetFromBoardState(boardState);
+  }
 
-        for (const boardActionResult of ensureList(boardAction.Results.BoardActionResult)) {
-
-          const action = actions[boardAction.ActionType || 0];
-
-          try {
-            await action(boardAction, boardActionResult);
-            await step();
-          } catch (error) {
-            await step();
-            console.error("Action failed", { error, boardAction });
-            throw error;
-          }
+  async function handleReplay() {
+    const step = $replay.fullReplay.ReplayStep[$replayCurrent.step];
+    if ($replayTarget) {
+      const target = $replayTarget;
+      $replayTarget = null;
+      await jumpToPosition(target);
+      return;
+    }
+    const subStep = step[REPLAY_KEY[$replayCurrent.state]];
+    switch ($replayCurrent.state) {
+      case REPLAY_STEP.SetupAction:
+        await handleSetupAction(subStep);
+        break;
+      case REPLAY_STEP.BoardAction:
+        let action = ensureList(subStep)[$replayCurrent.action];
+        if (!action) {
+          console.error("No action found", {
+            subStep,
+            replayCurrent: $replayCurrent,
+            step,
+          });
         }
-      }
-      if (replayStep.RulesEventEndTurn) {
-        handleEndTurn(replayStep.RulesEventEndTurn);
-      }
-      if (replayStep.BoardState) {
-        await resetFromBoardState(replayStep.BoardState);
+        let result = ensureList(action.Results.BoardActionResult)[
+          $replayCurrent.result
+        ];
+        await handleBoardAction(action, result);
+        break;
+      case REPLAY_STEP.EndTurn:
+        await handleEndTurn(subStep);
+        break;
+      case REPLAY_STEP.BoardState:
+        await handleBoardState(subStep);
+        break;
+    }
+    $replayCurrent = $replayCurrent.toNextPosition($replay.fullReplay);
+  }
+
+  async function jumpToPosition(position) {
+    clearTemporaryState();
+    $replayCurrent = new ReplayPosition(
+      position.step - 1,
+      REPLAY_STEP.BoardState
+    );
+    skipping = true;
+    while (position.after($replayCurrent)) {
+      await handleReplay();
+    }
+    skipping = false;
+  }
+
+  function jumpToPreviousActivation() {
+    for (var stepI = $replayCurrent.step; stepI--; stepI > 0) {
+      const step = $replay.fullReplay.ReplayStep[stepI];
+      const actions = ensureList(step.RulesEventBoardAction);
+      const actionTypes = actions.map((action) => action.ActionType || 0);
+      if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
+        jumpToPosition(new ReplayPosition(stepI));
+        return;
       }
     }
   }
-  // wget http://rebblvision.rebbl.net/images/players/{human,dwarf,skaven,orc,lizardman,goblin,woodelf,chaos,darkelf,undead,norse,amazon,proelf,highelf,khemri,necromantic,nurgle,vampire,chaosdwarf,underworld,bretonnian,kislev,chaospact}/{home,away}.png -nH -x
 
-  // Copied from rebbl.net on 2021-01-15 4:45pm EST
+  function jumpToPreviousTurn() {
+    for (var stepI = $replayCurrent.step; stepI--; stepI > 0) {
+      const step = $replay.fullReplay.ReplayStep[stepI];
+      if (step.RulesEventEndTurn) {
+        jumpToPosition(new ReplayPosition(stepI + 1));
+        return;
+      }
+    }
+  }
+  function jumpToPreviousStep() {
+    jumpToPosition(new ReplayPosition($replayCurrent.step - 1));
+  }
+  function jumpToNextActivation() {
+    for (
+      var stepI = $replayCurrent.step;
+      stepI++;
+      stepI < $replay.fullReplay.ReplayStep.length
+    ) {
+      const step = $replay.fullReplay.ReplayStep[stepI];
+      const actions = ensureList(step.RulesEventBoardAction);
+      const actionTypes = actions.map((action) => action.ActionType || 0);
+      if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
+        jumpToPosition(new ReplayPosition(stepI));
+        return;
+      }
+    }
+  }
+  function jumpToNextTurn() {
+    for (
+      var stepI = $replayCurrent.step;
+      stepI++;
+      stepI < $replay.fullReplay.ReplayStep.length
+    ) {
+      const step = $replay.fullReplay.ReplayStep[stepI];
+      if (step.RulesEventEndTurn) {
+        jumpToPosition(new ReplayPosition(stepI + 1));
+        return;
+      }
+    }
+  }
+
+  async function startPlayer() {
+    playing = true;
+    while (playing) {
+      await handleReplay();
+    }
+  }
 
   function checkRerolls() {
     let elements = document.getElementsByClassName("reroll");
@@ -470,9 +531,7 @@
   }
 
   function handleWeather(action, actionResult) {
-    const dice = translateStringNumberList(
-      actionResult.CoachChoices.ListDices
-    );
+    const dice = translateStringNumberList(actionResult.CoachChoices.ListDices);
     const diceSums = {
       2: WEATHER.SwelteringHeat,
       3: WEATHER.VerySunny,
@@ -531,9 +590,7 @@
 
       if (actionResult.IsOrderCompleted) {
         target["dice"] = [
-          translateStringNumberList(
-            actionResult.CoachChoices.ListDices
-          )[0],
+          translateStringNumberList(actionResult.CoachChoices.ListDices)[0],
         ];
       } else {
         let dice = translateStringNumberList(
@@ -570,9 +627,7 @@
         targetSquare.player = toPlayer;
         toSquare.player = null;
       } else {
-        ensureList(
-          actionResult.CoachChoices.ListCells.Cell
-        ).forEach((cell) => {
+        ensureList(actionResult.CoachChoices.ListCells.Cell).forEach((cell) => {
           let square = setPitchSquare(cell);
           square.cell = square.cell || {};
           square.cell.pushbackChoice = true;
@@ -591,9 +646,7 @@
       //follow up
       if (actionResult.IsOrderCompleted) {
         const from = action.Order.CellFrom;
-        const target = ensureList(
-          actionResult.CoachChoices.ListCells.Cell
-        )[0];
+        const target = ensureList(actionResult.CoachChoices.ListCells.Cell)[0];
         if (from.x != target.x || from.y != target.y) {
           const fromSquare = setPitchSquare(from);
           setPitchSquare(target).player = fromSquare.player;
@@ -657,10 +710,7 @@
 
     player.prone = false;
     player.moving = true;
-    if (
-      actionResult.IsOrderCompleted &&
-      squareTo != squareFrom
-    ) {
+    if (actionResult.IsOrderCompleted && squareTo != squareFrom) {
       squareFrom.player = null;
       squareTo.player = player;
     }
@@ -676,9 +726,7 @@
 
     if (
       actionResult.RollType &&
-      [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(
-        actionResult.RollType
-      )
+      [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(actionResult.RollType)
     ) {
       //Dodge, GFI, Leap
       squareTo.cell = squareTo.cell || {};
@@ -717,8 +765,7 @@
         [ROLL.ReallyStupid]: "Stupid",
         [ROLL.TakeRoot]: "Rooted",
       };
-      square.player.stupidity =
-        STUPID_TYPES[actionResult.RollType];
+      square.player.stupidity = STUPID_TYPES[actionResult.RollType];
     }
   }
 
@@ -818,13 +865,76 @@
   {/each}
   <link rel="stylesheet" href="/styles/sprite.css" />
   <link rel="stylesheet" href="/styles/skills.css" />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css"
+  />
 </svelte:head>
 
+<div class="controls">
+  <Row class="justify-content-md-center align-items-center">
+    <Col xs="auto">
+      <ButtonToolbar>
+        <Button
+          size="lg"
+          title="Slower"
+          on:click={() => {
+            $timing *= 1.2;
+          }}>{"-"}</Button
+        >
+        <Button size="lg" title="Previous Turn" on:click={jumpToPreviousTurn}
+          >{"<<<"}</Button
+        >
+        <Button
+          size="lg"
+          title="Previous Activation"
+          on:click={jumpToPreviousActivation}>{"<<"}</Button
+        >
+        <Button
+          size="lg"
+          title="Previous Replay Step"
+          on:click={jumpToPreviousStep}>{"<"}</Button
+        >
+        {#if playing}
+          <Button
+            size="lg"
+            title="Pause"
+            on:click={() => {
+              playing = false;
+            }}><Icon name="pause-fill" /></Button
+          >
+        {:else}
+          <Button size="lg" title="Play" on:click={() => startPlayer()}
+            ><Icon name="play-fill" /></Button
+          >
+        {/if}
+        <Button size="lg" title="Next Replay Step" on:click={handleReplay}
+          >{">"}</Button
+        >
+        <Button
+          size="lg"
+          title="Next Activation"
+          on:click={jumpToNextActivation}>{">>"}</Button
+        >
+        <Button size="lg" title="Next Turn" on:click={jumpToNextTurn}
+          >{">>>"}</Button
+        >
+        <Button
+          size="lg"
+          title="Faster"
+          on:click={() => {
+            $timing /= 1.2;
+          }}>{"+"}</Button
+        >
+      </ButtonToolbar>
+    </Col>
+  </Row>
+</div>
 <FixedRatio width={1335} height={1061}>
   <div class="pitch">
-    <HomeDugout {homeTeam} {weather} {send} {receive}/>
-    <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive}/>
-    <AwayDugout {awayTeam} {send} {receive}/>
+    <HomeDugout {homeTeam} {weather} {send} {receive} />
+    <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive} />
+    <AwayDugout {awayTeam} {send} {receive} />
   </div>
   {#if banner}
     <Banner {banner} />
@@ -840,10 +950,9 @@
     height: 100%;
     position: relative;
   }
-  @font-face {
-    font-family: "trump_town_proregular";
-    src: url("Trump_Town_Pro-webfont.woff") format("woff");
-    font-weight: normal;
-    font-style: normal;
+  .controls {
+    font-family: "Nuffle";
+    z-index: 10;
+    position: relative;
   }
 </style>

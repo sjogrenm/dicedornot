@@ -9,7 +9,7 @@ import {
   BLOCK,
   BLOCK_DIE,
 } from './constants.js';
-import { translateStringNumberList, ensureList } from './replay-utils.js';
+import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_STEP } from './replay-utils.js';
 import {
   SingleValue,
   SimpleDistribution,
@@ -208,7 +208,7 @@ export class Roll {
   }
 
   get startIndex() {
-    return this.stepIndex;
+    return new ReplayPosition(this.stepIndex, REPLAY_STEP.BoardAction, this.actionIndex, this.resultIndex);
   }
 
   get activeTeam() {
@@ -1093,7 +1093,6 @@ class ArmorRoll extends ModifiedD6SumRoll {
     args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
     if (args.isFoul) {
       args.foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
-      console.log(xml, args.finalBoardState.activePlayer, args.foulingPlayer);
     }
     return args;
   }

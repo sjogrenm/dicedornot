@@ -3,7 +3,8 @@
   import embed from "vega-embed";
   import * as vega from "vega";
   import vegaSpec from "./vega-spec.js";
-  import {replayStepIndex, replayStart, replayEnd, replay} from "./stores.js";
+  import { replayCurrent, replayTarget, replay } from "./stores.js";
+  import { ReplayPosition , REPLAY_STEP} from "./replay-utils.js";
   const dispatch = createEventDispatcher();
 
   let rolls, view, playHead;
@@ -17,18 +18,26 @@
 
   $: {
     rolls = $replay.rolls;
-    if (rolls && $replayStepIndex) {
-      let nextRoll = rolls.findIndex(roll => {
-        return $replayStepIndex < roll.stepIndex;
+    if (rolls && $replayCurrent) {
+      let nextRoll = rolls.findIndex((roll) => {
+        const rollPosition = new ReplayPosition(
+          roll.stepIndex,
+          REPLAY_STEP.BoardAction,
+          roll.actionIndex,
+          roll.resultIndex
+        );
+        return rollPosition.atOrAfter($replayCurrent);
       });
       playHead = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
     }
     if (view && playHead) {
-      var changeSet = vega.changeset().remove(() => true).insert([{rollIndex: playHead}]);
+      var changeSet = vega
+        .changeset()
+        .remove(() => true)
+        .insert([{ rollIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
     }
   }
-
 
   function renderChart() {
     const valid = rolls.filter((roll) => {
@@ -60,9 +69,7 @@
       result.view.addEventListener("click", function (event, item) {
         if (item) {
           let selectedRoll = item.datum.rollIndex;
-          $replayStart = rolls[selectedRoll].stepIndex;
-          $replayEnd = rolls[selectedRoll+1].stepIndex;
-          console.log("Results clicked", {selectedRoll, replayStart: $replayStart, replayEnd: $replayEnd});
+          $replayTarget = rolls[selectedRoll].startIndex;
         }
       });
 

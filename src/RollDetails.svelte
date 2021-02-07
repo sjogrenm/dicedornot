@@ -1,23 +1,23 @@
 <script>
   import Turn from "./Turn.svelte";
   import TurnSelector from "./TurnSelector.svelte";
-  import {replay, replayStepIndex} from "./stores.js";
+  import {replay, replayCurrent} from "./stores.js";
   let rolls, rollsByTurn, selectedRoll, currentTurnRolls;
 
-  function rollForStepIndex(stepIndex) {
+  function rollForReplayPosition(position) {
     let nextRoll = rolls.findIndex(roll => {
-      return stepIndex < roll.stepIndex;
+      return roll.startIndex.after(position);
     });
     return nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
   }
   $: {
     rolls = $replay.rolls;
-    selectedRoll = rollForStepIndex($replayStepIndex);
+    selectedRoll = rollForReplayPosition($replayCurrent);
     updateRollLog(rolls, selectedRoll);
     currentTurnRolls = rollsByTurn.find(turnRolls => {
       let startIndex = turnRolls[0].startIndex;
       let endIndex = turnRolls[turnRolls.length - 1].endIndex;
-      return startIndex <= $replayStepIndex && endIndex > $replayStepIndex;
+      return $replayCurrent.atOrAfter(startIndex) && (endIndex && endIndex.after($replayCurrent));
     });
   }
   function updateRollLog(rolls, selectedRoll) {

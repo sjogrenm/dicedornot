@@ -1,8 +1,8 @@
 <script>
   import { onMount } from "svelte";
   import { io } from "./io.js";
-  import { replay, replayStart, replayEnd } from "./stores.js";
-  import { processReplay, extractGameDetails } from "./replay.js";
+  import { replay } from "./stores.js";
+  import { processReplay } from "./replay.js";
   import { get, set, entries } from "idb-keyval";
   import Loading from "./Loading.svelte";
   import Error from "./Error.svelte";
@@ -61,8 +61,6 @@
     if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
       loading = false;
       $replay = processReplay(jsonReplayData);
-      $replayStart = null;
-      $replayEnd = null;
     } else {
       await completeLoad(cacheKey);
     }
@@ -81,8 +79,6 @@
 
         loading = false;
         $replay = replayData;
-        $replayStart = null;
-        $replayEnd = null;
       },
       function (err) {
         loading = false;
@@ -146,7 +142,6 @@
     </div>
   </div>
   {#await cachedReplays() then replays}
-    {@debug replays}
     <div class="row align-items-center justify-content-md-center pt-2">
       <div class="col-auto">
         <label for="saved-replay-choice">Saved replays:</label>
