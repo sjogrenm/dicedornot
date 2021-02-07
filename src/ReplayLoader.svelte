@@ -95,10 +95,13 @@
       let replayFile = await fetch(
         `https://rebbl.net/api/v2/match/${uuid}/replay`
       ).then((r) => r.json());
-      if (replayFile.filename) {
+      if (replayFile.filename && replayFile.filename != "No replay file found") {
         const blob = await fetch(replayFile.filename).then((r) => r.blob());
         const file = new File([blob], replayFile.filename);
         parseReplay(file, cacheKey);
+      } else {
+        error = `Unable to load replay for https://rebbl.net/rebbl/match/${uuid}`;
+        loading = false;
       }
     });
   }
@@ -175,9 +178,7 @@
   {#if loading}
     <Loading />
   {/if}
-  {#if error}
-    <Error {error} />
-  {/if}
+  <Error {error} />
 </div>
 
 <svelte:head
