@@ -7,11 +7,13 @@
   import About from "./About.svelte";
   import Nav from "./Nav.svelte";
   import Viewer from "./viewer/Viewer.svelte";
+  import Diced from "./Diced.svelte";
   import { Row, Col, Container, Jumbotron } from "sveltestrap";
   import {replay} from "./stores.js"
 
   let loading = false;
   let error = false;
+  let homePercentile, awayPercentile;
   $: {
     console.log("Replay", $replay);
   }
@@ -51,8 +53,14 @@
     {#if $replay}
       <Container fluid role="main">
         <Row>
+          <Col>
+            <Diced homeTeam={$replay.gameDetails.homeTeam.coachName} awayTeam={$replay.gameDetails.awayTeam.coachName} {homePercentile} {awayPercentile}/>
+          </Col>
+        </Row>
+        <Row>
           <Col lg="8" class="order-lg-1 order-12">
-            <Results/>
+            <Viewer />
+            <Results bind:homePercentile bind:awayPercentile/>
           </Col>
 
           <Col lg="4" class="order-lg-12 order-1">
@@ -60,13 +68,6 @@
               gameDetails={$replay.gameDetails}
               filename={$replay.fullReplay.filename}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col lg="8">
-            <Viewer />
-          </Col>
-          <Col lg="4">
             <RollDetails />
           </Col>
         </Row>

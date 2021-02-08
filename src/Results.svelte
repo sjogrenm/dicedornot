@@ -5,9 +5,10 @@
   import vegaSpec from "./vega-spec.js";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
   import { ReplayPosition , REPLAY_STEP} from "./replay-utils.js";
-  const dispatch = createEventDispatcher();
+import { percentRank, quantile } from "./utils.js";
 
-  let rolls, view, playHead;
+  let rolls, view, playHead, cumNetValues = {actuals: {}, simulated: {}};
+  export let homePercentile, awayPercentile;
 
   onMount(() => {
     console.log("Results onMount");
@@ -37,6 +38,14 @@
         .insert([{ rollIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
     }
+  }
+
+  function accumulateNetValue(values) {
+    let dest = {};
+    values.forEach(dataPoint => {
+      dest[dataPoint.activeTeamId] = (dest[dataPoint.activeTeamId] || 0) + dataPoint.netValue;
+    });
+    return dest;
   }
 
   function renderChart() {
@@ -77,18 +86,23 @@
       view = result.view.insert("actual", actuals).run();
       view = view.insert("simulated", actuals).run();
 
+      cumNetValues.actuals = accumulateNetValue(actuals);
+
       var iteration = 0;
       function addValues() {
         var values = [];
         for (var x = 0; x < 50; x++) {
           iteration++;
-          values = values.concat(
-            valid.map((roll) => roll.simulated(iteration))
-          );
+          let newValues = valid.map((roll) => roll.simulated(iteration));
+          cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
+          values.push(...newValues);
         }
+
+        homePercentile = percentRank(Object.values(cumNetValues.simulated).map(cum => cum[0]), cumNetValues.actuals[0]);
+        awayPercentile = percentRank(Object.values(cumNetValues.simulated).map(cum => cum[1]), cumNetValues.actuals[1]);
+
         var changeSet = vega.changeset().insert(values);
         view = view.change("simulated", changeSet).run();
-        dispatch("iterationComplete", iteration);
         if (iteration < 1000) {
           window.setTimeout(addValues, 200);
         }

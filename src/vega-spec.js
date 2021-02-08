@@ -21,7 +21,7 @@ const vegaSpec = {
         }
       ],
       layer: [
-        {
+        {  // Turn Markers
           transform: [
             {
               aggregate: [
@@ -70,7 +70,7 @@ const vegaSpec = {
             ]
           }
         },
-        {
+        {  // Percentile lines
           transform: [
             {
               quantile: 'cumNetValue',
@@ -122,7 +122,7 @@ const vegaSpec = {
         }
       ]
     },
-    {
+    {  // Play Head Marker
       data: { name: 'playHead' },
       mark: { type: 'rule' },
       encoding: {
@@ -153,7 +153,7 @@ const vegaSpec = {
         },
       ],
       layer: [
-        {
+        {  // Actual value trend
           mark: { type: 'line', interpolate: 'monotone' },
           encoding: {
             x: {
@@ -183,7 +183,7 @@ const vegaSpec = {
             }
           }
         },
-        {
+        {  // Distribution
           transform: [
             {
               flatten: ['outcomes', 'weights'],
@@ -272,7 +272,7 @@ const vegaSpec = {
             ]
           }
         },
-        {
+        {  // Actual Value Points
           mark: { type: 'point' },
           selection: {
             zoom_x: { type: "interval", bind: "scales", encodings: ["x"] },

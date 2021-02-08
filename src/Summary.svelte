@@ -1,5 +1,5 @@
 <script>
-  export let gameDetails, filename;
+  export let gameDetails, filename, homePercentile, awayPercentile;
   import { RACE_NAMES } from "./constants.js";
 </script>
 
@@ -17,59 +17,60 @@
   </div>
   <div class="row">
     <div class="col score">
-      <span id="home-score" class="home">{gameDetails.homeTeam.score}</span> -
-      <span id="away-score" class="away">{gameDetails.awayTeam.score}</span>
+      <span class="home">{gameDetails.homeTeam.score}</span> -
+      <span class="away">{gameDetails.awayTeam.score}</span>
+    </div>
   </div>
+  <div class="row">
+    <div class="col team-details team-details-left">
+      <div class="team-name home">
+        <img
+          class="race-logo"
+          src={`/images/races/${gameDetails.homeTeam.raceId}.png`}
+          alt={RACE_NAMES[gameDetails.homeTeam.raceId] || `Unknown: ${gameDetails.homeTeam.raceId}`}
+          title={RACE_NAMES[gameDetails.homeTeam.raceId] || `Unknown: ${gameDetails.homeTeam.raceId}`}
+        >
+        <span id="home-team">{gameDetails.homeTeam.teamName}</span>
+      </div>
+      <div class="coach-name">
+        Coach:
+        <span id="home-coach">{gameDetails.homeTeam.coachName}</span>
+      </div>
+    </div>
+    <div class="col team-details team-details-right">
+      <div class="team-name away">
+        <span id="away-team">{gameDetails.awayTeam.teamName}</span>
+        <img
+          class="race-logo"
+          src={`/images/races/${gameDetails.awayTeam.raceId}.png`}
+          alt={RACE_NAMES[gameDetails.awayTeam.raceId] || `Unknown: ${gameDetails.awayTeam.raceId}`}
+          title={RACE_NAMES[gameDetails.awayTeam.raceId] || `Unknown: ${gameDetails.awayTeam.raceId}`}
+        >
+      </div>
+      <div class="coach-name">
+        Coach:
+        <span id="away-coach">{gameDetails.awayTeam.coachName}</span>
+      </div>
+    </div>
   </div>
-    <div class="row">
-      <div class="col team-details team-details-left">
-        <div class="team-name home">
-          <span id="home-team">{gameDetails.homeTeam.teamName}</span>
-        </div>
-        <div class="coach-name">
-          Coach:
-          <span id="home-coach">{gameDetails.homeTeam.coachName}</span>
-        </div>
-        <div class="race">
-          Race:
-          <span id="home-race"
-            >{RACE_NAMES[gameDetails.homeTeam.raceId] ||
-              `Unknown: ${gameDetails.homeTeam.raceId}`}</span
-          >
-        </div>
-      </div>
-      <div class="col team-details team-details-right">
-        <div class="team-name away">
-          <span id="away-team">{gameDetails.awayTeam.teamName}</span>
-        </div>
-        <div class="coach-name">
-          Coach:
-          <span id="away-coach">{gameDetails.awayTeam.teamName}</span>
-        </div>
-        <div class="race">
-          Race:
-          <span id="away-race"
-            >{RACE_NAMES[gameDetails.awayTeam.raceId] ||
-              `Unknown: ${gameDetails.awayTeam.raceId}`}</span
-          >
-        </div>
-      </div>
+  <div class="row">
+  </div>
+  <div class="row stadium-name">
+    <div class="col-sm-12">
+      Stadium:
+      <span>{gameDetails.stadiumName}</span>
+      {#if gameDetails.stadiumType}
+      <span>[{gameDetails.stadiumType}]</span>
+      {/if}
     </div>
-    <div class="row stadium-name">
-      <div class="col-sm-12">
-        Stadium:
-        <span id="stadium-name">{gameDetails.stadiumName}</span>
-      </div>
-    </div>
-    <div class="row stadium-type">
-      <div class="col-sm-12">
-        Stadium Enhancement:
-        <span id="stadium-type">{gameDetails.stadiumType || "None"}</span>
-      </div>
-    </div>
+  </div>
 </div>
 
 <style>
+  .race-logo {
+    width: 2em;
+    height: 2em;
+  }
   .score {
     text-align: center;
     font-size: xx-large;
