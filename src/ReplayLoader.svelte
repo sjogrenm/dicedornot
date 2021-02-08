@@ -23,13 +23,24 @@
   });
 
   let filePicker, urlPicker;
-  const rebblRE = /https?:\/\/rebbl.net\/rebbl\/match\/([0-9a-f]*)/i;
+  const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
+  const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/([0-9a-f]*)/i
 
   function loadURL() {
+    if (!urlPicker.value) {
+      return;
+    }
     const rebblMatch = urlPicker.value.match(rebblRE);
     if (rebblMatch) {
       loadRebblReplay(rebblMatch[1]);
+      return;
     }
+    const goblinspyMatch = urlPicker.value.match(goblinspyRE);
+    if (goblinspyMatch) {
+      loadGoblinspyReplay(goblinspyMatch[1]);
+      return;
+    }
+    error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd or https://www.mordrek.com/gspy/comp/1234/match/abcd1234`;
   }
 
   async function cachedReplays() {
@@ -106,6 +117,25 @@
     });
   }
 
+  async function loadGoblinspyReplay(mid) {
+    loading = true;
+    error = null;
+    loadFromCache(`gspy-${mid}`, async (cacheKey) => {
+      let replayFile = await fetch(
+        `https://www.mordrek.com:666/api/v1/match/${mid}/url`
+      ).then((r) => r.json());
+      console.log("Replayfile", {replayFile});
+      if (replayFile) {
+        const blob = await fetch(replayFile).then((r) => r.blob());
+        const file = new File([blob], replayFile);
+        parseReplay(file, cacheKey);
+      } else {
+        error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
+        loading = false;
+      }
+    });
+  }
+
   async function loadReplay() {
     console.log("Preparing to parse XML...");
     loading = true;
@@ -132,12 +162,12 @@
     </span>
   </div>
   <div class="row align-items-center justify-content-md-center pt-2">
-    <div class="col-3">
+    <div class="col-5">
       <input
         bind:this={urlPicker}
         type="text"
         class="form-control form-control-sm"
-        placeholder="Paste your rebbl.net match url here..."
+        placeholder="Paste your rebbl.net or GoblinSpy match url here..."
       />
     </div>
     <div class="col-auto">
