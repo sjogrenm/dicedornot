@@ -100,7 +100,6 @@ import CasBox from "./viewer/CasBox.svelte";
       <summary><span class="font-weight-bold">Known Issues</span></summary>
       <ul>
         <li>Viewer: Roll details auto-close when the player is playing</li>
-        <li>Site: Doesn't format well on small screens/mobile</li>
         <li>Viewer: Score and team names don't scale with viewer scale</li>
         <li>Viewer: Player names don't wrap/scale to fit</li>
         <li>
