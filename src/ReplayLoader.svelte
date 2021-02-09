@@ -29,6 +29,7 @@
   let filePicker, urlPicker;
   const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
   const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/([0-9a-f]*)/i
+  const spikeRE = /.*spike\.ovh\/match\?match_uuid=([0-9a-f]*)/i
 
   function loadURL() {
     if (!urlPicker.value) {
@@ -44,7 +45,12 @@
       loadGoblinspyReplay(goblinspyMatch[1]);
       return;
     }
-    error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd or https://www.mordrek.com/gspy/comp/1234/match/abcd1234`;
+    const spikeMatch = urlPicker.value.match(spikeRE);
+    if (spikeMatch) {
+      loadGoblinspyReplay(`cid_${spikeMatch[1]}`);
+      return;
+    }
+    error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd, https://www.mordrek.com/gspy/comp/1234/match/abcd1234, or https://spike.ovh/match?match_uuid=abcd1234`;
   }
 
   async function cachedReplays() {
@@ -173,7 +179,7 @@
         bind:this={urlPicker}
         type="text"
         class="form-control form-control-sm"
-        placeholder="Paste your rebbl.net or GoblinSpy match url here..."
+        placeholder="Paste your ReBBL, GoblinSpy or Spike match url here..."
       />
     </div>
     <div class="col-auto">

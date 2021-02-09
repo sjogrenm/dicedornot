@@ -1,3 +1,13 @@
+<!-- 
+"X skipped his sacrifice to Nuffle"
+"Nuffle hated X"
+"X couldn't roll their way out of a paper bag"
+"Who has two thumbs and all the dice? X"
+"Who has two thumbs and none of the dice? X"
+"X must be in the arctic cause those dice were frozen!"
+"X should try Necromantic next season, because his dice are dead!"
+"X is vacationing in Maui cause those dice were hot!" -->
+
 <script>
   import { Row, Col } from "sveltestrap";
   export let homePercentile, awayPercentile, homeTeam, awayTeam;
