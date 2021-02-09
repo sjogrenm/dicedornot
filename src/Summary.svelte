@@ -18,7 +18,7 @@
               `Unknown: ${gameDetails.homeTeam.raceId}`}
           />
         </Col>
-        <Col>
+        <Col xs="auto" >
           <span id="home-team">{gameDetails.homeTeam.teamName}</span>
         </Col>
       </Row>
@@ -34,7 +34,7 @@
   <Col>
     <div class="team-name away">
       <Row class="align-items-center justify-content-center">
-        <Col class="order-12 order-lg-1">
+        <Col xs="auto" class="order-12 order-lg-1">
           <span id="away-team">{gameDetails.awayTeam.teamName}</span>
         </Col>
         <Col xs="auto" class="order-1 order-lg-12">
