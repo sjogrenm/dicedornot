@@ -863,6 +863,7 @@
   {#each races as race (race)}
     <link rel="stylesheet" href="/styles/{race}.css" />
   {/each}
+  <link rel="stylesheet" href="/styles/starplayers.css" />
   <link rel="stylesheet" href="/styles/sprite.css" />
   <link rel="stylesheet" href="/styles/skills.css" />
   <link
@@ -872,55 +873,49 @@
 </svelte:head>
 
 <div class="controls">
-  <Row class="justify-content-md-center align-items-center">
+  <Row class="justify-content-center align-items-center">
     <Col xs="auto">
       <ButtonToolbar>
         <Button
-          size="lg"
           title="Slower"
           on:click={() => {
             $timing *= 1.2;
           }}>{"-"}</Button
         >
-        <Button size="lg" title="Previous Turn" on:click={jumpToPreviousTurn}
+        <Button title="Previous Turn" on:click={jumpToPreviousTurn}
           >{"<<<"}</Button
         >
         <Button
-          size="lg"
           title="Previous Activation"
           on:click={jumpToPreviousActivation}>{"<<"}</Button
         >
         <Button
-          size="lg"
           title="Previous Replay Step"
           on:click={jumpToPreviousStep}>{"<"}</Button
         >
         {#if playing}
           <Button
-            size="lg"
             title="Pause"
             on:click={() => {
               playing = false;
             }}><Icon name="pause-fill" /></Button
           >
         {:else}
-          <Button size="lg" title="Play" on:click={() => startPlayer()}
+          <Button title="Play" on:click={() => startPlayer()}
             ><Icon name="play-fill" /></Button
           >
         {/if}
-        <Button size="lg" title="Next Replay Step" on:click={handleReplay}
+        <Button title="Next Replay Step" on:click={handleReplay}
           >{">"}</Button
         >
         <Button
-          size="lg"
           title="Next Activation"
           on:click={jumpToNextActivation}>{">>"}</Button
         >
-        <Button size="lg" title="Next Turn" on:click={jumpToNextTurn}
+        <Button title="Next Turn" on:click={jumpToNextTurn}
           >{">>>"}</Button
         >
         <Button
-          size="lg"
           title="Faster"
           on:click={() => {
             $timing /= 1.2;
@@ -930,18 +925,38 @@
     </Col>
   </Row>
 </div>
-<FixedRatio width={1335} height={1061}>
-  <div class="pitch">
-    <HomeDugout {homeTeam} {weather} {send} {receive} />
-    <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive} />
-    <AwayDugout {awayTeam} {send} {receive} />
+<div class="pitch-container">
+  <div class="pitch-scroll">
+    <FixedRatio width={1335} height={1061}>
+      <div class="pitch">
+        <HomeDugout {homeTeam} {weather} {send} {receive} />
+        <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive} />
+        <AwayDugout {awayTeam} {send} {receive} />
+      </div>
+      {#if banner}
+        <Banner {banner} />
+      {/if}
+    </FixedRatio>
   </div>
-  {#if banner}
-    <Banner {banner} />
-  {/if}
-</FixedRatio>
+</div>
 
 <style>
+  .pitch-container {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  @media (min-width: 768px) {
+    .pitch-container {
+      max-height: 100%;
+      height: 100%;
+      overflow-x: hidden;
+    }
+  }
+  .pitch-scroll {
+    min-width: 738px;
+    overflow-y: hidden;
+  }
   .pitch {
     background-image: url("/images/pitch.png");
     background-size: 100% 100%;

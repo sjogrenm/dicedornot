@@ -94,7 +94,7 @@ class Team {
     );
     this.name = teamState.Data.Name;
     this.id = teamState.Data.TeamId || 0;
-    this.turn = teamState.GameTurn || 0;
+    this.turn = teamState.GameTurn || 1;
   }
 
   get shortName() {

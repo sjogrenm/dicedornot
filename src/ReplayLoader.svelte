@@ -19,6 +19,10 @@
       if (rebblUUID) {
         loadRebblReplay(rebblUUID);
       }
+      const gspyMID = params.get("gspy");
+      if (gspyMID) {
+        loadGoblinspyReplay(gspyMID);
+      }
     }
   });
 
@@ -46,7 +50,7 @@
   async function cachedReplays() {
     const allReplays = await entries();
     const validReplays = allReplays.filter(
-      ([cacheKey, replay]) => replay.CACHE_VERSION === CACHE_VERSION
+      ([_, replay]) => replay.CACHE_VERSION === CACHE_VERSION
     );
     return validReplays.map(([cacheKey, replayJSON]) => {
       const firstStep = replayJSON.Replay.ReplayStep[0];
@@ -150,7 +154,8 @@
 </script>
 
 <div>
-  <div class="row align-items-center justify-content-md-center">
+  <div class="row align-items-center justify-content-center">
+    <div class="col-auto">
     <span id="file-input-button" class={`btn btn-${button} btn-file centered`}>
       Select Replay
       <input
@@ -160,9 +165,10 @@
         accept=".bbrz,.zip"
       />
     </span>
+    </div>
   </div>
-  <div class="row align-items-center justify-content-md-center pt-2">
-    <div class="col-5">
+  <div class="row align-items-center justify-content-center pt-2">
+    <div class="col col-md-7 col-lg-5">
       <input
         bind:this={urlPicker}
         type="text"
@@ -175,15 +181,16 @@
     </div>
   </div>
   {#await cachedReplays() then replays}
-    <div class="row align-items-center justify-content-md-center pt-2">
+    <div class="row align-items-center justify-content-center pt-2">
       <div class="col-auto">
         <label for="saved-replay-choice">Saved replays:</label>
       </div>
-      <div class="col-6">
+      <div class="col">
         <input
           list="saved-replay-options"
           id="saved-replay-choice"
           name="saved-replay-choice"
+          placeholder="Enter team name here for saved replay..."
           on:input={(ev) => {
             if (replays.map(replay => replay.cacheKey).includes(ev.data)) {
               loadFromCache(ev.data, (cacheKey) =>
@@ -211,15 +218,6 @@
   <Error {error} />
 </div>
 
-<svelte:head
-  ><script src="https://cdn.jsdelivr.net/npm/jszip@3/dist/jszip.min.js">
-  </script><script
-    src="https://cdnjs.cloudflare.com/ajax/libs/fast-xml-parser/3.17.1/parser.min.js"
-    integrity="sha512-JtZhe+DT2O3VPwzAMhyOpVY75fn92Zm1ebHVgAdXFf/x+7SfbonV/O7OWLsHkj11+yMtZAXavsuMvCaQS3WXrQ=="
-    crossorigin="anonymous">
-  </script></svelte:head
->
-
 <style>
   #saved-replay-choice {
     width: 100%;
@@ -232,12 +230,9 @@
   .btn-file input[type="file"] {
     position: absolute;
     top: 0;
-    right: 0;
-    min-width: 100%;
-    min-height: 100%;
-    font-size: 100px;
-    text-align: right;
-    filter: alpha(opacity=0);
+    left: 0;
+    width: 100%;
+    height: 100%;
     opacity: 0;
     outline: none;
     background: white;

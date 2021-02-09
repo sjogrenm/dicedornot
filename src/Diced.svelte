@@ -1,7 +1,7 @@
 <script>
   import { Row, Col } from "sveltestrap";
-  import { percentRank } from "./utils";
   export let homePercentile, awayPercentile, homeTeam, awayTeam;
+  $: console.log(homePercentile, awayPercentile);
   function betterThan(team, percentile) {
     let comparison = percentile < 0.5 ? "worse" : "better";
     let count = percentile < 0.5 ? 100 - percentile * 100 : percentile * 100;
@@ -9,19 +9,25 @@
       0
     )} in 100 games`;
   }
-  function diced(percentile) {
-    if (percentile > 0.99) {
+  function diced(team, percentile) {
+    const sample = (items) => items[team.length % items.length];
+
+    if (percentile > 0.985) {
       return "Nuffle's light shown down on them.";
     } else if (percentile > 0.9) {
-      return "Nuffle favored them.";
-    } else if (percentile > 0.7) {
-      return "Nuffle was generous.";
-    } else if (percentile < 0.3) {
-      return "A bit of a dicing.";
-    } else if (percentile < 0.1) {
-      return "Quite a dicing.";
+      return sample(["Nuffle favored them.", "Game of Skill", "Just rolled Pows", "Blood Bowl is just like Chess"]);
+    } else if (percentile > 0.8) {
+      return sample(["Nuffle was generous.", "In blodge we trust", "Scatter don't matter"]);
     } else if (percentile < 0.01) {
-      return "An absolute, unmitigated dicing.";
+      return sample(["An absolute, unmitigated dicing.", "Fuck this game.", "Rogered but good."]);
+    } else if (percentile < 0.1) {
+      return sample([
+        "Quite a dicing.",
+        `And 'lo, Nuffle did look down, and he said "No."`,
+        "Because without hope, Nuffle would have nothing to destroy.",
+      ]);
+    } else if (percentile < 0.3) {
+      return sample(["A bit of a dicing.", "Why do I believe in blodge?", "Unfair dices! Unfair game!"]);
     } else {
       return "Variance, man. Variance.";
     }
@@ -34,7 +40,7 @@
       <div class="home">
         <p>
           {betterThan(homeTeam, homePercentile)}<br />
-          {diced(homePercentile)}
+          {diced(homeTeam, homePercentile)}
         </p>
       </div>
     </Col>
@@ -42,7 +48,7 @@
       <div class="away">
         <p>
           {betterThan(awayTeam, awayPercentile)}<br />
-          {diced(awayPercentile)}
+          {diced(awayTeam, awayPercentile)}
         </p>
       </div>
     </Col>

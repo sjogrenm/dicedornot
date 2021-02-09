@@ -1,70 +1,74 @@
 <script>
   export let gameDetails, filename, homePercentile, awayPercentile;
   import { RACE_NAMES } from "./constants.js";
+  import { Row, Col } from "sveltestrap";
 </script>
 
-<div id="summary" class="container">
-  <div class="row filename">
-    <div class="col-sm-12">
-      {filename}
+<Row class="text-center">
+  <Col>
+    <div class="team-name home">
+      <Row class="align-items-center justify-content-center">
+        <Col xs="auto" >
+          <img
+            class="race-logo"
+            src={`/images/races/${gameDetails.homeTeam.raceId}.png`}
+            alt={RACE_NAMES[gameDetails.homeTeam.raceId] ||
+              `Unknown: ${gameDetails.homeTeam.raceId}`}
+            title={RACE_NAMES[gameDetails.homeTeam.raceId] ||
+              `Unknown: ${gameDetails.homeTeam.raceId}`}
+          />
+        </Col>
+        <Col>
+          <span id="home-team">{gameDetails.homeTeam.teamName}</span>
+        </Col>
+      </Row>
     </div>
-  </div>
-  <div class="row league-name">
-    <div class="col-sm-12">
-      League:
-      <span id="league-name">{gameDetails.leagueName}</span>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col score">
+  </Col>
+
+  <Col xs="auto" class="text-center">
+    <div class="score">
       <span class="home">{gameDetails.homeTeam.score}</span> -
       <span class="away">{gameDetails.awayTeam.score}</span>
     </div>
-  </div>
-  <div class="row">
-    <div class="col team-details team-details-left">
-      <div class="team-name home">
-        <img
-          class="race-logo"
-          src={`/images/races/${gameDetails.homeTeam.raceId}.png`}
-          alt={RACE_NAMES[gameDetails.homeTeam.raceId] || `Unknown: ${gameDetails.homeTeam.raceId}`}
-          title={RACE_NAMES[gameDetails.homeTeam.raceId] || `Unknown: ${gameDetails.homeTeam.raceId}`}
-        >
-        <span id="home-team">{gameDetails.homeTeam.teamName}</span>
-      </div>
-      <div class="coach-name">
-        Coach:
-        <span id="home-coach">{gameDetails.homeTeam.coachName}</span>
-      </div>
+  </Col>
+  <Col>
+    <div class="team-name away">
+      <Row class="align-items-center justify-content-center">
+        <Col class="order-12 order-lg-1">
+          <span id="away-team">{gameDetails.awayTeam.teamName}</span>
+        </Col>
+        <Col xs="auto" class="order-1 order-lg-12">
+          <img
+            class="race-logo"
+            src={`/images/races/${gameDetails.awayTeam.raceId}.png`}
+            alt={RACE_NAMES[gameDetails.awayTeam.raceId] ||
+              `Unknown: ${gameDetails.awayTeam.raceId}`}
+            title={RACE_NAMES[gameDetails.awayTeam.raceId] ||
+              `Unknown: ${gameDetails.awayTeam.raceId}`}
+          />
+        </Col>
+      </Row>
     </div>
-    <div class="col team-details team-details-right">
-      <div class="team-name away">
-        <span id="away-team">{gameDetails.awayTeam.teamName}</span>
-        <img
-          class="race-logo"
-          src={`/images/races/${gameDetails.awayTeam.raceId}.png`}
-          alt={RACE_NAMES[gameDetails.awayTeam.raceId] || `Unknown: ${gameDetails.awayTeam.raceId}`}
-          title={RACE_NAMES[gameDetails.awayTeam.raceId] || `Unknown: ${gameDetails.awayTeam.raceId}`}
-        >
-      </div>
-      <div class="coach-name">
-        Coach:
-        <span id="away-coach">{gameDetails.awayTeam.coachName}</span>
-      </div>
-    </div>
-  </div>
-  <div class="row">
-  </div>
-  <div class="row stadium-name">
-    <div class="col-sm-12">
-      Stadium:
-      <span>{gameDetails.stadiumName}</span>
-      {#if gameDetails.stadiumType}
+  </Col>
+</Row>
+<Row class="text-center justify-content-center">
+  <Col xs="auto">
+    {filename}
+  </Col>
+
+  <Col xs="auto">
+    Stadium:
+    <span>{gameDetails.stadiumName}</span>
+    {#if gameDetails.stadiumType}
       <span>[{gameDetails.stadiumType}]</span>
-      {/if}
-    </div>
-  </div>
-</div>
+    {/if}
+  </Col>
+
+  <Col xs="auto">
+    League:
+    <span id="league-name">{gameDetails.leagueName}</span>
+  </Col>
+</Row>
 
 <style>
   .race-logo {
@@ -72,11 +76,10 @@
     height: 2em;
   }
   .score {
-    text-align: center;
     font-size: xx-large;
   }
 
-  .team-details .team-name {
+  .team-name {
     font-size: large;
     font-weight: bold;
   }
@@ -116,9 +119,5 @@
   .filename {
     text-align: center;
     font-weight: bold;
-  }
-
-  #summary {
-    padding: 20px 0px;
   }
 </style>

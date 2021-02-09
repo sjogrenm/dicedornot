@@ -9,7 +9,9 @@
   import Viewer from "./viewer/Viewer.svelte";
   import Diced from "./Diced.svelte";
   import { Row, Col, Container, Jumbotron } from "sveltestrap";
-  import {replay} from "./stores.js"
+  import { replay } from "./stores.js";
+import TurnSelectors from "./TurnSelectors.svelte";
+import CasBox from "./viewer/CasBox.svelte";
 
   let loading = false;
   let error = false;
@@ -49,59 +51,91 @@
 
 <body>
   <Nav bind:loading />
-  <div id="content">
-    {#if $replay}
-      <Container fluid role="main">
-        <Row>
-          <Col>
-            <Diced homeTeam={$replay.gameDetails.homeTeam.coachName} awayTeam={$replay.gameDetails.awayTeam.coachName} {homePercentile} {awayPercentile}/>
-          </Col>
-        </Row>
-        <Row>
-          <Col lg="8" class="order-lg-1 order-12">
-            <Viewer />
-            <Results bind:homePercentile bind:awayPercentile/>
-          </Col>
+  {#if $replay}
+    <Container fluid role="main">
+      <Row>
+        <Col>
+          <Diced
+            homeTeam={$replay.gameDetails.homeTeam.coachName}
+            awayTeam={$replay.gameDetails.awayTeam.coachName}
+            {homePercentile}
+            {awayPercentile}
+          />
+          <Summary
+            gameDetails={$replay.gameDetails}
+            filename={$replay.fullReplay.filename}
+          />
+        </Col>
+      </Row>
+      <Row>
+        <Col lg="9">
+          <Viewer />
+        </Col>
+        <Col lg="3" class="justify-content-center">
+          <TurnSelectors/>
+          <RollDetails />
+        </Col>
+      </Row>
+      <Row>
+        <Col>
+          <Results bind:homePercentile bind:awayPercentile />
+        </Col>
+      </Row>
+    </Container>
+    <div class="container mt-4" role="main">
+      <ReplayLoader bind:loading bind:error />
+      <Explanation />
+    </div>
+  {:else}
+    <div class="container">
+      <Jumbotron>
+        <About />
+        <ReplayLoader bind:loading bind:error />
+      </Jumbotron>
+    </div>
+  {/if}
 
-          <Col lg="4" class="order-lg-12 order-1">
-            <Summary
-              gameDetails={$replay.gameDetails}
-              filename={$replay.fullReplay.filename}
-            />
-            <RollDetails />
-          </Col>
-        </Row>
-      </Container>
-      <div class="container mt-4" role="main">
-        <ReplayLoader bind:loading bind:error/>
-        <Explanation />
-      </div>
-    {:else}
-      <div class="container">
-        <Jumbotron>
-          <About />
-          <ReplayLoader bind:loading bind:error/>
-        </Jumbotron>
-      </div>
-    {/if}
+  <Container class="pt-2 pb-2">
+    <details>
+      <summary><span class="font-weight-bold">Known Issues</span></summary>
+      <ul>
+        <li>Viewer: Roll details auto-close when the player is playing</li>
+        <li>Site: Doesn't format well on small screens/mobile</li>
+        <li>Viewer: Score and team names don't scale with viewer scale</li>
+        <li>Viewer: Player names don't wrap/scale to fit</li>
+        <li>
+          Analyzer: Available team rerolls aren't accounted for in expectations
+        </li>
+        <li>Viewer: Tackle zones aren't displayed</li>
+        <li>Analyzer: Bribe isn't accounted for in foul expectations</li>
+        <li>
+          Analyzer: Catch and scatter aren't accounted for in pass/handoff
+          expectations
+        </li>
+        <li>Analyzer: Mighty Blow isn't accounted for in block expectations</li>
+        <li>Analyzer: Interceptions are accounted on the incorrect player</li>
+        <li>Analyzer: Piling On isn't accounted for in block result options</li>
+        <li>Analyzer: Apo rolls aren't merged correctly</li>
+        <li>Viewer: Inducements aren't displayed</li>
+        <li>Viewer: Throw teammate crashes the viewer</li>
+        <li>Viewer/Analyzer: Star Player names are wrong</li>
+        <li>Analyzer: Frenzy blocks aren't merged together</li>
+      </ul>
+    </details>
+  </Container>
 
-    <footer class="footer" id="contact">
-      <div class="container">
-        <p class="text-muted text-center">
-          This website is under active development. If you notice issues, please
-          post the replay and a description of the problem to
-          <a href="https://github.com/cpennington/dicedornot/issues"
-            >Diced Or Not Issues</a
-          >.
-        </p>
-      </div>
-    </footer>
-  </div>
+  <footer class="footer" id="contact">
+    <div class="container">
+      <p class="text-muted text-center">
+        This website is under active development. If you notice issues, please
+        post the replay and a description of the problem to
+        <a href="https://github.com/cpennington/dicedornot/issues"
+          >Diced Or Not Issues</a
+        >.
+      </p>
+    </div>
+  </footer>
 </body>
 
 <style>
-  #content {
-    margin-left: 200px;
-    position: relative;
-  }
 </style>

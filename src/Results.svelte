@@ -112,9 +112,7 @@ import { percentRank, quantile } from "./utils.js";
   }
 </script>
 
-<div id="results">
-  <div id="chart" class="col-sm-12" />
-</div>
+<div id="chart" class="col-sm-12" />
 
 <style>
   #chart {
