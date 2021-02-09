@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import parser from 'fast-xml-parser';
 var zip = new JSZip();
 
 export const io = {
