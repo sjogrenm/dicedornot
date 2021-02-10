@@ -80,8 +80,14 @@
     const jsonReplayData = await get(cacheKey);
     console.log("Loading from cache", { cacheKey, jsonReplayData });
     if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
-      loading = false;
-      $replay = processReplay(jsonReplayData);
+      try {
+        $replay = processReplay(jsonReplayData);
+        loading = false;
+      } catch (err) {
+        loading = false;
+        error = err;
+        console.error(err);
+      }
     } else {
       await completeLoad(cacheKey);
     }
@@ -96,10 +102,14 @@
         jsonReplayData.CACHE_VERSION = CACHE_VERSION;
         set(cacheKey, jsonReplayData);
         console.log("Setting cache", { cacheKey, jsonReplayData });
-        const replayData = processReplay(jsonReplayData);
-
-        loading = false;
-        $replay = replayData;
+        try {
+          $replay = processReplay(jsonReplayData);
+          loading = false;
+        } catch (err) {
+          loading = false;
+          error = err;
+          console.error(err);
+        }
       },
       function (err) {
         loading = false;
