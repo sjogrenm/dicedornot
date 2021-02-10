@@ -252,40 +252,44 @@
   }
 
   async function handleReplay() {
-    const step = $replay.fullReplay.ReplayStep[$replayCurrent.step];
-    if ($replayTarget) {
-      const target = $replayTarget;
-      $replayTarget = null;
-      await jumpToPosition(target);
-      return;
+    try {
+      const step = $replay.fullReplay.ReplayStep[$replayCurrent.step];
+      if ($replayTarget) {
+        const target = $replayTarget;
+        $replayTarget = null;
+        await jumpToPosition(target);
+        return;
+      }
+      const subStep = step[REPLAY_KEY[$replayCurrent.state]];
+      switch ($replayCurrent.state) {
+        case REPLAY_STEP.SetupAction:
+          await handleSetupAction(subStep);
+          break;
+        case REPLAY_STEP.BoardAction:
+          let action = ensureList(subStep)[$replayCurrent.action];
+          if (!action) {
+            console.error("No action found", {
+              subStep,
+              replayCurrent: $replayCurrent,
+              step,
+            });
+          }
+          let result = ensureList(action.Results.BoardActionResult)[
+            $replayCurrent.result
+          ];
+          await handleBoardAction(action, result);
+          break;
+        case REPLAY_STEP.EndTurn:
+          await handleEndTurn(subStep);
+          break;
+        case REPLAY_STEP.BoardState:
+          await handleBoardState(subStep);
+          break;
+      }
+      $replayCurrent = $replayCurrent.toNextPosition($replay.fullReplay);
+    } catch (err) {
+      console.error(err);
     }
-    const subStep = step[REPLAY_KEY[$replayCurrent.state]];
-    switch ($replayCurrent.state) {
-      case REPLAY_STEP.SetupAction:
-        await handleSetupAction(subStep);
-        break;
-      case REPLAY_STEP.BoardAction:
-        let action = ensureList(subStep)[$replayCurrent.action];
-        if (!action) {
-          console.error("No action found", {
-            subStep,
-            replayCurrent: $replayCurrent,
-            step,
-          });
-        }
-        let result = ensureList(action.Results.BoardActionResult)[
-          $replayCurrent.result
-        ];
-        await handleBoardAction(action, result);
-        break;
-      case REPLAY_STEP.EndTurn:
-        await handleEndTurn(subStep);
-        break;
-      case REPLAY_STEP.BoardState:
-        await handleBoardState(subStep);
-        break;
-    }
-    $replayCurrent = $replayCurrent.toNextPosition($replay.fullReplay);
   }
 
   async function jumpToPosition(position) {

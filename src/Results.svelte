@@ -7,14 +7,19 @@
   import { ReplayPosition , REPLAY_STEP} from "./replay-utils.js";
 import { percentRank } from "./utils.js";
 
-  let rolls, view, playHead, cumNetValues = {actuals: {}, simulated: {}};
+  let rolls, view, playHead, cumNetValues = {actuals: {}, simulated: {}}, activeTimeout, loadedReplay;
   export let homePercentile, awayPercentile;
 
   onMount(() => {
-    console.log("Results onMount");
-    renderChart();
-    console.log("Results onMount chart rendered");
-    return () => console.log("destroyed");
+      return () => {
+        if (view) {
+          view.finalize();
+        }
+        if (activeTimeout) {
+          clearTimeout(activeTimeout);
+          activeTimeout = null;
+        }
+      };
   });
 
   $: {
@@ -37,6 +42,16 @@ import { percentRank } from "./utils.js";
         .remove(() => true)
         .insert([{ rollIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
+    }
+    if ($replay.fullReplay.filename != loadedReplay) {
+      loadedReplay = $replay.fullReplay.filename;
+      if (activeTimeout) {
+        clearTimeout(activeTimeout);
+        activeTimeout = null;
+      }
+      console.log("Results onMount", {$replay});
+      renderChart();
+      console.log("Results onMount chart rendered");
     }
   }
 
@@ -104,7 +119,7 @@ import { percentRank } from "./utils.js";
         var changeSet = vega.changeset().insert(values);
         view = view.change("simulated", changeSet).run();
         if (iteration < 1000) {
-          window.setTimeout(addValues, 200);
+          activeTimeout = window.setTimeout(addValues, 200);
         }
       }
       addValues();

@@ -11,7 +11,6 @@
 <script>
   import { Row, Col } from "sveltestrap";
   export let homePercentile, awayPercentile, homeTeam, awayTeam;
-  $: console.log(homePercentile, awayPercentile);
   function betterThan(team, percentile) {
     let comparison = percentile < 0.5 ? "worse" : "better";
     let count = percentile < 0.5 ? 100 - percentile * 100 : percentile * 100;

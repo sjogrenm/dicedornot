@@ -26,7 +26,7 @@
     }
   });
 
-  let filePicker, urlPicker;
+  let filePicker, urlPicker, cachePicker;
   const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
   const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/([0-9a-f]*)/i
   const spikeRE = /.*spike\.ovh\/match\?match_uuid=([0-9a-f]*)/i
@@ -207,8 +207,10 @@
           id="saved-replay-choice"
           name="saved-replay-choice"
           placeholder="Enter team name here for saved replay..."
+          bind:this={cachePicker}
           on:input={(ev) => {
             if (replays.map(replay => replay.cacheKey).includes(ev.data)) {
+              cachePicker.value = "";
               loadFromCache(ev.data, (cacheKey) =>
                 alert(`Unable to load ${cacheKey} from cache`)
               );
