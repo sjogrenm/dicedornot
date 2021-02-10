@@ -10,12 +10,10 @@
   import Diced from "./Diced.svelte";
   import { Row, Col, Container, Jumbotron } from "sveltestrap";
   import { replay } from "./stores.js";
-import TurnSelectors from "./TurnSelectors.svelte";
-import CasBox from "./viewer/CasBox.svelte";
+  import TurnSelectors from "./TurnSelectors.svelte";
+  import Error from "./Error.svelte";
 
-  let loading = false;
-  let error = false;
-  let homePercentile, awayPercentile;
+  let homePercentile, awayPercentile, loading;
   $: {
     console.log("Replay", $replay);
   }
@@ -51,6 +49,7 @@ import CasBox from "./viewer/CasBox.svelte";
 
 <body>
   <Nav bind:loading />
+  <Error />
   {#if $replay}
     <Container fluid role="main">
       <Row>
@@ -72,7 +71,7 @@ import CasBox from "./viewer/CasBox.svelte";
           <Viewer />
         </Col>
         <Col lg="3" class="justify-content-center">
-          <TurnSelectors/>
+          <TurnSelectors />
           <RollDetails />
         </Col>
       </Row>
@@ -83,14 +82,14 @@ import CasBox from "./viewer/CasBox.svelte";
       </Row>
     </Container>
     <div class="container mt-4" role="main">
-      <ReplayLoader bind:loading bind:error />
+      <ReplayLoader bind:loading />
       <Explanation />
     </div>
   {:else}
     <div class="container">
       <Jumbotron>
         <About />
-        <ReplayLoader bind:loading bind:error />
+        <ReplayLoader bind:loading />
       </Jumbotron>
     </div>
   {/if}

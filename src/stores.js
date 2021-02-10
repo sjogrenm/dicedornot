@@ -6,3 +6,4 @@ export const selectedPlayer = writable(null);
 export const replay = writable(null);
 export const replayCurrent = writable(new ReplayPosition());
 export const replayTarget = writable(null);
+export const error = writable(null);

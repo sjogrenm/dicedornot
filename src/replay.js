@@ -1,4 +1,5 @@
 import { Roll, MoveAction } from "./rolls.js";
+import { END } from "./replay-utils.js";
 
 export function processReplay(data) {
   //console.log("replay.processReplay");
@@ -52,7 +53,7 @@ export function processReplay(data) {
   }, []);
   rolls.forEach((roll, idx) => {
     roll.rollIndex = idx;
-    roll.endIndex = rolls[idx + 1] ? rolls[idx + 1].startIndex : null;
+    roll.endIndex = rolls[idx + 1] ? rolls[idx + 1].startIndex : END;
   });
   console.log("Transformed rolls...", { rolls });
 

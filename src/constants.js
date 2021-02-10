@@ -325,7 +325,17 @@ export const RACE_ID = {
   Underworld: 22,
   Bretonnian: 24,
   Kislev: 25,
+  //AllianceOfGoodness: ,
+  AfterlifeUnited: 42,
+  //UnionOfSmallPeople: ,
+  ViolenceTogether: 40,
+  //SuperiorBeingRing: ,
+  //Chaos Gods Selection,
+  FarEastAssociation: 35,
+  AntiFurSociety: 37,
+  //Human League,
   ChaosPact: 33,
+  ElficGrandCoalition: 36,
 }
 
 export const RACE_NAMES = {
@@ -354,34 +364,11 @@ export const RACE_NAMES = {
   [RACE_ID.Underworld]: "Underworld",
   [RACE_ID.Vampire]: "Vampire",
   [RACE_ID.WoodElf]: "Wood Elf",
-}
-
-export const RACE_SLUG = {
-  [RACE_ID.Amazon]: "amazon",
-  [RACE_ID.Bretonnian]: "bretonnia",
-  [RACE_ID.Chaos]: "chaos",
-  [RACE_ID.ChaosDwarf]: "chaosdwarf",
-  [RACE_ID.ChaosPact]: "chaospact",
-  [RACE_ID.DarkElf]: "darkelf",
-  [RACE_ID.Dwarf]: "dwarf",
-  [RACE_ID.Goblin]: "goblin",
-  [RACE_ID.Halfling]: "halfling",
-  [RACE_ID.HighElf]: "highelf",
-  [RACE_ID.Human]: "human",
-  [RACE_ID.Khemri]: "khemri",
-  [RACE_ID.Kislev]: "kislev",
-  [RACE_ID.Lizardman]: "lizardman",
-  [RACE_ID.Necromantic]: "necromantic",
-  [RACE_ID.Norse]: "norse",
-  [RACE_ID.Nurgle]: "nurgle",
-  [RACE_ID.Orc]: "orc",
-  [RACE_ID.Ogre]: "ogre",
-  [RACE_ID.ProElf]: "proelf",
-  [RACE_ID.Skaven]: "skaven",
-  [RACE_ID.Undead]: "undead",
-  [RACE_ID.Underworld]: "underworld",
-  [RACE_ID.Vampire]: "vampire",
-  [RACE_ID.WoodElf]: "woodelf",
+  [RACE_ID.ElficGrandCoalition]: "Elfic Grand Coalition",
+  [RACE_ID.AfterlifeUnited]: "Afterlife United",
+  [RACE_ID.FarEastAssociation]: "Far East Association",
+  [RACE_ID.ViolenceTogether]: "Violence Together",
+  [RACE_ID.AntiFurSociety]: "Anti-Fur Society",
 }
 
 export function getPlayerType(playerId, playerTypeId) {

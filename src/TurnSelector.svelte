@@ -9,7 +9,7 @@
     teamName = rolls[0].activeTeam.name;
     startIndex = rolls[0].startIndex;
     endIndex = rolls[rolls.length - 1].endIndex;
-    current = $replayCurrent.atOrAfter(startIndex) && endIndex.after($replayCurrent);
+    current = $replayCurrent.atOrAfter(startIndex) && $replayCurrent.before(endIndex);
   }
 
   function handleClick() {

@@ -1,15 +1,14 @@
 <script>
   import { onMount } from "svelte";
   import { io } from "./io.js";
-  import { replay } from "./stores.js";
+  import { replay, error } from "./stores.js";
   import { processReplay } from "./replay.js";
   import { get, set, entries } from "idb-keyval";
   import Loading from "./Loading.svelte";
   import Error from "./Error.svelte";
 
   export let button = "primary",
-    loading,
-    error;
+    loading;
   const CACHE_VERSION = 2;
 
   onMount(() => {
@@ -50,7 +49,7 @@
       loadGoblinspyReplay(`cid_${spikeMatch[1]}`);
       return;
     }
-    error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd, https://www.mordrek.com/gspy/comp/1234/match/abcd1234, or https://spike.ovh/match?match_uuid=abcd1234`;
+    $error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd, https://www.mordrek.com/gspy/comp/1234/match/abcd1234, or https://spike.ovh/match?match_uuid=abcd1234`;
   }
 
   async function cachedReplays() {
@@ -85,7 +84,7 @@
         loading = false;
       } catch (err) {
         loading = false;
-        error = err;
+        $error = err;
         console.error(err);
       }
     } else {
@@ -107,13 +106,13 @@
           loading = false;
         } catch (err) {
           loading = false;
-          error = err;
+          $error = err;
           console.error(err);
         }
       },
       function (err) {
         loading = false;
-        error = err;
+        $error = err;
         alert(err);
       }
     );
@@ -121,7 +120,7 @@
 
   async function loadRebblReplay(uuid) {
     loading = true;
-    error = null;
+    $error = null;
     loadFromCache(`rebbl-${uuid}`, async (cacheKey) => {
       let replayFile = await fetch(
         `https://rebbl.net/api/v2/match/${uuid}/replay`
@@ -131,7 +130,7 @@
         const file = new File([blob], replayFile.filename);
         parseReplay(file, cacheKey);
       } else {
-        error = `Unable to load replay for https://rebbl.net/rebbl/match/${uuid}`;
+        $error = `Unable to load replay for https://rebbl.net/rebbl/match/${uuid}`;
         loading = false;
       }
     });
@@ -139,7 +138,7 @@
 
   async function loadGoblinspyReplay(mid) {
     loading = true;
-    error = null;
+    $error = null;
     loadFromCache(`gspy-${mid}`, async (cacheKey) => {
       let replayFile = await fetch(
         `https://www.mordrek.com:666/api/v1/match/${mid}/url`
@@ -150,7 +149,7 @@
         const file = new File([blob], replayFile);
         parseReplay(file, cacheKey);
       } else {
-        error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
+        $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
         loading = false;
       }
     });
@@ -159,7 +158,7 @@
   async function loadReplay() {
     console.log("Preparing to parse XML...");
     loading = true;
-    error = null;
+    $error = null;
     const files = filePicker.files;
     if (files.length > 0) {
       loadFromCache(`file-${files[0].name}`, (cacheKey) =>
@@ -233,7 +232,6 @@
   {#if loading}
     <Loading />
   {/if}
-  <Error {error} />
 </div>
 
 <style>

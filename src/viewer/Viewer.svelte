@@ -7,8 +7,8 @@
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
   import {
+    getPlayerType,
     SITUATION,
-    RACE_SLUG,
     ROLL,
     WEATHER,
     RESULT_TYPE,
@@ -23,7 +23,7 @@
     REPLAY_STEP,
     ReplayPosition,
   } from "../replay-utils.js";
-  import { replay, replayCurrent, replayTarget, timing } from "../stores.js";
+  import { replay, replayCurrent, replayTarget, timing, error } from "../stores.js";
   let lastChainPush,
     races = [],
     homeTeam = {},
@@ -78,8 +78,11 @@
       boardState.ListTeams.TeamState[1],
       boardState.ActiveTeam == 1
     );
-    races = boardState.ListTeams.TeamState.map(
-      (team) => RACE_SLUG[team.Data.IdRace]
+    races = boardState.ListTeams.TeamState.flatMap(
+      (team) => team.ListPitchPlayers.PlayerState.map(player => {
+        const { race } = getPlayerType(player.Id, player.Data.IdPlayerTypes);
+        return race;
+      })
     ).filter((v, i, a) => a.indexOf(v) === i);
     setPlayerStates(boardState);
     setBallPosition(boardState);
@@ -288,6 +291,8 @@
       }
       $replayCurrent = $replayCurrent.toNextPosition($replay.fullReplay);
     } catch (err) {
+      playing = false;
+      $error = err;
       console.error(err);
     }
   }

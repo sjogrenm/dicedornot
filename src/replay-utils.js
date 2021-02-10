@@ -1,4 +1,22 @@
 
+
+export const BEGINNING = {
+  beginning: true,
+  before: () => true,
+  after: () => false,
+  equal: (other) => other === BEGINNING,
+  atOrAfter: (other) => other === BEGINNING,
+  atOrBefore: () => true,
+}
+export const END = {
+  end: true,
+  before: () => false,
+  after: () => true,
+  equal: (other) => other === END,
+  atOrAfter: () => false,
+  atOrBefore: (other) => other === END,
+};
+
 export function ensureList(objOrList) {
     if (objOrList && objOrList.length) {
         return objOrList;
@@ -40,6 +58,9 @@ export const REPLAY_KEY = {
 
 function nextState(replayStep, start) {
   let next = start;
+  if (next > REPLAY_STEP.NextReplayStep) {
+    return END;
+  }
   if (next == REPLAY_STEP.NextReplayStep) {
     return next;
   }
@@ -102,6 +123,12 @@ export class ReplayPosition {
 
   after(other) {
     if (!other) {
+      throw new Error("Can't compare ReplayPosition to undefined", { this: this, other })
+    }
+    if (other === BEGINNING) {
+      return true;
+    }
+    if (other === END) {
       return false;
     }
     if (this.step > other.step) {
@@ -132,14 +159,20 @@ export class ReplayPosition {
   }
   equal(other) {
     if (!other) {
+      throw new Error("Can't compare ReplayPosition to undefined", { this: this, other })
+    }
+    if (other === BEGINNING || other === END) {
       return false;
     }
     return (this.step == other.step && this.state == other.state && this.action == other.action && this.result == other.result);
   }
   atOrAfter(other) {
-    if (!other) {
-      return false;
-    }
     return this.after(other) || this.equal(other);
+  }
+  before(other) {
+    return other.after(this);
+  }
+  atOrBefore(other) {
+    return other.atOrBefore(this);
   }
 }
