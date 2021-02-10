@@ -5,7 +5,7 @@
   import vegaSpec from "./vega-spec.js";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
   import { ReplayPosition , REPLAY_STEP} from "./replay-utils.js";
-import { percentRank, quantile } from "./utils.js";
+import { percentRank } from "./utils.js";
 
   let rolls, view, playHead, cumNetValues = {actuals: {}, simulated: {}};
   export let homePercentile, awayPercentile;

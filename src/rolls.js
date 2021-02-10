@@ -399,7 +399,7 @@ export class Roll {
     boardActionResult
   ) {
     var rollClass;
-    if (boardActionResult.RollType === undefined) {
+    if (action.ActionType === undefined && boardActionResult.RollType === undefined) {
       rollClass = MoveAction;
     } else {
       rollClass = ROLL_TYPES[boardActionResult.RollType];
