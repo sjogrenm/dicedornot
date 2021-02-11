@@ -1,17 +1,64 @@
-:root{--bm:-28px;--bl:-35px}
+:root {
+  --bm: 28;
+  --bl: 35;
+}
 
-.bretonnia{width: calc(-1 * var(--bm));height: calc(-1 * var(--bm));display: inline-block;background-position-x: 0px;}
-.bretonnia.knight1,.bretonnia.knight2{width: calc(-1 * var(--bl));height: calc(-1 * var(--bl));}
+.bretonnia.sprite {
+  --imH: 320;
+  --imW: 70;
+  --spW: 28;
+  --spH: 28;
+  --spX: 0;
+  --spY: 0;
+  --spScale: 75%;
+  width: var(--spScale);
+  height: var(--spScale);
+}
 
-.bretonnia.home {background: url("/images/players/bretonnia/home.png") no-repeat;}
-.bretonnia.away {background: url("/images/players/bretonnia/away.png") no-repeat;}
+.bretonnia.knight1, .bretonnia.knight2 {
+  --spW: 35;
+  --spH: 35;
+  --spScale: 85%;
+}
 
-.bretonnia.peasant1{background-position-y: 0px;}
-.bretonnia.peasant2{background-position-y: var(--bm);}
-.bretonnia.peasant3{background-position-y: calc(2 * var(--bm));}
-.bretonnia.blocker1{background-position-y: calc(3 * var(--bm));}
-.bretonnia.blocker2{background-position-y: calc(4 * var(--bm));}
-.bretonnia.knight1{background-position-y: calc(5 * var(--bm));}
-.bretonnia.knight2{background-position-y: calc(5 * var(--bm) + var(--bl));}
-.bretonnia.moving,.bretonnia.prone,.bretonnia.stunned {background-position-x: var(--bm);}
-.bretonnia.knight1.moving,.bretonnia.knight1.prone,.bretonnia.knight1.stunned,.bretonnia.knight2.moving,.bretonnia.knight2.prone,.bretonnia.knight2.stunned {background-position-x: var(--bl);}
+.bretonnia.home {
+  background-image: url("/images/players/bretonnia/home.png");
+  background-repeat: no-repeat;
+}
+
+.bretonnia.away {
+  background-image: url("/images/players/bretonnia/away.png");
+  background-repeat: no-repeat;
+}
+
+.bretonnia.peasant1 {
+  --spY: 0px;
+}
+
+.bretonnia.peasant2 {
+  --spY: var(--bm);
+}
+
+.bretonnia.peasant3 {
+  --spY: calc(2 * var(--bm));
+}
+
+.bretonnia.blocker1 {
+  --spY: calc(3 * var(--bm));
+}
+
+.bretonnia.blocker2 {
+  --spY: calc(4 * var(--bm));
+}
+
+.bretonnia.knight1 {
+  --spY: calc(5 * var(--bm));
+}
+
+.bretonnia.knight2 {
+  --spY: calc(5 * var(--bm) + var(--bl));
+}
+
+.bretonnia.moving, .bretonnia.prone, .bretonnia.stunned {
+  --spX: var(--spW);
+}
