@@ -68,7 +68,9 @@
       </Row>
       <Row>
         <Col lg="9">
-          <Viewer />
+          {#key $replay.fullReplay.filename}
+            <Viewer />
+          {/key}
         </Col>
         <Col lg="3" class="justify-content-center">
           <TurnSelectors />
