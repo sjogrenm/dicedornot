@@ -9,6 +9,17 @@
   display: inline-block;
   background-position-x: calc(var(--spX) * (1 + 1 / ((var(--imW) / var(--spW)) - 1)) / var(--imW) * 100%);
   background-position-y: calc(var(--spY) * (1 + 1 / ((var(--imH) / var(--spH)) - 1)) / var(--imH) * 100%);
+  background-repeat: no-repeat;
+}
+
+.sprite.player {
+  --spW: var(--spH);
+  height: calc(var(--spH) / 38 * 100%);
+  width: calc(var(--spW) / 38 * 100%);
+}
+
+.player.moving, .player.prone, .player.stunned {
+  --spX: var(--spW);
 }
 
 .crisp {

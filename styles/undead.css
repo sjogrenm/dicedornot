@@ -1,29 +1,19 @@
 .undead.sprite {
   --imW: 60;
   --imH: 368;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .undead.mummy1, .undead.mummy2 {
-  --spW: 30;
   --spH: 30;
-  --spScale: 95%;
 }
 
 .undead.home {
   background-image: url("/images/players/undead/home.png");
-  background-repeat: no-repeat;
 }
 
 .undead.away {
   background-image: url("/images/players/undead/away.png");
-  background-repeat: no-repeat;
 }
 
 .undead.zombie2 {
@@ -72,12 +62,4 @@
 
 .undead.mummy2 {
   --spY: calc(11 * 28 + 30);
-}
-
-.undead.moving, .undead.prone, .undead.stunned {
-  --spX: 28;
-}
-
-.undead.mummy1.moving, .undead.mummy1.prone, .undead.mummy1.stunned, .undead.mummy2.moving, .undead.mummy2.prone, .undead.mummy2.stunned {
-  --spX: 30;
 }

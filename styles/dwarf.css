@@ -5,30 +5,20 @@
 
 .dwarf.home {
     background-image: url("/images/players/dwarf/home.png");
-    background-repeat: no-repeat;
 }
 
 .dwarf.away {
     background-image: url("/images/players/dwarf/away.png");
-    background-repeat: no-repeat;
 }
 
 .dwarf.sprite {
   --imH: 318;
   --imW: 76;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .dwarf.deathroller {
-  --spW: 38;
   --spH: 38;
-  --spScale: 95%;
 }
 
 .dwarf.longbeard2 {
@@ -71,7 +61,4 @@
     --spY: calc(10 * var(--dwm));
 }
 
-.dwarf.moving, .dwarf.prone, .dwarf.stunned {
-    background-position-x: var(--spW);
-}
 

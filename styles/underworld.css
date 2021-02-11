@@ -6,33 +6,19 @@
 .underworld.sprite {
   --imW: 76;
   --imH: 410;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .underworld.troll {
-  --spScale: 95%;
-  --spW: 38;
   --spH: 38;
 }
 
 .underworld.home {
   background-image: url("/images/players/underworld/home.png");
-  background-repeat: no-repeat;
 }
 
 .underworld.away {
   background-image: url("/images/players/underworld/away.png");
-  background-repeat: no-repeat;
-}
-
-.underworld.goblin1,.underworld.goblin2,.underworld.goblin3,.underworld.goblin4,.underworld.goblin5 {
-  --spScale: 65%;
 }
 
 .underworld.goblin2 {
@@ -85,12 +71,4 @@
 
 .underworld.troll {
   --spY: calc(13 * var(--unm));
-}
-
-.underworld.moving, .underworld.prone, .underworld.stunned {
-  --spX: var(--unm);
-}
-
-.underworld.troll.moving, .underworld.troll.prone, .underworld.troll.stunned {
-  --spX: var(--unl);
 }

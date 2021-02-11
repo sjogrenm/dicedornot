@@ -1,33 +1,67 @@
-:root{--cdm:-28px;--cdl:-38px;--cdxl:-39px;}
+:root {
+  --cdm: 28;
+  --cdl: 38;
+  --cdxl: 39;
+}
 
-.chaosdwarf.home {background: url("/images/players/chaosdwarf/home.png") no-repeat;}
-.chaosdwarf.away {background: url("/images/players/chaosdwarf/away.png") no-repeat;}
+.chaosdwarf.home {
+  background-image: url("/images/players/chaosdwarf/home.png");
+}
 
-.chaosdwarf{width: calc(-1 * var(--cdm)); height: calc(-1 * var(--cdm)); display: inline-block; background-position-x: 0px;}
-.chaosdwarf.bullcentaur1,.chaosdwarf.bullcentaur2{width: calc(-1 * var(--cdl)); height: calc(-1 * var(--cdl));}
-.chaosdwarf.minotaur{width: calc(-1 * var(--cdxl)); height: calc(-1 * var(--cdxl));}
+.chaosdwarf.away {
+  background-image: url("/images/players/chaosdwarf/away.png");
+}
 
-.chaosdwarf.hobgoblin1{background-position-y: 0px;}
-.chaosdwarf.hobgoblin2{background-position-y: var(--cdm);}
-.chaosdwarf.hobgoblin3{background-position-y: calc(2 * var(--cdm));}
-.chaosdwarf.hobgoblin4{background-position-y: calc(3 * var(--cdm));}
+.chaosdwarf.sprite {
+  --spH: 28;
+  --imW: 78;
+  --imH: 339;
+}
 
-.chaosdwarf.blocker1{background-position-y: calc(4 * var(--cdm));}
-.chaosdwarf.blocker2{background-position-y: calc(5 * var(--cdm));}
-.chaosdwarf.blocker3{background-position-y: calc(6 * var(--cdm));}
-.chaosdwarf.blocker4{background-position-y: calc(7 * var(--cdm));}
+.chaosdwarf.bullcentaur1, .chaosdwarf.bullcentaur2 {
+  --spH: 38;
+}
 
-.chaosdwarf.bullcentaur1{background-position-y: calc(8 * var(--cdm));}
-.chaosdwarf.bullcentaur2{background-position-y: calc(8 * var(--cdm) + var(--cdl)) ;}
+.chaosdwarf.minotaur {
+  --spH: 39;
+}
 
-.chaosdwarf.minotaur{background-position-y: calc(8 * var(--cdm) + 2 * var(--cdl));}
+.chaosdwarf.hobgoblin2 {
+  --spY: var(--cdm);
+}
 
-.chaosdwarf.moving{background-position-x: var(--cdm);}
-.chaosdwarf.bullcentaur1.moving,.chaosdwarf.bullcentaur2.moving{background-position-x: var(--cdl);}
-.chaosdwarf.minotaur.moving{background-position-x: var(--cdxl);}
-.chaosdwarf.prone{background-position-x: var(--cdm);}
-.chaosdwarf.bullcentaur1.prone,.chaosdwarf.bullcentaur2.prone{background-position-x: var(--cdl);}
-.chaosdwarf.minotaur.prone{background-position-x: var(--cdxl);}
-.chaosdwarf.stunned{background-position-x: var(--cdm);}
-.chaosdwarf.bullcentaur1.stunned,.chaosdwarf.bullcentaur2.stunned{background-position-x: var(--cdl);}
-.chaosdwarf.minotaur.stunned{background-position-x: var(--cdxl);}
+.chaosdwarf.hobgoblin3 {
+  --spY: calc(2 * var(--cdm));
+}
+
+.chaosdwarf.hobgoblin4 {
+  --spY: calc(3 * var(--cdm));
+}
+
+.chaosdwarf.blocker1 {
+  --spY: calc(4 * var(--cdm));
+}
+
+.chaosdwarf.blocker2 {
+  --spY: calc(5 * var(--cdm));
+}
+
+.chaosdwarf.blocker3 {
+  --spY: calc(6 * var(--cdm));
+}
+
+.chaosdwarf.blocker4 {
+  --spY: calc(7 * var(--cdm));
+}
+
+.chaosdwarf.bullcentaur1 {
+  --spY: calc(8 * var(--cdm));
+}
+
+.chaosdwarf.bullcentaur2 {
+  --spY: calc(8 * var(--cdm) + var(--cdl));
+}
+
+.chaosdwarf.minotaur {
+  --spY: calc(8 * var(--cdm) + 2 * var(--cdl));
+}

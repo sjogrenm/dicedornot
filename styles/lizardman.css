@@ -6,39 +6,27 @@
 
 .lizardman.home {
   background-image: url("/images/players/lizardman/home.png");
-  background-repeat: no-repeat;
 }
 
 .lizardman.away {
   background-image: url("/images/players/lizardman/away.png");
-  background-repeat: no-repeat;
 }
 
 .lizardman.sprite {
   --imW: 78;
   --imH: 269;
-  --spX: 0;
-  --spY: 0;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .lizardman.skink1, .lizardman.skink2, .lizardman.skink3, .lizardman.skink4 {
-  --spW: 20;
   --spH: 20;
-  --spScale: 60%;
 }
 
 .lizardman.saurus1, .lizardman.saurus2, .lizardman.saurus3, .lizardman.saurus4 {
-  --spW: 28;
   --spH: 28;
-  --spScale: 90%;
 }
 
 .lizardman.kroxigor1, .lizardman.kroxigor2 {
-  --spW: 40;
   --spH: 40;
-  --spScale: 100%;
 }
 
 .lizardman.skink2 {
@@ -75,8 +63,4 @@
 
 .lizardman.kroxigor2 {
   --spY: 231;
-}
-
-.lizardman.moving, .lizardman.prone, .lizardman.prone{
-  --spX: var(--spW);
 }

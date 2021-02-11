@@ -1,29 +1,19 @@
 .human.home {
   background-image: url("/images/players/human/home.png");
-  background-repeat: no-repeat;
 }
 
 .human.away {
   background-image: url("/images/players/human/away.png");
-  background-repeat: no-repeat;
 }
 
 .human.sprite {
   --imH: 178;
   --imW: 76;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .human.ogre {
-  --spW: 38;
   --spH: 38;
-  --spScale: 100%;
 }
 
 .human.lineman2 {
