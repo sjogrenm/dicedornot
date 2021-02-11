@@ -9,10 +9,15 @@
     send,
     receive;
   import { timing } from "../stores.js";
-  let inFn, outFn, inParms, outParms, plusClass = "";
+  let inFn, outFn, inParms, outParms, cellClass;
 
   $: {
-    plusClass = plus ? `plus${plus}` : "";
+    let plusClass = plus ? `plus${plus}` : null;
+    let activeClass = active ? "active" : null;
+    let targetClass = target ? "target" : null;
+    let pushbackChoiceClass = pushbackChoice ? "pushback-choice" : null;
+    let movedClass = target ? "moved" : null;
+    cellClass = activeClass || targetClass || pushbackChoiceClass || plusClass || movedClass || "";
     if (active) {
       inFn = receive;
       outFn = send;
@@ -26,11 +31,7 @@
 
 <div
   id={`cell_${column}_${row}`}
-  class={`cell sprite ${plusClass}`}
-  class:target
-  class:moved
-  class:active
-  class:pushback-choice={pushbackChoice}
+  class={`cell sprite ${cellClass}`}
   in:inFn={inParms}
   out:outFn={outParms}
 />
