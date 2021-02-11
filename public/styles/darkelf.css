@@ -4,24 +4,16 @@
 
 .darkelf.home {
   background-image: url("/images/players/darkelf/home.png");
-  background-repeat: no-repeat;
 }
 
 .darkelf.away {
   background-image: url("/images/players/darkelf/away.png");
-  background-repeat: no-repeat;
 }
 
 .darkelf.sprite {
   --imH: 140;
   --imW: 56;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .darkelf.runner {
@@ -40,6 +32,3 @@
   --spY: calc(4 * var(--dam));
 }
 
-.darkelf.moving, .darkelf.prone, .darkelf.stunned {
-  --spX: var(--dam);
-}

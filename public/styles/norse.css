@@ -6,32 +6,24 @@
 
 .norse.home {
   background-image: url("/images/players/norse/home.png");
-  background-repeat: no-repeat;
 }
 
 .norse.away {
   background-image: url("/images/players/norse/away.png");
-  background-repeat: no-repeat;
 }
 
 .norse.sprite {
   --imW: 76;
   --imH: 326;
-  --spX: 0;
-  --spY: 0;
-  --spW: 28;
   --spH: 28;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
-.norse.ulfwerener1, .norse.ulfwerener1 {
-  --spScale: 85%;
+.norse.ulfwerener1, .norse.ulfwerener2 {
+  --spH: 32;
 }
 
 .norse.yhetee {
-  --spScale: 95%;
+  --spH: 38;
 }
 
 .norse.lineman2 {
@@ -72,8 +64,4 @@
 
 .norse.yhetee {
   --spY: calc(8 * var(--nom) + 2 * var(--nol));
-}
-
-.norse.moving, .norse.prone, .norse.stunned {
-  --spX: var(--spW);
 }

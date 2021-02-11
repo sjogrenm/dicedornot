@@ -433,7 +433,7 @@ export function getPlayerType(playerId, playerTypeId) {
     case 91: case 358: return { race: 'nurgle', model: `rotter${playerId % 6 + 1}` };
     case 92: case 359: return { race: 'nurgle', model: `pestigor${playerId % 4 + 1}` };
     case 93: case 360: return { race: 'nurgle', model: `warrior${playerId % 4 + 1}` };
-    case 94: case 361: return { race: 'nurgle', model: `beast - of - nurgle` };
+    case 94: case 361: return { race: 'nurgle', model: "beast-of-nurgle" };
     case 95: case 476: case 478: case 737: return { race: 'ogre', model: `snotling${playerId % 7 + 1}` };
     case 96: case 475: case 477: case 738: return { race: 'ogre', model: `ogre${playerId % 6 + 1}` };
     case 21: case 366: case 460: return { race: 'orc', model: `lineman${playerId % 3 + 1}` };

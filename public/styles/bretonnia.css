@@ -6,33 +6,19 @@
 .bretonnia.sprite {
   --imH: 320;
   --imW: 70;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .bretonnia.knight1, .bretonnia.knight2 {
-  --spW: 35;
   --spH: 35;
-  --spScale: 85%;
 }
 
 .bretonnia.home {
   background-image: url("/images/players/bretonnia/home.png");
-  background-repeat: no-repeat;
 }
 
 .bretonnia.away {
   background-image: url("/images/players/bretonnia/away.png");
-  background-repeat: no-repeat;
-}
-
-.bretonnia.peasant1 {
-  --spY: 0px;
 }
 
 .bretonnia.peasant2 {
@@ -57,8 +43,4 @@
 
 .bretonnia.knight2 {
   --spY: calc(5 * var(--bm) + var(--bl));
-}
-
-.bretonnia.moving, .bretonnia.prone, .bretonnia.stunned {
-  --spX: var(--spW);
 }

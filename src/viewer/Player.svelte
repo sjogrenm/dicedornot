@@ -20,7 +20,7 @@
     team = id > 30 ? "away" : "home";
     _done = done === undefined ? data.CanAct != 1 : done;
 
-    classes = [race, model, team, "sprite", "crisp"].join(" ");
+    classes = [race, model, team, "sprite", "crisp", "player"].join(" ");
     key = `player_${id}`;
     _prone = prone === undefined ? data.Status === 1 : prone;
     _stunned = stunned === undefined ? data.Status === 2 : stunned;

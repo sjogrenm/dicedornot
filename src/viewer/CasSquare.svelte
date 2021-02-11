@@ -80,5 +80,6 @@
     right: -5px;
     width: 50%;
     height: 50%;
+    z-index: 10;
   }
 </style>

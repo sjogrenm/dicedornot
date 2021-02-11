@@ -1,19 +1,54 @@
-:root{--sm:-28px;--sl:-38px}
+:root {
+  --sm: 28;
+  --sl: 38;
+}
 
-.skaven{width: calc(-1 * var(--sm));height: calc(-1 * var(--sm));display: inline-block;background-position-x: 0px;}
-.skaven.rat-ogre{width: calc(-1 * var(--sl));height: calc(-1 * var(--sl))}
+.skaven.sprite {
+  --spH: 28;
+  --imW: 76;
+  --imH: 262;
+}
 
-.skaven.home {background: url("/images/players/skaven/home.png") no-repeat;}
-.skaven.away {background: url("/images/players/skaven/away.png") no-repeat;}
+.skaven.rat-ogre {
+  --spH: 38;
+}
 
-.skaven.lineman1{background-position-y: 0px;}
-.skaven.lineman2{background-position-y: var(--sm);}
-.skaven.lineman3{background-position-y: calc(2 * var(--sm));}
-.skaven.blitzer1{background-position-y: calc(3 * var(--sm));}
-.skaven.blitzer2{background-position-y: calc(4 * var(--sm));}
-.skaven.thrower{background-position-y: calc(5 * var(--sm));}
-.skaven.runner1{background-position-y: calc(6 * var(--sm));}
-.skaven.runner2{background-position-y: calc(7 * var(--sm));}
-.skaven.rat-ogre{background-position-y: calc(8 * var(--sm));}
-.skaven.moving,.skaven.prone,.skaven.stunned {background-position-x: var(--sm);}
-.skaven.rat-ogre.moving,.skaven.rat-ogre.prone,.skaven.rat-ogre.stunned {background-position-x: var(--sl);}
+.skaven.home {
+  background-image: url("/images/players/skaven/home.png");
+}
+
+.skaven.away {
+  background-image: url("/images/players/skaven/away.png");
+}
+
+.skaven.lineman2 {
+  --spY: var(--sm);
+}
+
+.skaven.lineman3 {
+  --spY: calc(2 * var(--sm));
+}
+
+.skaven.blitzer1 {
+  --spY: calc(3 * var(--sm));
+}
+
+.skaven.blitzer2 {
+  --spY: calc(4 * var(--sm));
+}
+
+.skaven.thrower {
+  --spY: calc(5 * var(--sm));
+}
+
+.skaven.runner1 {
+  --spY: calc(6 * var(--sm));
+}
+
+.skaven.runner2 {
+  --spY: calc(7 * var(--sm));
+}
+
+.skaven.rat-ogre {
+  --spY: calc(8 * var(--sm));
+}

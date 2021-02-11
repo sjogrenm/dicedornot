@@ -839,13 +839,17 @@
         if (actionResult.ResultType === 1) {
           // armor failed
           //knocked down
-          player.prone = true;
+          if (player) {
+              player.prone = true;
+          }
         }
         break;
       case 4: //injury
         if (actionResult.SubResultType === 2) {
           //stunned
-          player.stunned = true;
+          if (player) {
+            player.stunned = true;
+          }
         } else if (actionResult.SubResultType === 3) {
           //knocked out
           let team = player.team;

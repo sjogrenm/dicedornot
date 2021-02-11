@@ -1,289 +1,310 @@
-:root{--spxs:-20px;--sps:-28px;--spm:-34px;--spl:-38px;}
+:root {
+    --spxs: 20;
+    --sps: 28;
+    --spm: 34;
+    --spl: 38;
+}
 
+.starplayer.sprite {
+  --spX: 0;
+  --spY: 0;
+  --imW: calc(var(--spW) * 4);
+  --imH: var(--spH);
+}
 
-.barik-farblast{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/BarikFarblast.png") no-repeat;}
-.barik-farblast.home.moving,.barik-farblast.home.prone,.barik-farblast.home.stunned{background-position-x: -28px}
-.barik-farblast.away{background-position-x: -56px}
-.barik-farblast.away.moving,.barik-farblast.away.prone,.barik-farblast.away.stunned{background-position-x: -84px}
+.starplayer.home.moving, .starplayer.home.prone, .starplayer.home.stunned {
+  --spX: calc(var(--spW));
+}
 
+.starplayer.away {
+  --spX: calc(var(--spW) * 2);
+}
 
-.bertha-bigfist{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/BerthaBigfist.png") no-repeat;}
-.bertha-bigfist.home.moving,.bertha-bigfist.home.prone,.bertha-bigfist.home.stunned{background-position-x: -38px}
-.bertha-bigfist.away{background-position-x: -76px}
-.bertha-bigfist.away.moving,.bertha-bigfist.away.prone,.bertha-bigfist.away.stunned{background-position-x: -114px}
+.starplayer.away.moving, .starplayer.away.prone, .starplayer.away.stunned {
+  --spX: calc(var(--spW) * 3);
+}
 
-.bomber-dribblesnot{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/BomberDribblesnot.png") no-repeat;}
-.bomber-dribblesnot.home.moving,.bomber-dribblesnot.home.prone,.bomber-dribblesnot.home.stunned{background-position-x: -28px}
-.bomber-dribblesnot.away{background-position-x: -56px}
-.bomber-dribblesnot.away.moving,.bomber-dribblesnot.away.prone,.bomber-dribblesnot.away.stunned{background-position-x: -84px}
+.barik-farblast.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/BarikFarblast.png");
+}
 
-.boomer-eziasson{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/BoomerEziasson.png") no-repeat;}
-.boomer-eziasson.home.moving,.boomer-eziasson.home.prone,.boomer-eziasson.home.stunned{background-position-x: -28px}
-.boomer-eziasson.away{background-position-x: -56px}
-.boomer-eziasson.away.moving,.boomer-eziasson.away.prone,.boomer-eziasson.away.stunned{background-position-x: -84px}
+.bertha-bigfist.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/BerthaBigfist.png");
+}
 
-.brick-farth{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/BrickFarth.png") no-repeat;}
-.brick-farth.home.moving,.brick-farth.home.prone,.brick-farth.home.stunned{background-position-x: -38px}
-.brick-farth.away{background-position-x: -76px}
-.brick-farth.away.moving,.brick-farth.away.prone,.brick-farth.away.stunned{background-position-x: -114px}
+.bomber-dribblesnot.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/BomberDribblesnot.png");
+}
 
-.count-luthorvon-drakenborg{width: 34px;height: 34px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/CountLuthor.png") no-repeat;}
-.count-luthorvon-drakenborg.home.moving,.count-luthorvon-drakenborg.home.prone,.count-luthorvon-drakenborg.home.stunned{background-position-x: -34px}
-.count-luthorvon-drakenborg.away{background-position-x: -68px}
-.count-luthorvon-drakenborg.away.moving,.count-luthorvon-drakenborg.away.prone,.count-luthorvon-drakenborg.away.stunned{background-position-x: -102px}
+.boomer-eziasson.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/BoomerEziasson.png");
+}
 
-.crazy-igor{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/CrazyIgor.png") no-repeat;}
-.crazy-igor.home.moving,.crazy-igor.home.prone,.crazy-igor.home.stunned{background-position-x: -28px}
-.crazy-igor.away{background-position-x: -56px}
-.crazy-igor.away.moving,.crazy-igor.away.prone,.crazy-igor.away.stunned{background-position-x: -84px}
+.brick-farth.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/BrickFarth.png");
+}
 
-.deeproot-strongbranch{width: 40px;height: 40px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Deeproot.png") no-repeat;}
-.deeproot-strongbranch.home.moving,.deeproot-strongbranch.home.prone,.deeproot-strongbranch.home.stunned{background-position-x: -40px}
-.deeproot-strongbranch.away{background-position-x: -80px}
-.deeproot-strongbranch.away.moving,.deeproot-strongbranch.away.prone,.deeproot-strongbranch.away.stunned{background-position-x: -120px}
+.count-luthorvon-drakenborg.sprite {
+    --spH: 34;
+    background-image: url("/images/players/starplayers/CountLuthor.png");
+}
 
-.dolfar-longstride{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/DolfarLongstride.png") no-repeat;}
-.dolfar-longstride.home.moving,.dolfar-longstride.home.prone,.dolfar-longstride.home.stunned{background-position-x: -28px}
-.dolfar-longstride.away{background-position-x: -56px}
-.dolfar-longstride.away.moving,.dolfar-longstride.away.prone,.dolfar-longstride.away.stunned{background-position-x: -84px}
+.crazy-igor.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/CrazyIgor.png");
+}
 
-.eldril-sidewinder{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/EldrilSidewinder.png") no-repeat;}
-.eldril-sidewinder.home.moving,.eldril-sidewinder.home.prone,.eldril-sidewinder.home.stunned{background-position-x: -28px}
-.eldril-sidewinder.away{background-position-x: -56px}
-.eldril-sidewinder.away.moving,.eldril-sidewinder.away.prone,.eldril-sidewinder.away.stunned{background-position-x: -84px}
+.deeproot-strongbranch.sprite {
+    --spH: 40;
+    background-image: url("/images/players/starplayers/Deeproot.png");
+}
 
-.fezglitch{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Fezglitch.png") no-repeat;}
-.fezglitch.home.moving,.fezglitch.home.prone,.fezglitch.home.stunned{background-position-x: -28px}
-.fezglitch.away{background-position-x: -56px}
-.fezglitch.away.moving,.fezglitch.away.prone,.fezglitch.away.stunned{background-position-x: -84px}
+.dolfar-longstride.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/DolfarLongstride.png");
+}
 
-.flint-churnblade{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/FlintChurnblade.png") no-repeat;}
-.flint-churnblade.home.moving,.flint-churnblade.home.prone,.flint-churnblade.home.stunned{background-position-x: -28px}
-.flint-churnblade.away{background-position-x: -56px}
-.flint-churnblade.away.moving,.flint-churnblade.away.prone,.flint-churnblade.away.stunned{background-position-x: -84px}
+.eldril-sidewinder.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/EldrilSidewinder.png");
+}
 
-.fungus-the-loon{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Fungus.png") no-repeat;}
-.fungus-the-loon.home.moving,.fungus-the-loon.home.prone,.fungus-the-loon.home.stunned{background-position-x: -28px}
-.fungus-the-loon.away{background-position-x: -56px}
-.fungus-the-loon.away.moving,.fungus-the-loon.away.prone,.fungus-the-loon.away.stunned{background-position-x: -84px}
+.fezglitch.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Fezglitch.png");
+}
 
-.glart-smashrip-jr{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/GlartSmashrip.png") no-repeat;}
-.glart-smashrip-jr.home.moving,.glart-smashrip-jr.home.prone,.glart-smashrip-jr.home.stunned{background-position-x: -28px}
-.glart-smashrip-jr.away{background-position-x: -56px}
-.glart-smashrip-jr.away.moving,.glart-smashrip-jr.away.prone,.glart-smashrip-jr.away.stunned{background-position-x: -84px}
+.flint-churnblade.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/FlintChurnblade.png");
+}
 
-.grashnak-blackhoof{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/GrashnakBlackhoof.png") no-repeat;}
-.grashnak-blackhoof.home.moving,.grashnak-blackhoof.home.prone,.grashnak-blackhoof.home.stunned{background-position-x: -38px}
-.grashnak-blackhoof.away{background-position-x: -76px}
-.grashnak-blackhoof.away.moving,.grashnak-blackhoof.away.prone,.grashnak-blackhoof.away.stunned{background-position-x: -114px}
+.fungus-the-loon.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Fungus.png");
+}
 
-.griff-oberwald{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/GriffOberwald.png") no-repeat;}
-.griff-oberwald.home.moving,.griff-oberwald.home.prone,.griff-oberwald.home.stunned{background-position-x: -28px}
-.griff-oberwald.away{background-position-x: -56px}
-.griff-oberwald.away.moving,.griff-oberwald.away.prone,.griff-oberwald.away.stunned{background-position-x: -84px}
+.glart-smashrip-jr.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/GlartSmashrip.png");
+}
 
-.grim-ironjaw{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/GrimIronjaw.png") no-repeat;}
-.grim-ironjaw.home.moving,.grim-ironjaw.home.prone,.grim-ironjaw.home.stunned{background-position-x: -28px}
-.grim-ironjaw.away{background-position-x: -56px}
-.grim-ironjaw.away.moving,.grim-ironjaw.away.prone,.grim-ironjaw.away.stunned{background-position-x: -84px}
+.grashnak-blackhoof.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/GrashnakBlackhoof.png");
+}
 
-.grotty{width: 20px;height: 20px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Grotty.png") no-repeat;}
-.grotty.home.moving,.grotty.home.prone,.grotty.home.stunned{background-position-x: -20px}
-.grotty.away{background-position-x: -40px}
-.grotty.away.moving,.grotty.away.prone,.grotty.away.stunned{background-position-x: -60px}
+.griff-oberwald.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/GriffOberwald.png");
+}
 
-.hack-enslash{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/HackEnslash.png") no-repeat;}
-.hack-enslash.home.moving,.hack-enslash.home.prone,.hack-enslash.home.stunned{background-position-x: -28px}
-.hack-enslash.away{background-position-x: -56px}
-.hack-enslash.away.moving,.hack-enslash.away.prone,.hack-enslash.away.stunned{background-position-x: -84px}
+.grim-ironjaw.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/GrimIronjaw.png");
+}
 
-.hakflem-skuttlespike{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/HakflemSkuttlespike.png") no-repeat;}
-.hakflem-skuttlespike.home.moving,.hakflem-skuttlespike.home.prone,.hakflem-skuttlespike.home.stunned{background-position-x: -28px}
-.hakflem-skuttlespike.away{background-position-x: -56px}
-.hakflem-skuttlespike.away.moving,.hakflem-skuttlespike.away.prone,.hakflem-skuttlespike.away.stunned{background-position-x: -84px}
+.grotty.sprite {
+    --spH: 20;
+    background-image: url("/images/players/starplayers/Grotty.png");
+}
 
-.headsplitter{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Headsplitter.png") no-repeat;}
-.headsplitter.home.moving,.headsplitter.home.prone,.headsplitter.home.stunned{background-position-x: -38px}
-.headsplitter.away{background-position-x: -76px}
-.headsplitter.away.moving,.headsplitter.away.prone,.headsplitter.away.stunned{background-position-x: -114px}
+.hack-enslash.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/HackEnslash.png");
+}
 
-.helmut-wulf{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/HelmutWulf.png") no-repeat;}
-.helmut-wulf.home.moving,.helmut-wulf.home.prone,.helmut-wulf.home.stunned{background-position-x: -28px}
-.helmut-wulf.away{background-position-x: -56px}
-.helmut-wulf.away.moving,.helmut-wulf.away.prone,.helmut-wulf.away.stunned{background-position-x: -84px}
+.hakflem-skuttlespike.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/HakflemSkuttlespike.png");
+}
 
-.hemlock{width: 20px;height: 20px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Hemlock.png") no-repeat;}
-.hemlock.home.moving,.hemlock.home.prone,.hemlock.home.stunned{background-position-x: -20px}
-.hemlock.away{background-position-x: -40px}
-.hemlock.away.moving,.hemlock.away.prone,.hemlock.away.stunned{background-position-x: -60px}
+.headsplitter.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/Headsplitter.png");
+}
 
-.horkon-heartripper{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Horkon.png") no-repeat;}
-.horkon-heartripper.home.moving,.horkon-heartripper.home.prone,.horkon-heartripper.home.stunned{background-position-x: -28px}
-.horkon-heartripper.away{background-position-x: -56px}
-.horkon-heartripper.away.moving,.horkon-heartripper.away.prone,.horkon-heartripper.away.stunned{background-position-x: -84px}
+.helmut-wulf.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/HelmutWulf.png");
+}
 
-.hthark-the-unstoppable{width: 40px;height: 40px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Hthark.png") no-repeat;}
-.hthark-the-unstoppable.home.moving,.hthark-the-unstoppable.home.prone,.hthark-the-unstoppable.home.stunned{background-position-x: -40px}
-.hthark-the-unstoppable.away{background-position-x: -80px}
-.hthark-the-unstoppable.away.moving,.hthark-the-unstoppable.away.prone,.hthark-the-unstoppable.away.stunned{background-position-x: -120px}
+.hemlock.sprite {
+    --spH: 20;
+    background-image: url("/images/players/starplayers/Hemlock.png");
+}
 
-.hubris-rakarth{width: 28px;height: 32px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Hubris.png") no-repeat;}
-.hubris-rakarth.home.moving,.hubris-rakarth.home.prone,.hubris-rakarth.home.stunned{background-position-x: -28px}
-.hubris-rakarth.away{background-position-x: -56px}
-.hubris-rakarth.away.moving,.hubris-rakarth.away.prone,.hubris-rakarth.away.stunned{background-position-x: -84px}
+.horkon-heartripper.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Horkon.png");
+}
 
-.humerus-carpal{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Humerus.png") no-repeat;}
-.humerus-carpal.home.moving,.humerus-carpal.home.prone,.humerus-carpal.home.stunned{background-position-x: -28px}
-.humerus-carpal.away{background-position-x: -56px}
-.humerus-carpal.away.moving,.humerus-carpal.away.prone,.humerus-carpal.away.stunned{background-position-x: -84px}
+.hthark-the-unstoppable.sprite {
+    --spH: 40;
+    background-image: url("/images/players/starplayers/Hthark.png");
+}
 
-.icepelt-hammerblow{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Icepelt.png") no-repeat;}
-.icepelt-hammerblow.home.moving,.icepelt-hammerblow.home.prone,.icepelt-hammerblow.home.stunned{background-position-x: -38px}
-.icepelt-hammerblow.away{background-position-x: -76px}
-.icepelt-hammerblow.away.moving,.icepelt-hammerblow.away.prone,.icepelt-hammerblow.away.stunned{background-position-x: -114px}
+.hubris-rakarth.sprite {
+    --spH: 32;
+    background-image: url("/images/players/starplayers/Hubris.png");
+}
 
-.ithaca-benoin{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Ithaca.png") no-repeat;}
-.ithaca-benoin.home.moving,.ithaca-benoin.home.prone,.ithaca-benoin.home.stunned{background-position-x: -28px}
-.ithaca-benoin.away{background-position-x: -56px}
-.ithaca-benoin.away.moving,.ithaca-benoin.away.prone,.ithaca-benoin.away.stunned{background-position-x: -84px}
+.humerus-carpal.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Humerus.png");
+}
 
-.j-earlice{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Earlice.png") no-repeat;}
-.j-earlice.home.moving,.j-earlice.home.prone,.j-earlice.home.stunned{background-position-x: -28px}
-.j-earlice.away{background-position-x: -56px}
-.j-earlice.away.moving,.j-earlice.away.prone,.j-earlice.away.stunned{background-position-x: -84px}
+.icepelt-hammerblow.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/Icepelt.png");
+}
 
-.jordel-freshbreeze{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Jordell.png") no-repeat;}
-.jordel-freshbreeze.home.moving,.jordel-freshbreeze.home.prone,.jordel-freshbreeze.home.stunned{background-position-x: -28px}
-.jordel-freshbreeze.away{background-position-x: -56px}
-.jordel-freshbreeze.away.moving,.jordel-freshbreeze.away.prone,.jordel-freshbreeze.away.stunned{background-position-x: -84px}
+.ithaca-benoin.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Ithaca.png");
+}
 
-.lewdgrip-whiparm{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Lewdgrip.png") no-repeat;}
-.lewdgrip-whiparm.home.moving,.lewdgrip-whiparm.home.prone,.lewdgrip-whiparm.home.stunned{background-position-x: -28px}
-.lewdgrip-whiparm.away{background-position-x: -56px}
-.lewdgrip-whiparm.away.moving,.lewdgrip-whiparm.away.prone,.lewdgrip-whiparm.away.stunned{background-position-x: -84px}
+.j-earlice.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Earlice.png");
+}
 
-.lord-borak-the-despoiler{width: 30px;height: 30px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/LordBorak.png") no-repeat;}
-.lord-borak-the-despoiler.home.moving,.lord-borak-the-despoiler.home.prone,.lord-borak-the-despoiler.home.stunned{background-position-x: -30px}
-.lord-borak-the-despoiler.away{background-position-x: -60px}
-.lord-borak-the-despoiler.away.moving,.lord-borak-the-despoiler.away.prone,.lord-borak-the-despoiler.away.stunned{background-position-x: -90px}
+.jordel-freshbreeze.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Jordell.png");
+}
 
-.lottabottol{width: 30px;height: 30px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Lottabottol.png") no-repeat;}
-.lottabottol.home.moving,.lottabottol.home.prone,.lottabottol.home.stunned{background-position-x: -30px}
-.lottabottol.away{background-position-x: -60px}
-.lottabottol.away.moving,.lottabottol.away.prone,.lottabottol.away.stunned{background-position-x: -90px}
+.lewdgrip-whiparm.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Lewdgrip.png");
+}
 
-.max-spleenripper{width: 34px;height: 34px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/MaxSpleenripper.png") no-repeat;}
-.max-spleenripper.home.moving,.max-spleenripper.home.prone,.max-spleenripper.home.stunned{background-position-x: -34px}
-.max-spleenripper.away{background-position-x: -68px}
-.max-spleenripper.away.moving,.max-spleenripper.away.prone,.max-spleenripper.away.stunned{background-position-x: -102px}
+.lord-borak-the-despoiler.sprite {
+    --spH: 30;
+    background-image: url("/images/players/starplayers/LordBorak.png");
+}
 
-.mighty-zug{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/MightyZug.png") no-repeat;}
-.mighty-zug.home.moving,.mighty-zug.home.prone,.mighty-zug.home.stunned{background-position-x: -28px}
-.mighty-zug.away{background-position-x: -56px}
-.mighty-zug.away.moving,.mighty-zug.away.prone,.mighty-zug.away.stunned{background-position-x: -84px}
+.lottabottol.sprite {
+    --spH: 30;
+    background-image: url("/images/players/starplayers/Lottabottol.png");
+}
 
+.max-spleenripper.sprite {
+    --spH: 34;
+    background-image: url("/images/players/starplayers/MaxSpleenripper.png");
+}
 
-.morg-n-thorg{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Morgh.png") no-repeat;}
-.morg-n-thorg.home.moving,.morg-n-thorg.home.prone,.morg-n-thorg.home.stunned{background-position-x: -38px}
-.morg-n-thorg.away{background-position-x: -76px}
-.morg-n-thorg.away.moving,.morg-n-thorg.away.prone,.morg-n-thorg.away.stunned{background-position-x: -114px}
+.mighty-zug.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/MightyZug.png");
+}
 
-.nobbla-blackwart{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Nobbla.png") no-repeat;}
-.nobbla-blackwart.home.moving,.nobbla-blackwart.home.prone,.nobbla-blackwart.home.stunned{background-position-x: -28px}
-.nobbla-blackwart.away{background-position-x: -56px}
-.nobbla-blackwart.away.moving,.nobbla-blackwart.away.prone,.nobbla-blackwart.away.stunned{background-position-x: -84px}
+.morg-n-thorg.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/Morgh.png");
+}
 
-.prince-moranion{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Moranion.png") no-repeat;}
-.prince-moranion.home.moving,.prince-moranion.home.prone,.prince-moranion.home.stunned{background-position-x: -28px}
-.prince-moranion.away{background-position-x: -56px}
-.prince-moranion.away.moving,.prince-moranion.away.prone,.prince-moranion.away.stunned{background-position-x: -84px}
+.nobbla-blackwart.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Nobbla.png");
+}
 
-.puggy-baconbreath{width: 21px;height: 21px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Puggy.png") no-repeat;}
-.puggy-baconbreath.home.moving,.puggy-baconbreath.home.prone,.puggy-baconbreath.home.stunned{background-position-x: -21px}
-.puggy-baconbreath.away{background-position-x: -42px}
-.puggy-baconbreath.away.moving,.puggy-baconbreath.away.prone,.puggy-baconbreath.away.stunned{background-position-x: -63px}
+.prince-moranion.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Moranion.png");
+}
 
-.quetzal-leap{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Quetzal.png") no-repeat;}
-.quetzal-leap.home.moving,.quetzal-leap.home.prone,.quetzal-leap.home.stunned{background-position-x: -28px}
-.quetzal-leap.away{background-position-x: -56px}
-.quetzal-leap.away.moving,.quetzal-leap.away.prone,.quetzal-leap.away.stunned{background-position-x: -84px}
+.puggy-baconbreath.sprite {
+    --spH: 21;
+    background-image: url("/images/players/starplayers/Puggy.png");
+}
 
-.ramtut-iii{width: 31px;height: 31px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Ramtut.png") no-repeat;}
-.ramtut-iii.home.moving,.ramtut-iii.home.prone,.ramtut-iii.home.stunned{background-position-x: -31px}
-.ramtut-iii.away{background-position-x: -62px}
-.ramtut-iii.away.moving,.ramtut-iii.away.prone,.ramtut-iii.away.stunned{background-position-x: -93px}
+.quetzal-leap.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Quetzal.png");
+}
 
-.rashnak-backstabber{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Rashnak.png") no-repeat;}
-.rashnak-backstabber.home.moving,.rashnak-backstabber.home.prone,.rashnak-backstabber.home.stunned{background-position-x: -28px}
-.rashnak-backstabber.away{background-position-x: -56px}
-.rashnak-backstabber.away.moving,.rashnak-backstabber.away.prone,.rashnak-backstabber.away.stunned{background-position-x: -84px}
+.ramtut-iii.sprite {
+    --spH: 31;
+    background-image: url("/images/players/starplayers/Ramtut.png");
+}
 
-.ripper{width: 38px;height: 38px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Ripper.png") no-repeat;}
-.ripper.home.moving,.ripper.home.prone,.ripper.home.stunned{background-position-x: -38px}
-.ripper.away{background-position-x: -76px}
-.ripper.away.moving,.ripper.away.prone,.ripper.away.stunned{background-position-x: -114px}
+.rashnak-backstabber.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Rashnak.png");
+}
 
-.roxanna-darknail{width: 32px;height: 32px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Roxanna.png") no-repeat;}
-.roxanna-darknail.home.moving,.roxanna-darknail.home.prone,.roxanna-darknail.home.stunned{background-position-x: -32px}
-.roxanna-darknail.away{background-position-x: -64px}
-.roxanna-darknail.away.moving,.roxanna-darknail.away.prone,.roxanna-darknail.away.stunned{background-position-x: -96px}
+.ripper.sprite {
+    --spH: 38;
+    background-image: url("/images/players/starplayers/Ripper.png");
+}
 
-.scrappa-sorehead{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Scrappa.png") no-repeat;}
-.scrappa-sorehead.home.moving,.scrappa-sorehead.home.prone,.scrappa-sorehead.home.stunned{background-position-x: -28px}
-.scrappa-sorehead.away{background-position-x: -56px}
-.scrappa-sorehead.away.moving,.scrappa-sorehead.away.prone,.scrappa-sorehead.away.stunned{background-position-x: -84px}
+.roxanna-darknail.sprite {
+    --spH: 32;
+    background-image: url("/images/players/starplayers/Roxanna.png");
+}
 
-.setekh{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Setekh.png") no-repeat;}
-.setekh.home.moving,.setekh.home.prone,.setekh.home.stunned{background-position-x: -28px}
-.setekh.away{background-position-x: -56px}
-.setekh.away.moving,.setekh.away.prone,.setekh.away.stunned{background-position-x: -84px}
+.scrappa-sorehead.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Scrappa.png");
+}
 
-.sinnedbad{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Sinnedbad.png") no-repeat;}
-.sinnedbad.home.moving,.sinnedbad.home.prone,.sinnedbad.home.stunned{background-position-x: -28px}
-.sinnedbad.away{background-position-x: -56px}
-.sinnedbad.away.moving,.sinnedbad.away.prone,.sinnedbad.away.stunned{background-position-x: -84px}
+.setekh.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Setekh.png");
+}
 
-.skitter-stab-stab{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Skitter.png") no-repeat;}
-.skitter-stab-stab.home.moving,.skitter-stab-stab.home.prone,.skitter-stab-stab.home.stunned{background-position-x: -28px}
-.skitter-stab-stab.away{background-position-x: -56px}
-.skitter-stab-stab.away.moving,.skitter-stab-stab.away.prone,.skitter-stab-stab.away.stunned{background-position-x: -84px}
+.sinnedbad.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Sinnedbad.png");
+}
 
-.slibli{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Slibli.png") no-repeat;}
-.slibli.home.moving,.slibli.home.prone,.slibli.home.stunned{background-position-x: -28px}
-.slibli.away{background-position-x: -56px}
-.slibli.away.moving,.slibli.away.prone,.slibli.away.stunned{background-position-x: -84px}
+.skitter-stab-stab.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Skitter.png");
+}
 
-.soaren-hightower{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Soaren.png") no-repeat;}
-.soaren-hightower.home.moving,.soaren-hightower.home.prone,.soaren-hightower.home.stunned{background-position-x: -28px}
-.soaren-hightower.away{background-position-x: -56px}
-.soaren-hightower.away.moving,.soaren-hightower.away.prone,.soaren-hightower.away.stunned{background-position-x: -84px}
+.slibli.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Slibli.png");
+}
 
-.ugroth-bolgrot{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Ugroth.png") no-repeat;}
-.ugroth-bolgrot.home.moving,.ugroth-bolgrot.home.prone,.ugroth-bolgrot.home.stunned{background-position-x: -28px}
-.ugroth-bolgrot.away{background-position-x: -56px}
-.ugroth-bolgrot.away.moving,.ugroth-bolgrot.away.prone,.ugroth-bolgrot.away.stunned{background-position-x: -84px}
+.soaren-hightower.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Soaren.png");
+}
 
-.varag-ghoul-chewer{width: 29px;height: 29px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Varag.png") no-repeat;}
-.varag-ghoul-chewer.home.moving,.varag-ghoul-chewer.home.prone,.varag-ghoul-chewer.home.stunned{background-position-x: -29px}
-.varag-ghoul-chewer.away{background-position-x: -58px}
-.varag-ghoul-chewer.away.moving,.varag-ghoul-chewer.away.prone,.varag-ghoul-chewer.away.stunned{background-position-x: -87px}
+.ugroth-bolgrot.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Ugroth.png");
+}
 
-.wilhelm-chaney{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Wilhelm.png") no-repeat;}
-.wilhelm-chaney.home.moving,.wilhelm-chaney.home.prone,.wilhelm-chaney.home.stunned{background-position-x: -28px}
-.wilhelm-chaney.away{background-position-x: -56px}
-.wilhelm-chaney.away.moving,.wilhelm-chaney.away.prone,.wilhelm-chaney.away.stunned{background-position-x: -84px}
+.varag-ghoul-chewer.sprite {
+    --spH: 29;
+    background-image: url("/images/players/starplayers/Varag.png");
+}
 
-.willow-rosebark{width: 30px;height: 30px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Willow.png") no-repeat;}
-.willow-rosebark.home.moving,.willow-rosebark.home.prone,.willow-rosebark.home.stunned{background-position-x: -30px}
-.willow-rosebark.away{background-position-x: -60px}
-.willow-rosebark.away.moving,.willow-rosebark.away.prone,.willow-rosebark.away.stunned{background-position-x: -90px}
+.wilhelm-chaney.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Wilhelm.png");
+}
 
-.zara-the-slayer{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Zara.png") no-repeat;}
-.zara-the-slayer.home.moving,.zara-the-slayer.home.prone,.zara-the-slayer.home.stunned{background-position-x: -28px}
-.zara-the-slayer.away{background-position-x: -56px}
-.zara-the-slayer.away.moving,.zara-the-slayer.away.prone,.zara-the-slayer.away.stunned{background-position-x: -84px}
+.willow-rosebark.sprite {
+    --spH: 30;
+    background-image: url("/images/players/starplayers/Willow.png");
+}
 
-.zzharg-madeye{width: 28px;height: 28px;display: inline-block;background-position-x: 0px;background: url("/images/players/starplayers/Zzharg.png") no-repeat;}
-.zzharg-madeye.home.moving,.zzharg-madeye.home.prone,.zzharg-madeye.home.stunned{background-position-x: -28px}
-.zzharg-madeye.away{background-position-x: -56px}
-.zzharg-madeye.away.moving,.zzharg-madeye.away.prone,.zzharg-madeye.away.stunned{background-position-x: -84px}
+.zara-the-slayer.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Zara.png");
+}
+
+.zzharg-madeye.sprite {
+    --spH: 28;
+    background-image: url("/images/players/starplayers/Zzharg.png");
+}

@@ -1,38 +1,88 @@
-:root{--nun:-28px;--num:-29px;--nul:-32px;--nuxl:-38px;}
+:root {
+  --nun: 28;
+  --num: 29;
+  --nul: 32;
+  --nuxl: 38;
+}
 
-.nurgle.home {background: url("/images/players/nurgle/home.png") no-repeat;}
-.nurgle.away {background: url("/images/players/nurgle/away.png") no-repeat;}
+.nurgle.home {
+  background-image: url("/images/players/nurgle/home.png");
+}
 
-.nurgle{width: calc(-1 * var(--nun)); height: calc(-1 * var(--nun)); display: inline-block; background-position-x: 0px;}
-.nurgle.pestigor1,.nurgle.pestigor2,.nurgle.pestigor3,.nurgle.pestigor4{width: calc(-1 * var(--num)); height: calc(-1 * var(--num));}
-.nurgle.warrior1,.nurgle.warrior2,.nurgle.warrior3,.nurgle.warrior4{width: calc(-1 * var(--num)); height: calc(-1 * var(--num));}
-.nurgle.beast-of-nurgle{width: calc(-1 * var(--nuxl)); height: calc(-1 * var(--nuxl));}
+.nurgle.away {
+  background-image: url("/images/players/nurgle/away.png");
+}
 
-.nurgle.rotter1{background-position-y: 0px;}
-.nurgle.rotter2{background-position-y: var(--nun);}
-.nurgle.rotter3{background-position-y: calc(2 * var(--nun));}
-.nurgle.rotter4{background-position-y: calc(3 * var(--nun));}
-.nurgle.rotter5{background-position-y: calc(4 * var(--nun));}
-.nurgle.rotter6{background-position-y: calc(5 * var(--nun));}
-.nurgle.pestigor1{background-position-y: calc(6 * var(--nun));}
-.nurgle.pestigor2{background-position-y: calc(6 * var(--nun) + var(--num) );}
-.nurgle.pestigor3{background-position-y: calc(6 * var(--nun) + 2 * var(--num));}
-.nurgle.pestigor4{background-position-y: calc(6 * var(--nun) + 3 * var(--num));}
-.nurgle.warrior1{background-position-y: calc(6 * var(--nun) + 4 * var(--num));}
-.nurgle.warrior2{background-position-y: calc(6 * var(--nun) + 4 * var(--num) + var(--nul));}
-.nurgle.warrior3{background-position-y: calc(6 * var(--nun) + 4 * var(--num) + 2 * var(--nul));}
-.nurgle.warrior4{background-position-y: calc(6 * var(--nun) + 4 * var(--num) + 3 * var(--nul));}
-.nurgle.beast-of-nurgle{background-position-y: calc(6 * var(--nun) + 4 * var(--num) + 4 * var(--nul));}
+.nurgle.sprite {
+  --spH: 28;
+  --imW: 76;
+  --imH: 450;
+}
 
-.nurgle.moving{background-position-x: var(--nun);}
-.nurgle.pestigor1.moving,.nurgle.pestigor2.moving,.nurgle.pestigor3.moving,.nurgle.pestigor4.moving{background-position-x: var(--num);}
-.nurgle.warrior1.moving,.nurgle.warrior2.moving,.nurgle.warrior3.moving,.nurgle.warrior4.moving{background-position-x: var(--nul);}
-.nurgle.beast-of-nurgle.moving{background-position-x: var(--nuxl);}
-.nurgle.prone{background-position-x: var(--nun);}
-.nurgle.pestigor1.prone,.nurgle.pestigor2.prone,.nurgle.pestigor3.prone,.nurgle.pestigor4.prone{background-position-x: var(--num);}
-.nurgle.warrior1.prone,.nurgle.warrior2.prone,.nurgle.warrior3.prone,.nurgle.warrior4.prone{background-position-x: var(--nul);}
-.nurgle.beast-of-nurgle.prone{background-position-x: var(--nuxl);}
-.nurgle.stunned{background-position-x: var(--nun);}
-.nurgle.pestigor1.stunned,.nurgle.pestigor2.stunned,.nurgle.pestigor3.stunned,.nurgle.pestigor4.stunned{background-position-x: var(--num);}
-.nurgle.warrior1.stunned,.nurgle.warrior2.stunned,.nurgle.warrior3.stunned,.nurgle.warrior4.stunned{background-position-x: var(--nul);}
-.nurgle.beast-of-nurgle.stunned{background-position-x: var(--nuxl);}
+.nurgle.pestigor1, .nurgle.pestigor2, .nurgle.pestigor3, .nurgle.pestigor4 {
+  --spH: 29;
+}
+
+.nurgle.warrior1, .nurgle.warrior2, .nurgle.warrior3, .nurgle.warrior4 {
+  --spH: 32;
+}
+
+.nurgle.beast-of-nurgle {
+  --spH: 38;
+}
+
+.nurgle.rotter2 {
+  --spY: var(--nun);
+}
+
+.nurgle.rotter3 {
+  --spY: calc(2 * var(--nun));
+}
+
+.nurgle.rotter4 {
+  --spY: calc(3 * var(--nun));
+}
+
+.nurgle.rotter5 {
+  --spY: calc(4 * var(--nun));
+}
+
+.nurgle.rotter6 {
+  --spY: calc(5 * var(--nun));
+}
+
+.nurgle.pestigor1 {
+  --spY: calc(6 * var(--nun));
+}
+
+.nurgle.pestigor2 {
+  --spY: calc(6 * var(--nun) + var(--num));
+}
+
+.nurgle.pestigor3 {
+  --spY: calc(6 * var(--nun) + 2 * var(--num));
+}
+
+.nurgle.pestigor4 {
+  --spY: calc(6 * var(--nun) + 3 * var(--num));
+}
+
+.nurgle.warrior1 {
+  --spY: calc(6 * var(--nun) + 4 * var(--num));
+}
+
+.nurgle.warrior2 {
+  --spY: calc(6 * var(--nun) + 4 * var(--num) + var(--nul));
+}
+
+.nurgle.warrior3 {
+  --spY: calc(6 * var(--nun) + 4 * var(--num) + 2 * var(--nul));
+}
+
+.nurgle.warrior4 {
+  --spY: calc(6 * var(--nun) + 4 * var(--num) + 3 * var(--nul));
+}
+
+.nurgle.beast-of-nurgle {
+  --spY: calc(6 * var(--nun) + 4 * var(--num) + 4 * var(--nul));
+}

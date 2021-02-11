@@ -1,19 +1,54 @@
-:root{--kim:-28px;--kil:-38px}
+:root {
+  --kim: 28;
+  --kil: 38;
+}
 
-.kislev{width: calc(-1 * var(--kim));height: calc(-1 * var(--kim));display: inline-block;background-position-x: 0px;}
-.kislev.bear {width: calc(-1 * var(--kil));height: calc(-1 * var(--kil))}
+.kislev.sprite {
+  --spH: 28;
+  --imW: 76;
+  --imH: 262;
+}
 
-.kislev.home {background: url("/images/players/kislev/home.png") no-repeat;}
-.kislev.away {background: url("/images/players/kislev/away.png") no-repeat;}
+.kislev.bear {
+  --spH: 38;
+}
 
-.kislev.lineman1{background-position-y: 0px;}
-.kislev.lineman2{background-position-y: var(--kim);}
-.kislev.lineman3{background-position-y: calc(2 * var(--kim));}
-.kislev.lineman4{background-position-y: calc(3 * var(--kim));}
-.kislev.catcher1{background-position-y: calc(4 * var(--kim));}
-.kislev.catcher2{background-position-y: calc(5 * var(--kim));}
-.kislev.blitzer1{background-position-y: calc(6 * var(--kim));}
-.kislev.blitzer2{background-position-y: calc(7 * var(--kim));}
-.kislev.bear{background-position-y: calc(8 * var(--kim));}
-.kislev.moving,.kislev.prone,.kislev.stunned {background-position-x: var(--kim);}
-.kislev.bear.moving,.kislev.bear.prone,.kislev.bear.stunned {background-position-x: var(--kil);}
+.kislev.home {
+  background-image: url("/images/players/kislev/home.png");
+}
+
+.kislev.away {
+  background-image: url("/images/players/kislev/away.png");
+}
+
+.kislev.lineman2 {
+  --spY: var(--kim);
+}
+
+.kislev.lineman3 {
+  --spY: calc(2 * var(--kim));
+}
+
+.kislev.lineman4 {
+  --spY: calc(3 * var(--kim));
+}
+
+.kislev.catcher1 {
+  --spY: calc(4 * var(--kim));
+}
+
+.kislev.catcher2 {
+  --spY: calc(5 * var(--kim));
+}
+
+.kislev.blitzer1 {
+  --spY: calc(6 * var(--kim));
+}
+
+.kislev.blitzer2 {
+  --spY: calc(7 * var(--kim));
+}
+
+.kislev.bear {
+  --spY: calc(8 * var(--kim));
+}

@@ -1,28 +1,18 @@
 .khemri.home {
   background-image: url("/images/players/khemri/home.png");
-  background-repeat: no-repeat;
 }
 
 .khemri.away {
   background-image: url("/images/players/khemri/away.png");
-  background-repeat: no-repeat;
 }
 
 .khemri.sprite {
   --imH: 284;
   --imW: 60;
-  --spW: 28;
   --spH: 28;
-  --spX: 0;
-  --spY: 0;
-  --spScale: 75%;
-  width: var(--spScale);
-  height: var(--spScale);
 }
 
 .khemri.mummy1, .khemri.mummy2 {
-  --spScale: 100%;
-  --spW: 30;
   --spH: 30;
 }
 
@@ -60,12 +50,4 @@
 
 .khemri.mummy2 {
   --spY: 254;
-}
-
-.khemri.moving, .khemri.prone, .khemri.stunned {
-  --imX: 28;
-}
-
-.khemri.mummy1.moving, .khemri.mummy2.moving, .khemri.mummy1.prone, .khemri.mummy2.prone, .khemri.mummy1.stunned, .khemri.mummy2.stunned {
-  --imX: 30;
 }

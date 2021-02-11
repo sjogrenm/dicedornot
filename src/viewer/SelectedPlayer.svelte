@@ -152,6 +152,7 @@
     bottom: -5%;
     right: -5%;
     width: 40%;
+    z-index: 10;
   }
   .cas img {
     width: 100%;

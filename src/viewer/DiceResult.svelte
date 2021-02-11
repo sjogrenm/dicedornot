@@ -26,6 +26,7 @@
     position: absolute;
     display: inline-block;
     text-align: center;
+    z-index: 5;
   }
   .dice {
     background-image: url("/images/dice.png");

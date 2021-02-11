@@ -1,15 +1,34 @@
-:root{--him:-28px;}
+:root {
+  --him: 28;
+}
 
-.highelf.home {background: url("/images/players/highelf/home.png") no-repeat;}
-.highelf.away {background: url("/images/players/highelf/away.png") no-repeat;}
+.highelf.home {
+  background-image: url("/images/players/highelf/home.png");
+}
 
-.highelf{width: calc(-1 * var(--him)); height: calc(-1 * var(--him)); display: inline-block; background-position-x: 0px;}
+.highelf.away {
+  background-image: url("/images/players/highelf/away.png");
+}
 
-.highelf.lineman1{background-position-y: 0px;}
-.highelf.lineman2{background-position-y: 0px;}
-.highelf.thrower{background-position-y: var(--him);}
-.highelf.blitzer{background-position-y: calc(2 * var(--him));}
-.highelf.catcher1{background-position-y: calc(3 * var(--him));}
-.highelf.catcher2{background-position-y: calc(4 * var(--him));}
+.highelf.sprite {
+  --imW: 56;
+  --imH: 168;
+  --spH: 28;
+}
 
-.highelf.moving,.highelf.prone,.highelf.stunned{background-position-x: var(--him);}
+.highelf.thrower {
+  --spY: var(--him);
+}
+
+.highelf.blitzer {
+  --spY: calc(2 * var(--him));
+}
+
+.highelf.catcher1 {
+  --spY: calc(3 * var(--him));
+}
+
+.highelf.catcher2 {
+  --spY: calc(4 * var(--him));
+}
+
