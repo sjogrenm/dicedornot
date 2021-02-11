@@ -4,7 +4,7 @@
   import * as vega from "vega";
   import vegaSpec from "./vega-spec.js";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
-  import { ReplayPosition , REPLAY_STEP} from "./replay-utils.js";
+  import { ReplayPosition , REPLAY_SUB_STEP} from "./replay-utils.js";
 import { percentRank } from "./utils.js";
 
   let rolls, view, playHead, cumNetValues = {actuals: {}, simulated: {}}, activeTimeout, loadedReplay;
@@ -28,7 +28,7 @@ import { percentRank } from "./utils.js";
       let nextRoll = rolls.findIndex((roll) => {
         const rollPosition = new ReplayPosition(
           roll.stepIndex,
-          REPLAY_STEP.BoardAction,
+          REPLAY_SUB_STEP.BoardAction,
           roll.actionIndex,
           roll.resultIndex
         );

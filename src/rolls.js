@@ -9,7 +9,7 @@ import {
   BLOCK,
   BLOCK_DIE,
 } from './constants.js';
-import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_STEP } from './replay-utils.js';
+import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP } from './replay-utils.js';
 import {
   SingleValue,
   SimpleDistribution,
@@ -208,7 +208,7 @@ export class Roll {
   }
 
   get startIndex() {
-    return new ReplayPosition(this.stepIndex, REPLAY_STEP.BoardAction, this.actionIndex, this.resultIndex);
+    return new ReplayPosition(this.stepIndex, REPLAY_SUB_STEP.BoardAction, this.actionIndex, this.resultIndex);
   }
 
   get activeTeam() {

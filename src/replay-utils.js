@@ -40,7 +40,7 @@ export function translateStringNumberList(str) {
     return numberList;
 }
 
-export const REPLAY_STEP = {
+export const REPLAY_SUB_STEP = {
   SetupAction: 1,
   BoardAction: 2,
   EndTurn: 3,
@@ -49,51 +49,45 @@ export const REPLAY_STEP = {
 }
 
 export const REPLAY_KEY = {
-  [REPLAY_STEP.SetupAction]: 'RulesEventSetupAction',
-  [REPLAY_STEP.BoardAction]: 'RulesEventBoardAction',
-  [REPLAY_STEP.EndTurn]: 'RulesEventEndTurn',
-  [REPLAY_STEP.BoardState]: 'BoardState',
+  [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetupAction',
+  [REPLAY_SUB_STEP.BoardAction]: 'RulesEventBoardAction',
+  [REPLAY_SUB_STEP.EndTurn]: 'RulesEventEndTurn',
+  [REPLAY_SUB_STEP.BoardState]: 'BoardState',
 }
 
 
-function nextState(replayStep, start) {
-  let next = start;
-  if (next > REPLAY_STEP.NextReplayStep) {
-    return END;
+function nextState(replayStep, subStep) {
+  for (var nextSubStep = subStep; nextSubStep < REPLAY_SUB_STEP.NextReplayStep; nextSubStep++) {
+    if (replayStep[REPLAY_KEY[nextSubStep]]) {
+      return nextSubStep;
+    }
   }
-  if (next == REPLAY_STEP.NextReplayStep) {
-    return next;
-  }
-  if (replayStep[REPLAY_KEY[next]]) {
-    return next;
-  } else {
-    return nextState(replayStep, next + 1);
-  }
+  return REPLAY_SUB_STEP.NextReplayStep;
 }
 export class ReplayPosition {
   step = 0;
-  state = REPLAY_STEP.SetupAction;
+  subStep = REPLAY_SUB_STEP.SetupAction;
   action = null;
   result = null;
 
-  constructor(step, state, action, result) {
+  constructor(step, subStep, action, result) {
     this.step = step || 0;
-    this.state = state || REPLAY_STEP.SetupAction;
+    this.subStep = subStep || REPLAY_SUB_STEP.SetupAction;
     this.action = action;
     this.result = result;
   }
 
   toString() {
-    if (this.state == REPLAY_STEP.BoardAction) {
-      return `Step-${this.step}.${REPLAY_KEY[this.state]}.${this.action}.${this.result}`;
+    if (this.subStep == REPLAY_SUB_STEP.BoardAction) {
+      return `Step-${this.step}.${REPLAY_KEY[this.subStep]}.${this.action}.${this.result}`;
     } else {
-      return `Step-${this.step}.${REPLAY_KEY[this.state]}`;
+      return `Step-${this.step}.${REPLAY_KEY[this.subStep]}`;
     }
   }
 
   toNextPosition(replay) {
     const replayStep = replay.ReplayStep[this.step];
-    if (this.state == REPLAY_STEP.BoardAction) {
+    if (this.subStep == REPLAY_SUB_STEP.BoardAction) {
       const actions = ensureList(replayStep.RulesEventBoardAction);
       const results = ensureList(actions[this.action].Results.BoardActionResult);
       if (this.result + 1 < results.length) {
@@ -106,14 +100,17 @@ export class ReplayPosition {
         return this;
       }
     }
-    const next = nextState(replayStep, this.state + 1);
-    if (next == REPLAY_STEP.NextReplayStep) {
+    const next = nextState(replayStep, this.subStep + 1);
+    if (next == REPLAY_SUB_STEP.NextReplayStep) {
       this.step += 1;
-      this.state = nextState(replay.ReplayStep[this.step], REPLAY_STEP.SetupAction);
+      if (this.step >= replay.ReplayStep.length) {
+        return END;
+      }
+      this.subStep = nextState(replay.ReplayStep[this.step], REPLAY_SUB_STEP.SetupAction);
     } else {
-      this.state = next;
+      this.subStep = next;
     }
-    if (this.state == REPLAY_STEP.BoardAction) {
+    if (this.subStep == REPLAY_SUB_STEP.BoardAction) {
       this.action = this.result = 0;
     } else {
       this.action = this.result = null;
@@ -137,10 +134,10 @@ export class ReplayPosition {
     if (this.step < other.step) {
       return false;
     }
-    if (this.state > other.state) {
+    if (this.subStep > other.subStep) {
       return true;
     }
-    if (this.state < other.state) {
+    if (this.subStep < other.subStep) {
       return false;
     }
     if (this.action > other.action) {
@@ -164,7 +161,7 @@ export class ReplayPosition {
     if (other === BEGINNING || other === END) {
       return false;
     }
-    return (this.step == other.step && this.state == other.state && this.action == other.action && this.result == other.result);
+    return (this.step == other.step && this.subStep == other.subStep && this.action == other.action && this.result == other.result);
   }
   atOrAfter(other) {
     return this.after(other) || this.equal(other);

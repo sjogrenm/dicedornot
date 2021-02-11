@@ -116,7 +116,7 @@
         <li>Analyzer: Piling On isn't accounted for in block result options</li>
         <li>Analyzer: Apo rolls aren't merged correctly</li>
         <li>Viewer: Inducements aren't displayed</li>
-        <li>Viewer: Throw teammate crashes the viewer</li>
+        <li>Viewer: Throw teammate doesn't correctly render intermediate states</li>
         <li>Viewer/Analyzer: Star Player names are wrong</li>
         <li>Analyzer: Frenzy blocks aren't merged together</li>
         <li>Analyzer: Many roll types:

@@ -20,8 +20,9 @@
     translateStringNumberList,
     ensureList,
     REPLAY_KEY,
-    REPLAY_STEP,
+    REPLAY_SUB_STEP,
     ReplayPosition,
+    END,
   } from "../replay-utils.js";
   import { replay, replayCurrent, replayTarget, timing, error } from "../stores.js";
   let lastChainPush,
@@ -256,6 +257,10 @@
 
   async function handleReplay() {
     try {
+      if ($replayCurrent == END) {
+        playing = false;
+        return;
+      }
       const step = $replay.fullReplay.ReplayStep[$replayCurrent.step];
       if ($replayTarget) {
         const target = $replayTarget;
@@ -263,12 +268,12 @@
         await jumpToPosition(target);
         return;
       }
-      const subStep = step[REPLAY_KEY[$replayCurrent.state]];
-      switch ($replayCurrent.state) {
-        case REPLAY_STEP.SetupAction:
+      const subStep = step[REPLAY_KEY[$replayCurrent.subStep]];
+      switch ($replayCurrent.subStep) {
+        case REPLAY_SUB_STEP.SetupAction:
           await handleSetupAction(subStep);
           break;
-        case REPLAY_STEP.BoardAction:
+        case REPLAY_SUB_STEP.BoardAction:
           let action = ensureList(subStep)[$replayCurrent.action];
           if (!action) {
             console.error("No action found", {
@@ -282,10 +287,10 @@
           ];
           await handleBoardAction(action, result);
           break;
-        case REPLAY_STEP.EndTurn:
+        case REPLAY_SUB_STEP.EndTurn:
           await handleEndTurn(subStep);
           break;
-        case REPLAY_STEP.BoardState:
+        case REPLAY_SUB_STEP.BoardState:
           await handleBoardState(subStep);
           break;
       }
@@ -301,7 +306,7 @@
     clearTemporaryState();
     $replayCurrent = new ReplayPosition(
       position.step - 1,
-      REPLAY_STEP.BoardState
+      REPLAY_SUB_STEP.BoardState
     );
     skipping = true;
     while (position.after($replayCurrent)) {
@@ -784,14 +789,18 @@
     }
 
     let from = setPitchSquare(action.Order.CellFrom);
-    from.ball.held = false;
-    await step();
+    if (from.ball) {
+      from.ball.held = false;
+    }
+    await step(.5);
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
       let target = setPitchSquare(action.Order.CellTo.Cell);
-      target.ball = from.ball;
-      from.ball = null;
+      if (from.ball) {
+        target.ball = from.ball;
+        from.ball = null;
+      }
       await step();
     }
   }
@@ -872,7 +881,6 @@
   {#each races as race (race)}
     <link rel="stylesheet" href="/styles/{race}.css" />
   {/each}
-  <link rel="stylesheet" href="/styles/starplayers.css" />
   <link rel="stylesheet" href="/styles/sprite.css" />
   <link rel="stylesheet" href="/styles/skills.css" />
   <link
