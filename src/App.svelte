@@ -113,7 +113,6 @@
           Analyzer: Catch and scatter aren't accounted for in pass/handoff
           expectations
         </li>
-        <li>Analyzer: Mighty Blow isn't accounted for in block expectations</li>
         <li>Analyzer: Interceptions are accounted on the incorrect player</li>
         <li>Analyzer: Piling On isn't accounted for in block result options</li>
         <li>Analyzer: Apo rolls aren't merged correctly</li>

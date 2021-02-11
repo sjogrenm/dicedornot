@@ -537,18 +537,20 @@ export class Roll {
     );
   }
 
-  armorRoll(player) {
+  armorRoll(player, damageBonusActive) {
     return (
-      this.armorRollCache[player.id] ||
-      (this.armorRollCache[player.id] = new ArmorRoll({
+      this.armorRollCache[`${player.id}-${damageBonusActive}`] ||
+      (this.armorRollCache[`${player.id}-${damageBonusActive}`] = new ArmorRoll({
         initialBoardState: this.initialBoardState,
         finalBoardState: this.finalBoardState,
         activePlayer: player,
+        modifier: damageBonusActive ? 1 : 0,
+        damageBonusActive
       }))
     );
   }
 
-  knockdownValue(player, includeExpectedValues) {
+  knockdownValue(player, includeExpectedValues, damageBonusActive) {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
     const playerValue = this.onPitchValue(player);
@@ -560,7 +562,7 @@ export class Roll {
     }
     var result = playerValue.product(...scalingFactors).named(`KD(${player.name})`);
     if (includeExpectedValues) {
-      result = result.add(this.armorRoll(player).possibleOutcomes.named('Armor Roll'));
+      result = result.add(this.armorRoll(player, damageBonusActive).possibleOutcomes.named('Armor Roll'));
     }
     return result;
   }
@@ -769,7 +771,7 @@ class BlockRoll extends Roll {
 
     switch (result) {
       case BLOCK.AttackerDown:
-        return this.knockdownValue(attacker, expected).add(
+        return this.knockdownValue(attacker, expected, defenderSkills.includes(SKILL.MightyBlow)).add(
           this.turnoverValue,
         );
       case BLOCK.BothDown:
@@ -807,14 +809,14 @@ class BlockRoll extends Roll {
           const blockBlock = new SingleValue('Block/Block', 0).add(expected ? this.dependentMoveValues : null);
           base = blockBlock;
         } else if (aBlock) {
-          const defDown = this.knockdownValue(defender, expected).add(expected ? this.dependentMoveValues : null);
+          const defDown = this.knockdownValue(defender, expected, attackerSkills.includes(SKILL.MightyBlow)).add(expected ? this.dependentMoveValues : null);
           base = defDown;
         } else if (dBlock) {
-          const attDown = this.knockdownValue(attacker, expected);
+          const attDown = this.knockdownValue(attacker, expected, defenderSkills.includes(SKILL.MightyBlow));
           base = attDown;
         } else {
-          const bothDown = this.knockdownValue(defender, expected).add(
-            this.knockdownValue(attacker, expected),
+          const bothDown = this.knockdownValue(defender, expected, attackerSkills.includes(SKILL.MightyBlow)).add(
+            this.knockdownValue(attacker, expected, defenderSkills.includes(SKILL.MightyBlow)),
             this.turnoverValue
           );
           base = bothDown;
@@ -838,10 +840,10 @@ class BlockRoll extends Roll {
               : this.knockdownValue(defender, false).product(new SingleValue('Push', 0.33)).named(`Push(${defender.name})`)
           ).add(expected ? this.dependentMoveValues : null);
         } else {
-          return this.knockdownValue(defender, expected).add(expected ? this.dependentMoveValues : null);
+          return this.knockdownValue(defender, expected, attackerSkills.includes(SKILL.MightyBlow)).add(expected ? this.dependentMoveValues : null);
         }
       case BLOCK.DefenderDown:
-        return this.knockdownValue(defender, expected).add(expected ? this.dependentMoveValues : null);
+        return this.knockdownValue(defender, expected, attackerSkills.includes(SKILL.MightyBlow)).add(expected ? this.dependentMoveValues : null);
     }
   }
 
@@ -976,8 +978,9 @@ class ModifiedD6SumRoll extends Roll {
     }
   }
   value(dice, expected) {
-    if (dice.reduce((a, b) => a + b, 0) >= this.modifiedTarget) {
-      return this.passValue(expected).add(expected ? this.dependentMoveValues : null);
+    let rollTotal = dice.reduce((a, b) => a + b, 0);
+    if (rollTotal >= this.modifiedTarget) {
+      return this.passValue(expected, rollTotal, this.modifiedTarget).add(expected ? this.dependentMoveValues : null);
     } else if (
       this.dependentRolls.length >= 1 &&
       this.dependentRolls[0].constructor == this.constructor &&
@@ -985,7 +988,7 @@ class ModifiedD6SumRoll extends Roll {
     ) {
       return new SingleValue(`Rerolled ${this.rollName}`, this.rerollValue);
     } else {
-      return this.failValue(expected);
+      return this.failValue(expected, rollTotal, this.modifiedTarget);
     }
   }
   get possibleOutcomes() {
@@ -999,35 +1002,59 @@ class ModifiedD6SumRoll extends Roll {
       }
       diceSums = newSums;
     }
-
-    var passingSums = [];
-    var failingSums = [];
-    for (const sum of diceSums) {
+    diceSums.sort((a, b) => a - b);
+    var sumsByOutcome = diceSums.reduce((acc, sum) => {
+      let value;
       if (sum >= this.modifiedTarget) {
-        passingSums.unshift(sum);
+        value = this.passValue(true, sum, this.modifiedTarget).add(this.dependentMoveValues);
       } else {
-        failingSums.unshift(sum);
+        value = this.hasSkillReroll ? this.reroll.possibleOutcomes : this.failValue(true, sum, this.modifiedTarget)
       }
-    }
-    var outcomes = [];
-    if (passingSums.length > 0) {
-      const minPassing = Math.min(...passingSums);
-      const maxPassing = Math.max(...passingSums);
-      outcomes.push({
-        name: minPassing === maxPassing ? minPassing : `${minPassing}-${maxPassing}`,
-        value: this.passValue(true).add(this.dependentMoveValues),
-        weight: passingSums.length / (passingSums.length + failingSums.length)
-      });
-    }
-    if (failingSums.length > 0) {
-      const minFailing = Math.min(...failingSums);
-      const maxFailing = Math.max(...failingSums);
-      outcomes.push({
-        name: minFailing === maxFailing ? minFailing : `${minFailing}-${maxFailing}`,
-        value: this.hasSkillReroll ? this.reroll.possibleOutcomes : this.failValue(true),
-        weight: failingSums.length / (passingSums.length + failingSums.length)
-      });
-    }
+      if (acc.length == 0) {
+        acc.push({
+          min: sum,
+          max: sum,
+          count: 1,
+          value
+        })
+      } else {
+        var lastValue = acc[acc.length - 1];
+        if (lastValue.value.valueOf() == value.valueOf()) {
+          if (sum == lastValue.min - 1) {
+            lastValue.min = sum;
+            lastValue.count += 1;
+          } else if (sum == lastValue.max + 1) {
+            lastValue.max = sum;
+            lastValue.count += 1;
+          } else if (sum >= lastValue.min && sum <= lastValue.max) {
+            lastValue.count += 1;
+          } else {
+            acc.push({
+              min: sum,
+              max: sum,
+              count: 1,
+              value
+            })
+          }
+        } else {
+          acc.push({
+            min: sum,
+            max: sum,
+            count: 1,
+            value
+          })
+        }
+      }
+      return acc;
+    }, []);
+
+    var outcomes = sumsByOutcome.map(outcome => {
+      return {
+        name: outcome.min === outcome.max ? outcome.min.toString() : `${outcome.min}-${outcome.max}`,
+        value: outcome.value,
+        weight: outcome.count / diceSums.length
+      }
+    });
     Object.defineProperty(this, 'possibleOutcomes', { value: new SimpleDistribution(outcomes) });
     return this.possibleOutcomes;
   }
@@ -1083,12 +1110,15 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
   }
 }
 
-// TODO: Detect which armor/injury rolls are from fouls, and classify as such
-// TODO: Include foul send-offs in armor/injury roll outcomes
 class ArmorRoll extends ModifiedD6SumRoll {
   static numDice = 2;
   static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
   static dependentConditions = [foulDamage];
+
+  constructor(attrs) {
+    super(attrs);
+    this.injuryRollCache = {};
+  }
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -1111,6 +1141,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
     if (args.isFoul) {
       args.foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
+      args.damageBonusActive = args.foulingPlayer.skills.includes(SKILL.DirtyPlayer);
     }
     return args;
   }
@@ -1150,16 +1181,15 @@ class ArmorRoll extends ModifiedD6SumRoll {
     return 0;
   }
 
-  get injuryRoll() {
-    Object.defineProperty(this, 'injuryRoll', {
-      value: new InjuryRoll({
+  injuryRoll(damageBonusAvailable) {
+    let result = this.injuryRollCache[damageBonusAvailable] ||
+      (this.injuryRollCache[damageBonusAvailable] = new InjuryRoll({
         initialBoardState: this.initialBoardState,
         finalBoardState: this.finalBoardState,
         activePlayer: this.activePlayer,
-        modifier: 0,
-      })
-    });
-    return this.injuryRoll;
+        modifier: damageBonusAvailable ? 1 : 0,
+      }));
+    return result;
   }
 
   value(dice, expected) {
@@ -1170,12 +1200,16 @@ class ArmorRoll extends ModifiedD6SumRoll {
     return value;
   }
 
-  passValue(expected) {
+  passValue(expected, rollTotal, modifiedTarget) {
     // passValue is negative because "Passing" an armor roll means rolling higher than
     // armor, which is a bad thing.
+    let damageBonusAvailable = this.damageBonusActive;
+    if (this.damageBonusActive && rollTotal == modifiedTarget) {
+      damageBonusAvailable = false;
+    }
     var injuredPlayerValue = this.stunValue(this.activePlayer); // Player is at least stunned = out for 2 turns
     if (expected) {
-      injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll.possibleOutcomes.named('Injury Roll'));
+      injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll(damageBonusAvailable).possibleOutcomes.named('Injury Roll'));
     }
     if (this.isPileOn) {
       const pileOnCost = this.knockdownValue(this.pilingOnPlayer, false);

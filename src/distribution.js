@@ -161,7 +161,7 @@ export class SimpleDistribution extends Distribution {
         }
         return acc;
       }, {})
-    )
+    );
   }
   _flat() {
     return this.values.flatMap(value => {

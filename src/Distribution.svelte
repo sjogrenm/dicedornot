@@ -24,7 +24,7 @@
     </summary>
     {#if open}
       <ul class="list-group" on:click|stopPropagation>
-        {#each dist.values as value}
+        {#each dist.values.sort((a, b) => a.name > b.name) as value}
           {#if value.value instanceof Distribution}
             <li class="list-group-item list-group-item-action">
               <svelte:self
