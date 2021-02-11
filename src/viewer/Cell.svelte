@@ -16,7 +16,7 @@
     let activeClass = active ? "active" : null;
     let targetClass = target ? "target" : null;
     let pushbackChoiceClass = pushbackChoice ? "pushback-choice" : null;
-    let movedClass = target ? "moved" : null;
+    let movedClass = moved ? "moved" : null;
     cellClass = activeClass || targetClass || pushbackChoiceClass || plusClass || movedClass || "";
     if (active) {
       inFn = receive;
