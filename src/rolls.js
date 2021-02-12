@@ -1073,7 +1073,7 @@ class ModifiedD6SumRoll extends Roll {
   }
   get hasSkillReroll() {
     return this.activePlayer.skills.includes(this.constructor.rerollSkill) &&
-      !this.skillsInEffect.includes(this.constructor.rerollCancelSkill) &&
+      !this.skillsInEffect.map(info => info.SkillId).includes(this.constructor.rerollCancelSkill) &&
       ![ROLL_STATUS.RerollWithSkill, ROLL_STATUS.RerollTaken].includes(this.rollStatus);
   }
   simulateDice() {
