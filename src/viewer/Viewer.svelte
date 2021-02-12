@@ -967,7 +967,7 @@
     {#each [...new Set($replay.unknownRolls.map(roll => roll.name))] as name}
     <li>{name}</li>
     {/each}
-  </ul>me
+  </ul>
 </Alert>
 {/if}
 
