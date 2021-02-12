@@ -12,7 +12,7 @@
   import { replay } from "./stores.js";
   import TurnSelectors from "./TurnSelectors.svelte";
   import Error from "./Error.svelte";
-
+  
   let homePercentile, awayPercentile, loading;
   $: {
     console.log("Replay", $replay);
@@ -20,82 +20,82 @@
 </script>
 
 <svelte:head>
-  <meta charset="utf-8" />
-  <meta http-equiv="x-ua-compatible" content="ie=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta
-    property="og:title"
-    content="Diced or Not? - Blood Bowl 2 Replay Luck Analyzer"
-  />
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="http://vengefulpickle.com/DicedOrNot" />
-  <meta
-    property="og:description"
-    content="Blood Bowl 2 replay and luck analyzer. Use it to decide whether you actually got diced."
-  />
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:url" content="http://vengefulpickle.com/DicedOrNot" />
-  <meta
-    name="twitter:title"
-    content="Diced or Not? - Blood Bowl 2 Replay Luck Analyzer"
-  />
-  <meta
-    name="twitter:description"
-    content="Blood Bowl 2 replay luck analyzer. Use it to decide whether you actually got diced."
-  />
-  <title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
-  <link rel="stylesheet" href="/styles/theme.css" />
+<meta charset="utf-8" />
+<meta http-equiv="x-ua-compatible" content="ie=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+property="og:title"
+content="Diced or Not? - Blood Bowl 2 Replay Luck Analyzer"
+/>
+<meta property="og:type" content="website" />
+<meta property="og:url" content="http://vengefulpickle.com/DicedOrNot" />
+<meta
+property="og:description"
+content="Blood Bowl 2 replay and luck analyzer. Use it to decide whether you actually got diced."
+/>
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:url" content="http://vengefulpickle.com/DicedOrNot" />
+<meta
+name="twitter:title"
+content="Diced or Not? - Blood Bowl 2 Replay Luck Analyzer"
+/>
+<meta
+name="twitter:description"
+content="Blood Bowl 2 replay luck analyzer. Use it to decide whether you actually got diced."
+/>
+<title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
+<link rel="stylesheet" href="/styles/theme.css" />
 </svelte:head>
 
 <body>
   <Nav bind:loading />
   <Error />
   {#if $replay}
-    <Container fluid role="main">
-      <Row>
-        <Col>
-          <Diced
-            homeTeam={$replay.gameDetails.homeTeam.coachName}
-            awayTeam={$replay.gameDetails.awayTeam.coachName}
-            {homePercentile}
-            {awayPercentile}
-          />
-          <Summary
-            gameDetails={$replay.gameDetails}
-            filename={$replay.fullReplay.filename}
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Col lg="9">
-          {#key $replay.fullReplay.filename}
-            <Viewer />
-          {/key}
-        </Col>
-        <Col lg="3" class="justify-content-center">
-          <TurnSelectors />
-          <RollDetails />
-        </Col>
-      </Row>
-      <Row>
-        <Col>
-          <Results bind:homePercentile bind:awayPercentile />
-        </Col>
-      </Row>
-    </Container>
-    <div class="container mt-4" role="main">
-      <ReplayLoader bind:loading />
-      <Explanation />
-    </div>
+  <Container fluid role="main">
+    <Row>
+      <Col>
+        <Diced
+        homeTeam={$replay.gameDetails.homeTeam.coachName}
+        awayTeam={$replay.gameDetails.awayTeam.coachName}
+        {homePercentile}
+        {awayPercentile}
+        />
+        <Summary
+        gameDetails={$replay.gameDetails}
+        filename={$replay.fullReplay.filename}
+        />
+      </Col>
+    </Row>
+    <Row>
+      <Col lg="9">
+        {#key $replay.fullReplay.filename}
+        <Viewer />
+        {/key}
+      </Col>
+      <Col lg="3" class="justify-content-center">
+        <TurnSelectors />
+        <RollDetails />
+      </Col>
+    </Row>
+    <Row>
+      <Col>
+        <Results bind:homePercentile bind:awayPercentile />
+      </Col>
+    </Row>
+  </Container>
+  <div class="container mt-4" role="main">
+    <ReplayLoader bind:loading />
+    <Explanation />
+  </div>
   {:else}
-    <div class="container">
-      <Jumbotron>
-        <About />
-        <ReplayLoader bind:loading />
-      </Jumbotron>
-    </div>
+  <div class="container">
+    <Jumbotron>
+      <About />
+      <ReplayLoader bind:loading />
+    </Jumbotron>
+  </div>
   {/if}
-
+  
   <Container class="pt-2 pb-2">
     <details>
       <summary><span class="font-weight-bold">Known Issues</span></summary>
@@ -127,51 +127,52 @@
         <li>Analyzer: Push/Follow Up/Standfirm affects on player position value aren't accounted for</li>
         <li>Analyzer: Many roll types:
           <ul>
-            <li>Kickoff Scatter</li>
-            <li>Throw-in Roll</li>
-            <li>Touch Back</li>
-            <li>LonerRoll,</li>
-            <li>Inaccurate Pass Scatter</li>
             <li>AlwaysHungryRoll</li>
-            <li>EatTeammate,</li>
+            <li>Animosity</li>
+            <li>BallAndChain</li>
+            <li>Bite</li>
+            <li>Bloodlust</li>
+            <li>Bomb KD</li>
+            <li>Bribe</li>
+            <li>Chainsaw (Kickback?)</li>
+            <li>Chainsaw Armor</li>
+            <li>Diving Tackle</li>
+            <li>EatTeammate</li>
+            <li>FansRoll</li>
+            <li>HailMaryPassRoll,</li>
+            <li>Halfling Chef</li>
+            <li>HypnoticGazeRoll,</li>
+            <li>Inaccurate Pass Scatter</li>
+            <li>Juggernaut</li>
+            <li>Kickoff Gust</li>
+            <li>Kickoff Scatter</li>
+            <li>LonerRoll,</li>
+            <li>Multiblock</li>
+            <li>ProRoll,</li>
+            <li>Raise Dead</li>
             <li>SafeThrow</li>
             <li>Shadowing</li>
-            <li>StabRoll</li>
-            <li>Tentacles</li>
-            <li>Chainsaw (Kickback?)</li>
-            <li>BallAndChain</li>
-            <li>HailMaryPassRoll,</li>
-            <li>Diving Tackle</li>
-            <li>ProRoll,</li>
-            <li>HypnoticGazeRoll,</li>
-            <li>Animosity</li>
-            <li>Bloodlust</li>
-            <li>Bite</li>
-            <li>Bribe</li>
-            <li>Multiblock</li>
-            <li>Kickoff Gust</li>
             <li>Some sort of wrestle roll that doesn't do anything</li>
-            <li>Juggernaut</li>
+            <li>StabRoll</li>
             <li>Stand Firm 2</li>
-            <li>Raise Dead</li>
-            <li>FansRoll,</li>
-            <li>Weather</li>
             <li>Swealtering Heat</li>
-            <li>Bomb KD</li>
-            <li>Chainsaw Armor</li>
+            <li>Tentacles</li>
+            <li>Throw-in Roll</li>
+            <li>Touch Back</li>
+            <li>Weather</li>
           </ul>
         </li>
       </ul>
     </details>
   </Container>
-
+  
   <footer class="footer" id="contact">
     <div class="container">
       <p class="text-muted text-center">
         This website is under active development. If you notice issues, please
         post the replay and a description of the problem to
         <a href="https://github.com/cpennington/dicedornot/issues"
-          >Diced Or Not Issues</a
+        >Diced Or Not Issues</a
         >.
       </p>
     </div>

@@ -612,6 +612,7 @@ export const ROLL = {
   Bloodlust: 50,
   Bite: 51,
   Bribe: 52,
+  HalflingChef: 53,
   Fireball: 54,
   LightningBolt: 55,
   ThrowTeammate: 56,

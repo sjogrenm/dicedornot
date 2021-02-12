@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";
-  import { Row, Col, ButtonToolbar, Button, Icon } from "sveltestrap";
+  import { Row, Col, ButtonToolbar, Button, Icon , Alert} from "sveltestrap";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
@@ -960,6 +960,16 @@
     </FixedRatio>
   </div>
 </div>
+{#if $replay.unknownRolls.length > 0}
+<Alert warning>
+  <p>The following rolls aren't able to be analyzed yet. Please <a href="https://github.com/cpennington/dicedornot/issues">open an issue on GitHub</a> and attach this replay (or match link).</p>
+  <ul>
+    {#each [...new Set($replay.unknownRolls.map(roll => roll.name))] as name}
+    <li>{name}</li>
+    {/each}
+  </ul>me
+</Alert>
+{/if}
 
 <style>
   .pitch-container {
@@ -969,8 +979,6 @@
 
   @media (min-width: 768px) {
     .pitch-container {
-      max-height: 100%;
-      height: 100%;
       overflow-x: hidden;
     }
   }

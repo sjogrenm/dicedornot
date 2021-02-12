@@ -412,8 +412,11 @@ export class Roll {
     if (rollClass === null) {
       return null;
     }
-
-    if (rollClass) {
+    if (!rollClass) {
+      return new UnknownRoll(`Unknown Roll ${boardActionResult.RollType}`, replayStep);
+    } else if (typeof rollClass === "string") {
+      return new UnknownRoll(rollClass, replayStep);
+    } else {
       return new rollClass(
         rollClass.argsFromXml({
           initialBoard,
@@ -425,17 +428,6 @@ export class Roll {
           boardActionResult
         })
       );
-    } else {
-      console.warn('Unknown roll ' + boardActionResult.RollType, {
-        initialBoard,
-        stepIndex,
-        replayStep,
-        actionIndex,
-        action,
-        resultIndex,
-        boardActionResult
-      });
-      return null;
     }
   }
 
@@ -542,6 +534,7 @@ export class Roll {
   }
 
   armorRoll(player, damageBonusActive) {
+    damageBonusActive = damageBonusActive || false;
     return (
       this.armorRollCache[`${player.id}-${damageBonusActive}`] ||
       (this.armorRollCache[`${player.id}-${damageBonusActive}`] = new ArmorRoll({
@@ -1405,6 +1398,7 @@ class LightningBoltRoll extends ModifiedD6SumRoll {
 class InjuryRoll extends Roll {
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
   static diceSeparator = '+';
+  static dependentConditions = [reroll];
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -1447,14 +1441,6 @@ class InjuryRoll extends Roll {
     }
   }
 
-  static ignore(xml) {
-    if (xml.boardActionResult.IsOrderCompleted != 1) {
-      console.log('Ignoring incomplete InjuryRoll', { roll: this });
-      return true;
-    }
-    return super.ignore(xml);
-  }
-
   // TODO: Handle skills
   injuryValue(total) {
     if (this.activePlayer.skills.includes(SKILL.Stunty)) {
@@ -1479,7 +1465,15 @@ class InjuryRoll extends Roll {
     if (this.isFoul && dice[0] == dice[1]) {
       value = value.add(this.casValue(this.foulingPlayer).named('Sent Off'), this.turnoverValue);
     }
-    return value;
+    if (
+      this.dependentRolls.length >= 1 &&
+      this.dependentRolls[0].constructor == this.constructor &&
+      this.dependentRolls[0].isReroll
+    ) {
+      return new SingleValue(`Rerolled ${this.rollName}`, this.rerollValue);
+    } else {
+      return value;
+    }
   }
 
   get possibleOutcomes() {
@@ -1646,6 +1640,14 @@ class FollowUpChoice extends NoValueRoll {
 
 class FoulPenaltyRoll extends NoValueRoll { }
 
+export class UnknownRoll {
+  constructor(name, xml) {
+    this.name = name;
+    this.xml = xml;
+    this.ignore = true;
+  }
+}
+
 export const ROLL_TYPES = {
   1: GFIRoll,
   2: DodgeRoll,
@@ -1668,35 +1670,36 @@ export const ROLL_TYPES = {
   20: BoneHeadRoll,
   21: ReallyStupidRoll,
   22: WildAnimalRoll,
-  //23: LonerRoll,
+  23: "Loner",
   24: LandingRoll,
   25: RegenerationRoll,
   26: null, // Inaccurate Pass Scatter
-  //27: AlwaysHungryRoll
-  //28: EatTeammate,
+  27: "Always Hungry",
+  28: "Eat Teammate",
   29: DauntlessRoll,
-  //30: SafeThrow
+  30: "Safe Throw",
   31: JumpUpRoll,
-  //32: Shadowing
-  //34: StabRoll,
+  32: "Shadowing",
+  34: "Shadowing",
   36: LeapRoll,
   37: FoulAppearanceRoll,
-  // 38: Tentacles
-  // 39: Chainsaw (Kickback?)
+  38: "Tentacles",
+  39: "Chainsaw (Kickback?)",
   40: TakeRootRoll,
-  // 41: BallAndChain
-  // 42: HailMaryPassRoll,
-  // 44: Diving Tackle
-  // 45: ProRoll,
-  // 46: HypnoticGazeRoll,
-  //49: Animosity
-  //50: Bloodlust
-  // 51: Bite
-  // 52: Bribe
+  41: "Ball And Chain",
+  42: "Hail Mary Pass",
+  44: "Diving Tackle",
+  45: "Pro",
+  46: "Hypnotic Gaze",
+  49: "Animosity",
+  50: "Bloodlust",
+  51: "Bite",
+  52: "Bribe",
+  53: "Halfling Chef",
   54: FireballRoll,
   55: LightningBoltRoll,
   56: ThrowTeammateRoll,
-  // 57: Multiblock
+  57: "Multiblock",
   58: null, // Kickoff Gust
   59: ArmorRoll, // Armor Roll with Pile On. If followed by a RollType 59 w/ IsOrderCompleted, then PO happened. Otherwise, no PO
   60: InjuryRoll, // Injury Roll with Pile On. If followed by a RollType 60 w/ IsOrderCompleted, then PO happened, otherwise, no PO?
@@ -1704,11 +1707,11 @@ export const ROLL_TYPES = {
   62: null, // Choic to use Dodge
   63: null, // Choice to use Stand Firm
   64: null, // Juggernaut
-  // 65: Stand Firm 2
-  // 66: Raise Dead
-  // 69: FansRoll,
-  70: null // Weather
-  // 71: Swealtering Heat
-  // 72: Bomb KD
-  // 73: Chainsaw Armor
+  65: "Stand Firm 2",
+  66: "Raise Dead",
+  69: null, // Fans
+  70: null, // Weather
+  71: "Swealtering Heat",
+  72: "Bomb KD",
+  73: "Chainsaw Armor",
 };

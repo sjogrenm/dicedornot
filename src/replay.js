@@ -1,4 +1,4 @@
-import { Roll, MoveAction } from "./rolls.js";
+import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END } from "./replay-utils.js";
 
 export function processReplay(data) {
@@ -26,8 +26,8 @@ export function processReplay(data) {
     ));
   }
   console.log("Extracted rolls...", { rolls });
-  rolls = rolls.filter((roll) => !roll.ignore);
-  rolls = rolls.reduce((rolls, nextRoll) => {
+  var validRolls = rolls.filter((roll) => !roll.ignore);
+  validRolls = validRolls.reduce((rolls, nextRoll) => {
     if (rolls.length == 0) {
       return [nextRoll];
     }
@@ -51,17 +51,18 @@ export function processReplay(data) {
     rolls.push(nextRoll);
     return rolls;
   }, []);
-  rolls.forEach((roll, idx) => {
+  validRolls.forEach((roll, idx) => {
     roll.rollIndex = idx;
     roll.endIndex = rolls[idx + 1] ? rolls[idx + 1].startIndex : END;
   });
-  console.log("Transformed rolls...", { rolls });
+  console.log("Transformed rolls...", { validRolls });
 
   return {
     fullReplay: data.Replay,
     gameDetails: gameDetails,
     playerDetails: playerDetails,
-    rolls: rolls,
+    rolls: validRolls,
+    unknownRolls: rolls.filter(roll => roll instanceof UnknownRoll),
     version: 1,
   };
 }
