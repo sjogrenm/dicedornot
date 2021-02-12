@@ -100,6 +100,10 @@
     <details>
       <summary><span class="font-weight-bold">Known Issues</span></summary>
       <ul>
+        <li>Viewer: There's no way to search by race or coach in saved replays</li>
+        <li>Viewer: Jumping around the replay while paused doesn't work correctly</li>
+        <li>Viewer: Dice rolls expand exactly in line with the replay viewer</li>
+        <li>Viewer: Replay doesn't start at beginning when it's reloaded</li>
         <li>Analyzer: Nega-trait rolls absorb moves with associated values, even though they don't end the turn</li>
         <li>Viewer: Roll details auto-close when the player is playing</li>
         <li>Viewer: Score and team names don't scale with viewer scale</li>
@@ -120,20 +124,19 @@
         <li>Viewer: Throw teammate doesn't correctly render intermediate states</li>
         <li>Viewer/Analyzer: Star Player names are wrong</li>
         <li>Analyzer: Frenzy blocks aren't merged together</li>
+        <li>Analyzer: Push/Follow Up/Standfirm affects on player position value aren't accounted for</li>
         <li>Analyzer: Many roll types:
           <ul>
             <li>Kickoff Scatter</li>
             <li>Throw-in Roll</li>
             <li>Touch Back</li>
             <li>LonerRoll,</li>
-            <li>Regeneration</li>
             <li>Inaccurate Pass Scatter</li>
             <li>AlwaysHungryRoll</li>
             <li>EatTeammate,</li>
             <li>SafeThrow</li>
             <li>Shadowing</li>
-            <li>StabRoll,</li>
-            <li>FoulAppearanceRoll,</li>
+            <li>StabRoll</li>
             <li>Tentacles</li>
             <li>Chainsaw (Kickback?)</li>
             <li>BallAndChain</li>
@@ -148,8 +151,6 @@
             <li>Multiblock</li>
             <li>Kickoff Gust</li>
             <li>Some sort of wrestle roll that doesn't do anything</li>
-            <li>Dodge Pick</li>
-            <li>Stand firm</li>
             <li>Juggernaut</li>
             <li>Stand Firm 2</li>
             <li>Raise Dead</li>

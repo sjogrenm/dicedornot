@@ -1,20 +1,10 @@
 <script>
-  import ReplayLoader from "./ReplayLoader.svelte";
-  import {replay} from "./stores.js";
-  export let loading, error
-
   import {
     Collapse,
     Navbar,
     NavbarToggler,
     NavbarBrand,
-    Nav,
-    NavItem,
-    NavLink,
-    UncontrolledDropdown,
-    DropdownToggle,
-    DropdownMenu,
-    DropdownItem
+    Nav
   } from 'sveltestrap';
 
   let isOpen = false;

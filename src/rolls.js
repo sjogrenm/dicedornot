@@ -662,7 +662,7 @@ export class Roll {
 
 
 function pushOrFollow(roll, dependent) {
-  return [PushRoll, FollowUpRoll].includes(
+  return [PushChoice, FollowUpChoice].includes(
     dependent.constructor
   );
 }
@@ -1114,6 +1114,15 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
   }
 }
 
+class FoulAppearanceRoll extends ModifiedD6SumRoll {
+  static rollName = "Foul Appearance";
+  static handledSkills = [SKILL.FoulAppearance];
+  static dependentConditions = [reroll, samePlayerMove];
+  failValue() {
+    return -this.onPitchValue(this.activePlayer);
+  }
+}
+
 class ArmorRoll extends ModifiedD6SumRoll {
   static numDice = 2;
   static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
@@ -1182,7 +1191,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
   }
 
   get computedModifier() {
-    return 0;
+    return this.damageBonusActive ? 1 : 0;
   }
 
   injuryRoll(damageBonusAvailable) {
@@ -1239,7 +1248,7 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.WildAnimal];
   static dependentConditions = [reroll, samePlayerMove];
   failValue() {
-    // Failing Wild Animal means that this player is effectively unavailable
+    // Failing Wild Animal means that this player is effectiFvely unavailable
     // for the rest of your turn, but is active on your opponents turn
     return -this.onPitchValue(this.activePlayer);
   }
@@ -1511,6 +1520,7 @@ class InjuryRoll extends Roll {
 
 class CasualtyRoll extends Roll {
   static rollName = "Casualty";
+  static handledSkills = [SKILL.NurglesRot, SKILL.Decay];
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
   static diceSeparator = '';
@@ -1556,24 +1566,21 @@ class CasualtyRoll extends Roll {
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);
   }
-  static ignore(xml) {
-    // Just guessing at this
-    if (
-      xml.boardActionResult.ResultType != RESULT_TYPE.FailTeamRR &&
-      xml.boardActionResult.SubResultType != SUB_RESULT_TYPE.ArmorNoBreak &&
-      // Replay Coach-551-9619f4910217db1915282ea2242c819f_2016-04-07_00_05_06, Furry Bears turn 8 crowdsurf injury, shouldn't be ignored
-      xml.boardActionResult.SubResultType != 12
-    ) {
-      console.warn('Ignoring casualty roll, should verify', { roll: this });
-      return true;
-    }
-    return super.ignore(xml);
+}
+
+class RegenerationRoll extends ModifiedD6SumRoll {
+  static rollName = "Regeneration";
+  static handledSkills = [SKILL.Regeneration];
+
+  passValue() {
+    return this.koValue(this.activePlayer).product(-0.5).named('Regeneration');
   }
 }
 
 export class MoveAction extends Roll {
   static rollName = "Move";
   static dependentConditions = [sameTeamMove];
+  static handledSkills = [SKILL.JumpUp];
   static ignore(xml) {
     return manhattan(xml.action.Order.CellFrom, xml.action.Order.CellTo.Cell) == 0;
   }
@@ -1627,14 +1634,14 @@ class NoValueRoll extends Roll {
   }
 }
 
-class PushRoll extends NoValueRoll {
+class PushChoice extends NoValueRoll {
   static rollName = "Push";
   static handledSkills = [SKILL.SideStep];
 }
 
-class FollowUpRoll extends NoValueRoll {
+class FollowUpChoice extends NoValueRoll {
   static rollName = "Follow Up";
-  // static handledSkills = [SKILL.Frenzy];
+  static handledSkills = [SKILL.Frenzy];
 }
 
 class FoulPenaltyRoll extends NoValueRoll { }
@@ -1652,8 +1659,8 @@ export const ROLL_TYPES = {
   10: null, // Kickoff Scatter
   11: null, // Throw-in Roll
   12: PassRoll,
-  13: PushRoll,
-  14: FollowUpRoll,
+  13: null, //PushChoice,
+  14: null, //FollowUpChoice,
   15: FoulPenaltyRoll,
   16: InterceptionRoll,
   17: WakeUpRoll,
@@ -1663,7 +1670,7 @@ export const ROLL_TYPES = {
   22: WildAnimalRoll,
   //23: LonerRoll,
   24: LandingRoll,
-  // 25: Regeneration
+  25: RegenerationRoll,
   26: null, // Inaccurate Pass Scatter
   //27: AlwaysHungryRoll
   //28: EatTeammate,
@@ -1671,9 +1678,9 @@ export const ROLL_TYPES = {
   //30: SafeThrow
   31: JumpUpRoll,
   //32: Shadowing
-  // 34: StabRoll,
+  //34: StabRoll,
   36: LeapRoll,
-  // 37: FoulAppearanceRoll,
+  37: FoulAppearanceRoll,
   // 38: Tentacles
   // 39: Chainsaw (Kickback?)
   40: TakeRootRoll,
@@ -1694,8 +1701,8 @@ export const ROLL_TYPES = {
   59: ArmorRoll, // Armor Roll with Pile On. If followed by a RollType 59 w/ IsOrderCompleted, then PO happened. Otherwise, no PO
   60: InjuryRoll, // Injury Roll with Pile On. If followed by a RollType 60 w/ IsOrderCompleted, then PO happened, otherwise, no PO?
   61: null, // Some sort of wrestle roll that doesn't do anything
-  // 62: Dodge Pick
-  // 63: Stand firm
+  62: null, // Choic to use Dodge
+  63: null, // Choice to use Stand Firm
   64: null, // Juggernaut
   // 65: Stand Firm 2
   // 66: Raise Dead

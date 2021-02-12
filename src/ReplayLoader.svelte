@@ -8,7 +8,7 @@
   import Error from "./Error.svelte";
 
   export let button = "primary",
-    loading;
+    loading = false;
   const CACHE_VERSION = 2;
 
   onMount(() => {

@@ -278,6 +278,7 @@ export const SUB_RESULT_TYPE = {
   InjuryKO: 3,
   InjuryCAS: 4,
   Unknown_7: 7, //Pick Dodge skill use?
+  CASDecay: 16,
   CASResult: 18, //Final CAS Result
   Fend: 35, //Blockdice against Fend, no 2nd Dice.
   DodgeNoReq: 57, //Dodge vs Tackle before RR Pick
