@@ -8,6 +8,9 @@ import {
   ACTION_TYPE,
   BLOCK,
   BLOCK_DIE,
+  PLAYER_TVS,
+  SKILL_CATEGORY,
+  getPlayerType,
 } from './constants.js';
 import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP } from './replay-utils.js';
 import {
@@ -70,6 +73,7 @@ class Player {
   constructor(team, playerState, boardState) {
     this.team = team;
     this.id = playerState.Data.Id;
+    this.playerType = getPlayerType(playerState.Data.IdPlayerTypes);
     this.name = playerState.Data.Name.replace(/\[colour='[0-9a-f]{8}'\]/i, '');
     this.cell = playerState.Cell;
     this.situation = playerState.Situation;
@@ -83,6 +87,31 @@ class Player {
 
   get skillNames() {
     return this.skills.map((skill) => SKILL_NAME[skill]);
+  }
+
+  get tv() {
+    let playerTV = PLAYER_TVS[this.playerType];
+    if (playerTV.star) {
+      return playerTV.tv;
+    } else {
+      let { tv, normals, doubles, free } = PLAYER_TVS[this.playerType];
+      this.skills.forEach(skill => {
+        if (free.includes(skill)) {
+          return;
+        } else if (doubles.includes(SKILL_CATEGORY[skill])) {
+          tv += 30;
+        } else if (normals.includes(SKILL_CATEGORY[skill])) {
+          tv += 20;
+        } else if ([SKILL.IncreaseMovement, SKILL.IncreaseArmour].includes(skill)) {
+          tv += 30;
+        } else if (skill == SKILL.IncreaseAgility) {
+          tv += 40;
+        } else if (skill == SKILL.IncreaseStrength) {
+          tv += 50;
+        }
+      })
+      return tv;
+    }
   }
 }
 
@@ -208,6 +237,10 @@ export class Roll {
     return args;
   }
 
+  get improbability() {
+    return 0;
+  }
+
   get startIndex() {
     return new ReplayPosition(this.stepIndex, REPLAY_SUB_STEP.BoardAction, this.actionIndex, this.resultIndex);
   }
@@ -307,11 +340,6 @@ export class Roll {
         [],
       rollName: this.rollName,
       dice: this.dice,
-      dnvMin: Math.min(...deltaNetValues.map((outcome) => outcome.value)),
-      dnvq33: weightedQuantile(deltaNetValues, 0.33, 'value', 'weight'),
-      dnvMed: weightedQuantile(deltaNetValues, 0.5, 'value', 'weight'),
-      dnvq67: weightedQuantile(deltaNetValues, 0.67, 'value', 'weight'),
-      dnvMax: Math.max(...deltaNetValues.map((outcome) => outcome.value)),
       outcomes: this.possibleOutcomes.flat.map(outcome => outcome.value - dataPoint.expectedValue),
       weights: this.possibleOutcomes.flat.map(outcome => outcome.weight),
       description: this.jointDescription,
@@ -347,7 +375,8 @@ export class Roll {
       type,
       expectedValue: this.expectedValue,
       netValue: outcomeValue - this.expectedValue,
-      rollIndex: this.rollIndex
+      rollIndex: this.rollIndex,
+      improbability: this.dependentRolls.reduce((acc, roll) => acc + roll.improbability, this.improbability),
     };
   }
 
@@ -451,7 +480,7 @@ export class Roll {
   }
 
   rawPlayerValue(player) {
-    return new SingleValue(`TV(${player.name})`, 1);
+    return new SingleValue(`TV(${player.name})`, player.tv);
   }
 
   teamValue(team, situations, includingPlayer) {
@@ -763,8 +792,8 @@ class BlockRoll extends Roll {
   dieValue(result, expected) {
     const attacker = this.attacker;
     const defender = this.defender;
-    var attackerSkills = (attacker && attacker.skills) || [];
-    var defenderSkills = (defender && defender.skills) || [];
+    var attackerSkills = attacker.skills;
+    var defenderSkills = defender.skills;
 
     switch (result) {
       case BLOCK.AttackerDown:
@@ -865,6 +894,28 @@ class BlockRoll extends Roll {
       return first.max(...rest);
     }
   }
+
+  get improbability() {
+    let bothDownSafe = this.attacker.skills.includes(SKILL.Block) || this.attacker.skills.includes(SKILL.Wrestle);
+    let unsafeFaces = [BLOCK.AttackerDown, BLOCK.BothDown];
+    if (bothDownSafe) {
+      unsafeFaces = [BLOCK.AttackerDown];
+    }
+    var pass, passChance;
+    if (this.isRedDice) {
+      pass = !this.dice.some(face => unsafeFaces.includes(face));
+      passChance = 1 - ((1 - ((6 - unsafeFaces.length) / 6)) ** this.dice.length);
+    } else {
+      pass = !this.dice.every(face => unsafeFaces.includes(face));
+      passChance = ((6 - unsafeFaces.length) / 6) ** this.dice.length;
+    }
+    if (pass) {
+      return 1 - passChance;
+    } else {
+      return - passChance;
+    }
+  }
+
   get possibleOutcomes() {
     var value;
     const blockDie = new SimpleDistribution([
@@ -959,6 +1010,10 @@ class ModifiedD6SumRoll extends Roll {
     return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name}${activeSkills} - ${this.dice} (${this.modifiedTarget})`;
   }
 
+  get shortDescription() {
+    return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.reduce((a, b) => a + b)} (${this.modifiedTarget})`;
+  }
+
   get actual() {
     return Object.assign(super.actual, {
       target: this.modifiedTarget
@@ -974,6 +1029,39 @@ class ModifiedD6SumRoll extends Roll {
       return target;
     }
   }
+
+  get improbability() {
+    let { pass, fail } = this.diceSums.reduce((acc, sum) => {
+      if (sum >= this.modifiedTarget) {
+        acc.pass += 1;
+      } else {
+        acc.fail += 1;
+      }
+      return acc;
+    }, { pass: 0, fail: 0 });
+    if (this.dice.reduce((a, b) => a + b) >= this.modifiedTarget) {
+      return 1 - (pass / (pass + fail));
+    } else {
+      return (-pass) / (pass + fail);
+    }
+  }
+
+  get diceSums() {
+    var diceSums = [0];
+    for (var die = 0; die < this.constructor.numDice; die++) {
+      var newSums = [];
+      for (var face = 1; face <= 6; face++) {
+        for (const sum of diceSums) {
+          newSums.push(sum + face);
+        }
+      }
+      diceSums = newSums;
+    }
+    diceSums.sort((a, b) => a - b);
+    Object.defineProperty(this, 'diceSums', { value: diceSums });
+    return diceSums;
+  }
+
   value(dice, expected) {
     let rollTotal = dice.reduce((a, b) => a + b, 0);
     if (rollTotal >= this.modifiedTarget) {
@@ -989,18 +1077,7 @@ class ModifiedD6SumRoll extends Roll {
     }
   }
   get possibleOutcomes() {
-    var diceSums = [0];
-    for (var die = 0; die < this.constructor.numDice; die++) {
-      var newSums = [];
-      for (var face = 1; face <= 6; face++) {
-        for (const sum of diceSums) {
-          newSums.push(sum + face);
-        }
-      }
-      diceSums = newSums;
-    }
-    diceSums.sort((a, b) => a - b);
-    var sumsByOutcome = diceSums.reduce((acc, sum) => {
+    var sumsByOutcome = this.diceSums.reduce((acc, sum) => {
       let value;
       if (sum >= this.modifiedTarget) {
         value = this.passValue(true, sum, this.modifiedTarget).add(this.dependentMoveValues);
@@ -1049,7 +1126,7 @@ class ModifiedD6SumRoll extends Roll {
       return {
         name: outcome.min === outcome.max ? outcome.min.toString() : `${outcome.min}-${outcome.max}`,
         value: outcome.value,
-        weight: outcome.count / diceSums.length
+        weight: outcome.count / this.diceSums.length
       }
     });
     Object.defineProperty(this, 'possibleOutcomes', { value: new SimpleDistribution(outcomes) });
@@ -1207,8 +1284,6 @@ class ArmorRoll extends ModifiedD6SumRoll {
   }
 
   passValue(expected, rollTotal, modifiedTarget) {
-    // passValue is negative because "Passing" an armor roll means rolling higher than
-    // armor, which is a bad thing.
     let damageBonusAvailable = this.damageBonusActive;
     if (this.damageBonusActive && rollTotal == modifiedTarget) {
       damageBonusAvailable = false;
@@ -1432,6 +1507,10 @@ class InjuryRoll extends Roll {
 
     return args;
   }
+  
+  get shortDescription() {
+    return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.reduce((a, b) => a + b)}`;
+  }
 
   get rollName() {
     if (this.isPileOn) {
@@ -1453,6 +1532,36 @@ class InjuryRoll extends Roll {
     } else {
       return this.casValue(this.activePlayer);
     }
+  }
+
+  get improbability() {
+    let modifier = this.activePlayer.skills.includes(SKILL.Stunty) ? 1 : 0;
+    let { pass, fail } = this.diceCombinations.reduce((acc, dice) => {
+      if (dice[0] + dice[1] + modifier <= 7) {
+        acc.fail += 1;
+      } else {
+        acc.pass += 1;
+      }
+      return acc;
+    }, { pass: 0, fail: 0 });
+
+    if (this.dice[0] + this.dice[1] + modifier > 7) {
+      return 1 - (pass / (pass + fail));
+    } else {
+      return (-pass) / (pass + fail);
+    }
+  }
+
+  get diceCombinations() {
+
+    var combinations = [];
+    for (var first = 1; first <= 6; first++) {
+      for (var second = 1; second <= 6; second++) {
+        combinations.push([first, second]);
+      }
+    }
+    Object.defineProperty(this, 'diceCombinations', { value: combinations });
+    return this.diceCombinations;
   }
 
   value(dice) {
@@ -1478,17 +1587,15 @@ class InjuryRoll extends Roll {
 
   get possibleOutcomes() {
     var outcomesByName = {};
-    for (var first = 1; first <= 6; first++) {
-      for (var second = 1; second <= 6; second++) {
-        var outcomeList = outcomesByName[this.value([first, second], true).name];
-        if (!outcomeList) {
-          outcomeList = outcomesByName[this.value([first, second], true).name] = [];
-        }
-        outcomeList.unshift({
-          name: (first + second).toString(),
-          value: this.value([first, second], true)
-        });
+    for (var combination of this.diceCombinations) {
+      var outcomeList = outcomesByName[this.value(combination, true).name];
+      if (!outcomeList) {
+        outcomeList = outcomesByName[this.value(combination, true).name] = [];
       }
+      outcomeList.unshift({
+        name: (combination[0] + combination[1]).toString(),
+        value: this.value(combination, true)
+      });
     }
     Object.defineProperty(this, 'possibleOutcomes', {
       value: new SimpleDistribution(

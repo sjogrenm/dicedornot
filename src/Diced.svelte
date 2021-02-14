@@ -1,16 +1,26 @@
-<!-- 
-"X skipped his sacrifice to Nuffle"
-"Nuffle hated X"
-"X couldn't roll their way out of a paper bag"
-"Who has two thumbs and all the dice? X"
-"Who has two thumbs and none of the dice? X"
-"X must be in the arctic cause those dice were frozen!"
-"X should try Necromantic next season, because his dice are dead!"
-"X is vacationing in Maui cause those dice were hot!" -->
-
 <script>
+import {percentRank} from "./utils.js";
+
   import { Row, Col } from "sveltestrap";
-  export let homePercentile, awayPercentile, homeTeam, awayTeam;
+  import { replay } from "./stores";
+
+  export let homeTeam, awayTeam;
+  let cumNetValues, actuals, homePercentile, awayPercentile;
+  $: {
+    cumNetValues = { actuals: {}, simulated: {} };
+    actuals = $replay.rolls.map((roll) => roll.actual);
+    cumNetValues.actuals = accumulateNetValue(actuals);
+    updatePercentiles();
+  }
+
+  function accumulateNetValue(values) {
+    let dest = {};
+    values.forEach((dataPoint) => {
+      dest[dataPoint.activeTeamId] =
+        (dest[dataPoint.activeTeamId] || 0) + dataPoint.netValue;
+    });
+    return dest;
+  }
   function betterThan(team, percentile) {
     let comparison = percentile < 0.5 ? "worse" : "better";
     let count = percentile < 0.5 ? 100 - percentile * 100 : percentile * 100;
@@ -24,22 +34,81 @@
     if (percentile > 0.985) {
       return "Nuffle's light shown down on them.";
     } else if (percentile > 0.9) {
-      return sample(["Nuffle favored them.", "Game of Skill", "Just rolled Pows", "Blood Bowl is just like Chess"]);
+      return sample([
+        "Nuffle favored them.",
+        "Game of Skill",
+        "Just rolled Pows",
+        "Blood Bowl is just like Chess",
+        "They are vacationing in Maui, because those dice were hot!",
+      ]);
     } else if (percentile > 0.8) {
-      return sample(["Nuffle was generous.", "In blodge we trust", "Scatter don't matter"]);
+      return sample([
+        "Nuffle was generous.",
+        "In blodge we trust",
+        "Scatter don't matter",
+        "Who has two thumbs and all the dice?",
+      ]);
     } else if (percentile < 0.01) {
-      return sample(["An absolute, unmitigated dicing.", "Fuck this game.", "Rogered but good."]);
+      return sample([
+        "An absolute, unmitigated dicing.",
+        "Fuck this game.",
+        "Rogered but good.",
+      ]);
     } else if (percentile < 0.1) {
       return sample([
         "Quite a dicing.",
         `And 'lo, Nuffle did look down, and he said "No."`,
         "Because without hope, Nuffle would have nothing to destroy.",
+        "They skipped their sacrifice to Nuffle",
+        "Nuffle hated them",
+        "They must be in the arctic cause those dice were frozen!",
+        "The should try Necromantic next season, because their dice are dead!"
       ]);
     } else if (percentile < 0.3) {
-      return sample(["A bit of a dicing.", "Why do I believe in blodge?", "Unfair dices! Unfair game!"]);
+      return sample([
+        "A bit of a dicing.",
+        "Why do I believe in blodge?",
+        "Unfair dices! Unfair game!",
+        "They couldn't roll their way out of a paper bag",
+        "Who has two thumbs and none of the dice?"
+      ]);
     } else {
       return "Variance, man. Variance.";
     }
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function updatePercentiles() {
+
+    var iteration = 0;
+    for (var c = 0; c < 500; c++) {
+      var values = [];
+      for (var x = 0; x < 50; x++) {
+        iteration++;
+        let newValues = $replay.rolls.map((roll) => roll.simulated(iteration));
+        cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
+        values.push(...newValues);
+      }
+      let oldHome = homePercentile, oldAway = awayPercentile;
+      homePercentile = percentRank(
+        Object.values(cumNetValues.simulated).map((cum) => cum[0]),
+        cumNetValues.actuals[0]
+      );
+      awayPercentile = percentRank(
+        Object.values(cumNetValues.simulated).map((cum) => cum[1]),
+        cumNetValues.actuals[1]
+      );
+      if (c > 10 && homePercentile - oldHome < 0.0005 && awayPercentile - oldAway < 0.0005) {
+        return;
+      }
+      console.log(iteration, {homeDelta: homePercentile - oldHome, awayDelta: awayPercentile - oldAway});
+
+      await sleep(100);
+    }
+
   }
 </script>
 

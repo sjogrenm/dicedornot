@@ -13,6 +13,7 @@
     WEATHER,
     RESULT_TYPE,
     ACTION_TYPE,
+    getPlayerSprite,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
@@ -81,7 +82,7 @@
     );
     races = boardState.ListTeams.TeamState.flatMap(
       (team) => team.ListPitchPlayers.PlayerState.map(player => {
-        const { race } = getPlayerType(player.Id, player.Data.IdPlayerTypes);
+        const { race } = getPlayerSprite(player.Id, player.Data.IdPlayerTypes);
         return race;
       })
     ).filter((v, i, a) => a.indexOf(v) === i);

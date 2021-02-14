@@ -1,6 +1,6 @@
 <script>
   import {fade} from 'svelte/transition';
-  import { getPlayerType, Casualties, SITUATION } from "../constants.js";
+  import { getPlayerType, getPlayerSprite } from "../constants.js";
   import {translateStringNumberList} from "../replay-utils.js";
 
   export let data,
@@ -15,7 +15,7 @@
   let id, race, model, team, classes, key, _done, _prone, _stunned, _stupidity;
 
   $: {
-    ({ model, race } = getPlayerType(data.Id, data.Data.IdPlayerTypes));
+    ({ model, race } = getPlayerSprite(data.Id, data.Data.IdPlayerTypes));
     id = data.Id;
     team = id > 30 ? "away" : "home";
     _done = done === undefined ? data.CanAct != 1 : done;

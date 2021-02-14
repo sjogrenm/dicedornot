@@ -13,7 +13,7 @@
 <div class="dice-container">
   {#if dice}
     {#each dice as die}
-      <div class="dice sprite d{dice.length}h {blockDice[die]}" />
+      <div class="dice sprite {blockDice[die]}" />
     {/each}
   {/if}
 </div>
@@ -40,48 +40,8 @@
     --spH: 25;
     --spX: 0;
     --spY: 0;
-  }
-  .d1v {
-    top: 12px;
-    left: -12px;
-  }
-  .d1h {
-    left: 12px;
-    bottom: -12px;
-  }
-  .d2v {
-    top: 1px;
-    left: -12px;
-  }
-  .d2v:nth-of-type(2) {
-    top: 25px;
-  }
-  .d2h {
-    bottom: -12px;
-    left: 0px;
-  }
-  .d2h:nth-of-type(2) {
-    left: 25px;
-  }
-  .d3v {
-    top: -12px;
-    left: -12px;
-  }
-  .d3v:nth-of-type(2) {
-    top: 13px;
-  }
-  .d3v:nth-of-type(3) {
-    top: 38px;
-  }
-  .d3h {
-    bottom: -12px;
-    left: -12px;
-  }
-  .d3h:nth-of-type(2) {
-    left: 13px;
-  }
-  .d3h:nth-of-type(3) {
-    left: 38px;
+    margin-left: -4%;
+    margin-right: -4%;
   }
   .both-down {
     --spY: 25;

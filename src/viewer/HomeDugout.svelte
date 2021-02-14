@@ -23,9 +23,7 @@
   {#if $selectedPlayer}
     <div class="selected"><SelectedPlayer player={$selectedPlayer} /></div>
   {/if}
-  {#if weather}
-    <div class="weather"><Weather {weather} /></div>
-  {/if}
+  <div class="weather"><Weather {weather} /></div>
 </div>
 
 <style>

@@ -53,7 +53,7 @@ export function processReplay(data) {
   }, []);
   validRolls.forEach((roll, idx) => {
     roll.rollIndex = idx;
-    roll.endIndex = rolls[idx + 1] ? rolls[idx + 1].startIndex : END;
+    roll.endIndex = validRolls[idx + 1] ? validRolls[idx + 1].startIndex : END;
   });
   console.log("Transformed rolls...", { validRolls });
 

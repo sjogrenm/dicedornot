@@ -12,6 +12,7 @@
   import { replay } from "./stores.js";
   import TurnSelectors from "./TurnSelectors.svelte";
   import Error from "./Error.svelte";
+  import {improbabilitySpec, valueSpec, valueDistributionSpec} from "./vega-spec.js";
 
   let homePercentile, awayPercentile, loading;
   $: {
@@ -79,7 +80,9 @@
       </Row>
       <Row>
         <Col>
-          <Results bind:homePercentile bind:awayPercentile />
+          <Results spec={improbabilitySpec}/>
+          <Results spec={valueSpec}/>
+          <Results spec={valueDistributionSpec}/>
         </Col>
       </Row>
     </Container>

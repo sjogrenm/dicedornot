@@ -2,24 +2,27 @@
   import { createEventDispatcher, onMount } from "svelte";
   import embed from "vega-embed";
   import * as vega from "vega";
-  import vegaSpec from "./vega-spec.js";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
-  import { ReplayPosition , REPLAY_SUB_STEP} from "./replay-utils.js";
-import { percentRank } from "./utils.js";
+  import { ReplayPosition, REPLAY_SUB_STEP } from "./replay-utils.js";
 
-  let rolls, view, playHead, cumNetValues = {actuals: {}, simulated: {}}, activeTimeout, loadedReplay;
-  export let homePercentile, awayPercentile;
+  let rolls,
+    view,
+    playHead,
+    activeTimeout,
+    loadedReplay,
+    chartEl;
+  export let spec;
 
   onMount(() => {
-      return () => {
-        if (view) {
-          view.finalize();
-        }
-        if (activeTimeout) {
-          clearTimeout(activeTimeout);
-          activeTimeout = null;
-        }
-      };
+    return () => {
+      if (view) {
+        view.finalize();
+      }
+      if (activeTimeout) {
+        clearTimeout(activeTimeout);
+        activeTimeout = null;
+      }
+    };
   });
 
   $: {
@@ -43,24 +46,16 @@ import { percentRank } from "./utils.js";
         .insert([{ rollIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
     }
-    if ($replay.fullReplay.filename != loadedReplay) {
+    if ($replay.fullReplay.filename != loadedReplay && chartEl) {
       loadedReplay = $replay.fullReplay.filename;
       if (activeTimeout) {
         clearTimeout(activeTimeout);
         activeTimeout = null;
       }
-      console.log("Results onMount", {$replay});
+      console.log("Results onMount", { $replay });
       renderChart();
       console.log("Results onMount chart rendered");
     }
-  }
-
-  function accumulateNetValue(values) {
-    let dest = {};
-    values.forEach(dataPoint => {
-      dest[dataPoint.activeTeamId] = (dest[dataPoint.activeTeamId] || 0) + dataPoint.netValue;
-    });
-    return dest;
   }
 
   function renderChart() {
@@ -89,7 +84,8 @@ import { percentRank } from "./utils.js";
     // Assign the specification to a local variable vlSpec.
 
     // Embed the visualization in the container with id `vis`
-    embed("#chart", vegaSpec).then((result) => {
+    console.log(chartEl);
+    embed(chartEl, spec).then((result) => {
       result.view.addEventListener("click", function (event, item) {
         if (item) {
           let selectedRoll = item.datum.rollIndex;
@@ -99,38 +95,16 @@ import { percentRank } from "./utils.js";
 
       view = result.view;
       view = result.view.insert("actual", actuals).run();
-      view = view.insert("simulated", actuals).run();
+      // view = view.insert("simulated", actuals).run();
 
-      cumNetValues.actuals = accumulateNetValue(actuals);
-
-      var iteration = 0;
-      function addValues() {
-        var values = [];
-        for (var x = 0; x < 50; x++) {
-          iteration++;
-          let newValues = valid.map((roll) => roll.simulated(iteration));
-          cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
-          values.push(...newValues);
-        }
-
-        homePercentile = percentRank(Object.values(cumNetValues.simulated).map(cum => cum[0]), cumNetValues.actuals[0]);
-        awayPercentile = percentRank(Object.values(cumNetValues.simulated).map(cum => cum[1]), cumNetValues.actuals[1]);
-
-        var changeSet = vega.changeset().insert(values);
-        view = view.change("simulated", changeSet).run();
-        if (iteration < 1000) {
-          activeTimeout = window.setTimeout(addValues, 200);
-        }
-      }
-      addValues();
     });
   }
 </script>
 
-<div id="chart" class="col-sm-12" />
+<div class="chart" bind:this={chartEl} />
 
 <style>
-  #chart {
+  .chart {
     width: 100%;
     height: 300px;
   }
