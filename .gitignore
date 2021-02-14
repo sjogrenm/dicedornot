@@ -2,3 +2,10 @@
 /public/build/
 
 .DS_Store
+*.xml
+*.bbrz
+Coach-*
+external
+dist
+.parcel-cache
+*.code-workspace
