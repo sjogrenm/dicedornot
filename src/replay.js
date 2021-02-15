@@ -55,7 +55,22 @@ export function processReplay(data) {
     roll.rollIndex = idx;
     roll.endIndex = validRolls[idx + 1] ? validRolls[idx + 1].startIndex : END;
   });
+  rolls.forEach(roll => {
+    roll.rolls = validRolls;
+  })
   console.log("Transformed rolls...", { validRolls });
+  let activationValues = validRolls.reduce((acc, roll) => {
+    acc[`${roll.turn}-${roll.activePlayer.name}`] = {
+      actual: roll.valueWithDependents.valueOf(),
+      expected: roll.onPitchValue(roll.activePlayer).valueOf(),
+    };
+    return acc;
+  }, {});
+  console.log("Player activation values", {
+    activationValues,
+    mean: Object.values(activationValues).reduce((acc, value) => acc + value.actual / Object.values(activationValues).length, 0),
+    meanExp: Object.values(activationValues).reduce((acc, value) => acc + value.expected / Object.values(activationValues).length, 0)
+  });
 
   return {
     fullReplay: data.Replay,

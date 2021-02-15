@@ -1,13 +1,4 @@
 
-
-export const BEGINNING = {
-  beginning: true,
-  before: () => true,
-  after: () => false,
-  equal: (other) => other === BEGINNING,
-  atOrAfter: (other) => other === BEGINNING,
-  atOrBefore: () => true,
-}
 export const END = {
   end: true,
   before: () => false,
@@ -15,6 +6,7 @@ export const END = {
   equal: (other) => other === END,
   atOrAfter: () => false,
   atOrBefore: (other) => other === END,
+  toNextPosition: () => new ReplayPosition(),
 };
 
 export function ensureList(objOrList) {
@@ -122,9 +114,6 @@ export class ReplayPosition {
     if (!other) {
       throw new Error("Can't compare ReplayPosition to undefined", { this: this, other })
     }
-    if (other === BEGINNING) {
-      return true;
-    }
     if (other === END) {
       return false;
     }
@@ -158,7 +147,7 @@ export class ReplayPosition {
     if (!other) {
       throw new Error("Can't compare ReplayPosition to undefined", { this: this, other })
     }
-    if (other === BEGINNING || other === END) {
+    if (other === END) {
       return false;
     }
     return (this.step == other.step && this.subStep == other.subStep && this.action == other.action && this.result == other.result);

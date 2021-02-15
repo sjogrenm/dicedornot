@@ -54,9 +54,9 @@ function ballPositionValue(team, cell) {
   }
   var distValue;
   if (distToGoal == 0) {
-    distValue = 8;
+    distValue = 1;
   } else {
-    distValue = 4 * (0.85 ** (distToGoal - 1));
+    distValue = .5 * (0.85 ** (distToGoal - 1));
   }
   return new SingleValue(`${distToGoal} to goal`, distValue);
 }
@@ -194,6 +194,7 @@ export class Roll {
     this.onTeamValues = {};
     this.armorRollCache = {};
     this.dependentRolls = [];
+    this._futurePlayerValue = {};
 
     console.assert(
       !this.unhandledSkills || this.unhandledSkills.length == 0,
@@ -230,19 +231,13 @@ export class Roll {
     args.rollStatus = xml.boardActionResult.RollStatus;
     args.resultType = xml.boardActionResult.ResultType;
     args.subResultType = xml.boardActionResult.SubResultType;
-    args.stepIndex = xml.stepIndex;
-    args.resultIndex = xml.resultIndex;
-    args.actionIndex = xml.actionIndex;
+    args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.BoardAction, xml.actionIndex, xml.resultIndex);
     args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill].includes(args.rollStatus);
     return args;
   }
 
   get improbability() {
     return 0;
-  }
-
-  get startIndex() {
-    return new ReplayPosition(this.stepIndex, REPLAY_SUB_STEP.BoardAction, this.actionIndex, this.resultIndex);
   }
 
   get activeTeam() {
@@ -665,11 +660,32 @@ export class Roll {
     return this.unactivatedPlayers;
   }
 
+  futurePlayerValue(player) {
+    let cachedValue = this._futurePlayerValue[player.id];
+    if (cachedValue) {
+      return cachedValue;
+    }
+
+    let futureActions = this._futurePlayerValue[player.id] = this.rolls.filter(
+      roll => roll.startIndex.after(this.startIndex) && roll.activePlayer.id == this.activePlayer.id && roll.turn == this.turn
+    );
+
+    let result;
+    if (futureActions.length) {
+      result = futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0);
+    } else {
+      result = this.onPitchValue(player);
+    }
+    this._futurePlayerValue[player.id] = result;
+    return new SingleValue(`Remaining Turn ${this.turn} value for ${player.name}`, result);
+  }
+
   get turnoverValue() {
-    const playerValues = this.unactivatedPlayers.filter((player) => player != this.activePlayer).map((player) => this.onPitchValue(player));
+    // futurePlayerValue == EV of all further player actions in the turn, or an estimate if the player didn't get to act
+    const playerValues = this.unactivatedPlayers.map(player => this.futurePlayerValue(player));
     var value;
     if (playerValues.length > 0) {
-      value = new SumDistribution(playerValues).named('Unactivated PV').product(-1).named('Turnover');
+      value = new SumDistribution(playerValues).named('Unactivated FPV').product(-1).named('Turnover');
     } else {
       value = new SingleValue("No Active Players", 0);
     }
@@ -1507,7 +1523,7 @@ class InjuryRoll extends Roll {
 
     return args;
   }
-  
+
   get shortDescription() {
     return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.reduce((a, b) => a + b)}`;
   }

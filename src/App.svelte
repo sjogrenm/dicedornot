@@ -88,7 +88,7 @@
     </Container>
     <div class="container mt-4" role="main">
       <ReplayLoader bind:loading />
-      <Explanation />
+      <!-- <Explanation /> -->
     </div>
   {:else}
     <div class="container">
