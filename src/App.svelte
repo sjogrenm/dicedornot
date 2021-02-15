@@ -61,10 +61,7 @@
             {homePercentile}
             {awayPercentile}
           />
-          <Summary
-            gameDetails={$replay.gameDetails}
-            filename={$replay.fullReplay.filename}
-          />
+          <Summary/>
         </Col>
       </Row>
       <Row>

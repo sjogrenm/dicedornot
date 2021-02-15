@@ -5,7 +5,6 @@
   import { processReplay } from "./replay.js";
   import { get, set, entries } from "idb-keyval";
   import Loading from "./Loading.svelte";
-  import Error from "./Error.svelte";
 
   export let button = "primary",
     loading = false;
@@ -75,7 +74,7 @@
     });
   }
 
-  async function loadFromCache(cacheKey, completeLoad) {
+  async function loadFromCache(cacheKey) {
     const jsonReplayData = await get(cacheKey);
     console.log("Loading from cache", { cacheKey, jsonReplayData });
     if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
@@ -87,18 +86,22 @@
         $error = err;
         console.error(err);
       }
-    } else {
-      await completeLoad(cacheKey);
     }
   }
 
-  async function parseReplay(replayFile, cacheKey) {
+  async function parseReplay(replayFile, cacheKey, urlParams) {
+    console.log(urlParams);
     io.xmlToJson(
       replayFile,
       function (jsonReplayData) {
         console.log("Preparing to process replay json...");
         jsonReplayData.Replay.filename = replayFile.name;
         jsonReplayData.CACHE_VERSION = CACHE_VERSION;
+        if (urlParams) {
+          let shareURL = new URL(window.location);
+          shareURL.search = urlParams;
+          jsonReplayData.Replay.url = shareURL.href;
+        }
         set(cacheKey, jsonReplayData);
         console.log("Setting cache", { cacheKey, jsonReplayData });
         try {
@@ -121,38 +124,36 @@
   async function loadRebblReplay(uuid) {
     loading = true;
     $error = null;
-    loadFromCache(`rebbl-${uuid}`, async (cacheKey) => {
-      let replayFile = await fetch(
-        `https://rebbl.net/api/v2/match/${uuid}/replay`
-      ).then((r) => r.json());
-      if (replayFile.filename && replayFile.filename != "No replay file found") {
-        const blob = await fetch(replayFile.filename).then((r) => r.blob());
-        const file = new File([blob], replayFile.filename);
-        parseReplay(file, cacheKey);
-      } else {
-        $error = `Unable to load replay for https://rebbl.net/rebbl/match/${uuid}`;
-        loading = false;
-      }
-    });
+    let cacheKey = `rebbl-${uuid}`;
+    let replayFile = await fetch(
+      `https://rebbl.net/api/v2/match/${uuid}/replay`
+    ).then((r) => r.json());
+    if (replayFile.filename && replayFile.filename != "No replay file found") {
+      const blob = await fetch(replayFile.filename).then((r) => r.blob());
+      const file = new File([blob], replayFile.filename);
+      parseReplay(file, cacheKey, `?rebbl=${uuid}`);
+    } else {
+      $error = `Unable to load replay for https://rebbl.net/rebbl/match/${uuid}`;
+      loading = false;
+    }
   }
 
   async function loadGoblinspyReplay(mid) {
     loading = true;
     $error = null;
-    loadFromCache(`gspy-${mid}`, async (cacheKey) => {
-      let replayFile = await fetch(
-        `https://www.mordrek.com:666/api/v1/match/${mid}/url`
-      ).then((r) => r.json());
-      console.log("Replayfile", {replayFile});
-      if (replayFile) {
-        const blob = await fetch(replayFile).then((r) => r.blob());
-        const file = new File([blob], replayFile);
-        parseReplay(file, cacheKey);
-      } else {
-        $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
-        loading = false;
-      }
-    });
+    let cacheKey = `gspy-${mid}`;
+    let replayFile = await fetch(
+      `https://www.mordrek.com:666/api/v1/match/${mid}/url`
+    ).then((r) => r.json());
+    console.log("Replayfile", {replayFile});
+    if (replayFile) {
+      const blob = await fetch(replayFile).then((r) => r.blob());
+      const file = new File([blob], replayFile);
+      parseReplay(file, cacheKey, `?gspy=${mid}`);
+    } else {
+      $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
+      loading = false;
+    }
   }
 
   async function loadReplay() {
@@ -161,9 +162,7 @@
     $error = null;
     const files = filePicker.files;
     if (files.length > 0) {
-      loadFromCache(`file-${files[0].name}`, (cacheKey) =>
-        parseReplay(files[0], cacheKey)
-      );
+      parseReplay(files[0], `file-${files[0].name}`);
     }
   }
 </script>
@@ -210,9 +209,7 @@
           on:input={(ev) => {
             if (replays.map(replay => replay.cacheKey).includes(ev.data)) {
               cachePicker.value = "";
-              loadFromCache(ev.data, (cacheKey) =>
-                alert(`Unable to load ${cacheKey} from cache`)
-              );
+              loadFromCache(ev.data);
             }
           }}
         />

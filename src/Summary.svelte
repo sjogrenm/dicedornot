@@ -1,7 +1,24 @@
 <script>
-  export let gameDetails, filename, homePercentile, awayPercentile;
+  let gameDetails, filename, shared = false;
   import { RACE_NAMES } from "./constants.js";
-  import { Row, Col } from "sveltestrap";
+  import { Row, Col, Button } from "sveltestrap";
+  import {replay} from "./stores.js";
+
+  $: {
+    gameDetails = $replay.gameDetails;
+    filename = $replay.fullReplay.filename;
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  async function share() {
+    await navigator.clipboard.writeText($replay.fullReplay.url);
+    shared = true;
+    await sleep(3000);
+    shared = false;
+  }
 </script>
 
 <Row class="text-center">
@@ -51,7 +68,7 @@
     </div>
   </Col>
 </Row>
-<Row class="text-center justify-content-center">
+<Row class="text-center justify-content-center align-items-center">
   <Col xs="auto">
     {filename}
   </Col>
@@ -68,6 +85,18 @@
     League:
     <span id="league-name">{gameDetails.leagueName}</span>
   </Col>
+
+  {#if $replay.fullReplay.url}
+    <Col xs="auto">
+      <Button on:click={share} color={shared ? "success" : "primary"}>
+        {#if shared}
+          Link copied to clipboard!
+        {:else}
+          Share!
+        {/if}
+      </Button>
+    </Col>
+  {/if}
 </Row>
 
 <style>
