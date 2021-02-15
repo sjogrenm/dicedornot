@@ -63,10 +63,10 @@
           .RulesEventGameFinished.MatchResult;
       return {
         homeCoach: firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId,
-        homeTeam: firstStep.BoardState.ListTeams.TeamState[0].Data.Name,
+        homeTeam: firstStep.BoardState.ListTeams.TeamState[0].Data.Name.toString(),
         homeScore: matchResult.Row.HomeScore || 0,
         awayCoach: firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId,
-        awayTeam: firstStep.BoardState.ListTeams.TeamState[1].Data.Name,
+        awayTeam: firstStep.BoardState.ListTeams.TeamState[1].Data.Name.toString(),
         awayScore: matchResult.Row.AwayScore || 0,
         date: new Date(matchResult.Row.Finished),
         cacheKey,

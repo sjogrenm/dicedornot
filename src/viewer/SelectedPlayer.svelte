@@ -9,8 +9,8 @@
   let name, color, skills, cas;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
-    name = player.data.Data.Name.replace(colorRE, "");
-    let colorMatch = player.data.Data.Name.match(colorRE);
+    name = player.data.Data.Name.toString().replace(colorRE, "");
+    let colorMatch = player.data.Data.Name.toString().match(colorRE);
     color = colorMatch ? `#${colorMatch[1].slice(2, 8)}` : "var(--gray-0)";
     skills = translateStringNumberList(player.data.Data.ListSkills);
 

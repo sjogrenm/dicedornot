@@ -100,7 +100,7 @@
         reserve: [],
       },
       score: team.Touchdown || 0,
-      name: team.Data.Name,
+      name: team.Data.Name.toString(),
       turn: team.GameTurn || 1,
       active,
       //rerolls

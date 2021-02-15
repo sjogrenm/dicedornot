@@ -74,7 +74,7 @@ class Player {
     this.team = team;
     this.id = playerState.Data.Id;
     this.playerType = getPlayerType(playerState.Data.IdPlayerTypes);
-    this.name = playerState.Data.Name.replace(/\[colour='[0-9a-f]{8}'\]/i, '');
+    this.name = playerState.Data.Name.toString().replace(/\[colour='[0-9a-f]{8}'\]/i, '');
     this.cell = playerState.Cell;
     this.situation = playerState.Situation;
     this.playerState = playerState;
@@ -121,7 +121,7 @@ class Team {
     this.players = teamState.ListPitchPlayers.PlayerState.map(
       (playerState) => new Player(this, playerState, boardState)
     );
-    this.name = teamState.Data.Name;
+    this.name = teamState.Data.Name.toString();
     this.id = teamState.Data.TeamId || 0;
     this.turn = teamState.GameTurn || 1;
   }

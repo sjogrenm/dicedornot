@@ -94,13 +94,13 @@ export function extractGameDetails(jsonObject) {
     leagueName: firstStep.GameInfos.RowLeague.Name,
     homeTeam: {
       coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId,
-      teamName: firstStep.BoardState.ListTeams.TeamState[0].Data.Name,
+      teamName: firstStep.BoardState.ListTeams.TeamState[0].Data.Name.toString(),
       raceId: firstStep.BoardState.ListTeams.TeamState[0].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.HomeScore || 0,
     },
     awayTeam: {
       coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId,
-      teamName: firstStep.BoardState.ListTeams.TeamState[1].Data.Name,
+      teamName: firstStep.BoardState.ListTeams.TeamState[1].Data.Name.toString(),
       raceId: firstStep.BoardState.ListTeams.TeamState[1].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.AwayScore || 0,
     },
