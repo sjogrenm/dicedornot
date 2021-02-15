@@ -46,7 +46,7 @@ import {percentRank} from "./utils.js";
         "Nuffle was generous.",
         "In blodge we trust",
         "Scatter don't matter",
-        "Who has two thumbs and all the dice?",
+        `Who has two thumbs and all the dice? ${team}`,
       ]);
     } else if (percentile < 0.01) {
       return sample([
@@ -70,7 +70,7 @@ import {percentRank} from "./utils.js";
         "Why do I believe in blodge?",
         "Unfair dices! Unfair game!",
         "They couldn't roll their way out of a paper bag",
-        "Who has two thumbs and none of the dice?"
+        `Who has two thumbs and none of the dice? ${team}`
       ]);
     } else {
       return "Variance, man. Variance.";
