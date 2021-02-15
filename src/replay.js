@@ -20,6 +20,7 @@ export function processReplay(data) {
     // extractPlayerDetails(replayStep, playerDetails);
     // extractActionsFromStep(replayStep, rolls);
     rolls = rolls.concat(Roll.fromReplayStep(
+      data.Replay,
       data.Replay.ReplayStep[stepIndex - 1] && data.Replay.ReplayStep[stepIndex - 1].BoardState,
       stepIndex,
       replayStep

@@ -233,6 +233,7 @@ export class Roll {
     args.subResultType = xml.boardActionResult.SubResultType;
     args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.BoardAction, xml.actionIndex, xml.resultIndex);
     args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill].includes(args.rollStatus);
+    args.gameLength = xml.gameLength;
     return args;
   }
 
@@ -375,24 +376,25 @@ export class Roll {
     };
   }
 
-  static fromReplayStep(initialBoard, stepIndex, replayStep) {
+  static fromReplayStep(replay, initialBoard, stepIndex, replayStep) {
     var actions = ensureList(replayStep.RulesEventBoardAction);
     var rolls = [];
     for (var actionIndex = 0; actionIndex < actions.length; actionIndex++) {
       var action = actions[actionIndex];
       rolls = rolls.concat(
-        Roll.fromAction(initialBoard, stepIndex, replayStep, actionIndex, action)
+        Roll.fromAction(replay, initialBoard, stepIndex, replayStep, actionIndex, action)
       );
     }
     return rolls;
   }
 
-  static fromAction(initialBoard, stepIndex, replayStep, actionIndex, action) {
+  static fromAction(replay, initialBoard, stepIndex, replayStep, actionIndex, action) {
     var results = ensureList(action.Results.BoardActionResult);
     var rolls = [];
     for (var resultIndex = 0; resultIndex < results.length; resultIndex++) {
       var result = results[resultIndex];
       var roll = this.fromBoardActionResult(
+        replay,
         initialBoard,
         stepIndex,
         replayStep,
@@ -415,6 +417,7 @@ export class Roll {
     return rolls;
   }
   static fromBoardActionResult(
+    replay,
     initialBoard,
     stepIndex,
     replayStep,
@@ -443,6 +446,7 @@ export class Roll {
     } else {
       return new rollClass(
         rollClass.argsFromXml({
+          gameLength: Math.max(...replay.ReplayStep.map(step => step.turn)),
           initialBoard,
           stepIndex,
           replayStep,
@@ -507,7 +511,7 @@ export class Roll {
       } else if (this.turn <= 16) {
         return 16 - team.turn;
       } else {
-        return 24 - team.turn;
+        return Math.min(24, this.gameLength) - team.turn;
       }
     });
     return halfTurns[0] + halfTurns[1];
