@@ -13,7 +13,7 @@ import {
   getPlayerType,
   STAR_NAMES,
 } from './constants.js';
-import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP } from './replay-utils.js';
+import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP, REPLAY_KEY } from './replay-utils.js';
 import {
   SingleValue,
   SimpleDistribution,
@@ -379,6 +379,15 @@ export class Roll {
   }
 
   static fromReplayStep(replay, initialBoard, stepIndex, replayStep) {
+    if (replayStep[REPLAY_KEY[REPLAY_SUB_STEP.SetupAction]]) {
+      return new SetupAction(SetupAction.argsFromXml({
+        gameLength: Math.max(...replay.ReplayStep.map(step => step.turn)),
+        initialBoard,
+        stepIndex,
+        replayStep,
+        setupAction: replayStep[REPLAY_KEY.SetupAction],
+      }));
+    }
     var actions = ensureList(replayStep.RulesEventBoardAction);
     var rolls = [];
     for (var actionIndex = 0; actionIndex < actions.length; actionIndex++) {
@@ -673,7 +682,12 @@ export class Roll {
     }
 
     let futureActions = this._futurePlayerValue[player.id] = this.rolls.filter(
-      roll => roll.startIndex.after(this.startIndex) && roll.activePlayer.id == this.activePlayer.id && roll.turn == this.turn
+      roll => (
+        roll.startIndex.after(this.startIndex) &&
+        roll.activePlayer &&
+        roll.activePlayer.id == this.activePlayer.id &&
+        roll.turn == this.turn
+      )
     );
 
     let result;
@@ -735,6 +749,12 @@ function reroll(roll, dependent) {
 function sameTeamMove(roll, dependent) {
   return (
     dependent.constructor == MoveAction && roll.activeTeam.id == dependent.activeTeam.id
+  )
+}
+
+function setup(roll, dependent) {
+  return (
+    dependent.constructor == SetupAction
   )
 }
 
@@ -1753,7 +1773,38 @@ class NoValueRoll extends Roll {
     return null;
   }
   get possibleOutcomes() {
-    return [];
+    return new SingleValue("No Value", 0);
+  }
+}
+
+
+export class SetupAction extends NoValueRoll {
+  static rollName = "Setup";
+  static dependentConditions = [setup];
+  static ignore() {
+    return false;
+  }
+
+  get description() {
+    return `Setup`;
+  }
+
+  get jointDescription() {
+    return "Setup";
+  }
+
+  get shortDescription() {
+    return this.description;
+  }
+  static argsFromXml(xml) {
+    const args = {};
+
+    args.initialBoardState = new BoardState(BoardState.argsFromXml(xml.initialBoard));
+    args.finalBoardState = new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState));
+    args.ignore = this.ignore(xml);
+    args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.SetupAction);
+    args.gameLength = xml.gameLength;
+    return args;
   }
 }
 

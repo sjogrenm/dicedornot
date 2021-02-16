@@ -41,7 +41,7 @@ export const REPLAY_SUB_STEP = {
 }
 
 export const REPLAY_KEY = {
-  [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetupAction',
+  [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetUpAction',
   [REPLAY_SUB_STEP.BoardAction]: 'RulesEventBoardAction',
   [REPLAY_SUB_STEP.EndTurn]: 'RulesEventEndTurn',
   [REPLAY_SUB_STEP.BoardState]: 'BoardState',

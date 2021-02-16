@@ -61,10 +61,12 @@ export function processReplay(data) {
   })
   console.log("Transformed rolls...", { validRolls });
   let activationValues = validRolls.reduce((acc, roll) => {
-    acc[`${roll.turn}-${roll.activePlayer.name}`] = {
-      actual: roll.valueWithDependents.valueOf(),
-      expected: roll.onPitchValue(roll.activePlayer).valueOf(),
-    };
+    if (roll.activePlayer) {
+      acc[`${roll.turn}-${roll.activePlayer.name}`] = {
+        actual: roll.valueWithDependents.valueOf(),
+        expected: roll.onPitchValue(roll.activePlayer).valueOf(),
+      };
+    }
     return acc;
   }, {});
   console.log("Player activation values", {
