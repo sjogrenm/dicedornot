@@ -259,7 +259,7 @@
   async function handleReplay() {
     try {
       if ($replayCurrent == END) {
-        playing = false;
+        $replayCurrent = new ReplayPosition();
         return;
       }
       const step = $replay.fullReplay.ReplayStep[$replayCurrent.step];
