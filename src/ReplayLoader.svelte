@@ -175,8 +175,7 @@ import { key } from "vega";
       const file = new File([blob], replayFile.filename);
       parseReplay(file, 'rebbl', uuid);
     } else {
-      $error = `Unable to load replay for https://rebbl.net/rebbl/match/${uuid}`;
-      loading = null;
+      loadGoblinspyReplay(`cid_${uuid}`);
     }
   }
 
