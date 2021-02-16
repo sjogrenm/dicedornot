@@ -29,13 +29,7 @@
     rolls = $replay.rolls;
     if (rolls && $replayCurrent) {
       let nextRoll = rolls.findIndex((roll) => {
-        const rollPosition = new ReplayPosition(
-          roll.stepIndex,
-          REPLAY_SUB_STEP.BoardAction,
-          roll.actionIndex,
-          roll.resultIndex
-        );
-        return rollPosition.atOrAfter($replayCurrent);
+        return roll.startIndex.atOrAfter($replayCurrent);
       });
       playHead = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
     }
