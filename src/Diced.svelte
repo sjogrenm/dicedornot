@@ -104,7 +104,6 @@ import {percentRank} from "./utils.js";
       if (c > 10 && homePercentile - oldHome < 0.0005 && awayPercentile - oldAway < 0.0005) {
         return;
       }
-      console.log(iteration, {homeDelta: homePercentile - oldHome, awayDelta: awayPercentile - oldAway});
 
       await sleep(100);
     }
