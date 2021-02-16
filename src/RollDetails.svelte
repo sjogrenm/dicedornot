@@ -35,7 +35,7 @@
   }
 </script>
 
-{#if selectedRoll && currentTurnRolls && currentTurnRolls.length > 0}
+{#if selectedRoll >= 0 && currentTurnRolls && currentTurnRolls.length > 0}
   <div class="details-list">
     <Turn rolls={currentTurnRolls} {selectedRoll}/>
   </div>
