@@ -11,6 +11,7 @@ import {
   PLAYER_TVS,
   SKILL_CATEGORY,
   getPlayerType,
+  STAR_NAMES,
 } from './constants.js';
 import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP } from './replay-utils.js';
 import {
@@ -75,6 +76,7 @@ class Player {
     this.id = playerState.Data.Id;
     this.playerType = getPlayerType(playerState.Data.IdPlayerTypes);
     this.name = playerState.Data.Name.toString().replace(/\[colour='[0-9a-f]{8}'\]/i, '');
+    this.name = STAR_NAMES[this.name] || this.name;
     this.cell = playerState.Cell;
     this.situation = playerState.Situation;
     this.playerState = playerState;
