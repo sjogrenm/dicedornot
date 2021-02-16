@@ -325,10 +325,6 @@ export class Roll {
 
   get actual() {
     var dataPoint = this.dataPoint(-1, POINT.Actual);
-    const deltaNetValues = this.possibleOutcomes.flat.map((outcome) => ({
-      value: outcome.value - dataPoint.expectedValue,
-      weight: outcome.weight
-    }));
     return Object.assign(dataPoint, {
       turn: this.turn,
       player: (this.activePlayer && this.activePlayer.name) || '',
@@ -338,7 +334,7 @@ export class Roll {
         [],
       rollName: this.rollName,
       dice: this.dice,
-      outcomes: this.possibleOutcomes.flat.map(outcome => outcome.value - dataPoint.expectedValue),
+      outcomes: this.possibleOutcomes.flat.map(outcome => outcome.value),
       weights: this.possibleOutcomes.flat.map(outcome => outcome.weight),
       description: this.jointDescription,
       valueDescription: `${this.valueWithDependents.valueString} ${this.possibleOutcomes.valueString}`,
