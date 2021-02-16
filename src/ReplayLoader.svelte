@@ -19,7 +19,7 @@ import { key } from "vega";
 
   let filePicker, urlPicker, cachePicker, replayKeys;
   const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
-  const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/([0-9a-f]*)/i
+  const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/((cid_)?[0-9a-f]*)/i
   const spikeRE = /.*spike\.ovh\/match\?match_uuid=([0-9a-f]*)/i
 
   async function loadFromSearchParams() {

@@ -713,9 +713,9 @@ export function getPlayerType(playerTypeId) {
     case 143: case 403: case 448: return PLAYER_TYPE.KislevCatcher;
     case 144: case 402: case 447: return PLAYER_TYPE.KislevBlitzer;
     case 145: case 404: case 449: return PLAYER_TYPE.KislevBear;
-    case 139: case 333: case 420: case 443: PLAYER_TYPE.BretonniaPeasant;
-    case 140: case 335: case 419: case 445: PLAYER_TYPE.BretonniaBlocker;
-    case 141: case 334: case 418: case 444: PLAYER_TYPE.BretonniaKnight;
+    case 139: case 333: case 420: case 443: return PLAYER_TYPE.BretonniaPeasant;
+    case 140: case 335: case 419: case 445: return PLAYER_TYPE.BretonniaBlocker;
+    case 141: case 334: case 418: case 444: return PLAYER_TYPE.BretonniaKnight;
     case 146: case 239: case 617: case 618: return PLAYER_TYPE.StarBarikFarblast;
     case 293: case 294: case 619: case 620: return PLAYER_TYPE.StarBerthaBigfist;
     case 133: case 233: case 621: case 622: return PLAYER_TYPE.StarBomberDribblesnot;
