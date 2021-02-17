@@ -453,6 +453,7 @@ export class Roll {
     } else {
       return new rollClass(
         rollClass.argsFromXml({
+          replay,
           gameLength: Math.max(...replay.ReplayStep.map(step => step.turn)),
           initialBoard,
           stepIndex,
@@ -817,10 +818,6 @@ class BlockRoll extends Roll {
     }
     if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.Fend) {
       // Opponent picking whether to activate fend
-      return true;
-    }
-    if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.DodgeNoReq) {
-      // Not sure what this is, but it doesn't have the expected number of dice.
       return true;
     }
 
@@ -1371,6 +1368,18 @@ class DodgeRoll extends ModifiedD6SumRoll {
   static rerollSkill = SKILL.Dodge;
   static rerollCancelSkill = SKILL.Tackle;
   static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+
+  static argsFromXml(xml) {
+    let args = super.argsFromXml(xml);
+    if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.DodgeNoReq) {
+      // A dodge that fails in tackle and prompts for a team reroll doesn't have the requirement attached, so
+      // pull them from the later roll
+      let nextActions = ensureList(xml.replay.ReplayStep[xml.stepIndex + 1].RulesEventBoardAction)
+      let nextResults = ensureList(nextActions[0].Results.BoardActionResult);
+      args.target = nextResults[0].Requirement;
+    }
+    return args
+  }
   failValue(expected) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
   }
