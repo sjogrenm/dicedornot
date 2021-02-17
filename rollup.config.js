@@ -8,6 +8,7 @@ import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 import autoPreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
+import { babel } from '@rollup/plugin-babel';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -70,6 +71,11 @@ export default {
       dedupe: ['svelte']
     }),
     commonjs(),
+    babel({
+      extensions: ['.js', '.mjs', '.html', '.svelte'],
+      include: ['src/**', 'node_modules/svelte/**'],
+      babelHelpers: 'bundled',
+    }),
 
     // In dev mode, call `npm run start` once
     // the bundle has been generated

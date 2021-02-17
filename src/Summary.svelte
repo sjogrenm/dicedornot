@@ -101,8 +101,8 @@
 
 <style>
   .race-logo {
-    width: 2em;
-    height: 2em;
+    width: 3em;
+    height: 3em;
   }
   .score {
     font-size: xx-large;
