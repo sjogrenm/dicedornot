@@ -47,6 +47,12 @@
     [SITUATION.SentOff]: "cas",
   };
 
+  $: {
+    if (!playing && $replayTarget) {
+      handleReplay();
+    }
+  }
+
   const [send, receive] = crossfade({
     duration: $timing * 0.5,
     easing: sineInOut,
@@ -334,9 +340,6 @@
       const actionTypes = actions.map((action) => action.ActionType || 0);
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
         $replayTarget = new ReplayPosition(stepI);
-        if (!playing) {
-          handleReplay();
-        }
         return;
       }
     }
@@ -347,18 +350,12 @@
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);
-        if (!playing) {
-          handleReplay();
-        }
         return;
       }
     }
   }
   function jumpToPreviousStep() {
     $replayTarget = new ReplayPosition($replayCurrent.step - 1);
-        if (!playing) {
-          handleReplay();
-        }
   }
   function jumpToNextActivation() {
     for (
@@ -371,9 +368,6 @@
       const actionTypes = actions.map((action) => action.ActionType || 0);
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
         $replayTarget = new ReplayPosition(stepI);
-        if (!playing) {
-          handleReplay();
-        }
         return;
       }
     }
@@ -387,9 +381,6 @@
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);
-        if (!playing) {
-          handleReplay();
-        }
         return;
       }
     }
