@@ -5,7 +5,6 @@
   import { processReplay } from "./replay.js";
   import { get, set, entries, keys } from "idb-keyval";
   import Loading from "./Loading.svelte";
-import { key } from "vega";
 
   export let button = "primary",
     loading = null;
@@ -117,7 +116,7 @@ import { key } from "vega";
         shareURL.search = "";
         shareURL.fragment = "";
         shareURL.searchParams.set(replayType, replayId);
-        window.history.pushState({[replayType]: replayId}, "", shareURL.href)
+        window.history.pushState({}, "", shareURL.href)
         $replay = processReplay(jsonReplayData);
         loading = null;
       } catch (err) {
@@ -140,7 +139,7 @@ import { key } from "vega";
         shareURL.search = "";
         shareURL.fragment = "";
         shareURL.searchParams.set(replayType, replayId);
-        window.history.pushState({[replayType]: replayId}, "", shareURL.href)
+        window.history.pushState({}, "", shareURL.href)
         jsonReplayData.Replay.url = shareURL.href;
         let cacheKey = `${replayType}-${replayId}`;
         set(cacheKey, jsonReplayData);

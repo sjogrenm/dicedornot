@@ -26,6 +26,9 @@
     END,
   } from "../replay-utils.js";
   import { replay, replayCurrent, replayTarget, timing, error } from "../stores.js";
+
+  let startingUrl = new URL(window.location);
+
   let lastChainPush,
     races = [],
     homeTeam = {},
@@ -64,9 +67,13 @@
   });
 
   onMount(() => {
-    let params = new URLSearchParams(window.location.search);
-    $timing = params.get("timing") || 300;
-    startPlayer();
+    let url = new URL(window.location);
+    $timing = url.searchParams.get("timing") || 300;
+    if (url.hash) {
+      handleReplay();
+    } else {
+      startPlayer();
+    }
     return () => console.log("destroyed");
   });
 
@@ -257,56 +264,58 @@
   }
 
   async function handleReplay() {
-    try {
-      if ($replayCurrent == END) {
-        $replayCurrent = new ReplayPosition();
-        return;
-      }
-      const step = $replay.fullReplay.ReplayStep[$replayCurrent.step];
-      if ($replayTarget) {
-        const target = $replayTarget;
-        $replayTarget = null;
-        await jumpToPosition(target);
-        return;
-      }
-      const subStep = step[REPLAY_KEY[$replayCurrent.subStep]];
-      switch ($replayCurrent.subStep) {
-        case REPLAY_SUB_STEP.SetupAction:
-          await handleSetupAction(subStep);
-          break;
-        case REPLAY_SUB_STEP.BoardAction:
-          let action = ensureList(subStep)[$replayCurrent.action];
-          if (!action) {
-            console.error("No action found", {
-              subStep,
-              replayCurrent: $replayCurrent,
-              step,
-            });
-          }
-          let result = ensureList(action.Results.BoardActionResult)[
-            $replayCurrent.result
-          ];
-          await handleBoardAction(action, result);
-          break;
-        case REPLAY_SUB_STEP.EndTurn:
-          await handleEndTurn(subStep);
-          break;
-        case REPLAY_SUB_STEP.BoardState:
-          await handleBoardState(subStep);
-          break;
-      }
-      $replayCurrent = $replayCurrent.toNextPosition($replay.fullReplay);
-    } catch (err) {
-      playing = false;
-      $error = err;
-      console.error(err);
+    let current = $replayCurrent, fullReplay = $replay.fullReplay;
+    if (!fullReplay) {
+      await sleep(100);
+      return;
+    }
+    if (current == END) {
+      $replayCurrent = new ReplayPosition();
+      return;
+    }
+    const step = fullReplay.ReplayStep[current.step];
+    const subStep = step[REPLAY_KEY[current.subStep]];
+    switch (current.subStep) {
+      case REPLAY_SUB_STEP.SetupAction:
+        await handleSetupAction(subStep);
+        break;
+      case REPLAY_SUB_STEP.BoardAction:
+        let action = ensureList(subStep)[current.action];
+        if (!action) {
+          console.error("No action found", {
+            subStep,
+            replayCurrent: current,
+            step,
+          });
+        }
+        let result = ensureList(action.Results.BoardActionResult)[
+          current.result
+        ];
+        await handleBoardAction(action, result);
+        break;
+      case REPLAY_SUB_STEP.EndTurn:
+        await handleEndTurn(subStep);
+        break;
+      case REPLAY_SUB_STEP.BoardState:
+        await handleBoardState(subStep);
+        break;
+    }
+    if ($replayTarget) {
+      const target = $replayTarget;
+      $replayTarget = null;
+      await jumpToPosition(target);
+    } else {
+      $replayCurrent = current.toNextPosition(fullReplay);
+      let url = new URL(window.location);
+      url.hash = current.toHash();
+      window.history.replaceState({}, "", url.href)
     }
   }
 
   async function jumpToPosition(position) {
     clearTemporaryState();
     $replayCurrent = new ReplayPosition(
-      position.step - 1,
+      Math.max(0, position.step - 1),
       REPLAY_SUB_STEP.BoardState
     );
     skipping = true;
@@ -314,6 +323,7 @@
       await handleReplay();
     }
     skipping = false;
+    await handleReplay();
   }
 
   function jumpToPreviousActivation() {
@@ -322,7 +332,7 @@
       const actions = ensureList(step.RulesEventBoardAction);
       const actionTypes = actions.map((action) => action.ActionType || 0);
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
-        jumpToPosition(new ReplayPosition(stepI));
+        $replayTarget = new ReplayPosition(stepI);
         return;
       }
     }
@@ -332,13 +342,13 @@
     for (var stepI = $replayCurrent.step; stepI--; stepI > 0) {
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
-        jumpToPosition(new ReplayPosition(stepI + 1));
+        $replayTarget = new ReplayPosition(stepI + 1);
         return;
       }
     }
   }
   function jumpToPreviousStep() {
-    jumpToPosition(new ReplayPosition($replayCurrent.step - 1));
+    $replayTarget = new ReplayPosition($replayCurrent.step - 1);
   }
   function jumpToNextActivation() {
     for (
@@ -350,7 +360,7 @@
       const actions = ensureList(step.RulesEventBoardAction);
       const actionTypes = actions.map((action) => action.ActionType || 0);
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
-        jumpToPosition(new ReplayPosition(stepI));
+        $replayTarget = new ReplayPosition(stepI);
         return;
       }
     }
@@ -363,7 +373,7 @@
     ) {
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
-        jumpToPosition(new ReplayPosition(stepI + 1));
+        $replayTarget = new ReplayPosition(stepI + 1);
         return;
       }
     }
@@ -372,7 +382,13 @@
   async function startPlayer() {
     playing = true;
     while (playing) {
-      await handleReplay();
+      try {
+        await handleReplay();
+      } catch (err) {
+        playing = false;
+        $error = err;
+        console.error(err);
+      }
     }
   }
 

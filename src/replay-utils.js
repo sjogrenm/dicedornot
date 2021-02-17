@@ -161,4 +161,15 @@ export class ReplayPosition {
   atOrBefore(other) {
     return other.atOrBefore(this);
   }
+  toHash() {
+    if (this.subStep === REPLAY_SUB_STEP.BoardAction) {
+      return [this.step, this.subStep, this.action, this.result].join('-');
+    } else {
+      return [this.step, this.subStep].join('-');
+    }
+  }
+  static fromHash(hash) {
+    let [step, subStep, action, result] = hash.replace('#', '').split('-').map(x => parseInt(x));
+    return new ReplayPosition(step, subStep, action, result);
+  }
 }

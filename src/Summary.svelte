@@ -14,7 +14,7 @@
   }
 
   async function share() {
-    await navigator.clipboard.writeText($replay.fullReplay.url);
+    await navigator.clipboard.writeText(window.location);
     shared = true;
     await sleep(3000);
     shared = false;
