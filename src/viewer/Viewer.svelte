@@ -273,6 +273,13 @@
       $replayCurrent = new ReplayPosition();
       return;
     }
+    if ($replayTarget) {
+      const target = $replayTarget;
+      $replayTarget = null;
+      await jumpToPosition(target);
+      return;
+    }
+
     const step = fullReplay.ReplayStep[current.step];
     const subStep = step[REPLAY_KEY[current.subStep]];
     switch (current.subStep) {
@@ -300,16 +307,10 @@
         await handleBoardState(subStep);
         break;
     }
-    if ($replayTarget) {
-      const target = $replayTarget;
-      $replayTarget = null;
-      await jumpToPosition(target);
-    } else {
-      $replayCurrent = current.toNextPosition(fullReplay);
-      let url = new URL(window.location);
-      url.hash = current.toHash();
-      window.history.replaceState({}, "", url.href)
-    }
+    $replayCurrent = current.toNextPosition(fullReplay);
+    let url = new URL(window.location);
+    url.hash = current.toHash();
+    window.history.replaceState({}, "", url.href);
   }
 
   async function jumpToPosition(position) {
@@ -319,7 +320,7 @@
       REPLAY_SUB_STEP.BoardState
     );
     skipping = true;
-    while (position.after($replayCurrent)) {
+    while (position.atOrAfter($replayCurrent)) {
       await handleReplay();
     }
     skipping = false;
@@ -333,6 +334,9 @@
       const actionTypes = actions.map((action) => action.ActionType || 0);
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
         $replayTarget = new ReplayPosition(stepI);
+        if (!playing) {
+          handleReplay();
+        }
         return;
       }
     }
@@ -343,12 +347,18 @@
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);
+        if (!playing) {
+          handleReplay();
+        }
         return;
       }
     }
   }
   function jumpToPreviousStep() {
     $replayTarget = new ReplayPosition($replayCurrent.step - 1);
+        if (!playing) {
+          handleReplay();
+        }
   }
   function jumpToNextActivation() {
     for (
@@ -361,6 +371,9 @@
       const actionTypes = actions.map((action) => action.ActionType || 0);
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
         $replayTarget = new ReplayPosition(stepI);
+        if (!playing) {
+          handleReplay();
+        }
         return;
       }
     }
@@ -374,6 +387,9 @@
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);
+        if (!playing) {
+          handleReplay();
+        }
         return;
       }
     }
