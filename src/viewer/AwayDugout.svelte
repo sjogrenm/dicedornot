@@ -4,19 +4,19 @@
   import TeamAids from "./TeamAids.svelte";
   import TeamLogo from "./TeamLogo.svelte";
 
-  export let awayTeam, send, receive;
+  export let team, send, receive;
 
 </script>
 
 <div class="dugout">
-  <div class="aids"><TeamAids reverse={true}/></div>
-  <div class="score">{awayTeam.score}</div>
-  <div class="turn" class:active={awayTeam.active}>{awayTeam.turn}</div>
-  <div class="name">{awayTeam.name}</div>
+  <div class="aids"><TeamAids reverse={true} {team}/></div>
+  <div class="score">{team.score}</div>
+  <div class="turn" class:active={team.active}>{team.turn}</div>
+  <div class="name">{team.name}</div>
   <div class="logo">
-    <TeamLogo logo={awayTeam.logo}/>
+    <TeamLogo logo={team.logo}/>
   </div>
-  <AwayBench dugout={awayTeam.dugout} {send} {receive}/>
+  <AwayBench dugout={team.dugout} {send} {receive}/>
 </div>
 
 <style>
@@ -78,6 +78,6 @@
     position: absolute;
     width: 30%;
     left: 16%;
-    top: 1%;
+    top: 2%;
   }
 </style>

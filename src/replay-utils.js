@@ -173,3 +173,8 @@ export class ReplayPosition {
     return new ReplayPosition(step, subStep, action, result);
   }
 }
+
+
+export function period(turn) {
+  return Math.floor((turn - 1) / 8) + 1;
+}

@@ -1,5 +1,6 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END } from "./replay-utils.js";
+import { SIDE } from "./constants.js";
 
 export function processReplay(data) {
   //console.log("replay.processReplay");
@@ -95,15 +96,15 @@ export function extractGameDetails(jsonObject) {
     stadiumType: firstStep.GameInfos.StructStadium,
     leagueName: firstStep.GameInfos.RowLeague.Name,
     homeTeam: {
-      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId,
-      teamName: firstStep.BoardState.ListTeams.TeamState[0].Data.Name.toString(),
-      raceId: firstStep.BoardState.ListTeams.TeamState[0].Data.IdRace,
+      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.home].UserId,
+      teamName: firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString(),
+      raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.HomeScore || 0,
     },
     awayTeam: {
-      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId,
-      teamName: firstStep.BoardState.ListTeams.TeamState[1].Data.Name.toString(),
-      raceId: firstStep.BoardState.ListTeams.TeamState[1].Data.IdRace,
+      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.away].UserId,
+      teamName: firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString(),
+      raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.AwayScore || 0,
     },
   };

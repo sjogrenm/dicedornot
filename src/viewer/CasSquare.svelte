@@ -3,7 +3,7 @@
   import { Popover } from "sveltestrap";
   import SelectedPlayer from "./SelectedPlayer.svelte";
   import { selectedPlayer } from "../stores.js";
-  import {SITUATION, Casualties} from "../constants.js";
+  import {SITUATION, Casualties, SIDE} from "../constants.js";
   import {translateStringNumberList} from "../replay-utils.js";
   export let team, dugout, row, column, width, height, casType, send, receive;
   let player = null,
@@ -11,7 +11,7 @@
     id, cas = null;
 
   $: {
-    id = `${team}-${casType}-${row}-${column}`;
+    id = `${team == 1 ? "away" : "home"}-${casType}-${row}-${column}`;
     if (dugout) {
       if (casType == "ko") {
         players = dugout["cas"].slice(width * height).concat(dugout[casType]);
@@ -55,7 +55,7 @@
 {#if player}
   <Popover
     trigger="hover"
-    placement={team == "home" ? "bottom" : "top"}
+    placement={team == SIDE.home ? "bottom" : "top"}
     target={id}
   >
     <div class="player-card">

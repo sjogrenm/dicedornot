@@ -6,19 +6,19 @@
   import { selectedPlayer } from "../stores.js";
   import TeamLogo from "./TeamLogo.svelte";
 
-  export let homeTeam, weather, send, receive;
+  export let team, weather, send, receive;
 </script>
 
 <div class="dugout">
-  {#if homeTeam}
-    <HomeBench dugout={homeTeam.dugout} {send} {receive} />
+  {#if team}
+    <HomeBench dugout={team.dugout} {send} {receive} />
     <div class="logo">
-      <TeamLogo logo={homeTeam.logo} />
+      <TeamLogo logo={team.logo} />
     </div>
-    <div class="name">{homeTeam.name}</div>
-    <div class="score"><p>{homeTeam.score}</p></div>
-    <div class="turn" class:active={homeTeam.active}><p>{homeTeam.turn}</p></div>
-    <div class="aids"><TeamAids /></div>
+    <div class="name">{team.name}</div>
+    <div class="score"><p>{team.score}</p></div>
+    <div class="turn" class:active={team.active}><p>{team.turn}</p></div>
+    <div class="aids"><TeamAids {team}/></div>
   {/if}
   {#if $selectedPlayer}
     <div class="selected"><SelectedPlayer player={$selectedPlayer} /></div>

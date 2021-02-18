@@ -355,7 +355,7 @@ export const SUB_RESULT_TYPE = {
   InjuryStun: 2,
   InjuryKO: 3,
   InjuryCAS: 4,
-  Unknown_7: 7, //Pick Dodge skill use?
+  ChoiceUseDodgeSkill: 7, //Pick Dodge skill use?
   CASDecay: 16,
   CASResult: 18, //Final CAS Result
   Fend: 35, //Blockdice against Fend, no 2nd Dice.
@@ -1249,4 +1249,9 @@ export const STAR_NAMES = {
   PLAYER_NAMES_CHAMPION_NAIN: "Grim Ironjaw",
   PLAYER_NAMES_CHAMPION_FLINT_FALLBACK: "Flint Churnblade",
   PLAYER_NAMES_CHAMPION_ELFE_SYLVAIN: "Jordel Freshbreeze",
+}
+
+export const SIDE = {
+  home: 0,
+  away: 1,
 }

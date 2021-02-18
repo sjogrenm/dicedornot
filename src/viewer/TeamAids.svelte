@@ -1,8 +1,35 @@
 <script>
-  import Grid from "./Grid.svelte";
+import FlexGrid from "./FlexGrid.svelte";
+  export let team, reverse;
 </script>
 
-<Grid width={10} height={3}>
+<FlexGrid width={10} height={3} {reverse}>
+  {#if team.rerolls}
+    {#each Array(team.rerolls.total) as _, i}
+      <div class="reroll sprite" class:used={i >= team.rerolls.available} />
+    {/each}
+    <div class="break"/>
+  {/if}
+  {#if team.inducements}
+    {#if team.inducements.wizard}
+      <div class="inducement sprite wizard"/>
+    {/if}
+    {#if team.inducements.chef}
+      <div class="inducement sprite chef"/>
+    {/if}
+    {#if team.inducements.igor}
+      <div class="inducement sprite igor"/>
+    {/if}
+    {#each Array(team.inducements.apo.total) as _, i}
+      <div class="inducement sprite apo" class:used={i >= team.inducements.apo.available}/>
+    {/each}
+    {#each Array(team.inducements.babes) as _}
+      <div class="inducement sprite babe"/>
+    {/each}
+    {#each Array(team.inducements.bribes.total) as _, i}
+      <div class="inducement sprite bribe" class:used={i >= team.inducements.bribes.available}/>
+    {/each}
+  {/if}
   <!-- <div class="grid_item_dice">
     <div class="inducement wizard" />
   </div>
@@ -12,44 +39,56 @@
   <div class="grid_item_dice">
     <div class="reroll" />
   </div> -->
-</Grid>
+</FlexGrid>
 
 <style>
-  .reroll {
-    background: url("/images/rerolls.png") no-repeat;
-    width: 34px;
-    height: 34px;
-    display: inline-block;
-    background-position-x: 0px;
-    position: absolute;
+  .break {
+    flex-basis: 100%;
+    height: 0;
   }
-  .inducement {
-    background: url("/images/inducements.png") no-repeat;
-    width: 34px;
-    height: 34px;
-    display: inline-block;
-    background-position-x: 0px;
-    position: absolute;
+  .reroll.sprite {
+    background-image: url("/images/rerolls.png");
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: calc(100%/10);
+    height: calc(100%/3);
+    --imW: 34;
+    --imH: 68;
+    --spW: 34;
+    --spH: 34;
+  }
+  .inducement.sprite {
+    background-image: url("/images/inducements.png");
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: calc(100%/10);
+    height: calc(100%/3);
+    --imW: 205;
+    --imH: 68;
+    --spW: 34;
+    --spH: 34;
   }
   .apo {
-    background-position-x: 0px;
+    --spX: ;
   }
   .babe {
-    background-position-x: -34px;
+    --spX: 34;
   }
   .wizard {
-    background-position-x: -68px;
+    --spX: 68;
   }
   .chef {
-    background-position-x: -102px;
+    --spX: 102;
   }
   .bribe {
-    background-position-x: -136px;
+    --spX: 136;
   }
   .igor {
-    background-position-x: -172px;
+    --spX: 172;
   }
   .used {
-    background-position-y: -34px;
+    --spY: 34;
   }
 </style>

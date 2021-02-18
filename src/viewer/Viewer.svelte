@@ -14,6 +14,7 @@
     RESULT_TYPE,
     ACTION_TYPE,
     getPlayerSprite,
+    SIDE,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
@@ -24,6 +25,7 @@
     REPLAY_SUB_STEP,
     ReplayPosition,
     END,
+    period,
   } from "../replay-utils.js";
   import { replay, replayCurrent, replayTarget, timing, error } from "../stores.js";
 
@@ -86,10 +88,12 @@
   async function resetFromBoardState(boardState) {
     blitzerId = boardState.BlitzerId;
     homeTeam = processTeam(
+      SIDE.home,
       boardState.ListTeams.TeamState[0],
       boardState.ActiveTeam != 1
     );
     awayTeam = processTeam(
+      SIDE.away,
       boardState.ListTeams.TeamState[1],
       boardState.ActiveTeam == 1
     );
@@ -104,7 +108,25 @@
     await step();
   }
 
-  function processTeam(team, active) {
+  function processTeam(side, team, active) {
+    let maxRerollsThisPeriod = $replay.fullReplay.ReplayStep.reduce((acc, step) => {
+      if (!step.BoardState) {
+        return acc;
+      }
+      let stepTeam = step.BoardState.ListTeams.TeamState[side];
+      let stepPeriod = period(stepTeam.GameTurn);
+      if (stepPeriod == period(team.GameTurn)) {
+        acc = Math.max(acc, stepTeam.RerollNumber || 0);
+      }
+      return acc;
+    }, 0);
+    let maxApos = $replay.fullReplay.ReplayStep.reduce((acc, step) => {
+      if (!step.BoardState) {
+        return acc;
+      }
+      let stepTeam = step.BoardState.ListTeams.TeamState[side];
+      return Math.max(acc, stepTeam.ApothecaryNumber || 0);
+    }, 0);
     return {
       logo: team.Data.Logo.toLowerCase(),
       dugout: {
@@ -116,7 +138,24 @@
       name: team.Data.Name.toString(),
       turn: team.GameTurn || 1,
       active,
-      //rerolls
+      rerolls: {
+        available: team.RerollNumber || 0,
+        total: Math.max(maxRerollsThisPeriod, team.Data.Reroll || 0), // TODO: Max RerollNumber over course of half
+      },
+      inducements: {
+        wizard: team.Wizard == 1,
+        babes: team.Babes || 0,
+        apo: {
+          available: team.ApothecaryNumber || 0,
+          total: Math.max(maxApos, team.Data.Apothecary || 0), // TODO: Max ApoNumber over course of game
+        },
+        chef: team.HalflingChef == 1,
+        bribes: {
+          available: team.BribeNumber || 0,
+          total: team.Bribe || 0,
+        },
+        igor: team.Igor == 1
+      }
       //inducements
     };
   }
@@ -974,9 +1013,9 @@
   <div class="pitch-scroll">
     <FixedRatio width={1335} height={1061}>
       <div class="pitch">
-        <HomeDugout {homeTeam} {weather} {send} {receive} />
+        <HomeDugout team={homeTeam} {weather} {send} {receive} />
         <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive} />
-        <AwayDugout {awayTeam} {send} {receive} />
+        <AwayDugout team={awayTeam} {send} {receive} />
       </div>
       {#if banner}
         <Banner {banner} />

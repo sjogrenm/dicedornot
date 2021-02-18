@@ -1,5 +1,6 @@
 <script>
   import FixedRatio from "./FixedRatio.svelte";
+  import FlexGrid from "./FlexGrid.svelte";
 
   import Player from "./Player.svelte";
   import { translateStringNumberList } from "../replay-utils.js";
@@ -72,13 +73,11 @@
       </div>
     {/if}
     <div class="skills-frame">
-      <FixedRatio width={4} height={3}>
-        <div class="skills">
-          {#each skills as skill}
-            <div class={`sprite skill ${SKILL_CSS[skill]}`} />
-          {/each}
-        </div>
-      </FixedRatio>
+      <FlexGrid width={4} height={3}>
+        {#each skills as skill}
+          <div class={`sprite skill ${SKILL_CSS[skill]}`} />
+        {/each}
+      </FlexGrid>
     </div>
   </div>
 {/if}
@@ -128,14 +127,6 @@
     position: relative;
   }
 
-  .skills {
-    display: flex;
-    align-items: end;
-    align-content: end;
-    flex-wrap: wrap-reverse;
-    width: 100%;
-    height: 100%;
-  }
   .skills-frame {
     position: absolute;
     left: 20%;
