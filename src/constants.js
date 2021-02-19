@@ -343,6 +343,35 @@ export const ACTION_TYPE = {
   Turnover: 58,
 };
 
+export const KICKOFF_RESULT = {
+  GetTheRef: 2,
+  Riot: 3,
+  PerfectDefence: 4,
+  HighKick: 5,
+  CheeringFans: 6,
+  ChangingWeather: 7,
+  BrilliantCoaching: 8,
+  QuickSnap: 9,
+  Blitz: 10,
+  ThrowARock: 11,
+  PitchInvasion: 12
+}
+
+export const KICKOFF_RESULT_NAMES = {
+  [KICKOFF_RESULT.GetTheRef]: "Get The Ref",
+  [KICKOFF_RESULT.Riot]: "Riot",
+  [KICKOFF_RESULT.PerfectDefence]: "Perfect Defence",
+  [KICKOFF_RESULT.HighKick]: "High Kick",
+  [KICKOFF_RESULT.CheeringFans]: "Cheering Fans",
+  [KICKOFF_RESULT.ChangingWeather]: "Changing Weather",
+  [KICKOFF_RESULT.BrilliantCoaching]: "Brilliant Coaching",
+  [KICKOFF_RESULT.QuickSnap]: "Quick Snap",
+  [KICKOFF_RESULT.Blitz]: "Blitz",
+  [KICKOFF_RESULT.ThrowARock]: "Throw A Rock",
+  [KICKOFF_RESULT.PitchInvasion]: "Pitch Invasion",
+}
+
+
 export const RESULT_TYPE = {
   Passed: undefined, //Skilltest Passed
   FailNoTurnover: 1, //Failed with Skill Reroll -> Failed no Turnover (Wild Animal Fail ect)

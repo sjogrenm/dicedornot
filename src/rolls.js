@@ -12,6 +12,8 @@ import {
   SKILL_CATEGORY,
   getPlayerType,
   STAR_NAMES,
+  KICKOFF_RESULT,
+  KICKOFF_RESULT_NAMES,
 } from './constants.js';
 import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP, REPLAY_KEY } from './replay-utils.js';
 import {
@@ -22,8 +24,8 @@ import {
   MaxDistribution,
   Distribution
 } from './distribution.js';
-import { weightedQuantile } from './utils.js';
 import _ from 'underscore';
+import parser from 'fast-xml-parser';
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -384,12 +386,21 @@ export class Roll {
         setupAction: replayStep[REPLAY_KEY.SetupAction],
       }));
     }
-    var actions = ensureList(replayStep.RulesEventBoardAction);
     var rolls = [];
+
+    var kickoff = replayStep.RulesEventKickOffTable;
+    if (kickoff) {
+      let kickoffRolls = Roll.fromKickoffEvent(replay, initialBoard, stepIndex, replayStep, kickoff);
+      console.log(kickoffRolls);
+
+      rolls.push(...kickoffRolls);
+    }
+
+    var actions = ensureList(replayStep.RulesEventBoardAction);
     for (var actionIndex = 0; actionIndex < actions.length; actionIndex++) {
       var action = actions[actionIndex];
-      rolls = rolls.concat(
-        Roll.fromAction(replay, initialBoard, stepIndex, replayStep, actionIndex, action)
+      rolls.push(
+        ...Roll.fromAction(replay, initialBoard, stepIndex, replayStep, actionIndex, action)
       );
     }
     return rolls;
@@ -445,8 +456,7 @@ export class Roll {
     }
     if (rollClass === null) {
       return null;
-    }
-    if (!rollClass) {
+    } else if (!rollClass) {
       return new UnknownRoll(`Unknown Roll ${boardActionResult.RollType}`, replayStep);
     } else if (typeof rollClass === "string") {
       return new UnknownRoll(rollClass, replayStep);
@@ -465,6 +475,45 @@ export class Roll {
         })
       );
     }
+  }
+
+  static fromKickoffEvent(replay, initialBoard, stepIndex, replayStep, kickoff) {
+    let kickoffRoll = new KickoffRoll(
+      KickoffRoll.argsFromXml({
+        replay,
+        initialBoard,
+        stepIndex,
+        replayStep,
+        kickoff
+      })
+    );
+    let dice = kickoffRoll.dice;
+    let diceSum = dice[0] + dice[1];
+    let rollClass = KICKOFF_RESULT_TYPES[diceSum];
+    let rolls = [kickoffRoll];
+    if (rollClass === null) {
+    } else if (!rollClass) {
+      rolls.push(new UnknownRoll(`Unknown Kickoff Event ${diceSum}`, replayStep));
+    } else if (typeof rollClass === "string") {
+      rolls.push(new UnknownRoll(rollClass, replayStep));
+    } else {
+      rolls.push(...ensureList(kickoffRoll.EventResults.StringMessage).map(msg => {
+        let messageDoc = new DOMParser().parseFromString(msg.MessageData, "text/xml");
+        let messageData = parser.parse(messageDoc.documentElement.textContent, {
+          ignoreAttributes: true,
+        });
+        new rollClass(
+          rollClass.argsFromXml({
+            replay,
+            initialBoard,
+            stepIndex,
+            replayStep,
+            messageData
+          })
+        );
+      }));
+    }
+    return rolls;
   }
 
   onActiveTeam(player) {
@@ -1783,6 +1832,27 @@ class NoValueRoll extends Roll {
 }
 
 
+class KickoffRoll extends NoValueRoll {
+  static rollName = "Kickoff";
+  static argsFromXml(xml) {
+    let dice = translateStringNumberList(xml.kickoff.ListDice);
+    return {
+      initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
+      finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),
+      dice,
+      diceSum: dice[0] + dice[1],
+      startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.Kickoff),
+    };
+  }
+  get description() {
+    return `${this.rollName}: ${KICKOFF_RESULT_NAMES[this.diceSum]}`;
+  }
+  get shortDescription() {
+    return this.description;
+  }
+}
+
+
 export class SetupAction extends NoValueRoll {
   static rollName = "Setup";
   static dependentConditions = [setup];
@@ -1833,7 +1903,7 @@ export class UnknownRoll {
   }
 }
 
-export const ROLL_TYPES = {
+const ROLL_TYPES = {
   1: GFIRoll,
   2: DodgeRoll,
   3: ArmorRoll,
@@ -1900,3 +1970,17 @@ export const ROLL_TYPES = {
   72: "Bomb KD",
   73: "Chainsaw Armor",
 };
+
+const KICKOFF_RESULT_TYPES = {
+  [KICKOFF_RESULT.GetTheRef]: "Get The Ref",
+  [KICKOFF_RESULT.Riot]: "Riot",
+  [KICKOFF_RESULT.PerfectDefence]: "Perfect Defence",
+  [KICKOFF_RESULT.HighKick]: "High Kick",
+  [KICKOFF_RESULT.CheeringFans]: "Cheering Fans",
+  [KICKOFF_RESULT.ChangingWeather]: "Changing Weather",
+  [KICKOFF_RESULT.BrilliantCoaching]: "Brilliant Coaching",
+  [KICKOFF_RESULT.QuickSnap]: "Quick Snap",
+  [KICKOFF_RESULT.Blitz]: "Blitz",
+  [KICKOFF_RESULT.ThrowARock]: "Throw A Rock",
+  [KICKOFF_RESULT.PitchInvasion]: "Pitch Invasion",
+}

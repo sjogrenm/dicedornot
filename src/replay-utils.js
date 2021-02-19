@@ -34,14 +34,16 @@ export function translateStringNumberList(str) {
 
 export const REPLAY_SUB_STEP = {
   SetupAction: 1,
-  BoardAction: 2,
-  EndTurn: 3,
-  BoardState: 4,
-  NextReplayStep: 5,
+  Kickoff: 2,
+  BoardAction: 3,
+  EndTurn: 4,
+  BoardState: 5,
+  NextReplayStep: 6,
 }
 
 export const REPLAY_KEY = {
   [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetUpAction',
+  [REPLAY_SUB_STEP.Kickoff]: 'RulesEventKickOffTable',
   [REPLAY_SUB_STEP.BoardAction]: 'RulesEventBoardAction',
   [REPLAY_SUB_STEP.EndTurn]: 'RulesEventEndTurn',
   [REPLAY_SUB_STEP.BoardState]: 'BoardState',
