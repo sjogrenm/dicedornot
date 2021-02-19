@@ -188,7 +188,7 @@
         post the replay and a description of the problem to
         <a href="https://github.com/cpennington/dicedornot/issues"
           >Diced Or Not Issues</a
-        >.
+        >, or message <a href="https://discordapp.com/users/123511435408965632">vengefulpickle on Discord</a>.
       </p>
     </div>
   </footer>
