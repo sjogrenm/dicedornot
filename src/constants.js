@@ -388,7 +388,7 @@ export const SUB_RESULT_TYPE = {
   CASDecay: 16,
   CASResult: 18, //Final CAS Result
   Fend: 35, //Blockdice against Fend, no 2nd Dice.
-  DodgeNoReq: 57, //Dodge vs Tackle before RR Pick
+  ChoiceUseDodgeTackle: 57, //Dodge vs Tackle before RR Pick
   Unknown_68: 68 //Pick Wrestle skill use?
 };
 

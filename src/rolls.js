@@ -869,6 +869,10 @@ class BlockRoll extends Roll {
       // Opponent picking whether to activate fend
       return true;
     }
+    if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
+      // Opponent picking whether to activate tackle
+      return true;
+    }
 
     return super.ignore(xml);
   }
@@ -1420,7 +1424,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
 
   static argsFromXml(xml) {
     let args = super.argsFromXml(xml);
-    if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.DodgeNoReq) {
+    if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
       // A dodge that fails in tackle and prompts for a team reroll doesn't have the requirement attached, so
       // pull them from the later roll
       let nextActions = ensureList(xml.replay.ReplayStep[xml.stepIndex + 1].RulesEventBoardAction)
