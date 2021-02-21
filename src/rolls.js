@@ -26,6 +26,7 @@ import {
 } from './distribution.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
+import he from 'he';
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -128,6 +129,7 @@ class Team {
     this.name = teamState.Data.Name.toString();
     this.id = teamState.Data.TeamId || 0;
     this.turn = teamState.GameTurn || 1;
+    this.fame = teamState.Fame || 0;
   }
 
   get shortName() {
@@ -496,18 +498,19 @@ export class Roll {
       rolls.push(new UnknownRoll(`Unknown Kickoff Event ${diceSum}`, replayStep));
     } else if (typeof rollClass === "string") {
       rolls.push(new UnknownRoll(rollClass, replayStep));
-    } else {
-      rolls.push(...ensureList(kickoffRoll.EventResults.StringMessage).map(msg => {
-        let messageDoc = new DOMParser().parseFromString(msg.MessageData, "text/xml");
-        let messageData = parser.parse(messageDoc.documentElement.textContent, {
+    } else if (kickoff.EventResults) {
+      console.log("he", { he });
+      rolls.push(...ensureList(kickoff.EventResults.StringMessage).map(msg => {
+        let messageData = parser.parse(he.decode(msg.MessageData), {
           ignoreAttributes: true,
         });
-        new rollClass(
+        return new rollClass(
           rollClass.argsFromXml({
             replay,
             initialBoard,
             stepIndex,
             replayStep,
+            kickoff,
             messageData
           })
         );
@@ -1835,9 +1838,15 @@ class NoValueRoll extends Roll {
   }
 }
 
-
-class KickoffRoll extends NoValueRoll {
+function isKickoffRoll(roll, dependent) {
+  return dependent instanceof KickoffEventRoll;
+}
+class KickoffRoll extends Roll {
   static rollName = "Kickoff";
+  static dependentConditions = [isKickoffRoll];
+  get activeTeam() {
+    return this.finalBoardState.teams[this.kickoffTeam];
+  }
   static argsFromXml(xml) {
     let dice = translateStringNumberList(xml.kickoff.ListDice);
     return {
@@ -1846,6 +1855,7 @@ class KickoffRoll extends NoValueRoll {
       dice,
       diceSum: dice[0] + dice[1],
       startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.Kickoff),
+      kickoffTeam: xml.replayStep.BoardState.KickOffTeam || 0,
     };
   }
   get description() {
@@ -1854,7 +1864,171 @@ class KickoffRoll extends NoValueRoll {
   get shortDescription() {
     return this.description;
   }
+
+  // TODO: Handle skills
+  kickoffValue(total) {
+    switch (total) {
+      case KICKOFF_RESULT.GetTheRef:
+        return new SingleValue("GetTheRef", 0);
+      case KICKOFF_RESULT.Riot:
+        return new SingleValue("Riot", 0);
+      case KICKOFF_RESULT.PerfectDefence:
+        return new SingleValue("PerfectDefence", 0);
+      case KICKOFF_RESULT.HighKick:
+        return new SingleValue("HighKick", 0);
+      case KICKOFF_RESULT.CheeringFans:
+        return new SingleValue("CheeringFans", 0);
+      case KICKOFF_RESULT.ChangingWeather:
+        return new SingleValue("ChangingWeather", 0);
+      case KICKOFF_RESULT.BrilliantCoaching:
+        return new SingleValue("BrilliantCoaching", 0);
+      case KICKOFF_RESULT.QuickSnap:
+        return new SingleValue("QuickSnap", 0);
+      case KICKOFF_RESULT.Blitz:
+        return new SingleValue("Blitz", 0);
+      case KICKOFF_RESULT.ThrowARock:
+        return new SingleValue("ThrowARock", 0);
+      case KICKOFF_RESULT.PitchInvasion:
+        return new SingleValue("PitchInvasion", 0);
+    }
+  }
+
+  get improbability() {
+    let { pass, fail } = this.diceCombinations.reduce((acc, dice) => {
+      let total = dice[0] + dice[1];
+      switch (total) {
+        case KICKOFF_RESULT.GetTheRef:
+        case KICKOFF_RESULT.Riot:
+        case KICKOFF_RESULT.CheeringFans:
+        case KICKOFF_RESULT.ChangingWeather:
+        case KICKOFF_RESULT.BrilliantCoaching:
+        case KICKOFF_RESULT.ThrowARock:
+        case KICKOFF_RESULT.PitchInvasion:
+          acc.pass += 0.5;
+          acc.fail += 0.5;
+          break;
+        case KICKOFF_RESULT.PerfectDefence:
+        case KICKOFF_RESULT.HighKick:
+          acc.fail += 1;
+          break;
+        case KICKOFF_RESULT.QuickSnap:
+        case KICKOFF_RESULT.Blitz:
+          acc.pass += 1;
+          break;
+      }
+      return acc;
+    }, { pass: 0, fail: 0 });
+
+
+    let total = this.dice[0] + this.dice[1];
+    switch (total) {
+      case KICKOFF_RESULT.GetTheRef:
+      case KICKOFF_RESULT.Riot:
+      case KICKOFF_RESULT.CheeringFans:
+      case KICKOFF_RESULT.ChangingWeather:
+      case KICKOFF_RESULT.BrilliantCoaching:
+      case KICKOFF_RESULT.ThrowARock:
+      case KICKOFF_RESULT.PitchInvasion:
+        return 0;
+      case KICKOFF_RESULT.PerfectDefence:
+      case KICKOFF_RESULT.HighKick:
+        return (-pass) / (pass + fail);
+      case KICKOFF_RESULT.QuickSnap:
+      case KICKOFF_RESULT.Blitz:
+        return 1 - (pass / (pass + fail));
+    }
+  }
+
+  get diceCombinations() {
+
+    var combinations = [];
+    for (var first = 1; first <= 6; first++) {
+      for (var second = 1; second <= 6; second++) {
+        combinations.push([first, second]);
+      }
+    }
+    Object.defineProperty(this, 'diceCombinations', { value: combinations });
+    return this.diceCombinations;
+  }
+
+  value(dice) {
+    var total = dice[0] + dice[1];
+    var value = this.kickoffValue(total);
+    return value;
+  }
+
+  get possibleOutcomes() {
+    var outcomesByName = {};
+    for (var combination of this.diceCombinations) {
+      var outcomeList = outcomesByName[this.value(combination, true).name];
+      if (!outcomeList) {
+        outcomeList = outcomesByName[this.value(combination, true).name] = [];
+      }
+      outcomeList.unshift({
+        name: (combination[0] + combination[1]).toString(),
+        value: this.value(combination, true)
+      });
+    }
+    Object.defineProperty(this, 'possibleOutcomes', {
+      value: new SimpleDistribution(
+        Object.values(outcomesByName).map((outcomes) => {
+          const minOutcome = Math.min(
+            ...outcomes.map((outcome) => parseInt(outcome.name))
+          );
+          const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
+          return {
+            name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
+            weight: outcomes.length,
+            value: outcomes[0].value
+          }
+        })
+      )
+    });
+    return this.possibleOutcomes;
+  }
+  simulateDice() {
+    return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
+  }
 }
+
+class KickoffEventRoll extends ModifiedD6SumRoll {
+  get activeTeam() {
+    return this.finalBoardState.teams[this.kickoffTeam];
+  }
+  static argsFromXml(xml) {
+    return {
+      initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
+      finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),
+      startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.Kickoff),
+      messageData: xml.messageData,
+      kickoffTeam: xml.replayStep.BoardState.KickOffTeam || 0,
+    };
+  }
+}
+
+
+class PitchInvasionRoll extends KickoffEventRoll {
+  static rollName = "Pitch Invasion";
+  constructor(args) {
+    super(args);
+    this.activePlayer = this.finalBoardState.playerById(this.messageData.RulesEventPlayerInvaded.PlayerId);
+    this.dice = [this.messageData.RulesEventPlayerInvaded.Die];
+    this.stunned = this.messageData.RulesEventPlayerInvaded.Stunned == 1;
+    let playerTeam = this.activePlayer.team;
+    let opposingTeam = this.finalBoardState.teams.filter(team => team.id != playerTeam.id)[0];
+    this.target = 6;
+    this.modifier = opposingTeam.fame;
+  }
+
+  get description() {
+    return `${this.rollName}: ${this.activePlayer.name} ${this.stunned ? 'stunned!' : 'safe'} - ${this.roll} (${this.target})`;
+  }
+
+  passValue() {
+    return this.stunValue(this.activePlayer);
+  }
+}
+
 
 
 export class SetupAction extends NoValueRoll {
@@ -1986,5 +2160,5 @@ const KICKOFF_RESULT_TYPES = {
   [KICKOFF_RESULT.QuickSnap]: "Quick Snap",
   [KICKOFF_RESULT.Blitz]: "Blitz",
   [KICKOFF_RESULT.ThrowARock]: "Throw A Rock",
-  [KICKOFF_RESULT.PitchInvasion]: "Pitch Invasion",
+  [KICKOFF_RESULT.PitchInvasion]: PitchInvasionRoll,
 }
