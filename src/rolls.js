@@ -1376,7 +1376,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     if (this.damageBonusActive && rollTotal == modifiedTarget) {
       damageBonusAvailable = false;
     }
-    var injuredPlayerValue = this.stunValue(this.activePlayer); // Player is at least stunned = out for 2 turns
+    var injuredPlayerValue = this.stunValue(this.activePlayer).subtract(this.knockdownValue(this.activePlayer)); // Player is at least stunned = out for 2 turns
     if (expected) {
       injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll(damageBonusAvailable).possibleOutcomes.named('Injury Roll'));
     }

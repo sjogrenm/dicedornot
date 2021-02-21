@@ -138,7 +138,7 @@
         <li>
           Viewer: Throw teammate doesn't correctly render intermediate states
         </li>
-        <li>Viewer/Analyzer: Star Player names are wrong</li>
+        <li>Analyzer: Correctly account for current player state when rolling armor rolls (for instance, no extra volue for stunning a stunned player again with a foul or a pileon)</li>
         <li>
           Analyzer: Many roll types:
           <ul>
