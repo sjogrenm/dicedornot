@@ -5,6 +5,7 @@
   import { processReplay } from "./replay.js";
   import { get, set, entries, keys } from "idb-keyval";
   import Loading from "./Loading.svelte";
+  import he from "he";
 
   export let button = "primary",
     loading = null;
@@ -91,11 +92,11 @@
         replayJSON.Replay.ReplayStep[replayJSON.Replay.ReplayStep.length - 1]
           .RulesEventGameFinished.MatchResult;
       return {
-        homeCoach: firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId,
-        homeTeam: firstStep.BoardState.ListTeams.TeamState[0].Data.Name.toString(),
+        homeCoach: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId.toString()),
+        homeTeam: he.decode(firstStep.BoardState.ListTeams.TeamState[0].Data.Name.toString()),
         homeScore: matchResult.Row.HomeScore || 0,
-        awayCoach: firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId,
-        awayTeam: firstStep.BoardState.ListTeams.TeamState[1].Data.Name.toString(),
+        awayCoach: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId.toString()),
+        awayTeam: he.decode(firstStep.BoardState.ListTeams.TeamState[1].Data.Name.toString()),
         awayScore: matchResult.Row.AwayScore || 0,
         date: new Date(matchResult.Row.Finished),
         cacheKey,

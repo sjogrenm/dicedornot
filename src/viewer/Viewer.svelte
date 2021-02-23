@@ -28,6 +28,7 @@
     period,
   } from "../replay-utils.js";
   import { replay, replayCurrent, replayTarget, timing, error } from "../stores.js";
+  import he from "he";
 
   let startingUrl = new URL(window.location);
 
@@ -135,7 +136,7 @@
         reserve: [],
       },
       score: team.Touchdown || 0,
-      name: team.Data.Name.toString(),
+      name: he.decode(team.Data.Name.toString()),
       turn: team.GameTurn || 1,
       active,
       rerolls: {

@@ -5,12 +5,13 @@
   import Player from "./Player.svelte";
   import { translateStringNumberList } from "../replay-utils.js";
   import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES } from "../constants.js";
+  import he from "he";
 
   export let player;
   let name, color, skills, cas;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
-    name = player.data.Data.Name.toString().replace(colorRE, "");
+    name = he.decode(player.data.Data.Name.toString().replace(colorRE, ""));
     name = STAR_NAMES[name] || name;
     let colorMatch = player.data.Data.Name.toString().match(colorRE);
     color = colorMatch ? `#${colorMatch[1].slice(2, 8)}` : "var(--gray-0)";

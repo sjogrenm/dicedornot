@@ -1,6 +1,7 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END } from "./replay-utils.js";
 import { SIDE } from "./constants.js";
+import he from 'he';
 
 export function processReplay(data) {
   //console.log("replay.processReplay");
@@ -92,18 +93,18 @@ export function extractGameDetails(jsonObject) {
     jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1];
   return {
     //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
-    stadiumName: firstStep.GameInfos.NameStadium,
+    stadiumName: he.decode(firstStep.GameInfos.NameStadium.toString()),
     stadiumType: firstStep.GameInfos.StructStadium,
-    leagueName: firstStep.GameInfos.RowLeague.Name,
+    leagueName: he.decode(firstStep.GameInfos.RowLeague.Name.toString()),
     homeTeam: {
-      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.home].UserId,
-      teamName: firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString(),
+      coachName: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.home].UserId.toString()),
+      teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString()),
       raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.HomeScore || 0,
     },
     awayTeam: {
-      coachName: firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.away].UserId,
-      teamName: firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString(),
+      coachName: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.away].UserId.toString()),
+      teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString()),
       raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.AwayScore || 0,
     },
