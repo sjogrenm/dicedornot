@@ -100,5 +100,6 @@
   .chart {
     width: 100%;
     height: 300px;
+    margin-top: 2em;
   }
 </style>

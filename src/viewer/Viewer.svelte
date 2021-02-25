@@ -78,7 +78,7 @@
   onMount(() => {
     let url = new URL(window.location);
     $timing = url.searchParams.get("timing") || 300;
-    if (url.hash) {
+    if (url.searchParams.get('st')) {
       handleReplay();
     } else {
       startPlayer();
@@ -355,7 +355,7 @@
     }
     $replayCurrent = current.toNextPosition(fullReplay);
     let url = new URL(window.location);
-    url.hash = current.toHash();
+    url.searchParams.set('st', current.toParam());
     window.history.replaceState({}, "", url.href);
   }
 
