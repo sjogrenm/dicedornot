@@ -1,9 +1,8 @@
 <script>
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import embed from "vega-embed";
   import * as vega from "vega";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
-  import { ReplayPosition, REPLAY_SUB_STEP } from "./replay-utils.js";
 
   let rolls,
     view,

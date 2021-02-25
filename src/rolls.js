@@ -1000,11 +1000,7 @@ class BlockRoll extends Roll {
       pass = !this.dice.every(face => unsafeFaces.includes(face));
       passChance = ((6 - unsafeFaces.length) / 6) ** this.dice.length;
     }
-    if (pass) {
-      return 1 - passChance;
-    } else {
-      return - passChance;
-    }
+    return (pass ? 1 : 0) - passChance;
   }
 
   get possibleOutcomes() {
@@ -1130,11 +1126,9 @@ class ModifiedD6SumRoll extends Roll {
       }
       return acc;
     }, { pass: 0, fail: 0 });
-    if (this.dice.reduce((a, b) => a + b) >= this.modifiedTarget) {
-      return 1 - (pass / (pass + fail));
-    } else {
-      return (-pass) / (pass + fail);
-    }
+    let passChance = pass / (pass + fail);
+    let passed = this.dice.reduce((a, b) => a + b) >= this.modifiedTarget;
+    return (passed ? 1 : 0) - passChance;
   }
 
   get diceSums() {
@@ -1400,6 +1394,27 @@ class ArmorRoll extends ModifiedD6SumRoll {
       return value;
     }
   }
+
+  get improbability() {
+    let { pass, fail } = this.diceSums.reduce((acc, sum) => {
+      if (sum >= this.modifiedTarget) {
+        acc.pass += 1;
+      } else {
+        acc.fail += 1;
+      }
+      return acc;
+    }, { pass: 0, fail: 0 });
+    let passed;
+    if (this.onActiveTeam(this.activePlayer)) {
+      let passChance = fail / (pass + fail);
+      let passed = this.dice.reduce((a, b) => a + b) < this.modifiedTarget;
+      return (passed ? 1 : 0) - passChance;
+    } else {
+      let passChance = pass / (pass + fail);
+      let passed = this.dice.reduce((a, b) => a + b) < this.modifiedTarget;
+      return (passed ? 1 : 0) - passChance;
+    }
+  }
 }
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
@@ -1648,11 +1663,9 @@ class InjuryRoll extends Roll {
       return acc;
     }, { pass: 0, fail: 0 });
 
-    if (this.dice[0] + this.dice[1] + modifier > 7) {
-      return 1 - (pass / (pass + fail));
-    } else {
-      return (-pass) / (pass + fail);
-    }
+    let passChance = pass / (pass + fail);
+    let passed = this.dice[0] + this.dice[1] + modifier > 7;
+    return (passed ? 1 : 0) - passChance;
   }
 
   get diceCombinations() {
