@@ -730,7 +730,7 @@ export class Roll {
       return cachedValue;
     }
 
-    let futureActions = this._futurePlayerValue[player.id] = this.rolls.filter(
+    let futureActions = this.rolls.filter(
       roll => (
         roll.startIndex.after(this.startIndex) &&
         roll.activePlayer &&
@@ -741,7 +741,7 @@ export class Roll {
 
     let result;
     if (futureActions.length) {
-      result = futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0);
+      result = Math.max(0, futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0));
     } else {
       result = this.onPitchValue(player);
     }
