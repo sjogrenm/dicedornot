@@ -38,12 +38,12 @@
       }
       const rebblUUID = params.get("rebbl");
       if (rebblUUID) {
-        loadRebblReplay(rebblUUID);
+        loadRebblReplay(rebblUUID, false);
         return;
       }
       const gspyMID = params.get("gspy");
       if (gspyMID) {
-        loadGoblinspyReplay(gspyMID);
+        loadGoblinspyReplay(gspyMID, false);
         return;
       }
   }
@@ -54,17 +54,17 @@
     }
     const rebblMatch = urlPicker.value.match(rebblRE);
     if (rebblMatch) {
-      loadRebblReplay(rebblMatch[1]);
+      loadRebblReplay(rebblMatch[1], true);
       return;
     }
     const goblinspyMatch = urlPicker.value.match(goblinspyRE);
     if (goblinspyMatch) {
-      loadGoblinspyReplay(goblinspyMatch[1]);
+      loadGoblinspyReplay(goblinspyMatch[1], true);
       return;
     }
     const spikeMatch = urlPicker.value.match(spikeRE);
     if (spikeMatch) {
-      loadGoblinspyReplay(`cid_${spikeMatch[1]}`);
+      loadGoblinspyReplay(`cid_${spikeMatch[1]}`, true);
       return;
     }
     $error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd, https://www.mordrek.com/gspy/comp/1234/match/abcd1234, or https://spike.ovh/match?match_uuid=abcd1234`;
@@ -104,7 +104,7 @@
     });
   }
 
-  async function loadFromCache(cacheKey) {
+  async function loadFromCache(cacheKey, updateUrl) {
     loading = `Loading ${cacheKey} from cache`;
     console.log("Loading from cache", { cacheKey });
     const jsonReplayData = await get(cacheKey);
@@ -117,7 +117,9 @@
         shareURL.search = "";
         shareURL.fragment = "";
         shareURL.searchParams.set(replayType, replayId);
-        window.history.pushState({}, "", shareURL.href)
+        if (updateUrl) {
+          window.history.pushState({}, "", shareURL.href);
+        }
         $replay = processReplay(jsonReplayData);
         loading = null;
       } catch (err) {
@@ -128,7 +130,7 @@
     }
   }
 
-  async function parseReplay(replayFile, replayType, replayId) {
+  async function parseReplay(replayFile, replayType, replayId, updateUrl) {
     loading = `Parsing ${replayFile.name}`;
     io.xmlToJson(
       replayFile,
@@ -140,7 +142,9 @@
         shareURL.search = "";
         shareURL.fragment = "";
         shareURL.searchParams.set(replayType, replayId);
-        window.history.pushState({}, "", shareURL.href)
+        if (updateUrl) {
+          window.history.pushState({}, "", shareURL.href);
+        }
         jsonReplayData.Replay.url = shareURL.href;
         let cacheKey = `${replayType}-${replayId}`;
         set(cacheKey, jsonReplayData);
@@ -162,7 +166,7 @@
     );
   }
 
-  async function loadRebblReplay(uuid) {
+  async function loadRebblReplay(uuid, updateUrl) {
     loading = `Loading ${uuid} from rebbl.net`;
     $error = null;
     let replayFile = await fetch(
@@ -173,13 +177,13 @@
       const blob = await fetch(replayFile.filename).then((r) => r.blob());
       loading = null;
       const file = new File([blob], replayFile.filename);
-      parseReplay(file, 'rebbl', uuid);
+      parseReplay(file, 'rebbl', uuid, updateUrl);
     } else {
-      loadGoblinspyReplay(`cid_${uuid}`);
+      loadGoblinspyReplay(`cid_${uuid}`, updateUrl);
     }
   }
 
-  async function loadGoblinspyReplay(mid) {
+  async function loadGoblinspyReplay(mid, updateUrl) {
     loading = `Loading ${mid} from GoblinSpy`;
     $error = null;
     let replayFile = await fetch(
@@ -191,7 +195,7 @@
       const blob = await fetch(replayFile).then((r) => r.blob());
       loading = null;
       const file = new File([blob], replayFile);
-      parseReplay(file, 'gspy', mid);
+      parseReplay(file, 'gspy', mid, updateUrl);
     } else {
       $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
       loading = null;
@@ -204,7 +208,7 @@
     $error = null;
     const files = filePicker.files;
     if (files.length > 0) {
-      parseReplay(files[0], 'file', files[0].name);
+      parseReplay(files[0], 'file', files[0].name, true);
     }
   }
 </script>
