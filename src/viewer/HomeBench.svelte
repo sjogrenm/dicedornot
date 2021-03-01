@@ -1,13 +1,13 @@
 <script>
   import CasBox from './CasBox.svelte';
   import {SIDE} from '../constants.js';
-  export let dugout, send, receive;
+  export let pitchPlayers, dugout, send, receive;
 </script>
 
 <div class="bench">
-  <CasBox team={SIDE.home} casType="cas" {dugout} {send} {receive}/>
-  <CasBox team={SIDE.home} casType="ko" {dugout} {send} {receive}/>
-  <CasBox team={SIDE.home} casType="reserve" {dugout} {send} {receive}/>
+  <CasBox {pitchPlayers} team={SIDE.home} casType="cas" {dugout} {send} {receive}/>
+  <CasBox {pitchPlayers} team={SIDE.home} casType="ko" {dugout} {send} {receive}/>
+  <CasBox {pitchPlayers} team={SIDE.home} casType="reserve" {dugout} {send} {receive}/>
 </div>
 
 <style>

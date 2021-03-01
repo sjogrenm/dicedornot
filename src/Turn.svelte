@@ -1,23 +1,16 @@
 <script>
   import Roll from "./Roll.svelte";
-  import {replayTarget} from "./stores.js";
   export let rolls, selectedRoll;
-  function handleClick(roll) {
-    return () => {
-      $replayTarget = roll.startIndex;
-    };
-  }
 </script>
 
-<div class="list-group">
+<div class="list-group" id="turn">
   {#each rolls as roll (roll.rollIndex)}
-    <button
+    <div
       class={`list-group-item list-group-item-action team-${roll.activeTeam.id}`}
       class:active={selectedRoll == roll.rollIndex}
-      on:click={handleClick(roll)}
     >
-      <Roll {roll} selected={selectedRoll == roll.rollIndex} />
-    </button>
+    <Roll {roll} selected={selectedRoll == roll.rollIndex} />
+    </div>
   {/each}
 </div>
 

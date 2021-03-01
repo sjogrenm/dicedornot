@@ -1,17 +1,15 @@
 <script>
   import HomeBench from "./HomeBench.svelte";
   import TeamAids from "./TeamAids.svelte";
-  import SelectedPlayer from "./SelectedPlayer.svelte";
   import Weather from "./Weather.svelte";
-  import { selectedPlayer } from "../stores.js";
   import TeamLogo from "./TeamLogo.svelte";
 
-  export let team, weather, send, receive;
+  export let pitchPlayers, team, weather, send, receive;
 </script>
 
 <div class="dugout">
   {#if team}
-    <HomeBench dugout={team.dugout} {send} {receive} />
+    <HomeBench {pitchPlayers} dugout={team.dugout} {send} {receive} />
     <div class="logo">
       <TeamLogo logo={team.logo} />
     </div>
@@ -19,9 +17,6 @@
     <div class="score"><p>{team.score}</p></div>
     <div class="turn" class:active={team.active}><p>{team.turn}</p></div>
     <div class="aids"><TeamAids {team}/></div>
-  {/if}
-  {#if $selectedPlayer}
-    <div class="selected"><SelectedPlayer player={$selectedPlayer} /></div>
   {/if}
   <div class="weather"><Weather {weather} /></div>
 </div>
@@ -91,13 +86,4 @@
     bottom: 1%;
   }
 
-  .selected {
-    width: 7.5%;
-    right: 7%;
-    position: absolute;
-    z-index: 10;
-  }
-  .selected:hover {
-    width: 15%;
-  }
 </style>

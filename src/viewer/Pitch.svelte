@@ -1,7 +1,7 @@
 <script>
   import Grid from "./Grid.svelte";
   import PitchSquare from "./PitchSquare.svelte";
-  export let homeTeam, awayTeam, pitch, send, receive;
+  export let pitchPlayers, homeTeam, awayTeam, pitch, send, receive;
 
   let homeLogo, awayLogo;
   $: {
@@ -13,6 +13,7 @@
 <div class="pitch">
   <Grid width={26} height={15} let:row let:column>
     <PitchSquare
+      {pitchPlayers}
       {homeLogo}
       {awayLogo}
       {pitch}

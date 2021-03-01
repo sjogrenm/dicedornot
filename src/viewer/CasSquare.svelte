@@ -1,11 +1,9 @@
 <script>
   import Player from "./Player.svelte";
-  import { Popover } from "sveltestrap";
-  import SelectedPlayer from "./SelectedPlayer.svelte";
-  import { selectedPlayer } from "../stores.js";
-  import {SITUATION, Casualties, SIDE} from "../constants.js";
+  import { selectedPlayer, hoveredPlayer } from "../stores.js";
+  import {SITUATION, Casualties} from "../constants.js";
   import {translateStringNumberList} from "../replay-utils.js";
-  export let team, dugout, row, column, width, height, casType, send, receive;
+  export let pitchPlayers, team, dugout, row, column, width, height, casType, send, receive;
   let player = null,
     players,
     id, cas = null;
@@ -20,7 +18,7 @@
       } else {
         players = dugout[casType];
       }
-      player = players[column * height + row];
+      player = pitchPlayers[players[column * height + row]];
     }
 
     if (player && player.data.Situation >= SITUATION.Casualty) {
@@ -40,8 +38,13 @@
   class="cas-square"
   {id}
   on:click={() => {
-    console.log("Clicked player", { player });
-    $selectedPlayer = player;
+    $selectedPlayer = player && player.data.Id;
+  }}
+  on:mouseenter={() => {
+    $hoveredPlayer = player && player.data.Id;
+  }}
+  on:mouseleave={() => {
+    $hoveredPlayer = null;
   }}
 >
   {#if player}
@@ -51,18 +54,6 @@
     {/if}
   {/if}
 </div>
-
-{#if player}
-  <Popover
-    trigger="hover"
-    placement={team == SIDE.home ? "bottom" : "top"}
-    target={id}
-  >
-    <div class="player-card">
-      <SelectedPlayer {player} />
-    </div>
-  </Popover>
-{/if}
 
 <style>
   .cas-square {

@@ -16,7 +16,7 @@
   import Terminology from "./Terminology.svelte";
   import Todo from "./Todo.svelte";
 
-  let homePercentile, awayPercentile, loading;
+  let homePercentile, awayPercentile, loading, playing;
   $: {
     console.log("Replay", $replay);
   }
@@ -69,12 +69,12 @@
       <Row>
         <Col lg="9">
           {#key $replay.fullReplay.filename}
-            <Viewer />
+            <Viewer bind:playing/>
           {/key}
         </Col>
         <Col lg="3" class="justify-content-center">
           <TurnSelectors />
-          <RollDetails />
+          <RollDetails {playing}/>
         </Col>
       </Row>
       <Row>

@@ -192,6 +192,7 @@ export class Roll {
   static handledSkills = [];
   static diceSeparator = ', '
   static dependentConditions = [];
+  static hideDependents = false;
 
   constructor(attrs) {
     Object.assign(this, attrs);
@@ -2047,6 +2048,7 @@ class PitchInvasionRoll extends KickoffEventRoll {
 export class SetupAction extends NoValueRoll {
   static rollName = "Setup";
   static dependentConditions = [setup];
+  static hideDependents = true;
   static ignore() {
     return false;
   }

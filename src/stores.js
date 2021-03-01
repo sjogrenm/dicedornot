@@ -11,6 +11,7 @@ if (startingUrl.searchParams.get('st')) {
 
 export const timing = writable(300);
 export const selectedPlayer = writable(null);
+export const hoveredPlayer = writable(null);
 export const replay = writable(null);
 export const replayCurrent = writable(new ReplayPosition());
 export const replayTarget = writable(target);

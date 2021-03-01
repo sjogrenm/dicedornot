@@ -7,25 +7,29 @@
   import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES } from "../constants.js";
   import he from "he";
 
-  export let player;
-  let name, color, skills, cas;
+  export let player, players;
+  let pitchPlayer, name, color, skills, cas;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
-    name = he.decode(player.data.Data.Name.toString().replace(colorRE, ""));
+    pitchPlayer = players[player];
+    console.log({players, pitchPlayer});
+    name = he.decode(pitchPlayer.data.Data.Name.toString().replace(colorRE, ""));
     name = STAR_NAMES[name] || name;
-    let colorMatch = player.data.Data.Name.toString().match(colorRE);
+    let colorMatch = pitchPlayer.data.Data.Name.toString().match(colorRE);
     color = colorMatch ? `#${colorMatch[1].slice(2, 8)}` : "var(--gray-0)";
-    skills = translateStringNumberList(player.data.Data.ListSkills);
+    skills = translateStringNumberList(pitchPlayer.data.Data.ListSkills);
 
-    if (player.data.Situation >= SITUATION.Casualty) {
-      if (player.data.Situation === SITUATION.Casualty) {
+    if (pitchPlayer.data.Situation >= SITUATION.Casualty) {
+      if (pitchPlayer.data.Situation === SITUATION.Casualty) {
         cas =
           Casualties[
-            Math.max(...translateStringNumberList(player.data.ListCasualties))
+            Math.max(...translateStringNumberList(pitchPlayer.data.ListCasualties))
           ].icon;
       } else {
         cas = "Expelled";
       }
+    } else {
+      cas = null;
     }
   }
 </script>
@@ -44,25 +48,25 @@
       <text class="name" x="18" y="36" style={`fill: ${color}`}>{name}</text>
       <text class="stat mv" x="18" y="75" text-anchor="middle">MV</text>
       <text class="stat mv value" x="18" y="106" text-anchor="middle"
-        >{player.data.Data.Ma}</text
+        >{pitchPlayer.data.Data.Ma}</text
       >
       <text class="stat st" x="18" y="140" text-anchor="middle">ST</text>
       <text class="stat st value" x="18" y="174" text-anchor="middle"
-        >{player.data.Data.St}</text
+        >{pitchPlayer.data.Data.St}</text
       >
       <text class="stat ag" x="18" y="204" text-anchor="middle">AG</text>
       <text class="stat ag value" x="18" y="238" text-anchor="middle"
-        >{player.data.Data.Ag}</text
+        >{pitchPlayer.data.Data.Ag}</text
       >
       <text class="stat av" x="18" y="273" text-anchor="middle">AV</text>
       <text class="stat av value" x="18" y="306" text-anchor="middle"
-        >{player.data.Data.Av}</text
+        >{pitchPlayer.data.Data.Av}</text
       >
     </svg>
     <div class="icon-frame">
       <FixedRatio>
         <div class="icon">
-          <Player {...player} />
+          <Player {...pitchPlayer} />
         </div>
       </FixedRatio>
     </div>
@@ -87,6 +91,7 @@
   .player-card {
     font-family: "Nuffle";
     position: relative;
+    z-index: 9;
   }
   .stat.value {
     fill: var(--gray-0);

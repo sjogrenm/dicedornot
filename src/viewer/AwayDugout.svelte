@@ -4,7 +4,7 @@
   import TeamAids from "./TeamAids.svelte";
   import TeamLogo from "./TeamLogo.svelte";
 
-  export let team, send, receive;
+  export let pitchPlayers, team, send, receive;
 
 </script>
 
@@ -16,7 +16,7 @@
   <div class="logo">
     <TeamLogo logo={team.logo}/>
   </div>
-  <AwayBench dugout={team.dugout} {send} {receive}/>
+  <AwayBench {pitchPlayers} dugout={team.dugout} {send} {receive}/>
 </div>
 
 <style>

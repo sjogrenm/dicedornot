@@ -1,6 +1,7 @@
 <script>
   import Turn from "./Turn.svelte";
   import {replay, replayCurrent} from "./stores.js";
+  export let playing;
   let rolls, rollsByTurn, selectedRoll, currentTurnRolls;
 
   function rollForReplayPosition(position) {
@@ -37,7 +38,7 @@
 
 {#if selectedRoll >= 0 && currentTurnRolls && currentTurnRolls.length > 0}
   <div class="details-list">
-    <Turn rolls={currentTurnRolls} {selectedRoll}/>
+    <Turn rolls={currentTurnRolls} {selectedRoll} {playing}/>
   </div>
 {/if}
 

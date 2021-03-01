@@ -6,6 +6,7 @@
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
+  import SelectedPlayer from "./SelectedPlayer.svelte";
   import {
     getPlayerType,
     SITUATION,
@@ -27,8 +28,10 @@
     END,
     period,
   } from "../replay-utils.js";
-  import { replay, replayCurrent, replayTarget, timing, error } from "../stores.js";
+  import { replay, replayCurrent, replayTarget, timing, error, selectedPlayer, hoveredPlayer } from "../stores.js";
   import he from "he";
+
+  export let playing = false;
 
   let startingUrl = new URL(window.location);
 
@@ -37,10 +40,10 @@
     homeTeam = {},
     awayTeam = {},
     pitch = {},
+    players = {},
     blitzerId,
     banner,
-    weather,
-    playing = false,
+    weather = WEATHER.Nice,
     skipping = false;
 
   const DUGOUT_POSITIONS = {
@@ -167,13 +170,8 @@
     return square;
   }
   function setPlayer(id) {
-    let player;
-    Object.entries(pitch).forEach(([idx, square]) => {
-      if (square.player && square.player.data.Id == id) {
-        pitch[idx] = square;
-        player = square.player;
-      }
-    });
+    let player = players[id];
+    players[id] = player;
     return player;
   }
 
@@ -183,6 +181,7 @@
         square.player = null;
       }
     });
+    players = {};
     boardState.ListTeams.TeamState[0].ListPitchPlayers.PlayerState.map((p) =>
       placePlayer(p, "home")
     );
@@ -192,14 +191,15 @@
   }
 
   function placePlayer(p, team) {
+    players[p.Id] = {data: p};
     switch (p.Situation) {
       case SITUATION.Active:
-        setPitchSquare(p.Cell).player = { data: p };
+        setPitchSquare(p.Cell).player = p.Id;
         break;
       default:
         (team == "home" ? homeTeam : awayTeam).dugout[
           DUGOUT_POSITIONS[p.Situation]
-        ].push({ data: p });
+        ].push(p.Id);
         break;
     }
   }
@@ -298,10 +298,10 @@
     try {
       await action(boardAction, boardActionResult);
       await step();
-    } catch (error) {
+    } catch (err) {
       await step();
-      console.error("Action failed", { error, boardAction, boardActionResult });
-      throw error;
+      console.error("Action failed", { err, boardAction, boardActionResult });
+      throw err;
     }
   }
 
@@ -592,7 +592,7 @@
     }
   }
 
-  function handle(state) {
+  function handle() {
     //not implemented
   }
 
@@ -602,7 +602,7 @@
       square.cell = null;
       square.foul = false;
       if (square.player) {
-        square.player.moving = false;
+        players[square.player].moving = false;
       }
       pitch[idx] = square;
     });
@@ -621,17 +621,17 @@
 
   function handleActivate(action) {
     clearTemporaryState();
+    players[action.PlayerId].prone = false;
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
         square.cell.active = false;
       }
       if (square.player) {
-        if (square.player.data.Id == action.ActivePlayerId) {
+        if (square.player == action.PlayerId) {
           if (!square.cell) {
             square.cell = {};
           }
           square.cell.active = true;
-          square.player.prone = false;
         }
         pitch[idx] = square;
       }
@@ -712,7 +712,7 @@
 
           if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
             //surf
-            let team = toPlayer.team;
+            let team = players[toPlayer].team;
             let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
             dugout.reserve.push(toPlayer);
             toSquare.player = null;
@@ -790,7 +790,7 @@
     player.moving = true;
     if (actionResult.IsOrderCompleted && squareTo != squareFrom) {
       squareFrom.player = null;
-      squareTo.player = player;
+      squareTo.player = action.PlayerId;
     }
 
     squareFrom.cell = squareFrom.cell || {};
@@ -835,7 +835,7 @@
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
-      square.player.stupidity = null;
+      players[square.player].stupidity = null;
     } else {
       //failure
       const STUPID_TYPES = {
@@ -843,7 +843,7 @@
         [ROLL.ReallyStupid]: "Stupid",
         [ROLL.TakeRoot]: "Rooted",
       };
-      square.player.stupidity = STUPID_TYPES[actionResult.RollType];
+      players[square.player].stupidity = STUPID_TYPES[actionResult.RollType];
     }
   }
 
@@ -885,14 +885,13 @@
   function handleTakeDamage(action, actionResult) {
     if (!actionResult.IsOrderCompleted) return;
 
-    let player, playerSquareIndex;
+    let player = setPlayer(action.PlayerId), playerSquareIndex;
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
         square.cell.target = null;
       }
-      if (square.player && square.player.data.Id == action.PlayerId) {
-        player = square.player;
+      if (square.player && square.player == action.PlayerId) {
         pitch[idx] = square; // Force svelte to update
         playerSquareIndex = idx;
       }
@@ -957,6 +956,7 @@
   />
 </svelte:head>
 
+<a name="viewer"/>
 <div class="controls">
   <Row class="justify-content-center align-items-center">
     <Col xs="auto">
@@ -1014,9 +1014,14 @@
   <div class="pitch-scroll">
     <FixedRatio width={1335} height={1061}>
       <div class="pitch">
-        <HomeDugout team={homeTeam} {weather} {send} {receive} />
-        <Pitch {pitch} {homeTeam} {awayTeam} {send} {receive} />
-        <AwayDugout team={awayTeam} {send} {receive} />
+        <HomeDugout pitchPlayers={players} team={homeTeam} {weather} {send} {receive} />
+        {#if $selectedPlayer || $hoveredPlayer}
+          <div class="selected" class:enlarged={!!$hoveredPlayer}>
+            <SelectedPlayer {players} player={$hoveredPlayer || $selectedPlayer} {pitch} {homeTeam} {awayTeam}/>
+          </div>
+        {/if}
+        <Pitch pitchPlayers={players} {pitch} {homeTeam} {awayTeam} {send} {receive} />
+        <AwayDugout pitchPlayers={players} team={awayTeam} {send} {receive} />
       </div>
       {#if banner}
         <Banner {banner} />
@@ -1036,6 +1041,16 @@
 {/if}
 
 <style>
+  .selected {
+    top: 0;
+    width: 7.5%;
+    right: 7%;
+    position: absolute;
+    z-index: 10;
+  }
+  .selected:hover, .selected.enlarged {
+    width: 16%;
+  }
   .pitch-container {
     width: 100%;
     overflow-x: auto;
