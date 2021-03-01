@@ -394,8 +394,6 @@ export class Roll {
     var kickoff = replayStep.RulesEventKickOffTable;
     if (kickoff) {
       let kickoffRolls = Roll.fromKickoffEvent(replay, initialBoard, stepIndex, replayStep, kickoff);
-      console.log(kickoffRolls);
-
       rolls.push(...kickoffRolls);
     }
 
@@ -1046,7 +1044,7 @@ class FansRoll extends Roll {
 }
 
 
-class ModifiedD6SumRoll extends Roll {
+export class ModifiedD6SumRoll extends Roll {
   static numDice = 1;
   static diceSeparator = '+'
   static dependentConditions = [reroll, sameTeamMove];
@@ -1855,7 +1853,7 @@ class NoValueRoll extends Roll {
 function isKickoffRoll(roll, dependent) {
   return dependent instanceof KickoffEventRoll;
 }
-class KickoffRoll extends Roll {
+export class KickoffRoll extends Roll {
   static rollName = "Kickoff";
   static dependentConditions = [isKickoffRoll];
   get activeTeam() {
@@ -2021,7 +2019,7 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
 }
 
 
-class PitchInvasionRoll extends KickoffEventRoll {
+export class PitchInvasionRoll extends KickoffEventRoll {
   static rollName = "Pitch Invasion";
   constructor(args) {
     super(args);
