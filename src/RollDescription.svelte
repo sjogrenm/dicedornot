@@ -38,7 +38,7 @@
           .toString()
           .split("")
           .map((char) => parseInt(char))}
-      />
+      /> - {roll.casName(roll.dice)}
     {:else if roll instanceof InjuryRoll}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
         dice={roll.dice}

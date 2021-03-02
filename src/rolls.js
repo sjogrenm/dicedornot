@@ -1767,6 +1767,26 @@ export class CasualtyRoll extends Roll {
     dice = dice.slice(0, dice.length / 2);
     return [dice[dice.length - 1]];
   }
+
+  casName(dice) {
+    if (dice < 40) {
+      return "Badly Hurt";
+    } else if (dice < 50) {
+      return "Miss Next Game";
+    } else if (dice <= 52) {
+      return "Niggling Injury";
+    } else if (dice <= 54) {
+      return "-MA";
+    } else if (dice <= 56) {
+      return "-AV";
+    } else if (dice == 57) {
+      return "-AG";
+    } else if (dice == 58) {
+      return "-ST";
+    } else if (dice < 70) {
+      return "Dead!";
+    }
+  }
   value(dice) {
     return new SingleValue("CAS", 0); // Need to figure out how to grade losing player value for multiple matches
     if (dice < 40) {
