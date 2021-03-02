@@ -20,16 +20,17 @@ export function ensureList(objOrList) {
 }
 
 export function translateStringNumberList(str) {
-    if (!str) return [];
+  if (str === undefined || str === null) return [];
+  str = str.toString();
 
-    var stripped = str.substring(1, str.length - 1);
-    var textList = stripped.split(",");
+  var stripped = str.replace(/[()]/g, '');
+  var textList = stripped.split(",");
 
-    var numberList = [];
-    for (var i = 0; i < textList.length; i++) {
-        numberList.push(parseInt(textList[i]));
-    }
-    return numberList;
+  var numberList = [];
+  for (var i = 0; i < textList.length; i++) {
+      numberList.push(parseInt(textList[i]));
+  }
+  return numberList;
 }
 
 export const REPLAY_SUB_STEP = {
