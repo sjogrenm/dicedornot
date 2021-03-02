@@ -17,9 +17,6 @@
 >
 
 <style>
-  .player-card {
-    width: 10vw;
-  }
   .pill-team-1 {
     background-color: var(--team1-color-2);
     color: var(--team1-gray-9);
@@ -27,5 +24,8 @@
   .pill-team-0 {
     background-color: var(--team0-color-2);
     color: var(--team0-gray-9);
+  }
+  .badge-pill {
+    font-size: 85%;
   }
 </style>

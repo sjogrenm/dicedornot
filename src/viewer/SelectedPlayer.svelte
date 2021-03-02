@@ -47,7 +47,7 @@
       <image href="/images/card.png" height="100%" />
       <text class="name" x="18" y="36" style={`fill: ${color}`}>{name}</text>
       <text class="stat mv" x="18" y="75" text-anchor="middle">MV</text>
-      <text class="stat mv value" x="18" y="106" text-anchor="middle"
+      <text class="stat mv value" x="18" y="109" text-anchor="middle"
         >{pitchPlayer.data.Data.Ma}</text
       >
       <text class="stat st" x="18" y="140" text-anchor="middle">ST</text>
@@ -59,7 +59,7 @@
         >{pitchPlayer.data.Data.Ag}</text
       >
       <text class="stat av" x="18" y="273" text-anchor="middle">AV</text>
-      <text class="stat av value" x="18" y="306" text-anchor="middle"
+      <text class="stat av value" x="18" y="304" text-anchor="middle"
         >{pitchPlayer.data.Data.Av}</text
       >
     </svg>

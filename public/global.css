@@ -68,6 +68,11 @@ button:focus {
   src: url("/fonts/Nuffle-OVwjO.ttf");
 }
 
+@font-face {
+  font-family: "NuffleDice";
+  src: url("/fonts/NuffleDice-axWja.ttf");
+}
+
 .popover-body {
   padding: 0;
 }

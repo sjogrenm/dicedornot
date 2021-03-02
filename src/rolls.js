@@ -1587,7 +1587,7 @@ class LightningBoltRoll extends ModifiedD6SumRoll {
   }
 }
 
-class InjuryRoll extends Roll {
+export class InjuryRoll extends Roll {
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
   static diceSeparator = '+';
   static dependentConditions = [reroll];
@@ -1634,6 +1634,20 @@ class InjuryRoll extends Roll {
       return "Pile On (Injury)";
     } else {
       return "Injury";
+    }
+  }
+
+  // TODO: Handle skills
+  injuryName(total) {
+    if (this.activePlayer.skills.includes(SKILL.Stunty)) {
+      total += 1;
+    }
+    if (total <= 7) {
+      return "Stun";
+    } else if (total <= 9) {
+      return "KO";
+    } else {
+      return "CAS";
     }
   }
 
@@ -1734,7 +1748,7 @@ class InjuryRoll extends Roll {
   }
 }
 
-class CasualtyRoll extends Roll {
+export class CasualtyRoll extends Roll {
   static rollName = "Casualty";
   static handledSkills = [SKILL.NurglesRot, SKILL.Decay];
   // TODO: Handle skills
