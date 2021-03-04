@@ -40,3 +40,5 @@ jobs:
               }
               <%}); %>
             ]
+        with:
+          args: "{{EVENT_PAYLOAD}}"
