@@ -40,7 +40,7 @@
   on:click={() => {
     $selectedPlayer = player && player.data.Id;
   }}
-  on:mouseenter={() => {
+  on:mouseover={() => {
     $hoveredPlayer = player && player.data.Id;
   }}
   on:mouseleave={() => {

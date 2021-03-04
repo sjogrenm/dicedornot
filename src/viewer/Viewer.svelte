@@ -8,7 +8,6 @@
   import Pitch from "./Pitch.svelte";
   import SelectedPlayer from "./SelectedPlayer.svelte";
   import {
-    getPlayerType,
     SITUATION,
     ROLL,
     WEATHER,
@@ -28,7 +27,7 @@
     END,
     period,
   } from "../replay-utils.js";
-  import { replay, replayCurrent, replayTarget, timing, error, selectedPlayer, hoveredPlayer } from "../stores.js";
+  import { replay, replayCurrent, replayTarget, timing, error, selectedPlayer, hoveredPlayer, replayPreview } from "../stores.js";
   import he from "he";
 
   export let playing = false;
@@ -44,7 +43,9 @@
     blitzerId,
     banner,
     weather = WEATHER.Nice,
-    skipping = false;
+    skipping = false,
+    underPreview,
+    previewing;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -54,7 +55,33 @@
   };
 
   $: {
-    if (!playing && $replayTarget) {
+    if (underPreview && !$replayPreview) {
+      homeTeam = underPreview.homeTeam;
+      awayTeam = underPreview.awayTeam;
+      pitch = underPreview.pitch;
+      players = underPreview.players;
+      let wasPlaying = underPreview.playing;
+      previewing = null;
+      underPreview = null;
+      if (wasPlaying) {
+        startPlayer();
+      } else {
+        step();
+      }
+    } else if (underPreview && previewing != $replayPreview) {
+      previewing = $replayPreview;
+      resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
+    } else if (!underPreview && $replayPreview) {
+      underPreview = {homeTeam, awayTeam, pitch, players, playing};
+      playing = false;
+      previewing = $replayPreview;
+      resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
+    }
+    if (underPreview && $replayTarget == $replayPreview) {
+      underPreview = {homeTeam, awayTeam, pitch, players, playing};
+      $replayTarget = null;
+      jumpToPosition($replayPreview);
+    } else if (!playing && $replayTarget) {
       handleReplay();
     }
   }
@@ -89,8 +116,13 @@
     return () => console.log("destroyed");
   });
 
-  async function resetFromBoardState(boardState) {
-    blitzerId = boardState.BlitzerId;
+  async function resetFromBoardState(boardState, fullClear) {
+    if (fullClear) {
+      homeTeam = {};
+      awayTeam = {};
+      pitch = {};
+      players = {};
+    }
     homeTeam = processTeam(
       SIDE.home,
       boardState.ListTeams.TeamState[0],
@@ -188,6 +220,9 @@
     boardState.ListTeams.TeamState[1].ListPitchPlayers.PlayerState.map((p) =>
       placePlayer(p, "away")
     );
+    if (boardState.BlitzerId) {
+      players[boardState.BlitzerId].blitz = true;
+    }
   }
 
   function placePlayer(p, team) {
@@ -370,7 +405,7 @@
       await handleReplay();
     }
     skipping = false;
-    await handleReplay();
+    await step();
   }
 
   function jumpToPreviousActivation() {

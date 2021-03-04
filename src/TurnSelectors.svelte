@@ -1,6 +1,6 @@
 <script>
   import TurnSelector from "./TurnSelector.svelte";
-  import {replay} from "./stores.js";
+  import { replay, replayPreview } from "./stores.js";
   let rolls, rollsByTurn;
 
   $: {
@@ -23,12 +23,11 @@
   }
 </script>
 
-<div class="turn-list">
+<div class="turn-list" on:mouseleave={() => ($replayPreview = null)}>
   {#each rollsByTurn as rolls}
     <TurnSelector {rolls} />
   {/each}
 </div>
-
 
 <style>
 </style>

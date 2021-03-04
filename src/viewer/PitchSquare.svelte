@@ -29,7 +29,7 @@
   on:click={() => {
     $selectedPlayer = player;
   }}
-  on:mouseenter={() => {
+  on:mouseover={() => {
     $hoveredPlayer = player;
   }}
   on:mouseleave={() => {

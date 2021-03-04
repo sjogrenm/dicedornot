@@ -15,4 +15,5 @@ export const hoveredPlayer = writable(null);
 export const replay = writable(null);
 export const replayCurrent = writable(new ReplayPosition());
 export const replayTarget = writable(target);
+export const replayPreview = writable(null);
 export const error = writable(null);

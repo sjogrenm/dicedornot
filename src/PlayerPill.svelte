@@ -8,7 +8,7 @@
   on:click={() => {
     $selectedPlayer = player.id;
   }}
-  on:mouseenter={() => {
+  on:mouseover={() => {
     $hoveredPlayer = player.id;
   }}
   on:mouseleave={() => {

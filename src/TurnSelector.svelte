@@ -1,6 +1,6 @@
 <script>
   export let rolls;
-  import {replayCurrent, replayTarget} from "./stores.js";
+  import {replayCurrent, replayTarget, replayPreview} from "./stores.js";
   let turn, teamId, teamName, current, active, startIndex, endIndex;
 
   $: {
@@ -11,17 +11,14 @@
     endIndex = rolls[rolls.length - 1].endIndex;
     current = $replayCurrent.atOrAfter(startIndex) && $replayCurrent.before(endIndex);
   }
-
-  function handleClick() {
-    $replayTarget = startIndex;
-  }
 </script>
 
 <div
   class={`btn team team-${teamId}`}
   class:current
   title={`${teamName}: Turn ${turn}`}
-  on:click={handleClick}
+  on:click={() => ($replayTarget = startIndex)}
+  on:mouseover={() => ($replayPreview = startIndex)}
 >
   {turn}
 </div>

@@ -255,7 +255,7 @@
           on:input={(ev) => {
             if (replays.map(replay => replay.cacheKey).includes(ev.data)) {
               cachePicker.value = "";
-              loadFromCache(ev.data);
+              loadFromCache(ev.data, true);
             }
           }}
         />
