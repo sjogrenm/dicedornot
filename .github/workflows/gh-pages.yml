@@ -45,6 +45,6 @@ jobs:
                 "footer": {
                   "text": "{{commit.timestamp}} | {{commit.id.substr(0,7)}}"
                 }
-              }{{idx < EVENT_PAYLOAD.commits-1 ? "," : ""}}
+              }{{idx < EVENT_PAYLOAD.commits.length-1 ? "," : ""}}
               <%}); %>
             ]
