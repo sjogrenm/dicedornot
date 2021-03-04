@@ -33,12 +33,11 @@ jobs:
               {
                 "author": {
                   "name": "{{commit.author.name}}",
-                  "url": "{{commit.author.html_url}}",
-                  "icon_url": "{{commit.author.avatar_url}}"
+                  "url": https://github.com/{{commit.author.username}}",
+                  "icon_url": "https://github.com/{{commit.author.username}}.png"
                 },
-                "description": "{{commit.message}}"
+                "title": "{{commit.message.split('\n')[0]}}"
+                "description": "{{commit.message.split('\n').slice(1).join('\n')}}"
               }
               <%}); %>
             ]
-        with:
-          args: "{{JSON.stringify(EVENT_PAYLOAD)}}"
