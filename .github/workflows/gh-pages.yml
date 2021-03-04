@@ -27,4 +27,4 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: '<% _.forEach(EVENT_PAYLOAD.commits, function(commit) { %>{{ commit.message }}\n<% }); %>'
+          args: '{{ EVENT_PAYLOAD }}'
