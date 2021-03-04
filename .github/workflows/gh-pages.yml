@@ -22,3 +22,9 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
           CNAME: dicedornot.vengefulpickle.com
+      - name: Notify
+        uses: Ilshidur/action-discord@0.0.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        with:
+          args: '<% _.forEach(EVENT_PAYLOAD.commits, function(commit) { %>{{ commit.message }}\n<% }); %>'
