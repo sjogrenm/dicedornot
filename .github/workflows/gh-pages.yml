@@ -36,7 +36,7 @@ jobs:
                   "url": "https://github.com/{{commit.author.username}}",
                   "icon_url": "https://github.com/{{commit.author.username}}.png"
                 },
-                "title": "{{commit.message.split('\n')[0]}}"
+                "title": "{{commit.message.split('\n')[0]}}",
                 "description": "{{commit.message.split('\n').slice(1).join('\n')}}"
               }
               <%}); %>
