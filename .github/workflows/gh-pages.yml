@@ -29,7 +29,7 @@ jobs:
           DISCORD_AVATAR: https://dicedornot.vengefulpickle.com/dicedornot-logo.png
           DISCORD_EMBEDS: >
             [
-              <% _.forEach(EVENT_PAYLOAD.commits, function(commit) {%>
+              <% _.forEach(EVENT_PAYLOAD.commits, function(commit, idx) {%>
               {
                 "author": {
                   "name": "{{commit.author.name}}",
@@ -45,6 +45,6 @@ jobs:
                 "footer": {
                   "text": "{{commit.timestamp}} | {{commit.id.substr(0,7)}}"
                 }
-              }
+              }{{idx < EVENT_PAYLOAD.commits-1 ? "," : ""}}
               <%}); %>
             ]
