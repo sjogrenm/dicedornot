@@ -33,7 +33,7 @@ jobs:
               {
                 "author": {
                   "name": "{{commit.author.name}}",
-                  "url": https://github.com/{{commit.author.username}}",
+                  "url": "https://github.com/{{commit.author.username}}",
                   "icon_url": "https://github.com/{{commit.author.username}}.png"
                 },
                 "title": "{{commit.message.split('\n')[0]}}"
