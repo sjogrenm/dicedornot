@@ -23,8 +23,20 @@ jobs:
           publish_dir: ./public
           CNAME: dicedornot.vengefulpickle.com
       - name: Notify
-        uses: Ilshidur/action-discord@0.3.0
+        uses: cpennington/action-discord@template-embeds
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        with:
-          args: '<% _.forEach(EVENT_PAYLOAD.commits, function(commit) { %>{{ commit.message }}\n<% }); %>'
+          DISCORD_AVATAR: https://dicedornot.vengefulpickle.com/dicedornot-logo.svg
+          DISCORD_EMBEDS: >
+            [
+              <% _.forEach(EVENT_PAYLOAD.commits, function(commit) {%>
+              {
+                "author": {
+                  "name": "{{commit.author.name}}",
+                  "url": "{{commit.author.html_url}}",
+                  "icon_url": "{{commit.author.avatar_url}}"
+                },
+                "description": "{{commit.message}}"
+              }
+              <%}); %>
+            ]
