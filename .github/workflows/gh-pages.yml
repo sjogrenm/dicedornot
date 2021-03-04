@@ -23,8 +23,8 @@ jobs:
           publish_dir: ./public
           CNAME: dicedornot.vengefulpickle.com
       - name: Notify
-        uses: Ilshidur/action-discord@0.0.2
+        uses: Ilshidur/action-discord@0.3.0
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
         with:
-          args: '{{ EVENT_PAYLOAD }}'
+          args: '<% _.forEach(EVENT_PAYLOAD.commits, function(commit) { %>{{ commit.message }}\n<% }); %>'
