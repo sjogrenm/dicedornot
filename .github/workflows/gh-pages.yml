@@ -37,7 +37,7 @@ jobs:
                   "icon_url": "https://github.com/{{commit.author.username}}.png"
                 },
                 "title": "{{commit.message.split('\n')[0]}}",
-                "description": "{{commit.message.split('\n').slice(1).join('\n')}}",
+                "description": "{{commit.message.split('\n').slice(2).join('\\n')}}",
                 "fields": [{
                   "name": "links",
                   "value": "[commit]({{commit.url}})"
