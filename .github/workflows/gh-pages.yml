@@ -41,4 +41,4 @@ jobs:
               <%}); %>
             ]
         with:
-          args: "{{<% JSON.stringify(EVENT_PAYLOAD) %>}}"
+          args: "<% JSON.stringify(EVENT_PAYLOAD) %>"
