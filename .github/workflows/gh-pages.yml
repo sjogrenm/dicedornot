@@ -26,7 +26,7 @@ jobs:
         uses: cpennington/action-discord@template-embeds
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          DISCORD_AVATAR: https://dicedornot.vengefulpickle.com/dicedornot-logo.svg
+          DISCORD_AVATAR: https://dicedornot.vengefulpickle.com/dicedornot-logo.png
           DISCORD_EMBEDS: >
             [
               <% _.forEach(EVENT_PAYLOAD.commits, function(commit) {%>
@@ -41,4 +41,4 @@ jobs:
               <%}); %>
             ]
         with:
-          args: "{{EVENT_PAYLOAD}}"
+          args: "{{<% JSON.stringify(EVENT_PAYLOAD) %>}}"
