@@ -38,6 +38,13 @@ jobs:
                 },
                 "title": "{{commit.message.split('\n')[0]}}",
                 "description": "{{commit.message.split('\n').slice(1).join('\n')}}"
+                "fields": [{
+                  "name": "links",
+                  "value": "[commit]({{commit.url}})"
+                }],
+                "footer": {
+                  "text": "{{commit.timestamp}} | ${commit.id.substr(0,7)}"
+                }
               }
               <%}); %>
             ]
