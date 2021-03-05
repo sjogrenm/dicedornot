@@ -28,20 +28,19 @@
 >
   <div class="col col-auto pr-0 pl-2">
     <div>
-      <a
+      <button
         href="#viewer"
-        class="badge badge-secondary"
+        class="btn btn-secondary btn-sm"
         on:click={() => ($replayTarget = roll.startIndex)}
-        ><Icon name="arrow-down-right" title="Jump to Roll" /></a
-      >
+        ><Icon name="arrow-down-right" title="Jump to Roll" /></button>
     </div>
     {#if selected}
       <div>
-        <a
+        <button
           href="#viewer"
-          class="badge badge-secondary"
+          class="btn btn-secondary btn-sm"
           on:click={() => openRoll()}
-          ><Icon name="three-dots-vertical" title="Show details" /></a
+          ><Icon name="three-dots-vertical" title="Show details" /></button
         >
       </div>
     {/if}

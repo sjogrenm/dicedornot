@@ -55,35 +55,6 @@
   };
 
   $: {
-    if (underPreview && !$replayPreview) {
-      homeTeam = underPreview.homeTeam;
-      awayTeam = underPreview.awayTeam;
-      pitch = underPreview.pitch;
-      players = underPreview.players;
-      let wasPlaying = underPreview.playing;
-      previewing = null;
-      underPreview = null;
-      if (wasPlaying) {
-        startPlayer();
-      } else {
-        step();
-      }
-    } else if (underPreview && previewing != $replayPreview) {
-      previewing = $replayPreview;
-      resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
-    } else if (!underPreview && $replayPreview) {
-      underPreview = {homeTeam, awayTeam, pitch, players, playing};
-      playing = false;
-      previewing = $replayPreview;
-      resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
-    }
-    if (underPreview && $replayTarget == $replayPreview) {
-      underPreview = {homeTeam, awayTeam, pitch, players, playing};
-      $replayTarget = null;
-      jumpToPosition($replayPreview);
-    } else if (!playing && $replayTarget) {
-      handleReplay();
-    }
   }
 
   const [send, receive] = crossfade({
@@ -109,10 +80,11 @@
     let url = new URL(window.location);
     $timing = url.searchParams.get("timing") || 300;
     if (url.searchParams.get('st')) {
-      handleReplay();
+      playing = false;
     } else {
-      startPlayer();
+      playing = true;
     }
+    playerLoop();
     return () => console.log("destroyed");
   });
 
@@ -344,22 +316,8 @@
     await resetFromBoardState(boardState);
   }
 
-  async function handleReplay() {
+  async function stepReplay() {
     let current = $replayCurrent, fullReplay = $replay.fullReplay;
-    if (!fullReplay) {
-      await sleep(100);
-      return;
-    }
-    if (current == END) {
-      $replayCurrent = new ReplayPosition();
-      return;
-    }
-    if ($replayTarget) {
-      const target = $replayTarget;
-      $replayTarget = null;
-      await jumpToPosition(target);
-      return;
-    }
 
     const step = fullReplay.ReplayStep[current.step];
     const subStep = step[REPLAY_KEY[current.subStep]];
@@ -402,10 +360,58 @@
     );
     skipping = true;
     while (position.atOrAfter($replayCurrent)) {
-      await handleReplay();
+      await stepReplay();
     }
     skipping = false;
     await step();
+  }
+
+
+  async function playerLoop() {
+    while (true) {
+      try {
+        if (underPreview && !$replayPreview) {
+          homeTeam = underPreview.homeTeam;
+          awayTeam = underPreview.awayTeam;
+          pitch = underPreview.pitch;
+          players = underPreview.players;
+          playing = underPreview.playing;
+          previewing = null;
+          underPreview = null;
+        } else if (underPreview && previewing != $replayPreview) {
+          previewing = $replayPreview;
+          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
+        } else if (!underPreview && $replayPreview) {
+          underPreview = {homeTeam, awayTeam, pitch, players, playing};
+          playing = false;
+          previewing = $replayPreview;
+          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
+        }
+        if (underPreview && $replayTarget == $replayPreview) {
+          underPreview = {homeTeam, awayTeam, pitch, players, playing};
+          $replayTarget = null;
+          jumpToPosition($replayPreview);
+        }
+        if ($replayCurrent == END) {
+          $replayCurrent = new ReplayPosition();
+          return;
+        }
+        if ($replayTarget) {
+          const target = $replayTarget;
+          $replayTarget = null;
+          await jumpToPosition(target);
+        }
+        if ($replay.fullReplay && playing) {
+          await stepReplay();
+        } else {
+          await sleep(100);
+        }
+      } catch (err) {
+        playing = false;
+        $error = err;
+        console.error(err);
+      }
+    }
   }
 
   function jumpToPreviousActivation() {
@@ -457,19 +463,6 @@
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);
         return;
-      }
-    }
-  }
-
-  async function startPlayer() {
-    playing = true;
-    while (playing) {
-      try {
-        await handleReplay();
-      } catch (err) {
-        playing = false;
-        $error = err;
-        console.error(err);
       }
     }
   }
@@ -1016,16 +1009,14 @@
         {#if playing}
           <Button
             title="Pause"
-            on:click={() => {
-              playing = false;
-            }}><Icon name="pause-fill" /></Button
+            on:click={() => (playing = false)}><Icon name="pause-fill" /></Button
           >
         {:else}
-          <Button title="Play" on:click={() => startPlayer()}
+          <Button title="Play" on:click={() => (playing = true)}
             ><Icon name="play-fill" /></Button
           >
         {/if}
-        <Button title="Next Replay Step" on:click={handleReplay}
+        <Button title="Next Replay Step" on:click={stepReplay}
           >{">"}</Button
         >
         <Button
