@@ -5,10 +5,13 @@ import {percentRank} from "./utils.js";
   import { replay } from "./stores";
 
   export let homeTeam, awayTeam;
-  let cumNetValues, actuals, homePercentile, awayPercentile;
+  let cumNetValues, actuals, homePercentile = 0.5, awayPercentile = 0.5;
   $: {
     cumNetValues = { actuals: {}, simulated: {} };
-    actuals = $replay.rolls.map((roll) => roll.actual);
+    actuals = $replay.rolls.map((roll) => ({
+      team: roll.activeTeam.id,
+      netValue: roll.valueWithDependents.singularValue - roll.expectedValue
+    }));
     cumNetValues.actuals = accumulateNetValue(actuals);
     updatePercentiles();
   }
@@ -16,8 +19,8 @@ import {percentRank} from "./utils.js";
   function accumulateNetValue(values) {
     let dest = {};
     values.forEach((dataPoint) => {
-      dest[dataPoint.activeTeamId] =
-        (dest[dataPoint.activeTeamId] || 0) + dataPoint.netValue;
+      dest[dataPoint.team] =
+        (dest[dataPoint.team] || 0) + dataPoint.netValue;
     });
     return dest;
   }
@@ -82,15 +85,17 @@ import {percentRank} from "./utils.js";
   }
 
   async function updatePercentiles() {
-
+    await sleep(2000);
     var iteration = 0;
     for (var c = 0; c < 500; c++) {
-      var values = [];
+      console.log("Computing 50 simulated games")
       for (var x = 0; x < 50; x++) {
         iteration++;
-        let newValues = $replay.rolls.map((roll) => roll.simulated(iteration));
+        let newValues = $replay.rolls.map((roll) => ({
+          team: roll.activeTeam.id,
+          netValue: roll.possibleOutcomes.sample() - roll.expectedValue,
+        }));
         cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
-        values.push(...newValues);
       }
       let oldHome = homePercentile, oldAway = awayPercentile;
       homePercentile = percentRank(
@@ -101,7 +106,12 @@ import {percentRank} from "./utils.js";
         Object.values(cumNetValues.simulated).map((cum) => cum[1]),
         cumNetValues.actuals[1]
       );
-      if (c > 10 && homePercentile - oldHome < 0.0005 && awayPercentile - oldAway < 0.0005) {
+      console.log("Simulation iteration complete", {
+        totalGames: c * 50,
+        homeDelta: Math.abs(homePercentile - oldHome),
+        awayDelta: Math.abs(awayPercentile - oldAway)
+      });
+      if (c > 10 && Math.abs(homePercentile - oldHome) < 0.001 && Math.abs(awayPercentile - oldAway) < 0.001) {
         return;
       }
 

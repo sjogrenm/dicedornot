@@ -290,9 +290,15 @@ export class Roll {
   get expectedValue() {
     return this.possibleOutcomes.expectedValue;
   }
-  get possibleOutcomes() {
-    throw `possibleOutcomes must be defined by subclass ${this.constructor.name}`;
+  get _possibleOutcomes() {
+    throw `_possibleOutcomes must be defined by subclass ${this.constructor.name}`;
   }
+
+  get possibleOutcomes() {
+    Object.defineProperty(this, 'possibleOutcomes', { value: this._possibleOutcomes });
+    return this.possibleOutcomes;
+  }
+
   simulateDice() {
     throw 'simulateDice must be defined by subclass';
   }
@@ -343,6 +349,7 @@ export class Roll {
       weights: this.possibleOutcomes.flat.map(outcome => outcome.weight),
       description: this.jointDescription,
       valueDescription: `${this.valueWithDependents.valueString} ${this.possibleOutcomes.valueString}`,
+      improbability: this.dependentRolls.reduce((acc, roll) => acc + roll.improbability, this.improbability),
     });
   }
   simulated(iteration) {
@@ -375,7 +382,6 @@ export class Roll {
       expectedValue: this.expectedValue,
       netValue: outcomeValue - this.expectedValue,
       rollIndex: this.rollIndex,
-      improbability: this.dependentRolls.reduce((acc, roll) => acc + roll.improbability, this.improbability),
     };
   }
 
@@ -1002,7 +1008,7 @@ class BlockRoll extends Roll {
     return (pass ? 1 : 0) - passChance;
   }
 
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     var value;
     const blockDie = new SimpleDistribution([
       { name: BLOCK.Push, weight: 1 / 3, value: this.dieValue(BLOCK.Push, true) },
@@ -1018,10 +1024,7 @@ class BlockRoll extends Roll {
     } else {
       value = new MaxDistribution(new Array(this.dice.length).fill(blockDie));
     }
-    Object.defineProperty(this, 'possibleOutcomes', {
-      value: value
-    });
-    return this.possibleOutcomes;
+    return value;
   }
 
   simulateDice() {
@@ -1160,7 +1163,7 @@ export class ModifiedD6SumRoll extends Roll {
       return this.failValue(expected, rollTotal, this.modifiedTarget);
     }
   }
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     var sumsByOutcome = this.diceSums.reduce((acc, sum) => {
       let value;
       if (sum >= this.modifiedTarget) {
@@ -1213,8 +1216,7 @@ export class ModifiedD6SumRoll extends Roll {
         weight: outcome.count / this.diceSums.length
       }
     });
-    Object.defineProperty(this, 'possibleOutcomes', { value: new SimpleDistribution(outcomes) });
-    return this.possibleOutcomes;
+    return new SimpleDistribution(outcomes);
   }
   get reroll() {
     const reroll = new this.constructor({
@@ -1714,7 +1716,7 @@ export class InjuryRoll extends Roll {
     }
   }
 
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     var outcomesByName = {};
     for (var combination of this.diceCombinations) {
       var outcomeList = outcomesByName[this.value(combination, true).name];
@@ -1726,22 +1728,19 @@ export class InjuryRoll extends Roll {
         value: this.value(combination, true)
       });
     }
-    Object.defineProperty(this, 'possibleOutcomes', {
-      value: new SimpleDistribution(
-        Object.values(outcomesByName).map((outcomes) => {
-          const minOutcome = Math.min(
-            ...outcomes.map((outcome) => parseInt(outcome.name))
-          );
-          const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
-          return {
-            name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
-            weight: outcomes.length,
-            value: outcomes[0].value
-          }
-        })
-      )
-    });
-    return this.possibleOutcomes;
+    return new SimpleDistribution(
+      Object.values(outcomesByName).map((outcomes) => {
+        const minOutcome = Math.min(
+          ...outcomes.map((outcome) => parseInt(outcome.name))
+        );
+        const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
+        return {
+          name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
+          weight: outcomes.length,
+          value: outcomes[0].value
+        }
+      })
+    );
   }
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
@@ -1799,7 +1798,7 @@ export class CasualtyRoll extends Roll {
       return -1; // Dead
     }
   }
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     var outcomes = [];
     for (var type = 1; type <= 6; type++) {
       for (var subtype = 1; subtype <= 8; subtype++) {
@@ -1810,8 +1809,7 @@ export class CasualtyRoll extends Roll {
         });
       }
     }
-    Object.defineProperty(this, 'possibleOutcomes', { value: new SimpleDistribution(outcomes) });
-    return this.possibleOutcomes;
+    return new SimpleDistribution(outcomes);
   }
   simulateDice() {
     return sample([1, 2, 3, 4, 5, 6]) * 10 + sample([1, 2, 3, 4, 5, 6, 7, 8]);
@@ -1861,7 +1859,7 @@ export class MoveAction extends Roll {
       return new SingleValue("Move", 0);
     }
   }
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     return this.value().add(...this.dependentRolls.map(roll => roll.value()))
   }
 }
@@ -1879,7 +1877,7 @@ class NoValueRoll extends Roll {
   simulateDice() {
     return null;
   }
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     return new SingleValue("No Value", 0);
   }
 }
@@ -2003,7 +2001,7 @@ export class KickoffRoll extends Roll {
     return value;
   }
 
-  get possibleOutcomes() {
+  get _possibleOutcomes() {
     var outcomesByName = {};
     for (var combination of this.diceCombinations) {
       var outcomeList = outcomesByName[this.value(combination, true).name];
@@ -2015,23 +2013,21 @@ export class KickoffRoll extends Roll {
         value: this.value(combination, true)
       });
     }
-    Object.defineProperty(this, 'possibleOutcomes', {
-      value: new SimpleDistribution(
-        Object.values(outcomesByName).map((outcomes) => {
-          const minOutcome = Math.min(
-            ...outcomes.map((outcome) => parseInt(outcome.name))
-          );
-          const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
-          return {
-            name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
-            weight: outcomes.length,
-            value: outcomes[0].value
-          }
-        })
-      )
-    });
-    return this.possibleOutcomes;
+    return new SimpleDistribution(
+      Object.values(outcomesByName).map((outcomes) => {
+        const minOutcome = Math.min(
+          ...outcomes.map((outcome) => parseInt(outcome.name))
+        );
+        const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
+        return {
+          name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
+          weight: outcomes.length,
+          value: outcomes[0].value
+        }
+      })
+    );
   }
+
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
   }

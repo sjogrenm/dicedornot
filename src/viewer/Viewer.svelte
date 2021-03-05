@@ -32,8 +32,6 @@
 
   export let playing = false;
 
-  let startingUrl = new URL(window.location);
-
   let lastChainPush,
     races = [],
     homeTeam = {},
@@ -45,7 +43,9 @@
     weather = WEATHER.Nice,
     skipping = false,
     underPreview,
-    previewing;
+    previewing,
+    shouldWake,
+    abort = new AbortController();
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -55,6 +55,26 @@
   };
 
   $: {
+    if (!shouldWake) {
+      shouldWake = {
+        replayPreview: $replayPreview,
+        playing: playing,
+        replayTarget: $replayTarget,
+        replay: $replay,
+      };
+    }
+    if (
+      shouldWake.replayPreview != $replayPreview ||
+      shouldWake.playing != playing ||
+      shouldWake.replayTarget != $replayTarget ||
+      shouldWake.replay != $replay
+    ) {
+      shouldWake.replayPreview = $replayPreview;
+      shouldWake.playing = playing;
+      shouldWake.replayTarget = $replayTarget;
+      shouldWake.replay = $replay;
+      abort.abort();
+    }
   }
 
   const [send, receive] = crossfade({
@@ -286,7 +306,22 @@
   ];
 
   function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    let signal = abort.signal;
+    return new Promise((resolve, reject) => {
+        const listener = () => {
+            clearTimeout(timer);
+            abort = new AbortController();
+            resolve();
+        };
+        const timer = setTimeout(() => {
+            signal?.removeEventListener('abort', listener);
+            resolve();
+        }, ms);
+        if (signal?.aborted) {
+            listener();
+        }
+        signal?.addEventListener('abort', listener);
+    });
   }
 
   async function step(ticks) {
@@ -404,7 +439,7 @@
         if ($replay.fullReplay && playing) {
           await stepReplay();
         } else {
-          await sleep(100);
+          await sleep(1000);
         }
       } catch (err) {
         playing = false;
@@ -984,7 +1019,7 @@
   />
 </svelte:head>
 
-<a name="viewer"/>
+<a name="viewer" />
 <div class="controls">
   <Row class="justify-content-center align-items-center">
     <Col xs="auto">
@@ -998,34 +1033,26 @@
         <Button title="Previous Turn" on:click={jumpToPreviousTurn}
           >{"<<<"}</Button
         >
-        <Button
-          title="Previous Activation"
-          on:click={jumpToPreviousActivation}>{"<<"}</Button
+        <Button title="Previous Activation" on:click={jumpToPreviousActivation}
+          >{"<<"}</Button
         >
-        <Button
-          title="Previous Replay Step"
-          on:click={jumpToPreviousStep}>{"<"}</Button
+        <Button title="Previous Replay Step" on:click={jumpToPreviousStep}
+          >{"<"}</Button
         >
         {#if playing}
-          <Button
-            title="Pause"
-            on:click={() => (playing = false)}><Icon name="pause-fill" /></Button
+          <Button title="Pause" on:click={() => (playing = false)}
+            ><Icon name="pause-fill" /></Button
           >
         {:else}
           <Button title="Play" on:click={() => (playing = true)}
             ><Icon name="play-fill" /></Button
           >
         {/if}
-        <Button title="Next Replay Step" on:click={stepReplay}
-          >{">"}</Button
+        <Button title="Next Replay Step" on:click={stepReplay}>{">"}</Button>
+        <Button title="Next Activation" on:click={jumpToNextActivation}
+          >{">>"}</Button
         >
-        <Button
-          title="Next Activation"
-          on:click={jumpToNextActivation}>{">>"}</Button
-        >
-        <Button title="Next Turn" on:click={jumpToNextTurn}
-          >{">>>"}</Button
-        >
+        <Button title="Next Turn" on:click={jumpToNextTurn}>{">>>"}</Button>
         <Button
           title="Faster"
           on:click={() => {
@@ -1040,13 +1067,32 @@
   <div class="pitch-scroll">
     <FixedRatio width={1335} height={1061}>
       <div class="pitch">
-        <HomeDugout pitchPlayers={players} team={homeTeam} {weather} {send} {receive} />
+        <HomeDugout
+          pitchPlayers={players}
+          team={homeTeam}
+          {weather}
+          {send}
+          {receive}
+        />
         {#if $selectedPlayer || $hoveredPlayer}
           <div class="selected" class:enlarged={!!$hoveredPlayer}>
-            <SelectedPlayer {players} player={$hoveredPlayer || $selectedPlayer} {pitch} {homeTeam} {awayTeam}/>
+            <SelectedPlayer
+              {players}
+              player={$hoveredPlayer || $selectedPlayer}
+              {pitch}
+              {homeTeam}
+              {awayTeam}
+            />
           </div>
         {/if}
-        <Pitch pitchPlayers={players} {pitch} {homeTeam} {awayTeam} {send} {receive} />
+        <Pitch
+          pitchPlayers={players}
+          {pitch}
+          {homeTeam}
+          {awayTeam}
+          {send}
+          {receive}
+        />
         <AwayDugout pitchPlayers={players} team={awayTeam} {send} {receive} />
       </div>
       {#if banner}
@@ -1056,14 +1102,19 @@
   </div>
 </div>
 {#if $replay.unknownRolls.length > 0}
-<Alert warning>
-  <p>The following rolls aren't able to be analyzed yet. Please <a href="https://github.com/cpennington/dicedornot/issues">open an issue on GitHub</a> and attach this replay (or match link).</p>
-  <ul>
-    {#each [...new Set($replay.unknownRolls.map(roll => roll.name))] as name}
-    <li>{name}</li>
-    {/each}
-  </ul>
-</Alert>
+  <Alert warning>
+    <p>
+      The following rolls aren't able to be analyzed yet. Please <a
+        href="https://github.com/cpennington/dicedornot/issues"
+        >open an issue on GitHub</a
+      > and attach this replay (or match link).
+    </p>
+    <ul>
+      {#each [...new Set($replay.unknownRolls.map((roll) => roll.name))] as name}
+        <li>{name}</li>
+      {/each}
+    </ul>
+  </Alert>
 {/if}
 
 <style>
@@ -1074,7 +1125,8 @@
     position: absolute;
     z-index: 10;
   }
-  .selected:hover, .selected.enlarged {
+  .selected:hover,
+  .selected.enlarged {
     width: 16%;
   }
   .pitch-container {
