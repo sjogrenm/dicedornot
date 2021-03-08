@@ -82,8 +82,11 @@
   </Col>
 
   <Col xs="auto">
-    League:
-    <span id="league-name">{gameDetails.leagueName}</span>
+    {#if gameDetails.leagueName}
+    League: {gameDetails.leagueName}
+    {:else}
+    Friendly
+    {/if}
   </Col>
 
   {#if $replay.fullReplay.url}

@@ -95,7 +95,7 @@ export function extractGameDetails(jsonObject) {
     //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
     stadiumName: he.decode(firstStep.GameInfos.NameStadium.toString()),
     stadiumType: firstStep.GameInfos.StructStadium,
-    leagueName: he.decode(firstStep.GameInfos.RowLeague.Name.toString()),
+    leagueName: firstStep.GameInfos.RowLeague.Name && he.decode(firstStep.GameInfos.RowLeague.Name.toString()),
     homeTeam: {
       coachName: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.home].UserId.toString()),
       teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString()),
