@@ -9,3 +9,4 @@ external
 dist
 .parcel-cache
 *.code-workspace
+build

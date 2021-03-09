@@ -731,8 +731,8 @@ export function getPlayerType(playerTypeId) {
     case 125: case 734: return PLAYER_TYPE.UnderworldThrower;
     case 126: case 735: return PLAYER_TYPE.UnderworldBlitzer;
     case 127: case 736: return PLAYER_TYPE.UnderworldTroll;
-    case 97: case 327: case 327: case 503: return PLAYER_TYPE.VampireThrall;
-    case 98: case 328: case 328: case 504: return PLAYER_TYPE.VampireVampire;
+    case 97: case 327: case 503: return PLAYER_TYPE.VampireThrall;
+    case 98: case 328: case 504: return PLAYER_TYPE.VampireVampire;
     case 11: case 396: case 433: return PLAYER_TYPE.WoodelfLineman;
     case 12: case 397: case 434: return PLAYER_TYPE.WoodelfCatcher;
     case 13: case 398: case 435: return PLAYER_TYPE.WoodelfThrower;
