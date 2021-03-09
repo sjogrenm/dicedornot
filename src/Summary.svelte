@@ -123,33 +123,4 @@
   .away {
     color: var(--team1-color-8);
   }
-
-  .team-details .coach-name,
-  .team-details .race {
-    font-size: medium;
-  }
-
-  .team-details-left {
-    text-align: right;
-  }
-
-  .team-details-right {
-    text-align: left;
-  }
-
-  .stadium-name {
-    text-align: center;
-  }
-
-  .stadium-type {
-    text-align: center;
-  }
-
-  .league-name {
-    text-align: center;
-  }
-  .filename {
-    text-align: center;
-    font-weight: bold;
-  }
 </style>
