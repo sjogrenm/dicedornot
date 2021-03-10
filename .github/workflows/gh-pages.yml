@@ -28,23 +28,23 @@ jobs:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DISCORD_AVATAR: https://dicedornot.vengefulpickle.com/dicedornot-logo.png
           DISCORD_EMBEDS: >
-            [
-              <% _.forEach(EVENT_PAYLOAD.commits, function(commit, idx) {%>
-              {
-                "author": {
-                  "name": "{{commit.author.name}}",
-                  "url": "https://github.com/{{commit.author.username}}",
-                  "icon_url": "https://github.com/{{commit.author.username}}.png"
-                },
-                "title": "{{commit.message.split('\n')[0]}}",
-                "description": "{{commit.message.split('\n').slice(2).join('\\n')}}",
-                "fields": [{
-                  "name": "links",
-                  "value": "[commit]({{commit.url}})"
-                }],
-                "footer": {
-                  "text": "{{commit.timestamp}} | {{commit.id.substr(0,7)}}"
-                }
-              }{{idx < EVENT_PAYLOAD.commits.length-1 ? "," : ""}}
-              <%}); %>
-            ]
+            {{
+                JSON.stringify(_.map(EVENT_PAYLOAD.commits, function(commit, idx) {
+                  return {
+                    author: {
+                      name: commit.author.name,
+                      url: `https://github.com/${commit.author.username}`,
+                      icon_url: `https://github.com/${commit.author.username}.png`
+                    },
+                    title: commit.message.split('\n')[0],
+                    description: commit.message.split('\n').slice(2).join('\\n'),
+                    fields: [{
+                      name: "links",
+                      value: `[commit](${commit.url}`,
+                    }],
+                    footer: {
+                      text: `${commit.timestamp} | ${commit.id.substr(0,7)}`
+                    }
+                  };
+              }))
+            }}
