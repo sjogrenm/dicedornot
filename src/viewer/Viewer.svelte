@@ -462,7 +462,7 @@
   }
 
   function jumpToPreviousTurn() {
-    for (var stepI = $replayCurrent.step; stepI--; stepI > 0) {
+    for (var stepI = $replayCurrent.step - 1; stepI--; stepI > 0) {
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);

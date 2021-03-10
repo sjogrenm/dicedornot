@@ -1517,10 +1517,13 @@ class WakeUpRoll extends ModifiedD6SumRoll {
   constructor(attrs) {
     super(attrs);
     this.finalBoardState.activeTeam = this.activePlayer.team;
-    this.finalBoardState.turn = this.finalBoardState.activeTeam.turn + 1;
   }
   passValue() {
-    return this.koValue(this.activePlayer).product(-1).named('Wake Up');
+    let turn = this.finalBoardState.turn;
+    this.finalBoardState.turn = this.finalBoardState.activeTeam.turn + 1;
+    let value = this.koValue(this.activePlayer).product(-1).named('Wake Up');
+    this.finalBoardState.turn = turn;
+    return value;
   }
 }
 
