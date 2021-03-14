@@ -121,7 +121,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 67642,
+      "bytes": 67574,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -925,7 +925,7 @@
       ]
     },
     "dist/viewer/PitchSquare.svelte.js": {
-      "bytes": 16648,
+      "bytes": 16260,
       "imports": [
         {
           "path": "dist/viewer/PitchSquare.svelte.css",
@@ -970,7 +970,7 @@
       "imports": []
     },
     "dist/viewer/OverlayMove.svelte.js": {
-      "bytes": 8823,
+      "bytes": 12425,
       "imports": [
         {
           "path": "dist/viewer/OverlayMove.svelte.css",
@@ -983,7 +983,7 @@
       ]
     },
     "dist/viewer/Overlay.svelte.js": {
-      "bytes": 6456,
+      "bytes": 6765,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -1045,7 +1045,7 @@
       "imports": []
     },
     "dist/viewer/SelectedPlayer.svelte.js": {
-      "bytes": 14942,
+      "bytes": 14899,
       "imports": [
         {
           "path": "dist/viewer/SelectedPlayer.svelte.css",
@@ -1588,7 +1588,7 @@
           "bytesInOutput": 86711
         },
         "dist/rolls.js": {
-          "bytesInOutput": 36459
+          "bytesInOutput": 36402
         },
         "dist/replay.js": {
           "bytesInOutput": 2324
@@ -1780,16 +1780,16 @@
           "bytesInOutput": 284
         },
         "dist/viewer/PitchSquare.svelte.js": {
-          "bytesInOutput": 4775
+          "bytesInOutput": 4656
         },
         "dist/viewer/OverlayMove.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/OverlayMove.svelte.js": {
-          "bytesInOutput": 3037
+          "bytesInOutput": 4289
         },
         "dist/viewer/Overlay.svelte.js": {
-          "bytesInOutput": 1936
+          "bytesInOutput": 2105
         },
         "dist/viewer/Pitch.svelte.js": {
           "bytesInOutput": 2150
@@ -1798,7 +1798,7 @@
           "bytesInOutput": 0
         },
         "dist/viewer/SelectedPlayer.svelte.js": {
-          "bytesInOutput": 5449
+          "bytesInOutput": 5410
         },
         "dist/viewer/Banner.svelte.css": {
           "bytesInOutput": 0
@@ -1837,7 +1837,7 @@
           "bytesInOutput": 0
         },
         "_snowpack/pkg/common/vega.module-d77aac5f.js": {
-          "bytesInOutput": 507388
+          "bytesInOutput": 507392
         },
         "_snowpack/pkg/vega-embed.js": {
           "bytesInOutput": 344179
@@ -1879,7 +1879,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1353475
+      "bytes": 1354685
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
