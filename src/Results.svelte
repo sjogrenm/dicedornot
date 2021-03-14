@@ -45,7 +45,7 @@
         clearTimeout(activeTimeout);
         activeTimeout = null;
       }
-      console.log("Results onMount", { $replay });
+      console.log("Results onMount", { replay: $replay });
       renderChart();
       console.log("Results onMount chart rendered");
     }

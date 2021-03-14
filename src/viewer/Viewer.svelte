@@ -45,7 +45,8 @@
     underPreview,
     previewing,
     shouldWake,
-    abort = new AbortController();
+    abort = new AbortController(),
+    current;
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -108,13 +109,7 @@
     return () => console.log("destroyed");
   });
 
-  async function resetFromBoardState(boardState, fullClear) {
-    if (fullClear) {
-      homeTeam = {};
-      awayTeam = {};
-      pitch = {};
-      players = {};
-    }
+  async function resetFromBoardState(boardState) {
     homeTeam = processTeam(
       SIDE.home,
       boardState.ListTeams.TeamState[0],
@@ -189,8 +184,8 @@
   }
 
   function setPitchSquare(cell) {
-    let square = (pitch[`${cell.x || 0}-${cell.y || 0}`] =
-      pitch[`${cell.x || 0}-${cell.y || 0}`] || {});
+    let square = pitch[`${cell.x || 0}-${cell.y || 0}`] || {};
+    pitch[`${cell.x || 0}-${cell.y || 0}`] = square;
     return square;
   }
   function setPlayer(id) {
@@ -333,7 +328,7 @@
     await sleep(sleepTime);
   }
 
-  async function handleSetupAction(setup) {}
+  async function handleSetupAction() {}
 
   async function handleBoardAction(boardAction, boardActionResult) {
     const action = actions[boardAction.ActionType || 0];
@@ -351,10 +346,9 @@
     await resetFromBoardState(boardState);
   }
 
-  async function stepReplay() {
-    let current = $replayCurrent, fullReplay = $replay.fullReplay;
+  async function stepReplay(updateUrl = true) {
 
-    const step = fullReplay.ReplayStep[current.step];
+    const step = $replay.fullReplay.ReplayStep[current.step];
     const subStep = step[REPLAY_KEY[current.subStep]];
     switch (current.subStep) {
       case REPLAY_SUB_STEP.SetupAction:
@@ -381,24 +375,34 @@
         await handleBoardState(subStep);
         break;
     }
-    $replayCurrent = current.toNextPosition(fullReplay);
-    let url = new URL(window.location);
-    url.searchParams.set('st', current.toParam());
-    window.history.replaceState({}, "", url.href);
+    current = current.toNextPosition($replay.fullReplay);
+    if (updateUrl) {
+      if (!skipping) {
+        $replayCurrent = current;
+      }
+      let url = new URL(window.location);
+      url.searchParams.set('st', current.toParam());
+      window.history.replaceState({}, "", url.href);
+    }
   }
 
-  async function jumpToPosition(position) {
+  async function jumpToPosition(position, updateUrl = true) {
     clearTemporaryState();
-    $replayCurrent = new ReplayPosition(
+    current = new ReplayPosition(
       Math.max(0, position.step - 1),
       REPLAY_SUB_STEP.BoardState
     );
     skipping = true;
-    while (position.atOrAfter($replayCurrent)) {
-      await stepReplay();
+    while (position.atOrAfter(current)) {
+      await stepReplay(updateUrl);
     }
     skipping = false;
+    pitch = pitch;
+    players = players;
     await step();
+    if (updateUrl) {
+      $replayCurrent = current;
+    }
   }
 
 
@@ -411,24 +415,35 @@
           pitch = underPreview.pitch;
           players = underPreview.players;
           playing = underPreview.playing;
+          current = underPreview.current;
           previewing = null;
           underPreview = null;
         } else if (underPreview && previewing != $replayPreview) {
           previewing = $replayPreview;
-          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
+          homeTeam = {};
+          awayTeam = {};
+          pitch = {};
+          players = {};
+          jumpToPosition($replayPreview.start, false);
+          // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         } else if (!underPreview && $replayPreview) {
-          underPreview = {homeTeam, awayTeam, pitch, players, playing};
+          underPreview = {homeTeam, awayTeam, pitch, players, playing, current};
           playing = false;
           previewing = $replayPreview;
-          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
+          homeTeam = {};
+          awayTeam = {};
+          pitch = {};
+          players = {};
+          jumpToPosition($replayPreview.start, false);
+          // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         }
         if (underPreview && $replayTarget == $replayPreview.start) {
-          underPreview = {homeTeam, awayTeam, pitch, players, playing};
+          underPreview = {homeTeam, awayTeam, pitch, players, playing, current};
           $replayTarget = null;
           jumpToPosition($replayPreview.start);
         }
-        if ($replayCurrent == END) {
-          $replayCurrent = new ReplayPosition();
+        if (current == END) {
+          current = new ReplayPosition();
           return;
         }
         if ($replayTarget) {
@@ -450,7 +465,7 @@
   }
 
   function jumpToPreviousActivation() {
-    for (var stepI = $replayCurrent.step; stepI--; stepI > 0) {
+    for (var stepI = current.step; stepI--; stepI > 0) {
       const step = $replay.fullReplay.ReplayStep[stepI];
       const actions = ensureList(step.RulesEventBoardAction);
       const actionTypes = actions.map((action) => action.ActionType || 0);
@@ -462,7 +477,7 @@
   }
 
   function jumpToPreviousTurn() {
-    for (var stepI = $replayCurrent.step - 1; stepI--; stepI > 0) {
+    for (var stepI = current.step - 1; stepI--; stepI > 0) {
       const step = $replay.fullReplay.ReplayStep[stepI];
       if (step.RulesEventEndTurn) {
         $replayTarget = new ReplayPosition(stepI + 1);
@@ -471,11 +486,11 @@
     }
   }
   function jumpToPreviousStep() {
-    $replayTarget = new ReplayPosition($replayCurrent.step - 1);
+    $replayTarget = new ReplayPosition(current.step - 1);
   }
   function jumpToNextActivation() {
     for (
-      var stepI = $replayCurrent.step;
+      var stepI = current.step;
       stepI++;
       stepI < $replay.fullReplay.ReplayStep.length
     ) {
@@ -490,7 +505,7 @@
   }
   function jumpToNextTurn() {
     for (
-      var stepI = $replayCurrent.step;
+      var stepI = current.step;
       stepI++;
       stepI < $replay.fullReplay.ReplayStep.length
     ) {
