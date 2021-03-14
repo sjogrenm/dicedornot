@@ -415,17 +415,17 @@
           underPreview = null;
         } else if (underPreview && previewing != $replayPreview) {
           previewing = $replayPreview;
-          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
+          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         } else if (!underPreview && $replayPreview) {
           underPreview = {homeTeam, awayTeam, pitch, players, playing};
           playing = false;
           previewing = $replayPreview;
-          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.step - 1].BoardState, true);
+          resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         }
-        if (underPreview && $replayTarget == $replayPreview) {
+        if (underPreview && $replayTarget == $replayPreview.start) {
           underPreview = {homeTeam, awayTeam, pitch, players, playing};
           $replayTarget = null;
-          jumpToPosition($replayPreview);
+          jumpToPosition($replayPreview.start);
         }
         if ($replayCurrent == END) {
           $replayCurrent = new ReplayPosition();

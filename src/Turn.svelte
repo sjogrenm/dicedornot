@@ -9,7 +9,7 @@
     <div
       class={`list-group-item list-group-item-action team-${roll.activeTeam.id}`}
       class:active={selectedRoll == roll.rollIndex}
-      on:mouseover={() => ($replayPreview = roll.startIndex)}
+      on:mouseover={() => ($replayPreview = {start: roll.startIndex, end: roll.endIndex})}
     >
       <Roll {roll} selected={selectedRoll == roll.rollIndex} />
     </div>

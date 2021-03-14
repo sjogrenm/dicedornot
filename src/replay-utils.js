@@ -175,6 +175,25 @@ export class ReplayPosition {
     let [step, subStep, action, result] = value.split('-').map(x => parseInt(x));
     return new ReplayPosition(step, subStep, action, result);
   }
+
+  sliceStepsTo(replay, end) {
+    return replay.ReplayStep.slice(this.step, end.step == this.step ? end.step + 1 : end.step);
+  }
+  sliceActionsTo(replay, end) {
+    if (this.step == end.step) {
+      return ensureList(replay.ReplayStep[this.step].RulesEventBoardAction).slice(this.action || 0, end.action).map(action => ({ step: this.step, action }));
+    } else {
+      return replay.ReplayStep.slice(this.step, end.step + 1).flatMap((step, stepIdx) => {
+        if (stepIdx == 0) {
+          return ensureList(step.RulesEventBoardAction).slice(this.action || 0).map(action => ({ step, action }));
+        } else if (stepIdx == end.step - this.step) {
+          return ensureList(step.RulesEventBoardAction).slice(0, end.action).map(action => ({ step, action }));
+        } else {
+          return ensureList(step.RulesEventBoardAction).map(action => ({ step, action }));
+        }
+      })
+    }
+  }
 }
 
 
