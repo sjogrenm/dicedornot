@@ -17,17 +17,22 @@
         case ACTION_TYPE.Move:
           let from = action.Order.CellFrom;
           let to = action.Order.CellTo.Cell;
+          let rolls = ensureList(action.Results.BoardActionResult).filter(result => result.Requirement).map(result => `${result.Requirement}+`).join(' ');
           let lastPath = paths[paths.length - 1];
           if (lastPath && lastPath.component === OverlayMove) {
             let lastCell = lastPath.path[lastPath.path.length - 1];
             if (cellEqual(lastCell, from)) {
               lastPath.path.push(to);
+              if (rolls) {
+                lastPath.rolls.push({from, to, rolls});
+              }
               break;
             }
           }
           paths.push({
             component: OverlayMove,
             path: [from, to],
+            rolls: rolls ? [{from, to, rolls}] : [],
           });
           break;
       }
@@ -41,6 +46,6 @@
   class="overlay svelte-7djegz"
 >
   {#each paths as path, index}
-    <svelte:component this={path.component} {...path} {index} maxIndex={paths.length - 1} />
+    <svelte:component this={path.component} {...path} index={index+1} maxIndex={paths.length} />
   {/each}
 </svg>

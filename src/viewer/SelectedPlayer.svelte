@@ -12,7 +12,6 @@
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
     pitchPlayer = players[player];
-    console.log({players, pitchPlayer});
     name = he.decode(pitchPlayer.data.Data.Name.toString().replace(colorRE, ""));
     name = STAR_NAMES[name] || name;
     let colorMatch = pitchPlayer.data.Data.Name.toString().match(colorRE);

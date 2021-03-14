@@ -1832,8 +1832,9 @@ export class MoveAction extends Roll {
   static rollName = "Move";
   static dependentConditions = [sameTeamMove];
   static handledSkills = [SKILL.JumpUp];
-  static ignore(xml) {
-    return manhattan(xml.action.Order.CellFrom, xml.action.Order.CellTo.Cell) == 0;
+
+  static ignore() {
+    return false;
   }
 
   static argsFromXml(xml) {

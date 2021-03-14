@@ -17,9 +17,6 @@
   $: {
     ({ player, cell, ball, dice, foul } = pitch[`${column}-${row}`] || {});
     id = `pitch-${row}-${column}`;
-    if (player && (!pitchPlayers[player] || !pitchPlayers[player].data)) {
-      console.log({player, pitchPlayers});
-    }
   }
 </script>
 
