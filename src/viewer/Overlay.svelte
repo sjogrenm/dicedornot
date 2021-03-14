@@ -40,25 +40,7 @@
   viewBox="-0.5 -0.5 26 15"
   class="overlay svelte-7djegz"
 >
-  <defs>
-    <marker
-      id="pointer"
-      markerUnits="strokeWidth"
-      orient="auto"
-      markerWidth="5"
-      markerHeight="5"
-      refY="2.5"
-      refX="4"
-    >
-      <polyline
-        stroke="#000000"
-        fill="#ffffff"
-        stroke-width="0.5"
-        points="0.5 0.5, 4.5 2.5, 0.5 4.5"
-      />
-    </marker>
-  </defs>
   {#each paths as path, index}
-    <svelte:component this={path.component} {...path} {index} />
+    <svelte:component this={path.component} {...path} {index} maxIndex={paths.length - 1} />
   {/each}
 </svg>
