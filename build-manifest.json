@@ -966,11 +966,11 @@
       ]
     },
     "dist/viewer/OverlayMove.svelte.css": {
-      "bytes": 99,
+      "bytes": 67,
       "imports": []
     },
     "dist/viewer/OverlayMove.svelte.js": {
-      "bytes": 5555,
+      "bytes": 8823,
       "imports": [
         {
           "path": "dist/viewer/OverlayMove.svelte.css",
@@ -983,7 +983,7 @@
       ]
     },
     "dist/viewer/Overlay.svelte.js": {
-      "bytes": 6998,
+      "bytes": 6456,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -1786,10 +1786,10 @@
           "bytesInOutput": 0
         },
         "dist/viewer/OverlayMove.svelte.js": {
-          "bytesInOutput": 1969
+          "bytesInOutput": 3037
         },
         "dist/viewer/Overlay.svelte.js": {
-          "bytesInOutput": 2227
+          "bytesInOutput": 1936
         },
         "dist/viewer/Pitch.svelte.js": {
           "bytesInOutput": 2150
@@ -1879,7 +1879,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1352698
+      "bytes": 1353475
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
@@ -1966,7 +1966,7 @@
           "bytesInOutput": 379
         },
         "dist/viewer/OverlayMove.svelte.css": {
-          "bytesInOutput": 99
+          "bytesInOutput": 67
         },
         "dist/RollDescription.svelte.css": {
           "bytesInOutput": 47
@@ -1990,7 +1990,7 @@
           "bytesInOutput": 986
         }
       },
-      "bytes": 12052
+      "bytes": 12020
     }
   }
 }
