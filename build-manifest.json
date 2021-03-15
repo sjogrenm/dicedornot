@@ -1103,7 +1103,7 @@
       ]
     },
     "dist/viewer/Viewer.svelte.js": {
-      "bytes": 61186,
+      "bytes": 61209,
       "imports": [
         {
           "path": "dist/viewer/Viewer.svelte.css",
@@ -1807,7 +1807,7 @@
           "bytesInOutput": 753
         },
         "dist/viewer/Viewer.svelte.js": {
-          "bytesInOutput": 20614
+          "bytesInOutput": 20621
         },
         "dist/Diced.svelte.css": {
           "bytesInOutput": 0
@@ -1879,7 +1879,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1354718
+      "bytes": 1354725
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
