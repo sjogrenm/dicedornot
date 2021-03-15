@@ -34,16 +34,17 @@
       path[0] = newStart;
       path[path.length - 1] = newEnd;
     }
-    let lightText, darkText;
+    let colorScale, textScale;
     if (team == SIDE.home) {
-      color = team0Color((maxIndex - index) / maxIndex);
-      lightText = team0Gray(0).brighten();
-      darkText = team0Gray(1).darken();
+      colorScale = team0Color;
+      textScale = team0Gray;
     } else {
-      color = team1Color(index / maxIndex);
-      lightText = team1Gray(0).brighten();
-      darkText = team1Gray(1).darken();
+      colorScale = team1Color;
+      textScale = team1Gray;
     }
+    color = colorScale((maxIndex - index) / maxIndex);
+    let lightText = textScale(0).brighten();
+    let darkText = textScale(1).darken();
     if (chroma.contrast(color, lightText) > chroma.contrast(color, darkText)) {
       textColor = lightText;
     } else {
