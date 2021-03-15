@@ -63,9 +63,9 @@
     refX="4"
   >
     <polyline
-      stroke={textColor}
-      fill={color}
-      stroke-width="0.25"
+      fill="none"
+      stroke={color}
+      stroke-width="1"
       points="0.5 0.5, 4.5 2.5, 0.5 4.5"
     />
   </marker>
@@ -73,12 +73,8 @@
 
 {#if path.length > 1}
   <polyline
-    stroke={textColor}
-    class="move-border"
-    stroke-width="0.1"
-    points={path.map((cell) => `${cell.x || 0}, ${cell.y || 0}`).join(" ")}
-  />
-  <polyline
+    fill="none"
+    filter="url(#chalk)"
     class="move"
     marker-start="url(#move-{index})"
     marker-end="url(#pointer-{index})"
@@ -88,6 +84,7 @@
   />
 {/if}
 <circle
+  filter="url(#chalk)"
   fill={color}
   cx={path[0].x}
   cy={path[0].y}
@@ -130,14 +127,3 @@
     dominant-baseline="middle">{roll.rolls}</text
   >
 {/each}
-
-
-
-<style>
-  .move {
-    fill: none;
-  }
-  .move-border {
-    fill: none;
-  }
-</style>

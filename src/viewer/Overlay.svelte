@@ -46,6 +46,14 @@
   viewBox="-0.5 -0.5 26 15"
   class="overlay svelte-7djegz"
 >
+  <defs>
+    <filter id="chalk" height="2" width="1.6" color-interpolation-filters="sRGB" y="-0.5" x="-0.3">
+      <feTurbulence baseFrequency="50" seed="115" result="result1" numOctaves="1" type="turbulence"/>
+      <feOffset result="result2" dx="-1" dy="-1"/>
+      <feDisplacementMap scale="0.1" yChannelSelector="G" in2="result1" xChannelSelector="R" in="SourceGraphic"/>
+      <feGaussianBlur stdDeviation="0.005"/>
+    </filter>
+  </defs>
   {#each paths as path, index}
     <svelte:component this={path.component} {...path} index={index+1} maxIndex={paths.length} />
   {/each}
