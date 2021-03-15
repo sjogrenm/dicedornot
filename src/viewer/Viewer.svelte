@@ -886,7 +886,10 @@
     ) {
       //Dodge, GFI, Leap
       squareTo.cell = squareTo.cell || {};
-      squareTo.cell.plus = actionResult.Requirement;
+      let modifier = ensureList(actionResult.ListModifiers.DiceModifier || [])
+        .map((modifier) => modifier.Value || 0)
+        .reduce((a, b) => a + b, 0) || 0;
+      squareTo.cell.plus = actionResult.Requirement - modifier;
     }
 
     if (player.data.Id == blitzerId) {

@@ -16,7 +16,16 @@
         case ACTION_TYPE.Move:
           let from = action.Order.CellFrom;
           let to = action.Order.CellTo.Cell;
-          let rolls = ensureList(action.Results.BoardActionResult).filter(result => result.Requirement).map(result => `${result.Requirement}+`).join(' ');
+          let rolls = ensureList(action.Results.BoardActionResult).filter(
+            result => result.Requirement
+          ).map(result => {
+            let requirement = result.Requirement;
+            let modifier = ensureList(result.ListModifiers.DiceModifier || [])
+              .map((modifier) => modifier.Value || 0)
+              .reduce((a, b) => a + b, 0) || 0;
+            return `${requirement - modifier}+`}
+          ).join(' ')
+          ;
           let team = action.PlayerId < 30 ? SIDE.home : SIDE.away;
           let lastPath = paths[paths.length - 1];
           if (lastPath && lastPath.component === OverlayMove) {
