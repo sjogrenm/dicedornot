@@ -46,7 +46,7 @@
     previewing,
     shouldWake,
     abort = new AbortController(),
-    current;
+    current = new ReplayPosition();
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
