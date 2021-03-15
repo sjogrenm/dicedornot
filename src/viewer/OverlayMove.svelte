@@ -1,6 +1,11 @@
 <script>
+  import { SIDE } from "../constants";
+  import chroma from "chroma-js";
+
+  import {team1Color, team1Gray, team0Color, team0Gray, gray} from "../theme.js";
   export let path,
     rolls,
+    team,
     index = 0,
     maxIndex = 0;
 
@@ -29,9 +34,21 @@
       path[0] = newStart;
       path[path.length - 1] = newEnd;
     }
-    color = 0 * ((maxIndex - index) / maxIndex) + 255 * (index / maxIndex);
-    textColor = color > 150 ? "#000000" : "#ffffff";
-    color = `rgb(${color}, ${color}, ${color})`;
+    let lightText, darkText;
+    if (team == SIDE.home) {
+      color = team0Color(index / maxIndex);
+      lightText = team0Gray(0).brighten();
+      darkText = team0Gray(1).darken();
+    } else {
+      color = team1Color(index / maxIndex);
+      lightText = team1Gray(0).brighten();
+      darkText = team1Gray(1).darken();
+    }
+    if (chroma.contrast(color, lightText) > chroma.contrast(color, darkText)) {
+      textColor = lightText;
+    } else {
+      textColor = darkText;
+    }
   }
 </script>
 
@@ -71,9 +88,7 @@
   />
 {/if}
 <circle
-  stroke={textColor}
   fill={color}
-  stroke-width="0.01"
   cx={path[0].x}
   cy={path[0].y}
   r="0.2"

@@ -15,6 +15,7 @@
   import ValueDistributionResults from "./ValueDistributionResults.svelte";
   import Terminology from "./Terminology.svelte";
   import Todo from "./Todo.svelte";
+  import Theme from "./Theme.svelte";
 
   let homePercentile, awayPercentile, loading, playing;
   $: {
@@ -47,10 +48,9 @@
     content="Blood Bowl 2 replay luck analyzer. Use it to decide whether you actually got diced."
   />
   <title>Diced or Not? - Blood Bowl 2 Replay Luck Analyzer</title>
-  <link rel="stylesheet" href="/styles/theme.css" />
 </svelte:head>
 
-<body>
+<Theme>
   <Nav bind:loading />
   <Error />
   {#if $replay}
@@ -119,7 +119,7 @@
       </p>
     </div>
   </footer>
-</body>
+</Theme>
 
 <style>
 </style>

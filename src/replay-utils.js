@@ -7,6 +7,7 @@ export const END = {
   atOrAfter: () => false,
   atOrBefore: (other) => other === END,
   toNextPosition: () => new ReplayPosition(),
+  toParam: () => '',
 };
 
 export function ensureList(objOrList) {
