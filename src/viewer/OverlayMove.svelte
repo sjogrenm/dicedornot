@@ -36,7 +36,7 @@
     }
     let lightText, darkText;
     if (team == SIDE.home) {
-      color = team0Color(index / maxIndex);
+      color = team0Color((maxIndex - index) / maxIndex);
       lightText = team0Gray(0).brighten();
       darkText = team0Gray(1).darken();
     } else {
