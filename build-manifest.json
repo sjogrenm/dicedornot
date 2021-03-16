@@ -498,7 +498,7 @@
       ]
     },
     "dist/viewer/Viewer.svelte.css": {
-      "bytes": 651,
+      "bytes": 642,
       "imports": []
     },
     "_snowpack/pkg/svelte/easing.js": {
@@ -1129,7 +1129,7 @@
       ]
     },
     "dist/viewer/Viewer.svelte.js": {
-      "bytes": 61080,
+      "bytes": 61074,
       "imports": [
         {
           "path": "dist/viewer/Viewer.svelte.css",
@@ -1860,7 +1860,7 @@
           "bytesInOutput": 761
         },
         "dist/viewer/Viewer.svelte.js": {
-          "bytesInOutput": 20724
+          "bytesInOutput": 20718
         },
         "dist/Diced.svelte.css": {
           "bytesInOutput": 0
@@ -1935,7 +1935,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1399421
+      "bytes": 1399415
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
@@ -1959,7 +1959,7 @@
           "bytesInOutput": 238
         },
         "dist/viewer/Viewer.svelte.css": {
-          "bytesInOutput": 648
+          "bytesInOutput": 639
         },
         "dist/Explanation.svelte.css": {
           "bytesInOutput": 78
@@ -2046,7 +2046,7 @@
           "bytesInOutput": 986
         }
       },
-      "bytes": 12716
+      "bytes": 12707
     }
   }
 }
