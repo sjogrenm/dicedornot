@@ -1206,7 +1206,7 @@
       "imports": []
     },
     "dist/Diced.svelte.js": {
-      "bytes": 9021,
+      "bytes": 9105,
       "imports": [
         {
           "path": "dist/Diced.svelte.css",
@@ -1869,7 +1869,7 @@
           "bytesInOutput": 118
         },
         "dist/Diced.svelte.js": {
-          "bytesInOutput": 3845
+          "bytesInOutput": 3876
         },
         "dist/TurnSelector.svelte.css": {
           "bytesInOutput": 0
@@ -1935,7 +1935,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1399390
+      "bytes": 1399421
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
