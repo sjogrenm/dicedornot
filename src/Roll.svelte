@@ -82,14 +82,14 @@
         <RollOutcomes {roll} />
       </div>
     {/if}
+    {#if roll.valueWithDependents.valueOf() != 0 || roll.possibleOutcomes.valueOf() != 0}
+      <div class="row">
+        <div class="col col-auto">{roll.valueWithDependents.valueString}</div>
+        <div class="col col-auto">{roll.possibleOutcomes.valueString}</div>
+      </div>
+    {/if}
   </div>
   <!-- class={`list-group-item list-group-item-action team-${roll.activeTeam.id}`}
 class:active={selectedRoll == roll.rollIndex}
 on:click={handleClick(roll)} -->
 </div>
-{#if roll.valueWithDependents.valueOf() != 0 || roll.possibleOutcomes.valueOf() != 0}
-  <div class="row justify-content-center">
-    <div class="col col-auto">{roll.valueWithDependents.valueString}</div>
-    <div class="col col-auto">{roll.possibleOutcomes.valueString}</div>
-  </div>
-{/if}

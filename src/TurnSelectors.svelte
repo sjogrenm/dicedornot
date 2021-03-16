@@ -23,14 +23,8 @@
   }
 </script>
 
-<div class="turn-list" on:mouseleave={() => ($replayPreview = null)}>
+<div on:mouseleave={() => ($replayPreview = null)}>
   {#each rollsByTurn as rolls}
     <TurnSelector {rolls} />
   {/each}
 </div>
-
-<style>
-  .turn-list {
-    min-width: 360px;
-  }
-</style>

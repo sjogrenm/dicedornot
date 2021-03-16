@@ -75,7 +75,7 @@
               <Viewer bind:playing />
             {/key}
           </div>
-          <div class="col justify-content-center">
+          <div class="col justify-content-center turns">
             <TurnSelectors />
             <RollDetails {playing} />
           </div>
@@ -131,5 +131,10 @@
   }
   .scroll-step {
     scroll-snap-align: start;
+  }
+
+  .turns {
+    min-width: 360px;
+    max-width: 800px;
   }
 </style>

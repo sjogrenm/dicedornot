@@ -33,7 +33,7 @@
   }
   .name {
     line-height: 1em;
-    font-size: calc(min(3.5vh, 2.5vw));
+    font-size: calc(min(3.5vh, 2.5vw, 40px));
     font-weight: bold;
     position: absolute;
     bottom: 0;

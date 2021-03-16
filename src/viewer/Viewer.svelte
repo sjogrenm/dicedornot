@@ -1205,6 +1205,6 @@
   }
 
   #viewer {
-    width: calc(min(1335/1061 * (100vh - 7em), 95vw));
+    width: calc(min(1335/1061 * (100vh - 7em), 1400px, 95vw));
   }
 </style>
