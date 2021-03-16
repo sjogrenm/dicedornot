@@ -25,11 +25,16 @@ import {percentRank} from "./utils.js";
     return dest;
   }
   function betterThan(team, percentile) {
-    let comparison = percentile < 0.5 ? "worse" : "better";
-    let count = percentile < 0.5 ? 100 - percentile * 100 : percentile * 100;
-    return `${team}'s rolls were ${comparison} than ${count.toFixed(
-      0
-    )} in 100 games`;
+    let qualifier = percentile < 0.25 ? "only " : "";
+    let count = percentile * 100;
+    if (count > 99) {
+      count = count.toFixed(1);
+    } else if (count < 10) {
+      count = count.toFixed(2);
+    } else {
+      count = count.toFixed(0);
+    }
+    return `${team}'s rolls were better than ${qualifier}${count} in 100 games`;
   }
   function diced(team, percentile) {
     const sample = (items) => items[team.length % items.length];
