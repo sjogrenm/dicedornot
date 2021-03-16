@@ -30,4 +30,7 @@
 </div>
 
 <style>
+  .turn-list {
+    min-width: 360px;
+  }
 </style>

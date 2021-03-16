@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";
-  import { Row, Col, ButtonToolbar, Button, Icon , Alert} from "sveltestrap";
+  import { Row, Col, ButtonToolbar, Button, Icon, Alert } from "sveltestrap";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
   import Pitch from "./Pitch.svelte";
@@ -27,7 +27,16 @@
     END,
     period,
   } from "../replay-utils.js";
-  import { replay, replayCurrent, replayTarget, timing, error, selectedPlayer, hoveredPlayer, replayPreview } from "../stores.js";
+  import {
+    replay,
+    replayCurrent,
+    replayTarget,
+    timing,
+    error,
+    selectedPlayer,
+    hoveredPlayer,
+    replayPreview,
+  } from "../stores.js";
   import he from "he";
 
   export let playing = false;
@@ -100,7 +109,7 @@
   onMount(() => {
     let url = new URL(window.location);
     $timing = url.searchParams.get("timing") || 300;
-    if (url.searchParams.get('st')) {
+    if (url.searchParams.get("st")) {
       playing = false;
     } else {
       playing = true;
@@ -120,8 +129,8 @@
       boardState.ListTeams.TeamState[1],
       boardState.ActiveTeam == 1
     );
-    races = boardState.ListTeams.TeamState.flatMap(
-      (team) => team.ListPitchPlayers.PlayerState.map(player => {
+    races = boardState.ListTeams.TeamState.flatMap((team) =>
+      team.ListPitchPlayers.PlayerState.map((player) => {
         const { race } = getPlayerSprite(player.Id, player.Data.IdPlayerTypes);
         return race;
       })
@@ -132,17 +141,20 @@
   }
 
   function processTeam(side, team, active) {
-    let maxRerollsThisPeriod = $replay.fullReplay.ReplayStep.reduce((acc, step) => {
-      if (!step.BoardState) {
+    let maxRerollsThisPeriod = $replay.fullReplay.ReplayStep.reduce(
+      (acc, step) => {
+        if (!step.BoardState) {
+          return acc;
+        }
+        let stepTeam = step.BoardState.ListTeams.TeamState[side];
+        let stepPeriod = period(stepTeam.GameTurn);
+        if (stepPeriod == period(team.GameTurn)) {
+          acc = Math.max(acc, stepTeam.RerollNumber || 0);
+        }
         return acc;
-      }
-      let stepTeam = step.BoardState.ListTeams.TeamState[side];
-      let stepPeriod = period(stepTeam.GameTurn);
-      if (stepPeriod == period(team.GameTurn)) {
-        acc = Math.max(acc, stepTeam.RerollNumber || 0);
-      }
-      return acc;
-    }, 0);
+      },
+      0
+    );
     let maxApos = $replay.fullReplay.ReplayStep.reduce((acc, step) => {
       if (!step.BoardState) {
         return acc;
@@ -177,8 +189,8 @@
           available: team.BribeNumber || 0,
           total: team.Bribe || 0,
         },
-        igor: team.Igor == 1
-      }
+        igor: team.Igor == 1,
+      },
       //inducements
     };
   }
@@ -213,7 +225,7 @@
   }
 
   function placePlayer(p, team) {
-    players[p.Id] = {data: p};
+    players[p.Id] = { data: p };
     switch (p.Situation) {
       case SITUATION.Active:
         setPitchSquare(p.Cell).player = p.Id;
@@ -303,19 +315,19 @@
   function sleep(ms) {
     let signal = abort.signal;
     return new Promise((resolve, reject) => {
-        const listener = () => {
-            clearTimeout(timer);
-            abort = new AbortController();
-            resolve();
-        };
-        const timer = setTimeout(() => {
-            signal?.removeEventListener('abort', listener);
-            resolve();
-        }, ms);
-        if (signal?.aborted) {
-            listener();
-        }
-        signal?.addEventListener('abort', listener);
+      const listener = () => {
+        clearTimeout(timer);
+        abort = new AbortController();
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        signal?.removeEventListener("abort", listener);
+        resolve();
+      }, ms);
+      if (signal?.aborted) {
+        listener();
+      }
+      signal?.addEventListener("abort", listener);
     });
   }
 
@@ -347,7 +359,6 @@
   }
 
   async function stepReplay(updateUrl = true) {
-
     const step = $replay.fullReplay.ReplayStep[current.step];
     const subStep = step[REPLAY_KEY[current.subStep]];
     switch (current.subStep) {
@@ -381,7 +392,7 @@
         $replayCurrent = current;
       }
       let url = new URL(window.location);
-      url.searchParams.set('st', current.toParam());
+      url.searchParams.set("st", current.toParam());
       window.history.replaceState({}, "", url.href);
     }
   }
@@ -405,7 +416,6 @@
     }
   }
 
-
   async function playerLoop() {
     while (true) {
       try {
@@ -427,7 +437,14 @@
           jumpToPosition($replayPreview.start, false);
           // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         } else if (!underPreview && $replayPreview) {
-          underPreview = {homeTeam, awayTeam, pitch, players, playing, current};
+          underPreview = {
+            homeTeam,
+            awayTeam,
+            pitch,
+            players,
+            playing,
+            current,
+          };
           playing = false;
           previewing = $replayPreview;
           homeTeam = {};
@@ -438,7 +455,14 @@
           // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         }
         if (underPreview && $replayTarget == $replayPreview.start) {
-          underPreview = {homeTeam, awayTeam, pitch, players, playing, current};
+          underPreview = {
+            homeTeam,
+            awayTeam,
+            pitch,
+            players,
+            playing,
+            current,
+          };
           $replayTarget = null;
           jumpToPosition($replayPreview.start);
         }
@@ -886,9 +910,10 @@
     ) {
       //Dodge, GFI, Leap
       squareTo.cell = squareTo.cell || {};
-      let modifier = ensureList(actionResult.ListModifiers.DiceModifier || [])
-        .map((modifier) => modifier.Value || 0)
-        .reduce((a, b) => a + b, 0) || 0;
+      let modifier =
+        ensureList(actionResult.ListModifiers.DiceModifier || [])
+          .map((modifier) => modifier.Value || 0)
+          .reduce((a, b) => a + b, 0) || 0;
       squareTo.cell.plus = actionResult.Requirement - modifier;
     }
 
@@ -937,7 +962,7 @@
     if (from.ball) {
       from.ball.held = false;
     }
-    await step(.5);
+    await step(0.5);
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
@@ -966,7 +991,8 @@
   function handleTakeDamage(action, actionResult) {
     if (!actionResult.IsOrderCompleted) return;
 
-    let player = setPlayer(action.PlayerId), playerSquareIndex;
+    let player = setPlayer(action.PlayerId),
+      playerSquareIndex;
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
@@ -984,7 +1010,7 @@
           // armor failed
           //knocked down
           if (player) {
-              player.prone = true;
+            player.prone = true;
           }
         }
         break;
@@ -1037,103 +1063,107 @@
   />
 </svelte:head>
 
-<a name="viewer" />
-<div class="controls">
-  <Row class="justify-content-center align-items-center">
-    <Col xs="auto">
-      <ButtonToolbar>
-        <Button
-          title="Slower"
-          on:click={() => {
-            $timing *= 1.2;
-          }}>{"-"}</Button
-        >
-        <Button title="Previous Turn" on:click={jumpToPreviousTurn}
-          >{"<<<"}</Button
-        >
-        <Button title="Previous Activation" on:click={jumpToPreviousActivation}
-          >{"<<"}</Button
-        >
-        <Button title="Previous Replay Step" on:click={jumpToPreviousStep}
-          >{"<"}</Button
-        >
-        {#if playing}
-          <Button title="Pause" on:click={() => (playing = false)}
-            ><Icon name="pause-fill" /></Button
+<div id="viewer">
+  <div class="controls">
+    <Row class="justify-content-center align-items-center">
+      <Col xs="auto">
+        <ButtonToolbar>
+          <Button
+            title="Slower"
+            on:click={() => {
+              $timing *= 1.2;
+            }}>{"-"}</Button
           >
-        {:else}
-          <Button title="Play" on:click={() => (playing = true)}
-            ><Icon name="play-fill" /></Button
+          <Button title="Previous Turn" on:click={jumpToPreviousTurn}
+            >{"<<<"}</Button
           >
-        {/if}
-        <Button title="Next Replay Step" on:click={stepReplay}>{">"}</Button>
-        <Button title="Next Activation" on:click={jumpToNextActivation}
-          >{">>"}</Button
-        >
-        <Button title="Next Turn" on:click={jumpToNextTurn}>{">>>"}</Button>
-        <Button
-          title="Faster"
-          on:click={() => {
-            $timing /= 1.2;
-          }}>{"+"}</Button
-        >
-      </ButtonToolbar>
-    </Col>
-  </Row>
-</div>
-<div class="pitch-container">
-  <div class="pitch-scroll">
-    <FixedRatio width={1335} height={1061}>
-      <div class="pitch">
-        <HomeDugout
-          pitchPlayers={players}
-          team={homeTeam}
-          {weather}
-          {send}
-          {receive}
-        />
-        {#if $selectedPlayer || $hoveredPlayer}
-          <div class="selected" class:enlarged={!!$hoveredPlayer}>
-            <SelectedPlayer
-              {players}
-              player={$hoveredPlayer || $selectedPlayer}
-              {pitch}
-              {homeTeam}
-              {awayTeam}
-            />
-          </div>
-        {/if}
-        <Pitch
-          pitchPlayers={players}
-          {pitch}
-          {homeTeam}
-          {awayTeam}
-          {send}
-          {receive}
-        />
-        <AwayDugout pitchPlayers={players} team={awayTeam} {send} {receive} />
-      </div>
-      {#if banner}
-        <Banner {banner} />
-      {/if}
-    </FixedRatio>
+          <Button
+            title="Previous Activation"
+            on:click={jumpToPreviousActivation}>{"<<"}</Button
+          >
+          <Button title="Previous Replay Step" on:click={jumpToPreviousStep}
+            >{"<"}</Button
+          >
+          {#if playing}
+            <Button title="Pause" on:click={() => (playing = false)}
+              ><Icon name="pause-fill" /></Button
+            >
+          {:else}
+            <Button title="Play" on:click={() => (playing = true)}
+              ><Icon name="play-fill" /></Button
+            >
+          {/if}
+          <Button title="Next Replay Step" on:click={stepReplay}>{">"}</Button>
+          <Button title="Next Activation" on:click={jumpToNextActivation}
+            >{">>"}</Button
+          >
+          <Button title="Next Turn" on:click={jumpToNextTurn}>{">>>"}</Button>
+          <Button
+            title="Faster"
+            on:click={() => {
+              $timing /= 1.2;
+            }}>{"+"}</Button
+          >
+        </ButtonToolbar>
+      </Col>
+    </Row>
   </div>
-</div>
+  <div class="pitch-container">
+    <div class="pitch-scroll">
+      <FixedRatio width={1335} height={1061}>
+        <div class="pitch">
+          <HomeDugout
+            pitchPlayers={players}
+            team={homeTeam}
+            {weather}
+            {send}
+            {receive}
+          />
+          {#if $selectedPlayer || $hoveredPlayer}
+            <div class="selected" class:enlarged={!!$hoveredPlayer}>
+              <SelectedPlayer
+                {players}
+                player={$hoveredPlayer || $selectedPlayer}
+                {pitch}
+                {homeTeam}
+                {awayTeam}
+              />
+            </div>
+          {/if}
+          <Pitch
+            pitchPlayers={players}
+            {pitch}
+            {homeTeam}
+            {awayTeam}
+            {send}
+            {receive}
+          />
+          <AwayDugout pitchPlayers={players} team={awayTeam} {send} {receive} />
+        </div>
+        {#if banner}
+          <Banner {banner} />
+        {/if}
+      </FixedRatio>
+    </div>
+  </div>
 {#if $replay.unknownRolls.length > 0}
   <Alert warning>
-    <p>
+    <details>
+    <summary>
       The following rolls aren't able to be analyzed yet. Please <a
         href="https://github.com/cpennington/dicedornot/issues"
         >open an issue on GitHub</a
       > and attach this replay (or match link).
-    </p>
+    </summary>
     <ul>
       {#each [...new Set($replay.unknownRolls.map((roll) => roll.name))] as name}
         <li>{name}</li>
       {/each}
     </ul>
+  </details>
   </Alert>
 {/if}
+</div>
 
 <style>
   .selected {
@@ -1158,7 +1188,6 @@
     }
   }
   .pitch-scroll {
-    min-width: 738px;
     overflow-y: hidden;
   }
   .pitch {
@@ -1173,5 +1202,9 @@
     font-family: "Nuffle";
     z-index: 10;
     position: relative;
+  }
+
+  #viewer {
+    width: calc(min(1335/1061 * (100vh - 7em), 95vw));
   }
 </style>

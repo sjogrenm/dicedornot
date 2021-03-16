@@ -1,6 +1,6 @@
 <p class="lead">Terminology</p>
 <dl>
-  <dt><a name="value-def">Value</a></dt>
+  <dt><a id="value-def">Value</a></dt>
   <dd>
     An abstraction of how much getting that roll result likely helped your game.
     Moving the ball from one end of the pitch to the other (scoring a touchdown)
@@ -12,32 +12,32 @@
 
     <a href="#value-details">More details</a> below.
   </dd>
-  <dt><a name="expected-value-def">Expected Value</a></dt>
+  <dt><a id="expected-value-def">Expected Value</a></dt>
   <dd>
     The average <a href="#value-def">Value</a> over all of the possible results of
     a roll.
   </dd>
-  <dt><a name="cum-value-def">Cumulative Value</a></dt>
+  <dt><a id="cum-value-def">Cumulative Value</a></dt>
   <dd>
     The sum of <a href="#value-def">Value</a> across all rolls in the game.
   </dd>
-  <dt><a name="cum-exp-value-def">Cumulative Expected Value</a></dt>
+  <dt><a id="cum-exp-value-def">Cumulative Expected Value</a></dt>
   <dd>
     The sum of <a href="#expected-value-def">Expected Value</a> across all rolls
     in the game.
   </dd>
-  <dt><a name="net-value-def">Net Value</a></dt>
+  <dt><a id="net-value-def">Net Value</a></dt>
   <dd>
     The difference between the <a href="#value-def">Value</a> and the
     <a href="#expected-value-def">Expected Value</a> on a specific roll.
   </dd>
-  <dt><a name="cum-net-value-def">Cumulative Net Value</a></dt>
+  <dt><a id="cum-net-value-def">Cumulative Net Value</a></dt>
   <dd>
     The sum of <a href="#net-value-def">Net Value</a> for all the rolls taken so
     far by a team.
   </dd>
 </dl>
-<p class="lead"><a name="value-details">Value Details</a></p>
+<p class="lead"><a id="value-details">Value Details</a></p>
 <p>The values attributed to the rolls are based on the following standards:</p>
 <ul>
   <li>

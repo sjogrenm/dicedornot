@@ -13,9 +13,9 @@
     <div class="logo">
       <TeamLogo logo={team.logo} />
     </div>
-    <div class="name">{team.name}</div>
-    <div class="score"><p>{team.score}</p></div>
-    <div class="turn" class:active={team.active}><p>{team.turn}</p></div>
+    <div class="name">{team.name || 'Home'}</div>
+    <div class="score"><span>{team.score || 0}</span></div>
+    <div class="turn" class:active={team.active}><p>{team.turn || ''}</p></div>
     <div class="aids"><TeamAids {team}/></div>
   {/if}
   <div class="weather"><Weather {weather} /></div>
@@ -32,7 +32,8 @@
     align-items: center;
   }
   .name {
-    font-size: 1.5em;
+    line-height: 1em;
+    font-size: calc(min(3.5vh, 2.5vw));
     font-weight: bold;
     position: absolute;
     bottom: 0;
@@ -58,7 +59,7 @@
     justify-content: center;
     align-items: center;
     left: 47%;
-    font-size: 200%;
+    font-size: calc(min(4vh, 3vw));
     width: 6%;
     bottom: 0;
     height: 50%;
@@ -72,11 +73,16 @@
     align-items: center;
     position: absolute;
     left: 47%;
-    font-size: 350%;
+    font-size: calc(min(6vh, 4vw));
     text-align: center;
     width: 6%;
     top: 0;
     height: 50%;
+  }
+  .score > span {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 100%;
   }
 
   .aids {

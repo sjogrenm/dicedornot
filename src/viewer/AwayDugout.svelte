@@ -10,9 +10,9 @@
 
 <div class="dugout">
   <div class="aids"><TeamAids reverse={true} {team}/></div>
-  <div class="score">{team.score}</div>
-  <div class="turn" class:active={team.active}>{team.turn}</div>
-  <div class="name">{team.name}</div>
+  <div class="score"><span>{team.score || 0}</span></div>
+  <div class="turn" class:active={team.active}>{team.turn || ''}</div>
+  <div class="name">{team.name || 'Away'}</div>
   <div class="logo">
     <TeamLogo logo={team.logo}/>
   </div>
@@ -31,7 +31,8 @@
     align-items: center;
   }
   .name {
-    font-size: 1.5em;
+    line-height: 1em;
+    font-size: calc(min(3.5vh, 2.5vw));
     font-weight: bold;
     position: absolute;
     top: 0;
@@ -52,7 +53,7 @@
     justify-content: center;
     align-items: center;
     left: 47%;
-    font-size: 200%;
+    font-size: calc(min(4vh, 3vw));
     text-align: center;
     width: 6%;
     top:0;
@@ -67,11 +68,16 @@
     justify-content: center;
     align-items: center;
     left: 47%;
-    font-size: 350%;
+    font-size: calc(min(6vh, 4vw));
     text-align: center;
     width: 6%;
     bottom: 0;
     height:50%;
+  }
+  .score > span {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 100%;
   }
 
   .aids {
