@@ -1453,10 +1453,21 @@ class DodgeRoll extends ModifiedD6SumRoll {
       let nextResults = ensureList(nextActions[0].Results.BoardActionResult);
       args.target = nextResults[0].Requirement;
     }
+    args.cellFrom = xml.action.Order.CellFrom;
+    args.cellTo = xml.action.Order.CellTo.Cell;
     return args
   }
   failValue(expected) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
+  }
+  passValue() {
+    if (this.activePlayer && this.activePlayer.isBallCarrier) {
+      return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
+        ballPositionValue(this.activePlayer.team, this.cellFrom)
+      );
+    } else {
+      return new SingleValue("Dodge", 0);
+    }
   }
 }
 
@@ -1473,8 +1484,23 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 class LeapRoll extends ModifiedD6SumRoll {
   static rollName = "Leap";
   static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+  static argsFromXml(xml) {
+    let args = super.argsFromXml(xml);
+    args.cellFrom = xml.action.Order.CellFrom;
+    args.cellTo = xml.action.Order.CellTo.Cell;
+    return args
+  }
   failValue() {
     return this.knockdownValue(this.activePlayer).add(this.turnoverValue);
+  }
+  passValue() {
+    if (this.activePlayer && this.activePlayer.isBallCarrier) {
+      return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
+        ballPositionValue(this.activePlayer.team, this.cellFrom)
+      );
+    } else {
+      return new SingleValue("Leap", 0);
+    }
   }
 }
 
@@ -1535,8 +1561,25 @@ class GFIRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.SureFeet];
   static rerollSkill = SKILL.SureFeet;
   static dependentConditions = [nonFoulDamage, reroll, sameTeamMove];
+
+  static argsFromXml(xml) {
+    const args = super.argsFromXml(xml);
+    args.cellFrom = xml.action.Order.CellFrom;
+    args.cellTo = xml.action.Order.CellTo.Cell;
+    return args;
+  }
+
   failValue(expected) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
+  }
+  passValue() {
+    if (this.activePlayer && this.activePlayer.isBallCarrier) {
+      return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
+        ballPositionValue(this.activePlayer.team, this.cellFrom)
+      );
+    } else {
+      return new SingleValue("GFI", 0);
+    }
   }
 }
 
