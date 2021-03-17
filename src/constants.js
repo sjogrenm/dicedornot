@@ -263,7 +263,8 @@ export const BLOCK_OUTCOME = {
 
 export const REQUEST_TYPE = {
   Unknown_0: 0,
-  ForCoach: 1 //Coach / Player
+  ForCoach: 1, //Coach / Player,
+  UseSkillReroll: 4 // Use a Skill-reroll?
 };
 
 export const ROLL_STATUS = {
@@ -271,7 +272,7 @@ export const ROLL_STATUS = {
   RerollTaken: 1,
   RerollNotTaken: 2,
   RerollWithSkill: 3,
-  Reroll4: 4 //After Subresult 7 (Failed Dodge) - Maybe after use skill(dodge)
+  RerollWithSkillChoice: 4
 };
 
 export const WEATHER = {

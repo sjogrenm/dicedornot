@@ -239,7 +239,7 @@ export class Roll {
     args.resultType = xml.boardActionResult.ResultType;
     args.subResultType = xml.boardActionResult.SubResultType;
     args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.BoardAction, xml.actionIndex, xml.resultIndex);
-    args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill].includes(args.rollStatus);
+    args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill, ROLL_STATUS.RerollWithSkillChoice].includes(args.rollStatus);
     args.gameLength = xml.gameLength;
     return args;
   }
@@ -794,7 +794,11 @@ function foulDamage(roll, dependent) {
 function reroll(roll, dependent) {
   return (
     dependent.rollType === roll.rollType &&
-    [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill].includes(
+    [
+      ROLL_STATUS.RerollTaken,
+      ROLL_STATUS.RerollWithSkill,
+      ROLL_STATUS.RerollWithSkillChoice
+    ].includes(
       dependent.rollStatus
     )
   );
