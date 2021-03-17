@@ -31,7 +31,7 @@
       {roll.rollName}: {KICKOFF_RESULT_NAMES[roll.diceSum]}
     {:else if roll instanceof PitchInvasionRoll}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} />
-      {roll.stunned ? "stunned!" : "safe"} - {roll.roll} ({roll.target})`
+      {roll.stunned ? "stunned!" : "safe"} - <Dice dice={roll.dice} /> ({roll.modifiedTarget})
     {:else if roll instanceof CasualtyRoll}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
         dice={roll.dice

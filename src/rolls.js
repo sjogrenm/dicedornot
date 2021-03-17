@@ -1405,7 +1405,6 @@ class ArmorRoll extends ModifiedD6SumRoll {
       }
       return acc;
     }, { numBroke: 0, numHeld: 0 });
-    let broken;
     if (this.onActiveTeam(this.activePlayer)) {
       let heldChance = numHeld / (numBroke + numHeld);
       let held = this.dice.reduce((a, b) => a + b) < this.modifiedTarget;
@@ -2067,11 +2066,22 @@ export class PitchInvasionRoll extends KickoffEventRoll {
   }
 
   get description() {
-    return `${this.rollName}: ${this.activePlayer.name} ${this.stunned ? 'stunned!' : 'safe'} - ${this.roll} (${this.target})`;
+    return `${this.rollName}: ${this.activePlayer.name} ${this.stunned ? 'stunned!' : 'safe'} - ${this.dice[0]} (${this.target})`;
   }
 
   passValue() {
     return this.stunValue(this.activePlayer);
+  }
+
+  get improbability() {
+    if (this.onActiveTeam(this.activePlayer)) {
+      let safeChance = (5 - this.modifier) / 6;
+      let safe = !this.stunned;
+      return (safe ? 1 : 0) - safeChance;
+    } else {
+      let stunnedChance = (1 + this.modifier) / 6;
+      return (this.stunned ? 1 : 0) - stunnedChance;
+    }
   }
 }
 
