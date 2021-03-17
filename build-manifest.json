@@ -104,7 +104,7 @@
       ]
     },
     "dist/constants.js": {
-      "bytes": 66104,
+      "bytes": 66097,
       "imports": []
     },
     "dist/distribution.js": {
@@ -125,7 +125,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 67922,
+      "bytes": 69368,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -1626,7 +1626,7 @@
           "bytesInOutput": 260
         },
         "dist/constants.js": {
-          "bytesInOutput": 48057
+          "bytesInOutput": 48071
         },
         "dist/distribution.js": {
           "bytesInOutput": 4556
@@ -1638,7 +1638,7 @@
           "bytesInOutput": 86711
         },
         "dist/rolls.js": {
-          "bytesInOutput": 36599
+          "bytesInOutput": 37509
         },
         "dist/replay.js": {
           "bytesInOutput": 2324
@@ -1935,7 +1935,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1399698
+      "bytes": 1400622
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
