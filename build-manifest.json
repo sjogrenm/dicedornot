@@ -125,7 +125,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 69368,
+      "bytes": 69787,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -363,7 +363,7 @@
       ]
     },
     "dist/RollDescription.svelte.js": {
-      "bytes": 21125,
+      "bytes": 21105,
       "imports": [
         {
           "path": "dist/RollDescription.svelte.css",
@@ -762,7 +762,7 @@
       ]
     },
     "dist/viewer/HomeDugout.svelte.js": {
-      "bytes": 7287,
+      "bytes": 7241,
       "imports": [
         {
           "path": "dist/viewer/HomeDugout.svelte.css",
@@ -1638,7 +1638,7 @@
           "bytesInOutput": 86711
         },
         "dist/rolls.js": {
-          "bytesInOutput": 37509
+          "bytesInOutput": 37610
         },
         "dist/replay.js": {
           "bytesInOutput": 2324
@@ -1692,7 +1692,7 @@
           "bytesInOutput": 1623
         },
         "dist/RollDescription.svelte.js": {
-          "bytesInOutput": 7020
+          "bytesInOutput": 6998
         },
         "dist/RollOutcomes.svelte.js": {
           "bytesInOutput": 1581
@@ -1785,7 +1785,7 @@
           "bytesInOutput": 1000
         },
         "dist/viewer/HomeDugout.svelte.js": {
-          "bytesInOutput": 2467
+          "bytesInOutput": 2448
         },
         "dist/viewer/AwayDugout.svelte.css": {
           "bytesInOutput": 0
@@ -1935,7 +1935,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1400622
+      "bytes": 1400682
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
