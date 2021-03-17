@@ -1397,23 +1397,23 @@ class ArmorRoll extends ModifiedD6SumRoll {
   }
 
   get improbability() {
-    let { pass, fail } = this.diceSums.reduce((acc, sum) => {
+    let { numBroke, numHeld } = this.diceSums.reduce((acc, sum) => {
       if (sum >= this.modifiedTarget) {
-        acc.pass += 1;
+        acc.numBroke += 1;
       } else {
-        acc.fail += 1;
+        acc.numHeld += 1;
       }
       return acc;
-    }, { pass: 0, fail: 0 });
-    let passed;
+    }, { numBroke: 0, numHeld: 0 });
+    let broken;
     if (this.onActiveTeam(this.activePlayer)) {
-      let passChance = fail / (pass + fail);
-      let passed = this.dice.reduce((a, b) => a + b) < this.modifiedTarget;
-      return (passed ? 1 : 0) - passChance;
+      let heldChance = numHeld / (numBroke + numHeld);
+      let held = this.dice.reduce((a, b) => a + b) < this.modifiedTarget;
+      return (held ? 1 : 0) - heldChance;
     } else {
-      let passChance = pass / (pass + fail);
-      let passed = this.dice.reduce((a, b) => a + b) < this.modifiedTarget;
-      return (passed ? 1 : 0) - passChance;
+      let brokeChance = numBroke / (numBroke + numHeld);
+      let broke = this.dice.reduce((a, b) => a + b) >= this.modifiedTarget;
+      return (broke ? 1 : 0) - brokeChance;
     }
   }
 }
