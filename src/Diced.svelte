@@ -114,7 +114,11 @@ import {percentRank} from "./utils.js";
       console.log("Simulation iteration complete", {
         totalGames: c * 50,
         homeDelta: Math.abs(homePercentile - oldHome),
-        awayDelta: Math.abs(awayPercentile - oldAway)
+        awayDelta: Math.abs(awayPercentile - oldAway),
+        homePercentile,
+        oldHome,
+        awayPercentile,
+        oldAway,
       });
       if (c > 10 && Math.abs(homePercentile - oldHome) < 0.001 && Math.abs(awayPercentile - oldAway) < 0.001) {
         return;

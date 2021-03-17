@@ -610,7 +610,7 @@ export class Roll {
       ).named(`%PV(${player.name})`)
     );
   }
-
+ 
   onTeamValue(player) {
     // The fraction of the teams on-pitch players that this player represents.
     return (
@@ -644,7 +644,7 @@ export class Roll {
   knockdownValue(player, includeExpectedValues, damageBonusActive) {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
-    const playerValue = this.onPitchValue(player);
+    const playerValue = this.onTeamValue(player);
     var turnsMissing = this.kdTurns(player);
     var tdTurnsMissing = decayedHalfTurns(turnsMissing);
     var scalingFactors = [new SingleValue(`TDT(${turnsMissing / 2})`, tdTurnsMissing)];
@@ -661,7 +661,7 @@ export class Roll {
   stunValue(player) {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
-    var playerValue = this.onPitchValue(player);
+    var playerValue = this.onTeamValue(player);
     var turnsMissing = this.stunTurns(player);
     var tdTurnsMissing = decayedHalfTurns(turnsMissing);
     var scalingFactors = [new SingleValue(`TDT(${turnsMissing / 2})`, tdTurnsMissing)];
@@ -674,7 +674,7 @@ export class Roll {
 
   koValue(player) {
     const playerValue =
-      this.onPitchValue(player)
+      this.onTeamValue(player)
     let turnsInGame = this.halfTurnsInGame;
     let turnsInHalf = this.halfTurnsInHalf;
     let wakeUpChance = (3 + (player.team.teamState.Babes || 0)) / 6;
@@ -700,9 +700,7 @@ export class Roll {
     const remainingTeamValue = this.onTeamValue(player).product(
       new SingleValue(`TDT(${this.halfTurnsInGame / 2})`, decayedHalfTurns(this.halfTurnsInGame))
     );
-    const excessPitchValue = this.onPitchValue(player).subtract(
-      this.onTeamValue(player)
-    ).product(
+    const excessPitchValue = this.onTeamValue(player).product(
       new SingleValue(`TDT(${this.halfTurnsInHalf / 2})`, decayedHalfTurns(this.halfTurnsInHalf))
     );
     const playerValue = remainingTeamValue.add(excessPitchValue).named(`PV(${player.name})`);
@@ -754,7 +752,7 @@ export class Roll {
     if (futureActions.length) {
       result = Math.max(0, futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0));
     } else {
-      result = this.onPitchValue(player);
+      result = this.onTeamValue(player);
     }
     this._futurePlayerValue[player.id] = result;
     return new SingleValue(`Remaining Turn ${this.turn} value for ${player.name}`, result);
@@ -1285,7 +1283,7 @@ class FoulAppearanceRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.FoulAppearance];
   static dependentConditions = [reroll, samePlayerMove];
   failValue() {
-    return -this.onPitchValue(this.activePlayer);
+    return -this.onTeamValue(this.activePlayer);
   }
 }
 
@@ -1434,7 +1432,7 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
   failValue() {
     // Failing Wild Animal means that this player is effectiFvely unavailable
     // for the rest of your turn, but is active on your opponents turn
-    return -this.onPitchValue(this.activePlayer);
+    return -this.onTeamValue(this.activePlayer);
   }
 }
 
@@ -1483,7 +1481,7 @@ class JumpUpRoll extends ModifiedD6SumRoll {
   failValue() {
     // Jump Up failure means the block fails to activate, so the player is no longer
     // available for this turn.
-    return -this.onPitchValue(this.activePlayer);
+    return -this.onTeamValue(this.activePlayer);
   }
 }
 
@@ -1555,7 +1553,7 @@ class WakeUpRoll extends ModifiedD6SumRoll {
   }
   passValue() {
     const playerValue =
-      this.onPitchValue(this.activePlayer)
+      this.onTeamValue(this.activePlayer)
     let turnsInGame = this.halfTurnsInGame;
 
     let turnDecay = new SingleValue(
@@ -1761,7 +1759,7 @@ export class InjuryRoll extends Roll {
     var value = this.injuryValue(total);
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
-      value = value.subtract(this.onPitchValue(this.pilingOnPlayer));
+      value = value.subtract(this.onTeamValue(this.pilingOnPlayer));
     }
     if (this.isFoul && dice[0] == dice[1]) {
       value = value.add(this.casValue(this.foulingPlayer).named('Sent Off'), this.turnoverValue);
