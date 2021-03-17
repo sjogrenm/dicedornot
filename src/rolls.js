@@ -130,6 +130,7 @@ class Team {
     this.id = teamState.Data.TeamId || 0;
     this.turn = teamState.GameTurn || 1;
     this.fame = teamState.Fame || 0;
+    this.teamState = teamState;
   }
 
   get shortName() {
@@ -579,7 +580,7 @@ export class Roll {
         return Math.min(24, this.gameLength) - team.turn;
       }
     });
-    return halfTurns[0] + halfTurns[1];
+    return halfTurns[0] + halfTurns[1] + 1;
   }
 
   stunTurns(player) {
@@ -674,13 +675,18 @@ export class Roll {
   koValue(player) {
     const playerValue =
       this.onPitchValue(player)
-    var turnsInHalf = this.halfTurnsInHalf;
-    var stunTurns = this.stunTurns(player);
+    let turnsInGame = this.halfTurnsInGame;
+    let turnsInHalf = this.halfTurnsInHalf;
+    let wakeUpChance = (3 + (player.team.teamState.Babes || 0)) / 6;
+    let wakeUpTurns = wakeUpChance * turnsInHalf + (1 - wakeUpChance) * turnsInGame;
+    let stunTurns = this.stunTurns(player);
+    let turns = wakeUpTurns - stunTurns;
+    let decayedTurns = decayedHalfTurns(wakeUpTurns) - decayedHalfTurns(stunTurns);
 
-    var scalingFactors = [
+    let scalingFactors = [
       new SingleValue(
-        `TDT(${turnsInHalf - stunTurns})`,
-        decayedHalfTurns(turnsInHalf) - decayedHalfTurns(stunTurns)
+        `TDT(${turns})`,
+        decayedTurns
       )
     ];
     if (this.onActiveTeam(player)) {
@@ -826,7 +832,7 @@ function catchOrInterception(roll, dependent) {
   return [CatchRoll, InterceptionRoll].includes(dependent.constructor);
 }
 
-class BlockRoll extends Roll {
+export class BlockRoll extends Roll {
   static rollName = "Block";
   static handledSkills = [
     SKILL.Tackle,
@@ -1548,11 +1554,16 @@ class WakeUpRoll extends ModifiedD6SumRoll {
     this.finalBoardState.activeTeam = this.activePlayer.team;
   }
   passValue() {
-    let turn = this.finalBoardState.turn;
-    this.finalBoardState.turn = this.finalBoardState.activeTeam.turn + 1;
-    let value = this.koValue(this.activePlayer).product(-1).named('Wake Up');
-    this.finalBoardState.turn = turn;
-    return value;
+    const playerValue =
+      this.onPitchValue(this.activePlayer)
+    let turnsInGame = this.halfTurnsInGame;
+
+    let turnDecay = new SingleValue(
+      `TDT(${turnsInGame})`,
+      decayedHalfTurns(turnsInGame)
+    );
+
+    return playerValue.product(turnDecay).named(`WakeUp(${this.activePlayer.name})`);
   }
 }
 
@@ -1689,7 +1700,8 @@ export class InjuryRoll extends Roll {
   }
 
   // TODO: Handle skills
-  injuryName(total) {
+  get injuryName() {
+    let total = this.dice[0] + this.dice[1] + this.modifier;
     if (this.activePlayer.skills.includes(SKILL.Stunty)) {
       total += 1;
     }

@@ -9,6 +9,7 @@
     ModifiedD6SumRoll,
     CasualtyRoll,
     InjuryRoll,
+    BlockRoll
   } from "./rolls.js";
   import Dice from "./Dice.svelte";
 
@@ -17,7 +18,7 @@
 
 <div>
   <span class="dice-line">
-    {#if roll.rollType === ROLL.Block}
+    {#if roll.constructor instanceof BlockRoll}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} />
       <Dice dice={roll.dice} uphill={roll.isRedDice} separator="/" />
       <PlayerPill player={roll.defender} />
@@ -43,7 +44,7 @@
       {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
         dice={roll.dice}
         separator="+"
-      /> - {roll.injuryName(roll.diceSum)}
+      /> - {roll.injuryName}
     {:else if roll instanceof ModifiedD6SumRoll}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
         dice={roll.dice}
