@@ -40,7 +40,7 @@ import {percentRank} from "./utils.js";
     const sample = (items) => items[team.length % items.length];
 
     if (percentile > 0.985) {
-      return "Nuffle's light shown down on them.";
+      return "Nuffle's light shone down on them.";
     } else if (percentile > 0.9) {
       return sample([
         "Nuffle favored them.",
