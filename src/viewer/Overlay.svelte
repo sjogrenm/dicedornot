@@ -1,19 +1,58 @@
 <script>
-  import { ACTION_TYPE, SIDE } from "../constants.js";
-  import { ensureList } from "../replay-utils.js";
+  import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
+  import { ensureList, translateStringNumberList } from "../replay-utils.js";
   import { replayPreview, replay } from "../stores.js";
   import OverlayMove from "./OverlayMove.svelte";
+  import OverlayBlock from "./OverlayBlock.svelte";
+  import chroma from "chroma-js";
+
+  import {team1Color, team1Gray, team0Color, team0Gray, gray} from "../theme.js";
 
   let paths;
 
   function cellEqual(a, b) {
     return a.x == b.x && a.y == b.y;
   }
+
+  function colors(team, index, maxIndex) {
+    let colorScale, textScale, oppColorScale, oppTextScale;
+    if (team == SIDE.home) {
+      colorScale = team0Color;
+      textScale = team0Gray;
+      oppColorScale = team1Color;
+      oppTextScale = team1Color;
+    } else {
+      colorScale = team1Color;
+      textScale = team1Gray;
+      oppColorScale = team0Color;
+      oppTextScale = team0Color;
+    }
+    let color = colorScale((maxIndex - index) / maxIndex);
+    let lightText = textScale(0).brighten();
+    let darkText = textScale(1).darken();
+    let textColor;
+    if (chroma.contrast(color, lightText) > chroma.contrast(color, darkText)) {
+      textColor = lightText;
+    } else {
+      textColor = darkText;
+    }
+    let oppColor = oppColorScale((maxIndex - index) / maxIndex);
+    let oppLightText = oppTextScale(0).brighten();
+    let oppDarkText = oppTextScale(1).darken();
+    let oppTextColor;
+    if (chroma.contrast(oppColor, oppLightText) > chroma.contrast(color, oppDarkText)) {
+      textColor = oppLightText;
+    } else {
+      textColor = oppDarkText;
+    }
+    return {color, textColor, oppColor, oppTextColor};
+  }
+
   $: {
     paths = [];
     for (const {step, action} of $replayPreview.start.sliceActionsTo($replay.fullReplay, $replayPreview.end)) {
       switch (action.ActionType || 0) {
-        case ACTION_TYPE.Move:
+        case ACTION_TYPE.Move: {
           let from = action.Order.CellFrom;
           let to = action.Order.CellTo.Cell;
           let rolls = ensureList(action.Results.BoardActionResult).filter(
@@ -44,7 +83,60 @@
             rolls: rolls ? [{from, to, rolls}] : [],
             team
           });
-          break;
+        }
+        break;
+        case ACTION_TYPE.Blitz:
+        case ACTION_TYPE.Block: {
+          for (const result of ensureList(action.Results.BoardActionResult)) {
+            if (result.RollType == ROLL.Block && result.IsOrderCompleted != 1) {
+              let from = action.Order.CellFrom;
+              let to = action.Order.CellTo.Cell;
+              let team = action.PlayerId < 30 ? SIDE.home : SIDE.away;
+              let requirement = result.Requirement;
+              let modifier = ensureList(result.ListModifiers.DiceModifier || [])
+                .map((modifier) => modifier.Value || 0)
+                .reduce((a, b) => a + b, 0) || 0;
+              let dieCount = translateStringNumberList(result.CoachChoices.ListDices).length / 2;
+              let roll;
+              if (requirement < 0) {
+                if (dieCount == 2) {
+                  roll = '\u00BDD';
+                } else if (dieCount == 3) {
+                  roll = '\u2153D';
+                }
+              } else {
+                roll = `${dieCount}D`;
+              }
+              let last = paths[paths.length - 1];
+              if (
+                last &&
+                last.component == OverlayBlock &&
+                last.from.x == from.x &&
+                last.from.y == from.y &&
+                last.to.x == to.x &&
+                last.to.y == to.y
+              ){
+                last.rolls += ` ${roll}`;
+              } else {
+                paths.push({
+                  component: OverlayBlock,
+                  from,
+                  to,
+                  rolls: roll,
+                  team,
+                });
+              }
+            } else if (result.RollType == ROLL.Push && result.IsOrderCompleted == 1) {
+              let pushTo = result.CoachChoices.ListCells.Cell;
+              paths[paths.length - 1].pushTo = pushTo;
+            } else if (result.RollType == ROLL.FollowUp && result.IsOrderCompleted == 1) {
+              let followTo = result.CoachChoices.ListCells.Cell;
+              let last = paths[paths.length - 1];
+              last.follow = followTo.x != last.from.x || followTo.y != last.from.y;
+            }
+          }
+        }
+        break;
       }
     }
   }
@@ -64,6 +156,6 @@
     </filter>
   </defs>
   {#each paths as path, index}
-    <svelte:component this={path.component} {...path} index={index+1} maxIndex={paths.length} />
+    <svelte:component this={path.component} {...path} {...colors(path.team, index, paths.length)} index={index+1} />
   {/each}
 </svg>

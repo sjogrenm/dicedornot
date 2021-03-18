@@ -1,19 +1,15 @@
 <script>
-  import { SIDE } from "../constants";
-  import chroma from "chroma-js";
-
-  import {team1Color, team1Gray, team0Color, team0Gray, gray} from "../theme.js";
   export let path,
     rolls,
-    team,
-    index = 0,
-    maxIndex = 0;
+    color,
+    textColor,
+    oppColor,
+    index = 0;
 
-  let color, textColor;
   function mixCells(cellA, cellB, pct) {
     return {
-      x: cellA.x * pct + cellB.x * (1 - pct),
-      y: cellA.y * pct + cellB.y * (1 - pct),
+      x: cellA.x * (1 - pct) + cellB.x * pct,
+      y: cellA.y * (1 - pct) + cellB.y * pct,
     };
   }
 
@@ -29,26 +25,10 @@
         rolls[0].pt.x += 0.3;
       }
     } else {
-      let newStart = mixCells(path[0], path[1], 0.75);
-      let newEnd = mixCells(path[path.length - 1], path[path.length - 2], 0.75);
+      let newStart = mixCells(path[0], path[1], 0.25);
+      let newEnd = mixCells(path[path.length - 2], path[path.length - 1], 0.75);
       path[0] = newStart;
       path[path.length - 1] = newEnd;
-    }
-    let colorScale, textScale;
-    if (team == SIDE.home) {
-      colorScale = team0Color;
-      textScale = team0Gray;
-    } else {
-      colorScale = team1Color;
-      textScale = team1Gray;
-    }
-    color = colorScale((maxIndex - index) / maxIndex);
-    let lightText = textScale(0).brighten();
-    let darkText = textScale(1).darken();
-    if (chroma.contrast(color, lightText) > chroma.contrast(color, darkText)) {
-      textColor = lightText;
-    } else {
-      textColor = darkText;
     }
   }
 </script>
@@ -67,7 +47,7 @@
       fill="none"
       stroke={color}
       stroke-width="1"
-      points="0.5 0.5, 4.5 2.5, 0.5 4.5"
+      points="0.5,0.5 4.5,2.5 0.5,4.5"
     />
   </marker>
 </defs>
@@ -77,11 +57,10 @@
     fill="none"
     filter="url(#chalk)"
     class="move"
-    marker-start="url(#move-{index})"
     marker-end="url(#pointer-{index})"
     stroke-width="0.08"
     stroke={color}
-    points={path.map((cell) => `${cell.x || 0}, ${cell.y || 0}`).join(" ")}
+    points={path.map((cell) => `${cell.x || 0},${cell.y || 0}`).join(" ")}
   />
 {/if}
 <circle
