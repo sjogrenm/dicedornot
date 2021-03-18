@@ -18,7 +18,7 @@
 
 <div>
   <span class="dice-line">
-    {#if roll.constructor instanceof BlockRoll}
+    {#if roll instanceof BlockRoll}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} />
       <Dice dice={roll.dice} uphill={roll.isRedDice} separator="/" />
       <PlayerPill player={roll.defender} />
