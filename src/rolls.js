@@ -1450,12 +1450,20 @@ class DodgeRoll extends ModifiedD6SumRoll {
 
   static argsFromXml(xml) {
     let args = super.argsFromXml(xml);
-    if (xml.boardActionResult.SubResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
+    if (
+      [
+        SUB_RESULT_TYPE.ChoiceUseDodgeTackle,
+        SUB_RESULT_TYPE.ChoiceUseDodgeSkill
+      ].includes(xml.boardActionResult.SubResultType)
+    ) {
       // A dodge that fails in tackle and prompts for a team reroll doesn't have the requirement attached, so
       // pull them from the later roll
       let nextActions = ensureList(xml.replay.ReplayStep[xml.stepIndex + 1].RulesEventBoardAction)
       let nextResults = ensureList(nextActions[0].Results.BoardActionResult);
       args.target = nextResults[0].Requirement;
+      args.modifier = ensureList(nextResults[0].ListModifiers.DiceModifier || [])
+        .map((modifier) => modifier.Value || 0)
+        .reduce((a, b) => a + b, 0) || 0;
     }
     args.cellFrom = xml.action.Order.CellFrom;
     args.cellTo = xml.action.Order.CellTo.Cell;
