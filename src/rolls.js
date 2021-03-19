@@ -706,13 +706,10 @@ export class Roll {
   }
 
   casValue(player) {
-    const remainingTeamValue = this.onTeamValue(player).product(
+    const gameValue = this.onTeamValue(player).product(
       new SingleValue(`TDT(${this.halfTurnsInGame / 2})`, decayedHalfTurns(this.halfTurnsInGame))
     );
-    const excessPitchValue = this.onTeamValue(player).product(
-      new SingleValue(`TDT(${this.halfTurnsInHalf / 2})`, decayedHalfTurns(this.halfTurnsInHalf))
-    );
-    const playerValue = remainingTeamValue.add(excessPitchValue).named(`PV(${player.name})`);
+    const playerValue = gameValue.named(`PV(${player.name})`);
 
     var scalingFactors = [];
     if (this.onActiveTeam(player)) {
