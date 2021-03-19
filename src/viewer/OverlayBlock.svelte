@@ -1,5 +1,4 @@
 <script>
-  import { X } from "vega-lite/build/src/channel";
 
   export let from,
     to,

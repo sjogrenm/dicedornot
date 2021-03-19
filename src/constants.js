@@ -264,6 +264,7 @@ export const BLOCK_OUTCOME = {
 export const REQUEST_TYPE = {
   Unknown_0: 0,
   ForCoach: 1, //Coach / Player,
+  PushFollow: 3,
   UseSkillReroll: 4 // Use a Skill-reroll?
 };
 

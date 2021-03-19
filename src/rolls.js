@@ -14,6 +14,7 @@ import {
   STAR_NAMES,
   KICKOFF_RESULT,
   KICKOFF_RESULT_NAMES,
+  ROLL,
 } from './constants.js';
 import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP, REPLAY_KEY } from './replay-utils.js';
 import {
@@ -1663,6 +1664,13 @@ export class InjuryRoll extends Roll {
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
 
+    if (args.rollType == ROLL.PileOnInjuryRoll) {
+      // The first time you see it, without an IsOrderComplete, is the choice to use PileOn
+      // The second time, with IsOrderComplete, is an actual PileOn (but there are no dice associated)
+      // If there's no IsOrderComplete, then it will show up as a normal injury roll.
+      args.canPileOn = xml.boardActionResult.IsOrderComplete == undefined;
+    }
+
     // An Injury PileOn has a IsOrderCompleted RollType 60 right before it
     if (xml.resultIndex == 0) {
       args.isPileOn = false;
@@ -1680,6 +1688,7 @@ export class InjuryRoll extends Roll {
         );
       }
     }
+
     args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
     if (args.isFoul) {
       args.foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
@@ -1698,8 +1707,10 @@ export class InjuryRoll extends Roll {
   }
 
   get rollName() {
-    if (this.isPileOn) {
-      return "Pile On (Injury)";
+    if (this.canPileOn) {
+      return "Injury (Can Pile On)"
+    } else if (this.isPileOn) {
+      return "Injury (Piled On)";
     } else {
       return "Injury";
     }
@@ -1763,6 +1774,9 @@ export class InjuryRoll extends Roll {
   }
 
   value(dice) {
+    if (this.canPileOn) {
+      return new SingleValue(`Pile On Decision Pending`, 0);
+    }
     var total = dice[0] + dice[1] + this.modifier;
     var value = this.injuryValue(total);
     if (this.isPileOn) {
