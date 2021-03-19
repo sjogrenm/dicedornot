@@ -12,9 +12,9 @@
 
 <style>
   .bench {
-    width: 44.5%;
-    right: 1.7%;
-    bottom: 2.5%;
+    width: calc(600/1338*100%);
+    right: calc((1338 - 1316)/1338*100%);
+    bottom: 5%;
     position: absolute;
     display: grid;
     grid-template-columns: repeat(3, auto);

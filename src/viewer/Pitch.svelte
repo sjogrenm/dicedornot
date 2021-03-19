@@ -37,8 +37,8 @@
 
 <style>
   .pitch {
-    left: 1.25%;
-    width: 97.5%;
+    left: calc(18/1336*100%);
+    width: calc(1300/1336*100%);
     position: relative;
   }
   .overlay {

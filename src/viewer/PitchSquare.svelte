@@ -59,7 +59,7 @@
 
 <style>
   .pitch-square {
-    border: 0.05vh dashed rgba(255, 255, 255, 0.31);
+    border: 0.05vh dashed rgba(255, 255, 255, 0.2);
     display: flex;
     justify-content: center;
     align-items: center;

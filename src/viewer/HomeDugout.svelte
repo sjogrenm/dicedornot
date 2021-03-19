@@ -42,7 +42,7 @@
   }
   .dugout {
     width: 100%;
-    height: 14.5%;
+    height: calc(158/1062*100%);
     position: relative;
     color: hsl(0, 0%, 85%);
     font-family: Nuffle;

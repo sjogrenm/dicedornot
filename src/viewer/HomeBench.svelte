@@ -12,7 +12,7 @@
 
 <style>
   .bench {
-    width: 44.5%;
+    width: calc(600/1338*100%);
     left: 2.1%;
     top: 4.7%;
     position: absolute;
