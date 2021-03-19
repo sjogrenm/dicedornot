@@ -528,11 +528,11 @@
       ]
     },
     "dist/viewer/HomeDugout.svelte.css": {
-      "bytes": 1110,
+      "bytes": 1124,
       "imports": []
     },
     "dist/viewer/HomeBench.svelte.css": {
-      "bytes": 142,
+      "bytes": 157,
       "imports": []
     },
     "dist/viewer/Grid.svelte.css": {
@@ -574,7 +574,7 @@
       ]
     },
     "dist/viewer/CasSquare.svelte.css": {
-      "bytes": 216,
+      "bytes": 260,
       "imports": []
     },
     "dist/viewer/Player.svelte.css": {
@@ -607,7 +607,7 @@
       ]
     },
     "dist/viewer/CasSquare.svelte.js": {
-      "bytes": 8012,
+      "bytes": 8010,
       "imports": [
         {
           "path": "dist/viewer/CasSquare.svelte.css",
@@ -653,7 +653,7 @@
       ]
     },
     "dist/viewer/HomeBench.svelte.js": {
-      "bytes": 4141,
+      "bytes": 4142,
       "imports": [
         {
           "path": "dist/viewer/HomeBench.svelte.css",
@@ -795,7 +795,7 @@
       "imports": []
     },
     "dist/viewer/AwayBench.svelte.css": {
-      "bytes": 146,
+      "bytes": 183,
       "imports": []
     },
     "dist/viewer/AwayBench.svelte.js": {
@@ -845,11 +845,11 @@
       ]
     },
     "dist/viewer/Pitch.svelte.css": {
-      "bytes": 132,
+      "bytes": 160,
       "imports": []
     },
     "dist/viewer/PitchSquare.svelte.css": {
-      "bytes": 171,
+      "bytes": 170,
       "imports": []
     },
     "dist/viewer/Ball.svelte.css": {
@@ -1816,13 +1816,13 @@
           "bytesInOutput": 2231
         },
         "dist/viewer/CasSquare.svelte.js": {
-          "bytesInOutput": 2465
+          "bytesInOutput": 2463
         },
         "dist/viewer/CasBox.svelte.js": {
           "bytesInOutput": 1461
         },
         "dist/viewer/HomeBench.svelte.js": {
-          "bytesInOutput": 1408
+          "bytesInOutput": 1409
         },
         "dist/viewer/TeamAids.svelte.css": {
           "bytesInOutput": 0
@@ -2011,7 +2011,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1406197
+      "bytes": 1406196
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
@@ -2059,22 +2059,22 @@
           "bytesInOutput": 297
         },
         "dist/viewer/HomeDugout.svelte.css": {
-          "bytesInOutput": 1097
+          "bytesInOutput": 1111
         },
         "dist/viewer/Pitch.svelte.css": {
-          "bytesInOutput": 132
+          "bytesInOutput": 160
         },
         "dist/viewer/SelectedPlayer.svelte.css": {
           "bytesInOutput": 1062
         },
         "dist/viewer/AwayBench.svelte.css": {
-          "bytesInOutput": 145
+          "bytesInOutput": 182
         },
         "dist/viewer/HomeBench.svelte.css": {
-          "bytesInOutput": 141
+          "bytesInOutput": 156
         },
         "dist/viewer/PitchSquare.svelte.css": {
-          "bytesInOutput": 166
+          "bytesInOutput": 165
         },
         "dist/viewer/TeamAids.svelte.css": {
           "bytesInOutput": 665
@@ -2104,7 +2104,7 @@
           "bytesInOutput": 47
         },
         "dist/viewer/CasSquare.svelte.css": {
-          "bytesInOutput": 216
+          "bytesInOutput": 255
         },
         "dist/viewer/Grid.svelte.css": {
           "bytesInOutput": 219
@@ -2122,7 +2122,7 @@
           "bytesInOutput": 986
         }
       },
-      "bytes": 12706
+      "bytes": 12838
     }
   }
 }
