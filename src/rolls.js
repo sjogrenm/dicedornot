@@ -246,6 +246,14 @@ export class Roll {
     return args;
   }
 
+  get nextRoll() {
+    if (this.dependentRolls.length > 0) {
+      return this.dependentRolls[0];
+    } else if (this.dependentOn) {
+      return this.dependentOn.dependentRolls[this.dependentIndex + 1];
+    }
+  }
+
   get improbability() {
     return 0;
   }
@@ -1163,9 +1171,9 @@ export class ModifiedD6SumRoll extends Roll {
     if (rollTotal >= this.modifiedTarget) {
       return this.passValue(expected, rollTotal, this.modifiedTarget).add(expected ? this.dependentMoveValues : null);
     } else if (
-      this.dependentRolls.length >= 1 &&
-      this.dependentRolls[0].constructor == this.constructor &&
-      this.dependentRolls[0].isReroll
+      this.nextRoll &&
+      this.nextRoll.constructor == this.constructor &&
+      this.nextRoll.isReroll
     ) {
       return new SingleValue(`Rerolled ${this.rollName}`, this.rerollValue);
     } else {
@@ -1787,9 +1795,9 @@ export class InjuryRoll extends Roll {
       value = value.add(this.casValue(this.foulingPlayer).named('Sent Off'), this.turnoverValue);
     }
     if (
-      this.dependentRolls.length >= 1 &&
-      this.dependentRolls[0].constructor == this.constructor &&
-      this.dependentRolls[0].isReroll
+      this.nextRoll &&
+      this.nextRoll.constructor == this.constructor &&
+      this.nextRoll.isReroll
     ) {
       return new SingleValue(`Rerolled ${this.rollName}`, this.rerollValue);
     } else {

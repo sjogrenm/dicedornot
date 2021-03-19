@@ -49,6 +49,8 @@ export function processReplay(data) {
       lastRoll.isDependentRoll(nextRoll)
     ) {
       lastRoll.dependentRolls.push(nextRoll);
+      nextRoll.dependentOn = lastRoll;
+      nextRoll.dependentIndex = lastRoll.dependentRolls.length - 1;
       return rolls;
     }
     rolls.push(nextRoll);
