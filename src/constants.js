@@ -273,7 +273,8 @@ export const ROLL_STATUS = {
   RerollTaken: 1,
   RerollNotTaken: 2,
   RerollWithSkill: 3,
-  RerollWithSkillChoice: 4
+  RerollWithSkillChoice: 4,
+  RerollWithFailedOutcome: 5
 };
 
 export const WEATHER = {

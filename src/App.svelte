@@ -6,13 +6,14 @@
   import Nav from "./Nav.svelte";
   import Viewer from "./viewer/Viewer.svelte";
   import Diced from "./Diced.svelte";
-  import { Row, Col, Container, Jumbotron } from "sveltestrap";
-  import { replay } from "./stores.js";
+  import { Jumbotron } from "sveltestrap";
+  import { replay, showResultsAnalysis } from "./stores.js";
   import TurnSelectors from "./TurnSelectors.svelte";
   import Error from "./Error.svelte";
   import ImprobabilityResults from "./ImprobabilityResults.svelte";
   import ValueResults from "./ValueResults.svelte";
   import ValueDistributionResults from "./ValueDistributionResults.svelte";
+  import ExpectedValueResults from "./ExpectedValueResults.svelte";
   import Terminology from "./Terminology.svelte";
   import Todo from "./Todo.svelte";
   import Theme from "./Theme.svelte";
@@ -60,12 +61,14 @@
       <div class="container-fluid scroll-step" role="main">
         <div class="row">
           <div class="col">
-            <Diced
-              homeTeam={$replay.gameDetails.homeTeam.coachName}
-              awayTeam={$replay.gameDetails.awayTeam.coachName}
-              {homePercentile}
-              {awayPercentile}
-            />
+              {#if $showResultsAnalysis}
+              <Diced
+                homeTeam={$replay.gameDetails.homeTeam.coachName}
+                awayTeam={$replay.gameDetails.awayTeam.coachName}
+                {homePercentile}
+                {awayPercentile}
+              />
+            {/if}
             <Summary />
           </div>
         </div>
@@ -80,13 +83,17 @@
             <RollDetails {playing} />
           </div>
         </div>
-        <div class="row">
-          <div class="col">
-            <ImprobabilityResults />
-            <ValueResults />
-            <ValueDistributionResults />
+          <div class="row">
+            <div class="col">
+              {#if $showResultsAnalysis}
+              <ImprobabilityResults />
+              <ValueResults />
+              {:else}
+              <ExpectedValueResults/>
+              {/if}
+              <ValueDistributionResults />
+            </div>
           </div>
-        </div>
       </div>
       <div class="container mt-4" role="main">
         <ReplayLoader bind:loading />
@@ -104,6 +111,18 @@
     <div class="container pt-2 pb-2">
       {#if $replay}
         <Terminology />
+        {#if !$showResultsAnalysis}
+          <div class="row alert alert-warning" role="alert">
+            <div class="col col-9">
+            <p>
+              Results-based analysis will hinder your Blood Bowl learning process. Focus on whether the actions you took and the dice you rolled were the best possible, rather than on the results of those dice rolls.
+            </p>
+          </div>
+            <div class="col col-3">
+              <button class="btn btn-danger" on:click={() => {$showResultsAnalysis = true}}>I know, show me anyway!</button>
+            </div>
+          </div>
+        {/if}
       {/if}
       <Todo />
     </div>

@@ -241,7 +241,7 @@ export class Roll {
     args.resultType = xml.boardActionResult.ResultType;
     args.subResultType = xml.boardActionResult.SubResultType;
     args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.BoardAction, xml.actionIndex, xml.resultIndex);
-    args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill, ROLL_STATUS.RerollWithSkillChoice].includes(args.rollStatus);
+    args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill, ROLL_STATUS.RerollWithSkillChoice, ROLL_STATUS.RerollWithFailedOutcome].includes(args.rollStatus);
     args.gameLength = xml.gameLength;
     return args;
   }
@@ -807,7 +807,8 @@ function reroll(roll, dependent) {
     [
       ROLL_STATUS.RerollTaken,
       ROLL_STATUS.RerollWithSkill,
-      ROLL_STATUS.RerollWithSkillChoice
+      ROLL_STATUS.RerollWithSkillChoice,
+      ROLL_STATUS.RerollWithFailedOutcome
     ].includes(
       dependent.rollStatus
     )

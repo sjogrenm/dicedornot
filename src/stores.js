@@ -17,3 +17,4 @@ export const replayCurrent = writable(new ReplayPosition());
 export const replayTarget = writable(target);
 export const replayPreview = writable(null);
 export const error = writable(null);
+export const showResultsAnalysis = writable(false);

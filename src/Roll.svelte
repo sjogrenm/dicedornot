@@ -1,7 +1,7 @@
 <script>
   import Distribution from "./Distribution.svelte";
   import RollOutcomes from "./RollOutcomes.svelte";
-  import { replayTarget } from "./stores.js";
+  import { replayTarget, showResultsAnalysis } from "./stores.js";
   import { Icon } from "sveltestrap";
   export let roll, selected;
   let actualDistributions;
@@ -84,7 +84,9 @@
     {/if}
     {#if roll.valueWithDependents.valueOf() != 0 || roll.possibleOutcomes.valueOf() != 0}
       <div class="row">
-        <div class="col col-auto">{roll.valueWithDependents.valueString}</div>
+        {#if $showResultsAnalysis}
+          <div class="col col-auto">{roll.valueWithDependents.valueString}</div>
+        {/if}
         <div class="col col-auto">{roll.possibleOutcomes.valueString}</div>
       </div>
     {/if}

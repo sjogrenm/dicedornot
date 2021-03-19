@@ -2,7 +2,7 @@
 import {percentRank} from "./utils.js";
 
   import { Row, Col } from "sveltestrap";
-  import { replay } from "./stores";
+  import { replay, showResultsAnalysis } from "./stores";
 
   export let homeTeam, awayTeam;
   let cumNetValues, actuals, homePercentile = 0.5, awayPercentile = 0.5;
