@@ -125,7 +125,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 70585,
+      "bytes": 70570,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -237,7 +237,7 @@
       ]
     },
     "dist/Summary.svelte.css": {
-      "bytes": 238,
+      "bytes": 304,
       "imports": []
     },
     "_snowpack/pkg/common/index-0205b586.js": {
@@ -275,7 +275,7 @@
       ]
     },
     "dist/Summary.svelte.js": {
-      "bytes": 24916,
+      "bytes": 25913,
       "imports": [
         {
           "path": "dist/Summary.svelte.css",
@@ -304,7 +304,7 @@
       "imports": []
     },
     "dist/Distribution.svelte.js": {
-      "bytes": 25913,
+      "bytes": 25828,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -970,7 +970,7 @@
       ]
     },
     "dist/viewer/OverlayMove.svelte.js": {
-      "bytes": 10963,
+      "bytes": 11350,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -1672,7 +1672,7 @@
           "bytesInOutput": 86711
         },
         "dist/rolls.js": {
-          "bytesInOutput": 37925
+          "bytesInOutput": 37903
         },
         "dist/replay.js": {
           "bytesInOutput": 2383
@@ -1702,13 +1702,13 @@
           "bytesInOutput": 20611
         },
         "dist/Summary.svelte.js": {
-          "bytesInOutput": 8891
+          "bytesInOutput": 9268
         },
         "dist/Turn.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/Distribution.svelte.js": {
-          "bytesInOutput": 7602
+          "bytesInOutput": 7573
         },
         "dist/RollDescription.svelte.css": {
           "bytesInOutput": 0
@@ -1867,7 +1867,7 @@
           "bytesInOutput": 4660
         },
         "dist/viewer/OverlayMove.svelte.js": {
-          "bytesInOutput": 3868
+          "bytesInOutput": 4058
         },
         "dist/viewer/OverlayBlock.svelte.js": {
           "bytesInOutput": 4525
@@ -1975,7 +1975,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1410334
+      "bytes": 1410850
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
@@ -1996,7 +1996,7 @@
           "bytesInOutput": 304
         },
         "dist/Summary.svelte.css": {
-          "bytesInOutput": 238
+          "bytesInOutput": 304
         },
         "dist/viewer/Viewer.svelte.css": {
           "bytesInOutput": 639
@@ -2086,7 +2086,7 @@
           "bytesInOutput": 986
         }
       },
-      "bytes": 12838
+      "bytes": 12904
     }
   }
 }
