@@ -1065,7 +1065,7 @@ class FansRoll extends Roll {
 export class ModifiedD6SumRoll extends Roll {
   static numDice = 1;
   static diceSeparator = '+'
-  static dependentConditions = [reroll, sameTeamMove];
+  static dependentConditions = [reroll, samePlayerMove];
 
   constructor(args) {
     super(args);
@@ -1453,7 +1453,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
   static rerollSkill = SKILL.Dodge;
   static rerollCancelSkill = SKILL.Tackle;
-  static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
 
   static argsFromXml(xml) {
     let args = super.argsFromXml(xml);
@@ -1502,7 +1502,7 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 
 class LeapRoll extends ModifiedD6SumRoll {
   static rollName = "Leap";
-  static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
   static argsFromXml(xml) {
     let args = super.argsFromXml(xml);
     args.cellFrom = xml.action.Order.CellFrom;
@@ -1527,7 +1527,7 @@ class PassRoll extends ModifiedD6SumRoll {
   static rollName = "Pass";
   static rerollSkill = SKILL.Pass;
   static handledSkills = [SKILL.Pass, SKILL.StrongArm, SKILL.Accurate];
-  static dependentConditions = [catchOrInterception, sameTeamMove, reroll];
+  static dependentConditions = [catchOrInterception, samePlayerMove, reroll];
   failValue() {
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
@@ -1539,7 +1539,7 @@ class PassRoll extends ModifiedD6SumRoll {
 class ThrowTeammateRoll extends ModifiedD6SumRoll {
   static rollName = "Throw Teammate";
   static handledSkills = [SKILL.ThrowTeamMate];
-  static dependentConditions = [sameTeamMove, reroll];
+  static dependentConditions = [samePlayerMove, reroll];
   failValue() {
     // TODO: Throw teammate only turns over if the thrown player has the ball, and even then, only
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
@@ -1584,7 +1584,7 @@ class GFIRoll extends ModifiedD6SumRoll {
   static rollName = "GFI";
   static handledSkills = [SKILL.SureFeet];
   static rerollSkill = SKILL.SureFeet;
-  static dependentConditions = [nonFoulDamage, reroll, sameTeamMove];
+  static dependentConditions = [nonFoulDamage, reroll, samePlayerMove];
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
@@ -1634,7 +1634,7 @@ class TakeRootRoll extends ModifiedD6SumRoll {
 
 class LandingRoll extends ModifiedD6SumRoll {
   static rollName = "Landing";
-  static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
   failValue(expected) {
     // TODO: Handle a turnover if the thrown player has the ball
     return this.knockdownValue(this.activePlayer, expected);
@@ -1643,7 +1643,7 @@ class LandingRoll extends ModifiedD6SumRoll {
 
 class FireballRoll extends ModifiedD6SumRoll {
   static rollName = "Fireball";
-  static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+  static dependentConditions = [nonFoulDamage];
   passValue(expected) {
     return this.knockdownValue(this.activePlayer, expected);
   }
@@ -1651,7 +1651,7 @@ class FireballRoll extends ModifiedD6SumRoll {
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
   static rollName = "Lightning Bolt";
-  static dependentConditions = [reroll, sameTeamMove, nonFoulDamage];
+  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
     args.activePlayer = args.initialBoardState.playerAtPosition(xml.action.Order.CellTo.Cell);
