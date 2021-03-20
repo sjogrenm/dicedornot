@@ -749,7 +749,7 @@ export class Roll {
       roll => (
         roll.startIndex.after(this.startIndex) &&
         roll.activePlayer &&
-        roll.activePlayer.id == this.activePlayer.id &&
+        roll.activePlayer.id == player.id &&
         roll.turn == this.turn
       )
     );
