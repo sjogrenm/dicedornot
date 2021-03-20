@@ -4,6 +4,9 @@
     color,
     textColor,
     oppColor,
+    oppTextColor,
+    team,
+    component,
     index = 0;
 
   function mixCells(cellA, cellB, pct) {
