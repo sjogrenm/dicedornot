@@ -12,7 +12,7 @@
 
 {#if dist instanceof SingleValue}
   {#if dist.value instanceof Distribution}
-    <svelte:self dist={dist.value.named(dist.name)} />;
+    <svelte:self dist={dist.value.named(dist.name)} />
   {:else}{dist.name} {dist.valueString}{/if}
 {:else if dist instanceof SimpleDistribution}
   <details

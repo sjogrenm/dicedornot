@@ -850,7 +850,7 @@ export class BlockRoll extends Roll {
     SKILL.TakeRoot
   ];
   static diceSeparator = '/';
-  static dependentConditions = [pushOrFollow, nonFoulDamage, reroll, sameTeamMove];
+  static dependentConditions = [pushOrFollow, nonFoulDamage, reroll, samePlayerMove];
 
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
