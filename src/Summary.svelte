@@ -36,7 +36,8 @@
           />
         </Col>
         <Col xs="auto" >
-          <span id="home-team">{gameDetails.homeTeam.teamName}</span>
+          <div class="team">{gameDetails.homeTeam.teamName}</div>
+          <div class="coach">{gameDetails.homeTeam.coachName}</div>
         </Col>
       </Row>
     </div>
@@ -52,7 +53,8 @@
     <div class="team-name away">
       <Row class="align-items-center justify-content-center">
         <Col xs="auto" class="order-12 order-lg-1">
-          <span id="away-team">{gameDetails.awayTeam.teamName}</span>
+          <div class="team">{gameDetails.awayTeam.teamName}</div>
+          <div class="coach">{gameDetails.awayTeam.coachName}</div>
         </Col>
         <Col xs="auto" class="order-1 order-lg-12">
           <img
@@ -122,5 +124,10 @@
 
   .away {
     color: var(--team1-color-8);
+  }
+
+  .coach {
+    font-variant: small-caps;
+    font-size: 1rem;
   }
 </style>
