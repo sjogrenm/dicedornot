@@ -153,7 +153,7 @@ export class SimpleDistribution extends Distribution {
         const existing = acc[`${value.name}`];
         if (existing) {
           if (existing.value != value.value) {
-            throw new Error("Inconsistent values passed to SimpleDistribution")
+            throw new Error(`Inconsistent values passed to SimpleDistribution. ${existing.value.valueOf()} != ${value.value.valueOf()} when adding '${value.name}'`);
           }
           existing.weight += value.weight;
         } else {

@@ -68,7 +68,7 @@ export function processReplay(data) {
     if (roll.activePlayer) {
       acc[`${roll.turn}-${roll.activePlayer.name}`] = {
         actual: roll.valueWithDependents.valueOf(),
-        expected: roll.onPitchValue(roll.activePlayer).valueOf(),
+        expected: roll.onTeamValue(roll.activePlayer).valueOf(),
       };
     }
     return acc;

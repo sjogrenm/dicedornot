@@ -36,6 +36,7 @@ function sample(list) {
 }
 
 function decayedHalfTurns(halfTurns) {
+  return halfTurns;
   var decayedTurns = 0;
   for (var turn = 0; turn < halfTurns; turn++) {
     decayedTurns += 0.9 ** turn;
@@ -199,7 +200,6 @@ export class Roll {
   constructor(attrs) {
     Object.assign(this, attrs);
 
-    this.onPitchValues = {};
     this.onTeamValues = {};
     this.armorRollCache = {};
     this.dependentRolls = [];
@@ -606,20 +606,6 @@ export class Roll {
     );
   }
 
-  onPitchValue(player) {
-    // The fraction of the teams on-pitch players that this player represents.
-    return this.onPitchValues[player.id] || (
-      this.onPitchValues[player.id] =
-      this.playerValue(player).divide(
-        this.teamValue(
-          player.team,
-          [SITUATION.Active],
-          player
-        ).named(`TPV(${player.team.name})`)
-      ).named(`%PV(${player.name})`)
-    );
-  }
- 
   onTeamValue(player) {
     // The fraction of the teams on-pitch players that this player represents.
     return (
@@ -631,7 +617,9 @@ export class Roll {
             [SITUATION.Active, SITUATION.Reserves, SITUATION.KO],
             player
           ).named('Players on Team')
-        ).named(player.name)
+          // Scale players by the difference between a full team scoring 1.5 points per game
+          // and pitch-cleared opponent scoring 16 points per game
+        ).product(6.5 / 32).named(player.name)
       )
     );
   }

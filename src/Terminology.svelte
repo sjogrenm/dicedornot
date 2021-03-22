@@ -2,13 +2,23 @@
 <dl>
   <dt><a id="value-def">Value</a></dt>
   <dd>
-    An abstraction of how much getting that roll result likely helped your game.
-    Moving the ball from one end of the pitch to the other (scoring a touchdown)
-    is worth 1 point, weighted to your opponents end of the pitch (so moving the
-    last square to get the touchdown has higher value than moving to one square
-    away from the endzone). Knocking down a player (or stunning or removing that
-    player) has a value that is roughly (emperically) based on how much value a
-    player is expected to provide per action.
+    <p>
+      An abstraction of how much getting that roll result likely helped your
+      game. Moving the ball from one end of the pitch to the other (scoring a
+      touchdown) is worth 1 point, weighted to your opponents end of the pitch
+      (so moving the last square to get the touchdown has higher value than
+      moving to one square away from the endzone). Knocking down a player (or
+      stunning or removing that player) has a value that is based on how much
+      value a player is expected to provide per action.
+    </p>
+    <p>
+      Player values is calculated as follows: The base value of the player is
+      the fraction of the total team player TV that player is worth. We expect
+      two full teams to score 1.5 points a game (2-1 grind), and a fully pitch
+      cleared opponent to score 8 points per game (one every two turns). So, we
+      scale the TV fraction down by 6.5 points dividided by 32 half-turns, and
+      count removals by their number of half-turns removed.
+    </p>
 
     <a href="#value-details">More details</a> below.
   </dd>
