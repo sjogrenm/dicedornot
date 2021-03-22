@@ -108,7 +108,7 @@
       "imports": []
     },
     "dist/distribution.js": {
-      "bytes": 9297,
+      "bytes": 9383,
       "imports": []
     },
     "_snowpack/pkg/underscore.js": {
@@ -125,7 +125,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 70570,
+      "bytes": 70324,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -154,7 +154,7 @@
       ]
     },
     "dist/replay.js": {
-      "bytes": 4519,
+      "bytes": 4518,
       "imports": [
         {
           "path": "dist/rolls.js",
@@ -1463,7 +1463,7 @@
       ]
     },
     "dist/Terminology.svelte.js": {
-      "bytes": 4407,
+      "bytes": 4866,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -1663,7 +1663,7 @@
           "bytesInOutput": 48097
         },
         "dist/distribution.js": {
-          "bytesInOutput": 4556
+          "bytesInOutput": 4626
         },
         "_snowpack/pkg/underscore.js": {
           "bytesInOutput": 19399
@@ -1672,10 +1672,10 @@
           "bytesInOutput": 86711
         },
         "dist/rolls.js": {
-          "bytesInOutput": 37903
+          "bytesInOutput": 37699
         },
         "dist/replay.js": {
-          "bytesInOutput": 2383
+          "bytesInOutput": 2382
         },
         "_snowpack/pkg/idb-keyval.js": {
           "bytesInOutput": 716
@@ -1960,7 +1960,7 @@
           "bytesInOutput": 677
         },
         "dist/Terminology.svelte.js": {
-          "bytesInOutput": 3394
+          "bytesInOutput": 3853
         },
         "dist/Todo.svelte.js": {
           "bytesInOutput": 3001
@@ -1975,7 +1975,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1410850
+      "bytes": 1411174
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
