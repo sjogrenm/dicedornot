@@ -744,7 +744,7 @@ export class Roll {
 
     let result;
     if (futureActions.length) {
-      result = Math.max(0, futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0));
+      result = futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0);
     } else {
       result = this.onTeamValue(player);
     }
