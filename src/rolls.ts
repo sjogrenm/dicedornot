@@ -15,6 +15,8 @@ import {
   KICKOFF_RESULT,
   KICKOFF_RESULT_NAMES,
   ROLL,
+  PLAYER_TYPE,
+  SIDE,
 } from './constants.js';
 import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP, REPLAY_KEY } from './replay-utils.js';
 import {
@@ -25,6 +27,11 @@ import {
   MaxDistribution,
   Distribution
 } from './distribution.js';
+import type {
+  Cell,
+  TeamState,
+  SkillInfo,
+} from './BB2Replay.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
@@ -73,8 +80,16 @@ const POINT = {
 }
 
 class Player {
-  team;
+  team: Team;
   playerState;
+  name: string;
+  id: number;
+  playerType: PLAYER_TYPE;
+  cell: Cell;
+  situation: SITUATION;
+  canAct: boolean;
+  skills: Array<SKILL>;
+  isBallCarrier: boolean;
 
   constructor(team, playerState, boardState) {
     this.team = team;
@@ -123,7 +138,14 @@ class Player {
 }
 
 class Team {
-  teamState;
+  players: Array<Player>;
+  name: string;
+  id: number;
+  turn: number;
+  fame: number
+  teamState: TeamState;
+  blitzerId: number;
+
   constructor(teamState, boardState) {
     this.players = teamState.ListPitchPlayers.PlayerState.map(
       (playerState) => new Player(this, playerState, boardState)
@@ -133,6 +155,7 @@ class Team {
     this.turn = teamState.GameTurn || 1;
     this.fame = teamState.Fame || 0;
     this.teamState = teamState;
+    this.blitzerId = teamState.BlitzerId;
   }
 
   get shortName() {
@@ -143,10 +166,20 @@ class Team {
   }
 }
 
+interface Arguments {
+  teams: Array<Team>,
+  activeTeamId: number,
+  ballCell: Cell
+}
+
 class BoardState {
-  teams;
-  activeTeam;
-  turn;
+  ballCell: Cell;
+  teams: Array<Team>;
+  activeTeamId: number;
+  activeTeam: Team;
+  turn: number;
+  replayStep: number;
+  action: number;
 
   constructor({ teams, activeTeamId, ballCell }) {
     this.teams = teams;
@@ -156,12 +189,15 @@ class BoardState {
     this.ballCell = ballCell;
   }
   static argsFromXml(boardState) {
-    const args = {};
-    args.teams = boardState.ListTeams.TeamState.map(
+    let teams = boardState.ListTeams.TeamState.map(
       (teamState) => new Team(teamState, boardState)
     );
-    args.activeTeamId = boardState.ActiveTeam;
-    args.ballCell = boardState.Ball.Cell;
+    let activeTeamId = boardState.ActiveTeam || 0;
+    let args = {
+      teams,
+      activeTeamId,
+      ballCell: boardState.Ball.Cell,
+    }
     return args;
   }
 
@@ -191,19 +227,57 @@ class BoardState {
   }
 }
 
-export class Roll {
-  static handledSkills = [];
-  static diceSeparator = ', '
-  static dependentConditions = [];
-  static hideDependents = false;
+interface RollArgs<Dice> {
+  initialBoardState: BoardState,
+  finalBoardState: BoardState,
+  skillsInEffect: Array<SkillInfo>,
+  rollStatus: ROLL_STATUS,
+  activePlayer: Player,
+  rollType: ROLL,
+  dice: Array<Dice>
+  unhandledSkills: Array<SkillInfo>,
+  ignore: boolean,
+  actionType: ACTION_TYPE,
+  resultType: RESULT_TYPE,
+  subResultType: SUB_RESULT_TYPE,
+  startIndex: ReplayPosition,
+  isReroll: boolean,
+  gameLength: number,
+}
 
-  constructor(attrs) {
+export class Roll<Dice> {
+  _futurePlayerValue: Map<number, Distribution>;
+  activePlayer: Player;
+  armorRollCache: Map<string, ArmorRoll>;
+  dependentIndex?: number;
+  dependentOn?: Roll<any>;
+  dependentRolls: Array<Roll<any>>;
+  dice: Array<Dice>;
+  finalBoardState: BoardState;
+  gameLength: number;
+  initialBoardState: BoardState;
+  isReroll: boolean;
+  onTeamValues: Map<number, number>;
+  rollIndex: number;
+  rolls: Array<Roll<any>>;
+  rollStatus: ROLL_STATUS;
+  rollType: ROLL;
+  skillsInEffect: Array<SkillInfo>;
+  startIndex: ReplayPosition;
+  unhandledSkills: Array<SkillInfo>;
+  get rollName() { return `Unnamed Roll ${this.constructor.name}`; }
+  static handledSkills = [];
+  get diceSeparator() { return ', '; }
+  static hideDependents = false;
+  readonly dependentConditions: Array<Function> = [];
+
+  constructor(attrs: RollArgs<Dice>) {
     Object.assign(this, attrs);
 
-    this.onTeamValues = {};
-    this.armorRollCache = {};
+    this.onTeamValues = new Map();
+    this.armorRollCache = new Map();
     this.dependentRolls = [];
-    this._futurePlayerValue = {};
+    this._futurePlayerValue = new Map();
 
     console.assert(
       !this.unhandledSkills || this.unhandledSkills.length == 0,
@@ -220,30 +294,40 @@ export class Roll {
     );
   }
 
-  static argsFromXml(xml) {
-    const args = {};
+  static argsFromXml(xml): RollArgs<any> {
 
-    args.initialBoardState = new BoardState(BoardState.argsFromXml(xml.initialBoard));
-    args.finalBoardState = new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState));
-    var activePlayerId = xml.action.PlayerId;
-    args.activePlayer = args.initialBoardState.playerById(activePlayerId);
-    args.rollType = xml.boardActionResult.RollType;
-    args.dice = this.dice(xml.boardActionResult);
-    args.skillsInEffect = ensureList(
+    const initialBoardState = new BoardState(BoardState.argsFromXml(xml.initialBoard));
+    const activePlayerId = xml.action.PlayerId;
+
+    const skillsInEffect = ensureList(
       xml.boardActionResult.CoachChoices.ListSkills.SkillInfo
     );
-    args.unhandledSkills = args.skillsInEffect.filter(
-      (skillInfo) => !this.handledSkills.includes(skillInfo.SkillId)
-    );
-    args.ignore = this.ignore(xml);
-    args.actionType = xml.action.ActionType;
-    args.rollStatus = xml.boardActionResult.RollStatus;
-    args.resultType = xml.boardActionResult.ResultType;
-    args.subResultType = xml.boardActionResult.SubResultType;
-    args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.BoardAction, xml.actionIndex, xml.resultIndex);
-    args.isReroll = [ROLL_STATUS.RerollTaken, ROLL_STATUS.RerollWithSkill, ROLL_STATUS.RerollWithSkillChoice, ROLL_STATUS.RerollWithFailedOutcome].includes(args.rollStatus);
-    args.gameLength = xml.gameLength;
-    return args;
+    const rollStatus = xml.boardActionResult.RollStatus;
+
+    return {
+      initialBoardState,
+      skillsInEffect,
+      rollStatus,
+      finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),
+      activePlayer: initialBoardState.playerById(activePlayerId),
+      rollType: xml.boardActionResult.RollType,
+      dice: this.dice(xml.boardActionResult),
+      unhandledSkills: skillsInEffect.filter(
+        (skillInfo: SkillInfo) => !this.handledSkills.includes(skillInfo.SkillId)
+      ),
+      ignore: this.ignore(xml),
+      actionType: xml.action.ActionType,
+      resultType: xml.boardActionResult.ResultType,
+      subResultType: xml.boardActionResult.SubResultType,
+      startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.BoardAction, xml.actionIndex, xml.resultIndex),
+      isReroll: [
+        ROLL_STATUS.RerollTaken,
+        ROLL_STATUS.RerollWithSkill,
+        ROLL_STATUS.RerollWithSkillChoice,
+        ROLL_STATUS.RerollWithFailedOutcome
+      ].includes(rollStatus),
+      gameLength: xml.gameLength,
+    };
   }
 
   get nextRoll() {
@@ -270,10 +354,6 @@ export class Roll {
     return this.finalBoardState.turn;
   }
 
-  get rollName() {
-    return this.constructor.rollName;
-  }
-
   get jointDescription() {
     return [this.description].concat(this.dependentRolls.map(roll => roll.shortDescription || roll.description)).join(" \u2192 ");
   }
@@ -287,14 +367,14 @@ export class Roll {
   }
 
   get shortDescription() {
-    return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.join(this.constructor.diceSeparator)}`;
+    return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.join(this.diceSeparator)}`;
   }
 
   isDependentRoll(roll) {
-    return this.constructor.dependentConditions.some(cond => cond(this, roll));
+    return this.dependentConditions.some(cond => cond(this, roll));
   }
 
-  value(dice, expected) {
+  value(dice?: Array<Dice>, expected?: boolean): Distribution | number {
     throw 'value must be defined by subclass';
   }
   get expectedValue() {
@@ -507,7 +587,7 @@ export class Roll {
     let dice = kickoffRoll.dice;
     let diceSum = dice[0] + dice[1];
     let rollClass = KICKOFF_RESULT_TYPES[diceSum];
-    let rolls = [kickoffRoll];
+    let rolls: Array<Roll<any> | UnknownRoll> = [kickoffRoll];
     if (rollClass === null) {
     } else if (!rollClass) {
       rolls.push(new UnknownRoll(`Unknown Kickoff Event ${diceSum}`, replayStep));
@@ -638,7 +718,7 @@ export class Roll {
     );
   }
 
-  knockdownValue(player, includeExpectedValues, damageBonusActive) {
+  knockdownValue(player, includeExpectedValues = false, damageBonusActive = false) {
     // Return the number of half-turns the player is unavailable times the
     // fraction of current team value it represents
     const playerValue = this.onTeamValue(player);
@@ -708,7 +788,7 @@ export class Roll {
 
   get dependentMoveValues() {
     const dependentMoves = this.dependentRolls.filter(
-      roll => roll.constructor == MoveAction
+      roll => roll instanceof MoveAction
     );
     if (dependentMoves.length > 0) {
       return new SumDistribution(
@@ -825,8 +905,19 @@ function catchOrInterception(roll, dependent) {
   return [CatchRoll, InterceptionRoll].includes(dependent.constructor);
 }
 
-export class BlockRoll extends Roll {
-  static rollName = "Block";
+interface BlockRollArgs extends RollArgs<BLOCK> {
+  isRedDice: boolean,
+  attacker: Player,
+  defender: Player,
+  isBlitz: boolean,
+}
+
+export class BlockRoll extends Roll<BLOCK> {
+  isRedDice: boolean;
+  attacker: Player;
+  defender: Player;
+  isBlitz: boolean;
+  get rollName() { return "Block"; }
   static handledSkills = [
     SKILL.Tackle,
     SKILL.Dodge,
@@ -837,17 +928,20 @@ export class BlockRoll extends Roll {
     SKILL.Wrestle,
     SKILL.TakeRoot
   ];
-  static diceSeparator = '/';
+  get diceSeparator() { return '/'; }
   static dependentConditions = [pushOrFollow, nonFoulDamage, reroll, samePlayerMove];
 
-  static argsFromXml(xml) {
-    const args = super.argsFromXml(xml);
-    args.isRedDice = xml.boardActionResult.Requirement < 0;
-    args.attacker = args.activePlayer;
-    args.defender = args.finalBoardState.playerAtPosition(
-      xml.action.Order.CellTo.Cell
-    );
-    return args;
+  static argsFromXml(xml): BlockRollArgs {
+    let args = super.argsFromXml(xml);
+    return {
+      ...args,
+      isRedDice: xml.boardActionResult.Requirement < 0,
+      attacker: args.activePlayer,
+      defender: args.finalBoardState.playerAtPosition(
+        xml.action.Order.CellTo.Cell
+      ),
+      isBlitz: args.activePlayer.team.blitzerId == args.activePlayer.id,
+    }
   }
 
   static dice(boardActionResult) {
@@ -868,7 +962,7 @@ export class BlockRoll extends Roll {
         : '';
     return `${this.rollName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name
       }${attackerSkills} against ${this.defender.name
-      }${defenderSkills} - ${this.dice.join(this.constructor.diceSeparator)}${uphill}`;
+      }${defenderSkills} - ${this.dice.join(this.diceSeparator)}${uphill}`;
   }
 
   static ignore(xml) {
@@ -972,7 +1066,7 @@ export class BlockRoll extends Roll {
     }
   }
 
-  value(dice, expected) {
+  value(dice, expected): Distribution {
     if (
       this.dependentRolls.length > 0 &&
       this.dependentRolls[0].rollType == this.rollType &&
@@ -1044,18 +1138,29 @@ export class BlockRoll extends Roll {
   }
 }
 
-class FansRoll extends Roll {
-  static rollName = "Fans";
+class FansRoll extends Roll<number> {
+  get rollName() { return "Fans"; }
   // TODO: Need to capture both teams rolls, because result is about comparison.
 }
 
+interface ModifiedD6SumRollArgs extends RollArgs<number> {
+  target: number,
+  modifier: number,
+}
 
-export class ModifiedD6SumRoll extends Roll {
-  static numDice = 1;
-  static diceSeparator = '+'
+
+export class ModifiedD6SumRoll extends Roll<number> {
+  target: number;
+  modifier: number;
+  get computedTarget() { return 0; }
+  get computedModifier() { return 0; }
+  get numDice() { return 1 };
+  get diceSeparator() { return '+' }
+  get rerollSkill() { return undefined; }
+  get rerollCancelSkill() { return undefined; }
   static dependentConditions = [reroll, samePlayerMove];
 
-  constructor(args) {
+  constructor(args: ModifiedD6SumRollArgs) {
     super(args);
     console.assert(
       !this.computedTarget ||
@@ -1076,22 +1181,22 @@ export class ModifiedD6SumRoll extends Roll {
       this
     );
     console.assert(
-      this.dice === undefined || this.constructor.numDice == this.dice.length,
+      this.dice === undefined || this.numDice == this.dice.length,
       'Mismatch in number of dice (%d) and expected number of dice (%d)',
       this.dice && this.dice.length,
-      this.constructor.numDice,
+      this.numDice,
       this
     );
   }
 
-  static argsFromXml(xml) {
-    const args = super.argsFromXml(xml);
-    args.modifier =
-      ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
+  static argsFromXml(xml): ModifiedD6SumRollArgs {
+    return {
+      ...super.argsFromXml(xml),
+      modifier: ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
         .map((modifier) => modifier.Value || 0)
-        .reduce((a, b) => a + b, 0) || 0;
-    args.target = xml.boardActionResult.Requirement;
-    return args;
+        .reduce((a, b) => a + b, 0) || 0,
+      target: xml.boardActionResult.Requirement,
+    }
   }
 
   get description() {
@@ -1115,7 +1220,7 @@ export class ModifiedD6SumRoll extends Roll {
     var target =
       (this.target || this.computedTarget) -
       (this.modifier || this.computedModifier || 0);
-    if (this.constructor.numDice == 1) {
+    if (this.numDice == 1) {
       return Math.min(6, Math.max(2, target));
     } else {
       return target;
@@ -1138,7 +1243,7 @@ export class ModifiedD6SumRoll extends Roll {
 
   get diceSums() {
     var diceSums = [0];
-    for (var die = 0; die < this.constructor.numDice; die++) {
+    for (var die = 0; die < this.numDice; die++) {
       var newSums = [];
       for (var face = 1; face <= 6; face++) {
         for (const sum of diceSums) {
@@ -1152,7 +1257,7 @@ export class ModifiedD6SumRoll extends Roll {
     return diceSums;
   }
 
-  value(dice, expected) {
+  value(dice, expected): Distribution {
     let rollTotal = dice.reduce((a, b) => a + b, 0);
     if (rollTotal >= this.modifiedTarget) {
       return this.passValue(expected, rollTotal, this.modifiedTarget).add(expected ? this.dependentMoveValues : null);
@@ -1222,7 +1327,7 @@ export class ModifiedD6SumRoll extends Roll {
     return new SimpleDistribution(outcomes);
   }
   get reroll() {
-    const reroll = new this.constructor({
+    const reroll = new (this.constructor as any)({
       ...this,
       rollStatus: ROLL_STATUS.RerollWithSkill
     });
@@ -1231,91 +1336,125 @@ export class ModifiedD6SumRoll extends Roll {
 
   }
   get hasSkillReroll() {
-    return this.activePlayer.skills.includes(this.constructor.rerollSkill) &&
-      !this.skillsInEffect.map(info => info.SkillId).includes(this.constructor.rerollCancelSkill) &&
+    return this.activePlayer.skills.includes(this.rerollSkill) &&
+      !this.skillsInEffect.map(info => info.SkillId).includes(this.rerollCancelSkill) &&
       ![ROLL_STATUS.RerollWithSkill, ROLL_STATUS.RerollTaken].includes(this.rollStatus);
   }
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
   }
-  passValue() {
+  passValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
     return new SingleValue("Pass", 0);
   }
-  failValue() {
+  failValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
     return new SingleValue("Fail", 0);
   }
 }
 
 class PickupRoll extends ModifiedD6SumRoll {
-  static rollName = "Pickup";
-  static rerollSkill = SKILL.SureHands;
+  get rollName() { return "Pickup"; }
+  get rerollSkill() { return SKILL.SureHands; }
   static handledSkills = [SKILL.SureHands, SKILL.BigHand, SKILL.ExtraArms];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.turnoverValue;
   }
 }
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
-  static rollName = "Bone Head";
+  get rollName() { return "Bone Head"; }
   static handledSkills = [SKILL.BoneHead];
   static dependentConditions = [reroll, samePlayerMove];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class ReallyStupidRoll extends ModifiedD6SumRoll {
-  static rollName = "Really Stupid";
+  get rollName() { return "Really Stupid"; }
   static handledSkills = [SKILL.ReallyStupid];
   static dependentConditions = [reroll, samePlayerMove];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class FoulAppearanceRoll extends ModifiedD6SumRoll {
-  static rollName = "Foul Appearance";
+  get rollName() { return "Foul Appearance"; }
   static handledSkills = [SKILL.FoulAppearance];
   static dependentConditions = [reroll, samePlayerMove];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return -this.onTeamValue(this.activePlayer);
   }
 }
 
+interface ArmorRollArgs extends ModifiedD6SumRollArgs {
+  foulingPlayer?: Player,
+  pilingOnPlayer?: Player,
+  canPileOn: boolean,
+  isFoul: boolean,
+  isPileOn: boolean,
+  damageBonusActive: boolean,
+}
+
 class ArmorRoll extends ModifiedD6SumRoll {
-  static numDice = 2;
+  foulingPlayer?: Player;
+  pilingOnPlayer?: Player;
+  canPileOn: boolean;
+  isFoul: boolean;
+  isPileOn: boolean;
+  injuryRollCache: Map<boolean, InjuryRoll>;
+  damageBonusActive: boolean;
+
+  get numDice() { return 2; }
   static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
   static dependentConditions = [foulDamage];
 
   constructor(attrs) {
     super(attrs);
-    this.injuryRollCache = {};
+    this.injuryRollCache = new Map();
   }
 
-  static argsFromXml(xml) {
+  static argsFromXml(xml): ArmorRollArgs {
     const args = super.argsFromXml(xml);
+
+    let canPileOn, isPileOn, isFoul, foulingPlayer, pilingOnPlayer, damageBonusActive;
+
+    if (args.rollType == ROLL.PileOnArmorRoll) {
+      // The first time you see it, without an IsOrderComplete, is the choice to use PileOn
+      // The second time, with IsOrderComplete, is an actual PileOn (but there are no dice associated)
+      // If there's no IsOrderComplete, then it will show up as a normal injury roll.
+      canPileOn = xml.boardActionResult.IsOrderComplete == undefined;
+    }
 
     // An Armor PileOn has a IsOrderCompleted RollType 60 right before it
     if (xml.resultIndex == 0) {
-      args.isPileOn = false;
+      isPileOn = false;
     } else {
       var previousResult =
         xml.action.Results.BoardActionResult[xml.resultIndex - 1];
-      args.isPileOn = previousResult.RollType == 59;
-      if (args.isPileOn) {
+      isPileOn = previousResult.RollType == 59;
+      if (isPileOn) {
         var previousSkills = ensureList(previousResult.CoachChoices.ListSkills.SkillInfo);
-        args.pilingOnPlayer = args.finalBoardState.playerById(
+        pilingOnPlayer = args.finalBoardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
         );
       }
     }
-    args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
-    if (args.isFoul) {
-      args.foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
-      args.damageBonusActive = args.foulingPlayer.skills.includes(SKILL.DirtyPlayer);
+    isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
+    if (isFoul) {
+      foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
+      damageBonusActive = foulingPlayer.skills.includes(SKILL.DirtyPlayer);
     }
-    return args;
+    return {
+      ...args,
+      canPileOn,
+      isPileOn,
+      isFoul,
+      foulingPlayer,
+      pilingOnPlayer,
+      damageBonusActive,
+    };
   }
 
   get description() {
@@ -1329,7 +1468,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
           ? ` (${this.activePlayer.skillNames.join(', ')})`
           : '';
       return `${this.rollName}: [${this.foulingPlayer.team.shortName}] ${this.foulingPlayer.name
-        }${foulerSkills} against ${this.activePlayer.name}${fouledSkills} - ${this.dice.join(this.constructor.diceSeparator)}`;
+        }${foulerSkills} against ${this.activePlayer.name}${fouledSkills} - ${this.dice.join(this.diceSeparator)}`;
     } else {
       return super.description;
     }
@@ -1353,18 +1492,34 @@ class ArmorRoll extends ModifiedD6SumRoll {
     return this.damageBonusActive ? 1 : 0;
   }
 
-  injuryRoll(damageBonusAvailable) {
-    let result = this.injuryRollCache[damageBonusAvailable] ||
-      (this.injuryRollCache[damageBonusAvailable] = new InjuryRoll({
+  injuryRoll(damageBonusAvailable: boolean, canPileOn: boolean, isFoul: boolean) {
+    let key = `${damageBonusAvailable}-${canPileOn}-${isFoul}`;
+    let result = this.injuryRollCache[key] ||
+      (this.injuryRollCache[key] = new InjuryRoll({
         initialBoardState: this.initialBoardState,
         finalBoardState: this.finalBoardState,
         activePlayer: this.activePlayer,
         modifier: damageBonusAvailable ? 1 : 0,
+        skillsInEffect: [],
+        canPileOn,
+        isPileOn: false,
+        isFoul,
+        rollStatus: undefined,
+        rollType: undefined,
+        dice: [],
+        ignore: false,
+        unhandledSkills: [],
+        actionType: undefined,
+        resultType: undefined,
+        subResultType: undefined,
+        startIndex: undefined,
+        isReroll: false,
+        gameLength: this.gameLength,
       }));
     return result;
   }
 
-  value(dice, expected) {
+  value(dice, expected): Distribution {
     var value = super.value(dice, expected);
     if (this.isFoul && dice[0] == dice[1]) {
       value = value.add(this.casValue(this.foulingPlayer).named('Sent Off'), this.turnoverValue);
@@ -1379,7 +1534,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     }
     var injuredPlayerValue = this.stunValue(this.activePlayer).subtract(this.knockdownValue(this.activePlayer)); // Player is at least stunned = out for 2 turns
     if (expected) {
-      injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll(damageBonusAvailable).possibleOutcomes.named('Injury Roll'));
+      injuredPlayerValue = injuredPlayerValue.add(this.injuryRoll(damageBonusAvailable, this.canPileOn && !this.isPileOn, this.isFoul).possibleOutcomes.named('Injury Roll'));
     }
     if (this.isPileOn) {
       const pileOnCost = this.knockdownValue(this.pilingOnPlayer, false);
@@ -1389,7 +1544,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     }
   }
 
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     var value = new SingleValue('No Break', 0);
     if (this.isPileOn) {
       // Using Piling On means the piling on player is out for a whole turn;
@@ -1421,10 +1576,10 @@ class ArmorRoll extends ModifiedD6SumRoll {
 }
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
-  static rollName = "Wild Animal";
+  get rollName() { return "Wild Animal"; }
   static handledSkills = [SKILL.WildAnimal];
   static dependentConditions = [reroll, samePlayerMove];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     // Failing Wild Animal means that this player is effectiFvely unavailable
     // for the rest of your turn, but is active on your opponents turn
     return -this.onTeamValue(this.activePlayer);
@@ -1432,19 +1587,28 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
 }
 
 class DauntlessRoll extends ModifiedD6SumRoll {
-  static rollName = "Dauntless";
+  get rollName() { return "Dauntless"; }
   static handledSkills = [SKILL.Dauntless];
 }
 
+interface MoveRollArgs extends ModifiedD6SumRollArgs {
+  cellFrom: Cell,
+  cellTo: Cell,
+}
+
 class DodgeRoll extends ModifiedD6SumRoll {
-  static rollName = "Dodge";
+  cellFrom: Cell;
+  cellTo: Cell;
+
+  get rollName() { return "Dodge"; }
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
-  static rerollSkill = SKILL.Dodge;
-  static rerollCancelSkill = SKILL.Tackle;
+  get rerollSkill() { return SKILL.Dodge; }
+  get rerollCancelSkill() { return SKILL.Tackle; }
   static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
 
-  static argsFromXml(xml) {
+  static argsFromXml(xml): MoveRollArgs {
     let args = super.argsFromXml(xml);
+    let target, modifier;
     if (
       [
         SUB_RESULT_TYPE.ChoiceUseDodgeTackle,
@@ -1455,19 +1619,23 @@ class DodgeRoll extends ModifiedD6SumRoll {
       // pull them from the later roll
       let nextActions = ensureList(xml.replay.ReplayStep[xml.stepIndex + 1].RulesEventBoardAction)
       let nextResults = ensureList(nextActions[0].Results.BoardActionResult);
-      args.target = nextResults[0].Requirement;
-      args.modifier = ensureList(nextResults[0].ListModifiers.DiceModifier || [])
+      target = nextResults[0].Requirement;
+      modifier = ensureList(nextResults[0].ListModifiers.DiceModifier || [])
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
     }
-    args.cellFrom = xml.action.Order.CellFrom;
-    args.cellTo = xml.action.Order.CellTo.Cell;
-    return args
+    return {
+      ...args,
+      cellFrom: xml.action.Order.CellFrom,
+      cellTo: xml.action.Order.CellTo.Cell,
+      target,
+      modifier
+    }
   }
-  failValue(expected) {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
   }
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     if (this.activePlayer && this.activePlayer.isBallCarrier) {
       return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
         ballPositionValue(this.activePlayer.team, this.cellFrom)
@@ -1479,9 +1647,9 @@ class DodgeRoll extends ModifiedD6SumRoll {
 }
 
 class JumpUpRoll extends ModifiedD6SumRoll {
-  static rollName = "Jump-Up";
+  get rollName() { return "Jump-Up"; }
   static handledSkills = [SKILL.JumpUp];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     // Jump Up failure means the block fails to activate, so the player is no longer
     // available for this turn.
     return -this.onTeamValue(this.activePlayer);
@@ -1489,18 +1657,21 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 }
 
 class LeapRoll extends ModifiedD6SumRoll {
-  static rollName = "Leap";
+  cellFrom: Cell;
+  cellTo: Cell;
+  get rollName() { return "Leap"; }
   static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
-  static argsFromXml(xml) {
-    let args = super.argsFromXml(xml);
-    args.cellFrom = xml.action.Order.CellFrom;
-    args.cellTo = xml.action.Order.CellTo.Cell;
-    return args
+  static argsFromXml(xml): MoveRollArgs {
+    return {
+      ...super.argsFromXml(xml),
+      cellFrom: xml.action.Order.CellFrom,
+      cellTo: xml.action.Order.CellTo.Cell,
+    };
   }
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer).add(this.turnoverValue);
   }
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     if (this.activePlayer && this.activePlayer.isBallCarrier) {
       return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
         ballPositionValue(this.activePlayer.team, this.cellFrom)
@@ -1512,11 +1683,11 @@ class LeapRoll extends ModifiedD6SumRoll {
 }
 
 class PassRoll extends ModifiedD6SumRoll {
-  static rollName = "Pass";
-  static rerollSkill = SKILL.Pass;
+  get rollName() { return "Pass"; }
+  get rerollSkill() { return SKILL.Pass; }
   static handledSkills = [SKILL.Pass, SKILL.StrongArm, SKILL.Accurate];
   static dependentConditions = [catchOrInterception, samePlayerMove, reroll];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
     // TODO: Account for fumbles.
@@ -1525,10 +1696,10 @@ class PassRoll extends ModifiedD6SumRoll {
 }
 
 class ThrowTeammateRoll extends ModifiedD6SumRoll {
-  static rollName = "Throw Teammate";
+  get rollName() { return "Throw Teammate"; }
   static handledSkills = [SKILL.ThrowTeamMate];
   static dependentConditions = [samePlayerMove, reroll];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Throw teammate only turns over if the thrown player has the ball, and even then, only
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
@@ -1539,22 +1710,22 @@ class ThrowTeammateRoll extends ModifiedD6SumRoll {
 }
 
 class InterceptionRoll extends ModifiedD6SumRoll {
-  static rollName = "Intercept";
+  get rollName() { return "Intercept"; }
   static handledSkills = [SKILL.ExtraArms];
   // Interception rolls on the thrower, not the interceptee. If it "passes",
   // then the ball is caught
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     return this.turnoverValue;
   }
 }
 
 class WakeUpRoll extends ModifiedD6SumRoll {
-  static rollName = "Wake Up";
+  get rollName() { return "Wake Up"; }
   constructor(attrs) {
     super(attrs);
     this.finalBoardState.activeTeam = this.activePlayer.team;
   }
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     const playerValue =
       this.onTeamValue(this.activePlayer)
     let turnsInGame = this.halfTurnsInGame;
@@ -1569,22 +1740,25 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
-  static rollName = "GFI";
+  cellFrom: Cell;
+  cellTo: Cell;
+  get rollName() { return "GFI"; }
   static handledSkills = [SKILL.SureFeet];
-  static rerollSkill = SKILL.SureFeet;
+  get rerollSkill() { return SKILL.SureFeet; }
   static dependentConditions = [nonFoulDamage, reroll, samePlayerMove];
 
-  static argsFromXml(xml) {
-    const args = super.argsFromXml(xml);
-    args.cellFrom = xml.action.Order.CellFrom;
-    args.cellTo = xml.action.Order.CellTo.Cell;
-    return args;
+  static argsFromXml(xml): MoveRollArgs {
+    return {
+      ...super.argsFromXml(xml),
+      cellFrom: xml.action.Order.CellFrom,
+      cellTo: xml.action.Order.CellTo.Cell,
+    };
   }
 
-  failValue(expected) {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, expected).add(this.turnoverValue);
   }
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     if (this.activePlayer && this.activePlayer.isBallCarrier) {
       return ballPositionValue(this.activePlayer.team, this.cellTo).subtract(
         ballPositionValue(this.activePlayer.team, this.cellFrom)
@@ -1596,104 +1770,138 @@ class GFIRoll extends ModifiedD6SumRoll {
 }
 
 class CatchRoll extends ModifiedD6SumRoll {
-  static rollName = "Catch";
+  get rollName() { return "Catch"; }
   static handledSkills = [SKILL.DisturbingPresence, SKILL.Catch, SKILL.ExtraArms];
-  static rerollSkill = SKILL.Catch;
+  get rerollSkill() { return SKILL.Catch; }
 
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.turnoverValue;
   }
 }
 
 class StandUpRoll extends ModifiedD6SumRoll {
-  static rollName = "Stand Up";
-  failValue() {
+  get rollName() { return "Stand Up"; }
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class TakeRootRoll extends ModifiedD6SumRoll {
-  static rollName = "Take Root";
+  get rollName() { return "Take Root"; }
   static handledSkills = [SKILL.TakeRoot];
-  failValue() {
+  failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
 }
 
 class LandingRoll extends ModifiedD6SumRoll {
-  static rollName = "Landing";
+  get rollName() { return "Landing"; }
   static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
-  failValue(expected) {
+  failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Handle a turnover if the thrown player has the ball
     return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
 class FireballRoll extends ModifiedD6SumRoll {
-  static rollName = "Fireball";
+  get rollName() { return "Fireball"; }
   static dependentConditions = [nonFoulDamage];
-  passValue(expected) {
+  passValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
-  static rollName = "Lightning Bolt";
+  get rollName() { return "Lightning Bolt"; }
   static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
     args.activePlayer = args.initialBoardState.playerAtPosition(xml.action.Order.CellTo.Cell);
     return args;
   }
-  passValue(expected) {
+  passValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, expected);
   }
 }
 
-export class InjuryRoll extends Roll {
+interface InjuryRollArgs extends RollArgs<number> {
+  canPileOn: boolean,
+  isPileOn: boolean,
+  pilingOnPlayer?: Player,
+  isFoul: boolean,
+  foulingPlayer?: Player,
+  modifier: number
+}
+
+interface Outcome {
+  name: string,
+  value: Distribution,
+}
+
+export class InjuryRoll extends Roll<number> {
+  canPileOn: boolean;
+  isPileOn: boolean;
+  pilingOnPlayer?: Player;
+  isFoul: boolean;
+  foulingPlayer?: Player;
+  modifier: number;
+
+  constructor(args: InjuryRollArgs) {
+    super(args);
+  }
+
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
-  static diceSeparator = '+';
+  get diceSeparator() { return '+'; }
   static dependentConditions = [reroll];
 
-  static argsFromXml(xml) {
+  static argsFromXml(xml): InjuryRollArgs {
     const args = super.argsFromXml(xml);
+    let canPileOn, isPileOn, pilingOnPlayer, isFoul, foulingPlayer, modifier;
 
     if (args.rollType == ROLL.PileOnInjuryRoll) {
       // The first time you see it, without an IsOrderComplete, is the choice to use PileOn
       // The second time, with IsOrderComplete, is an actual PileOn (but there are no dice associated)
       // If there's no IsOrderComplete, then it will show up as a normal injury roll.
-      args.canPileOn = xml.boardActionResult.IsOrderComplete == undefined;
+      canPileOn = xml.boardActionResult.IsOrderComplete == undefined;
     }
 
     // An Injury PileOn has a IsOrderCompleted RollType 60 right before it
     if (xml.resultIndex == 0) {
-      args.isPileOn = false;
+      isPileOn = false;
     } else {
       var previousResult =
         xml.action.Results.BoardActionResult[xml.resultIndex - 1];
-      args.isPileOn = previousResult.RollType == 60;
-      if (args.isPileOn) {
+      isPileOn = previousResult.RollType == 60;
+      if (isPileOn) {
         var previousSkills = ensureList(
           previousResult.CoachChoices.ListSkills.SkillInfo
         );
-        args.pilingOnPlayer = args.finalBoardState.playerById(
+        pilingOnPlayer = args.finalBoardState.playerById(
           previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
             .PlayerId
         );
       }
     }
 
-    args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
-    if (args.isFoul) {
-      args.foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
+    isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
+    if (isFoul) {
+      foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
     }
 
-    args.modifier =
+    modifier =
       ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
 
-    return args;
+    return {
+      ...args,
+      canPileOn,
+      isPileOn,
+      pilingOnPlayer,
+      isFoul,
+      foulingPlayer,
+      modifier,
+    };
   }
 
   get shortDescription() {
@@ -1767,7 +1975,7 @@ export class InjuryRoll extends Roll {
     return this.diceCombinations;
   }
 
-  value(dice) {
+  value(dice, expected): Distribution {
     if (this.canPileOn) {
       return new SingleValue(`Pile On Decision Pending`, 0);
     }
@@ -1792,19 +2000,20 @@ export class InjuryRoll extends Roll {
   }
 
   get _possibleOutcomes() {
-    var outcomesByName = {};
+    var outcomesByName: Map<string, Array<Outcome>> = new Map();
     for (var combination of this.diceCombinations) {
-      var outcomeList = outcomesByName[this.value(combination, true).name];
+      let value = this.value(combination, true);
+      var outcomeList = outcomesByName[value.name];
       if (!outcomeList) {
-        outcomeList = outcomesByName[this.value(combination, true).name] = [];
+        outcomeList = outcomesByName[value.name] = [];
       }
       outcomeList.unshift({
         name: (combination[0] + combination[1]).toString(),
-        value: this.value(combination, true)
+        value: value
       });
     }
     return new SimpleDistribution(
-      Object.values(outcomesByName).map((outcomes) => {
+      Array.from(outcomesByName.values()).map((outcomes) => {
         const minOutcome = Math.min(
           ...outcomes.map((outcome) => parseInt(outcome.name))
         );
@@ -1822,17 +2031,22 @@ export class InjuryRoll extends Roll {
   }
 }
 
-export class CasualtyRoll extends Roll {
-  static rollName = "Casualty";
+interface CasualtyRollArgs extends RollArgs<number> {
+  isFoul: boolean,
+}
+export class CasualtyRoll extends Roll<number> {
+  isFoul: boolean;
+  get rollName() { return "Casualty"; }
   static handledSkills = [SKILL.NurglesRot, SKILL.Decay];
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
-  static diceSeparator = '';
+  get diceSeparator() { return ''; }
 
-  static argsFromXml(xml) {
-    const args = super.argsFromXml(xml);
-    args.isFoul = xml.action.ActionType == ACTION_TYPE.FoulAR;
-    return args;
+  static argsFromXml(xml): CasualtyRollArgs {
+    return {
+      ...super.argsFromXml(xml),
+      isFoul: xml.action.ActionType == ACTION_TYPE.FoulAR,
+    };
   }
 
   static dice(BoardActionResult) {
@@ -1861,7 +2075,7 @@ export class CasualtyRoll extends Roll {
       return "Dead!";
     }
   }
-  value(dice) {
+  value(dice, expected): Distribution {
     return new SingleValue("CAS", 0); // Need to figure out how to grade losing player value for multiple matches
     if (dice < 40) {
       return 0; // Badly Hurt
@@ -1892,16 +2106,23 @@ export class CasualtyRoll extends Roll {
 }
 
 class RegenerationRoll extends ModifiedD6SumRoll {
-  static rollName = "Regeneration";
+  get rollName() { return "Regeneration"; }
   static handledSkills = [SKILL.Regeneration];
 
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     return this.koValue(this.activePlayer).product(-0.5).named('Regeneration');
   }
 }
 
-export class MoveAction extends Roll {
-  static rollName = "Move";
+interface MoveActionArgs extends RollArgs<null> {
+  cellFrom: Cell,
+  cellTo: Cell,
+}
+
+export class MoveAction extends Roll<null> {
+  cellFrom: Cell;
+  cellTo: Cell;
+  get rollName() { return "Move"; }
   static dependentConditions = [sameTeamMove];
   static handledSkills = [SKILL.JumpUp];
 
@@ -1909,11 +2130,12 @@ export class MoveAction extends Roll {
     return false;
   }
 
-  static argsFromXml(xml) {
-    const args = super.argsFromXml(xml);
-    args.cellFrom = xml.action.Order.CellFrom;
-    args.cellTo = xml.action.Order.CellTo.Cell;
-    return args;
+  static argsFromXml(xml): MoveActionArgs {
+    return {
+      ...super.argsFromXml(xml),
+      cellFrom: xml.action.Order.CellFrom,
+      cellTo: xml.action.Order.CellTo.Cell,
+    };
   }
   get description() {
     const from = this.cellFrom;
@@ -1940,8 +2162,8 @@ export class MoveAction extends Roll {
   }
 }
 
-class NoValueRoll extends Roll {
-  static ignore() {
+class NoValueRoll extends Roll<number> {
+  static ignore(xml) {
     return true;
   }
   value() {
@@ -1961,13 +2183,22 @@ class NoValueRoll extends Roll {
 function isKickoffRoll(roll, dependent) {
   return dependent instanceof KickoffEventRoll;
 }
-export class KickoffRoll extends Roll {
-  static rollName = "Kickoff";
+
+interface KickoffRollArgs extends RollArgs<number> {
+  diceSum: number,
+  kickoffTeam: SIDE,
+}
+
+export class KickoffRoll extends Roll<number> {
+  kickoffTeam: number;
+  diceSum: number;
+
+  get rollName() { return "Kickoff"; }
   static dependentConditions = [isKickoffRoll];
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml) {
+  static argsFromXml(xml): KickoffRollArgs {
     let dice = translateStringNumberList(xml.kickoff.ListDice);
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
@@ -1976,6 +2207,17 @@ export class KickoffRoll extends Roll {
       diceSum: dice[0] + dice[1],
       startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.Kickoff),
       kickoffTeam: xml.replayStep.BoardState.KickOffTeam || 0,
+      skillsInEffect: [],
+      rollStatus: undefined,
+      activePlayer: undefined,
+      rollType: undefined,
+      unhandledSkills: [],
+      ignore: false,
+      actionType: undefined,
+      resultType: undefined,
+      subResultType: undefined,
+      isReroll: undefined,
+      gameLength: xml.gameLength,
     };
   }
   get description() {
@@ -2071,14 +2313,14 @@ export class KickoffRoll extends Roll {
     return this.diceCombinations;
   }
 
-  value(dice) {
+  value(dice, expected): Distribution {
     var total = dice[0] + dice[1];
     var value = this.kickoffValue(total);
     return value;
   }
 
   get _possibleOutcomes() {
-    var outcomesByName = {};
+    var outcomesByName: Map<string, Array<Distribution>> = new Map();
     for (var combination of this.diceCombinations) {
       var outcomeList = outcomesByName[this.value(combination, true).name];
       if (!outcomeList) {
@@ -2109,24 +2351,58 @@ export class KickoffRoll extends Roll {
   }
 }
 
+interface KickoffEventRollArgs extends ModifiedD6SumRollArgs {
+  kickoffTeam: SIDE,
+  messageData: any,
+}
+
 class KickoffEventRoll extends ModifiedD6SumRoll {
+  kickoffTeam: SIDE;
+  messageData: any;
+
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml) {
+  static argsFromXml(xml): KickoffEventRollArgs {
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
       finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),
       startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.Kickoff),
       messageData: xml.messageData,
-      kickoffTeam: xml.replayStep.BoardState.KickOffTeam || 0,
+      kickoffTeam: xml.replayStep.BoardState.KickOffTeam || SIDE.home,
+      target: undefined,
+      modifier: undefined,
+      skillsInEffect: [],
+      rollStatus: undefined,
+      rollType: undefined,
+      actionType: undefined,
+      activePlayer: undefined,
+      dice: [],
+      unhandledSkills: [],
+      ignore: false,
+      resultType: undefined,
+      subResultType: undefined,
+      isReroll: false,
+      gameLength: xml.gameLength,
     };
   }
 }
 
+interface RulesEventPlayerInvaded {
+  PlayerId: number,
+  Die: number,
+  Stunned?: number,
+}
+
+interface PitchInvasionMessage {
+  RulesEventPlayerInvaded: RulesEventPlayerInvaded,
+}
 
 export class PitchInvasionRoll extends KickoffEventRoll {
-  static rollName = "Pitch Invasion";
+  messageData: PitchInvasionMessage;
+  stunned: boolean;
+
+  get rollName() { return "Pitch Invasion"; }
   constructor(args) {
     super(args);
     this.activePlayer = this.finalBoardState.playerById(this.messageData.RulesEventPlayerInvaded.PlayerId);
@@ -2142,7 +2418,7 @@ export class PitchInvasionRoll extends KickoffEventRoll {
     return `${this.rollName}: ${this.activePlayer.name} ${this.stunned ? 'stunned!' : 'safe'} - ${this.dice[0]} (${this.target})`;
   }
 
-  passValue() {
+  passValue(expected, rollTotal, modifiedTarget) {
     return this.stunValue(this.activePlayer);
   }
 
@@ -2161,10 +2437,10 @@ export class PitchInvasionRoll extends KickoffEventRoll {
 
 
 export class SetupAction extends NoValueRoll {
-  static rollName = "Setup";
+  get rollName() { return "Setup"; }
   static dependentConditions = [setup];
   static hideDependents = true;
-  static ignore() {
+  static ignore(xml) {
     return false;
   }
 
@@ -2179,31 +2455,44 @@ export class SetupAction extends NoValueRoll {
   get shortDescription() {
     return this.description;
   }
-  static argsFromXml(xml) {
-    const args = {};
-
-    args.initialBoardState = new BoardState(BoardState.argsFromXml(xml.initialBoard));
-    args.finalBoardState = new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState));
-    args.ignore = this.ignore(xml);
-    args.startIndex = new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.SetupAction);
-    args.gameLength = xml.gameLength;
-    return args;
+  static argsFromXml(xml): RollArgs<null> {
+    return {
+      initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
+      finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),
+      ignore: this.ignore(xml),
+      startIndex: new ReplayPosition(xml.stepIndex, REPLAY_SUB_STEP.SetupAction),
+      gameLength: xml.gameLength,
+      skillsInEffect: [],
+      rollStatus: undefined,
+      activePlayer: undefined,
+      rollType: undefined,
+      dice: [],
+      unhandledSkills: [],
+      actionType: undefined,
+      resultType: undefined,
+      subResultType: undefined,
+      isReroll: false,
+    };
   }
 }
 
 class PushChoice extends NoValueRoll {
-  static rollName = "Push";
+  get rollName() { return "Push"; }
   static handledSkills = [SKILL.SideStep];
 }
 
 class FollowUpChoice extends NoValueRoll {
-  static rollName = "Follow Up";
+  get rollName() { return "Follow Up"; }
   static handledSkills = [SKILL.Frenzy];
 }
 
 class FoulPenaltyRoll extends NoValueRoll { }
 
 export class UnknownRoll {
+  name: string;
+  xml: any;
+  ignore: boolean;
+
   constructor(name, xml) {
     this.name = name;
     this.xml = xml;
@@ -2279,16 +2568,6 @@ const ROLL_TYPES = {
   73: "Chainsaw Armor",
 };
 
-const KICKOFF_RESULT_TYPES = {
-  [KICKOFF_RESULT.GetTheRef]: "Get The Ref",
-  [KICKOFF_RESULT.Riot]: "Riot",
-  [KICKOFF_RESULT.PerfectDefence]: "Perfect Defence",
-  [KICKOFF_RESULT.HighKick]: "High Kick",
-  [KICKOFF_RESULT.CheeringFans]: "Cheering Fans",
-  [KICKOFF_RESULT.ChangingWeather]: "Changing Weather",
-  [KICKOFF_RESULT.BrilliantCoaching]: "Brilliant Coaching",
-  [KICKOFF_RESULT.QuickSnap]: "Quick Snap",
-  [KICKOFF_RESULT.Blitz]: "Blitz",
-  [KICKOFF_RESULT.ThrowARock]: "Throw A Rock",
-  [KICKOFF_RESULT.PitchInvasion]: PitchInvasionRoll,
-}
+const KICKOFF_RESULT_TYPES: Map<KICKOFF_RESULT, typeof KickoffEventRoll> = new Map([
+  [KICKOFF_RESULT.PitchInvasion, PitchInvasionRoll],
+]);

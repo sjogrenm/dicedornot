@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { ReplayPosition } from './replay-utils';
 
-let startingUrl = new URL(window.location);
+let startingUrl = new URL(window.location.href);
 let target = null;
 if (startingUrl.searchParams.get('st')) {
   target = ReplayPosition.fromParam(startingUrl.searchParams.get('st'));

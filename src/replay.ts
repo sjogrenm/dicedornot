@@ -64,7 +64,7 @@ export function processReplay(data) {
     roll.rolls = validRolls;
   })
   console.log("Transformed rolls...", { validRolls });
-  let activationValues = validRolls.reduce((acc, roll) => {
+  let activationValues: Map<string, Value> = validRolls.reduce((acc, roll) => {
     if (roll.activePlayer) {
       acc[`${roll.turn}-${roll.activePlayer.name}`] = {
         actual: roll.valueWithDependents.valueOf(),
@@ -87,6 +87,11 @@ export function processReplay(data) {
     unknownRolls: rolls.filter(roll => roll instanceof UnknownRoll),
     version: 1,
   };
+}
+
+interface Value {
+  actual: number,
+  expected: number,
 }
 
 export function extractGameDetails(jsonObject) {

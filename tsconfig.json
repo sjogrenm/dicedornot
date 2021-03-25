@@ -9,4 +9,11 @@
         "__sapper__/*",
         "public/*"
     ],
+    "compilerOptions": {
+        "lib": [
+            "es2019",
+            "dom"
+        ],
+        "target": "es6"
+    }
 }

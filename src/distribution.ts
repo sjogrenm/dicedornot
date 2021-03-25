@@ -6,8 +6,20 @@ function isIterable(obj) {
   return typeof obj[Symbol.iterator] === 'function';
 }
 
+interface WeightedValue {
+  name: string,
+  weight: number,
+  value: number | Distribution,
+}
+
+interface SimpleValue extends WeightedValue {
+  value: number,
+}
+
 export class Distribution {
-  constructor(name) {
+  name: string;
+
+  constructor(name?: string) {
     this.name = name;
   }
 
@@ -16,7 +28,7 @@ export class Distribution {
     return this;
   }
 
-  _flat() {
+  _flat(): Array<SimpleValue> {
     throw new Error("${this.constructor}._flat() missing implementation");
   }
   get flat() {
@@ -34,22 +46,6 @@ export class Distribution {
       )
     })
     return this.flat;
-  }
-
-  get cdf() {
-    Object.defineProperty(this, 'cdf', {
-      value: this.flat.sort(
-        (a, b) => a.value - b.value
-      ).reduce(
-        (cdf, result) => {
-          cdf.push({
-            weight: cdf[cdf.length - 1].weight + result.weight,
-            value: result.value,
-          });
-          return cdf;
-        }
-      )
-    })
   }
 
   sample() {
@@ -85,7 +81,7 @@ export class Distribution {
     return this.expectedValue;
   }
 
-  add(...values) {
+  add(...values: Array<Distribution | number>) {
     values = values.filter(value => value !== null);
     if (values.length > 0) {
       return new SumDistribution([this, ...values]);
@@ -94,7 +90,7 @@ export class Distribution {
     }
   }
 
-  product(...values) {
+  product(...values: Array<Distribution | number>) {
     values = values.filter(value => value !== null);
     if (values.length > 0) {
       return new ProductDistribution([this, ...values]);
@@ -142,7 +138,8 @@ export class Distribution {
 }
 
 export class SimpleDistribution extends Distribution {
-  constructor(values, name) {
+  values: Array<WeightedValue>;
+  constructor(values: Array<WeightedValue>, name?: string) {
     super(name)
     const totalWeight = values.map(value => value.weight).reduce((a, b) => a + b);
     values.forEach(value => {
@@ -178,7 +175,8 @@ export class SimpleDistribution extends Distribution {
 }
 
 export class SingleValue extends Distribution {
-  constructor(name, value) {
+  value: number | Distribution;
+  constructor(name: string, value: number | Distribution) {
     super(name)
     this.value = value;
   }
@@ -200,21 +198,32 @@ export class SingleValue extends Distribution {
 }
 
 export class BinFuncDistribution extends Distribution {
-  constructor(valFunc, nameFunc, distFuncName, values, name) {
+  valFunc: (a: number, b: number) => number;
+  nameFunc: (a: string, b: string) => string;
+  distFuncName: string;
+  values: Array<Distribution | number>;
+
+  constructor(
+    valFunc: (a: number, b: number) => number,
+    nameFunc: (a: string, b: string) => string,
+    distFuncName: string,
+    values: Array<Distribution | number>,
+    name?: string
+  ) {
     super(name)
     this.valFunc = valFunc;
     this.nameFunc = nameFunc;
     this.distFuncName = distFuncName;
     if (!isIterable(values)) {
-      throw new Error("values not iterable", values);
+      throw new Error("values not iterable");
     }
     if (values.length == 0) {
-      throw new Error("empty values list", values);
+      throw new Error("empty values list");
     }
     this.values = values;
   }
 
-  _combine(a, b) {
+  _combine(a: Distribution | number, b: Distribution | number) {
     if (a instanceof Distribution) {
       return a[this.distFuncName](b);
     } else if (b instanceof Distribution) {
@@ -235,7 +244,7 @@ export class BinFuncDistribution extends Distribution {
         if (flattened instanceof Distribution) {
           if (next instanceof Distribution) {
             flattened = new SimpleDistribution(flattened.flat.flatMap(fVal => (
-              next.flat.map(nextVal => (
+              (<Distribution>next).flat.map(nextVal => (
                 {
                   name: this.name || this.nameFunc(fVal.name, nextVal.name),
                   weight: fVal.weight * nextVal.weight,
@@ -246,8 +255,8 @@ export class BinFuncDistribution extends Distribution {
           } else {
             flattened = new SimpleDistribution(flattened.flat.map(value => (
               {
-                name: this.name || this.nameFunc(value.name, next),
-                value: this.valFunc(value.value, next),
+                name: this.name || this.nameFunc(value.name, next.toString()),
+                value: this.valFunc(value.value, <number>next),
                 weight: value.weight
               }
             )), this.name);
@@ -263,7 +272,7 @@ export class BinFuncDistribution extends Distribution {
             )), this.name);
           } else {
             flattened = new SingleValue(
-              this.name || this.nameFunc(flattened, next),
+              this.name || this.nameFunc(flattened, next.toString()),
               this.valFunc(flattened, next),
             )
           }
@@ -275,36 +284,38 @@ export class BinFuncDistribution extends Distribution {
 }
 
 export class SumDistribution extends BinFuncDistribution {
-  constructor(values, name) {
+  constructor(values: Array<Distribution | number>, name?: string) {
     super((a, b) => a + b, (a, b) => `${a} + ${b}`, 'add', values, name);
   }
 }
 
 export class ProductDistribution extends BinFuncDistribution {
-  constructor(values, name) {
+  constructor(values: Array<Distribution | number>, name?: string) {
     super((a, b) => a * b, (a, b) => `${a} * ${b}`, 'product', values, name);
   }
 }
 
 export class DivideDistribution extends BinFuncDistribution {
-  constructor(base, divisor, name) {
+  constructor(base: Distribution, divisor: number, name?: string) {
     super((a, b) => a / b, (a, b) => `${a} / ${b}`, 'divide', [base, divisor], name)
   }
 }
 export class DifferenceDistribution extends BinFuncDistribution {
-  constructor(base, subtract, name) {
+  constructor(base, subtract, name?: string) {
     super((a, b) => a - b, (a, b) => `${a} - ${b}`, 'subtract', [base, subtract], name)
   }
 }
 
 export class ComparativeDistribution extends Distribution {
-  constructor(better, values, name) {
+  values: Array<SimpleDistribution>;
+  better: (a: number, b: number) => boolean;
+  constructor(better: (a: number, b: number) => boolean, values: Array<SimpleDistribution>, name) {
     super(name)
     if (!isIterable(values)) {
-      throw new Error("values not iterable", values);
+      throw new Error("values not iterable");
     }
     if (values.length == 0) {
-      throw new Error("empty values list", values);
+      throw new Error("empty values list");
     }
     this.better = better;
     this.values = values;
@@ -312,22 +323,19 @@ export class ComparativeDistribution extends Distribution {
 
   _simple() {
     const valQueue = [...this.values];
-    var simplified = null;
+    var simplified: SimpleDistribution = null;
 
     while (valQueue.length > 0) {
       var next = valQueue.shift();
       if (!simplified) {
         simplified = next;
       } else {
-        if (!((simplified instanceof SimpleDistribution) && (next instanceof SimpleDistribution))) {
-          throw new Error("Can only compare simple distributions")
-        }
         simplified = new SimpleDistribution(simplified.values.flatMap(fVal => (
           next.values.map(nextVal => (
             {
-              name: this.better(fVal.value, nextVal.value) ? fVal.name : nextVal.name,
+              name: this.better(fVal.value.valueOf(), nextVal.value.valueOf()) ? fVal.name : nextVal.name,
               weight: fVal.weight * nextVal.weight,
-              value: this.better(fVal.value, nextVal.value) ? fVal.value : nextVal.value,
+              value: this.better(fVal.value.valueOf(), nextVal.value.valueOf()) ? fVal.value : nextVal.value,
             })
           )
         )));
@@ -350,12 +358,12 @@ export class ComparativeDistribution extends Distribution {
 }
 
 export class MaxDistribution extends ComparativeDistribution {
-  constructor(values, name) {
-    super((a, b) => a > b, values, name);
+  constructor(values: Array<SimpleDistribution>, name?: string) {
+    super((a: number, b: number) => a > b, values, name);
   }
 }
 export class MinDistribution extends ComparativeDistribution {
-  constructor(values, name) {
-    super((a, b) => a < b, values, name);
+  constructor(values: Array<SimpleDistribution>, name?: string) {
+    super((a: number, b: number) => a < b, values, name);
   }
 }

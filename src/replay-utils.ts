@@ -11,13 +11,13 @@ export const END = {
 };
 
 export function ensureList(objOrList) {
-    if (objOrList && objOrList.length) {
-        return objOrList;
-    } else if (objOrList) {
-        return [objOrList];
-    } else {
-        return [];
-    }
+  if (objOrList && objOrList.length) {
+    return objOrList;
+  } else if (objOrList) {
+    return [objOrList];
+  } else {
+    return [];
+  }
 }
 
 export function translateStringNumberList(str) {
@@ -29,7 +29,7 @@ export function translateStringNumberList(str) {
 
   var numberList = [];
   for (var i = 0; i < textList.length; i++) {
-      numberList.push(parseInt(textList[i]));
+    numberList.push(parseInt(textList[i]));
   }
   return numberList;
 }
@@ -66,7 +66,7 @@ export class ReplayPosition {
   action = null;
   result = null;
 
-  constructor(step, subStep, action, result) {
+  constructor(step?: number, subStep?: number, action?: number, result?: number) {
     this.step = step || 0;
     this.subStep = subStep || REPLAY_SUB_STEP.SetupAction;
     this.action = action;
@@ -116,7 +116,7 @@ export class ReplayPosition {
 
   after(other) {
     if (!other) {
-      throw new Error("Can't compare ReplayPosition to undefined", { this: this, other })
+      throw new Error("Can't compare ReplayPosition to undefined")
     }
     if (other === END) {
       return false;
@@ -149,7 +149,7 @@ export class ReplayPosition {
   }
   equal(other) {
     if (!other) {
-      throw new Error("Can't compare ReplayPosition to undefined", { this: this, other })
+      throw new Error("Can't compare ReplayPosition to undefined")
     }
     if (other === END) {
       return false;
