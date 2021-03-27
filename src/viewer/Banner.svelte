@@ -1,8 +1,6 @@
-<script>
-import FixedRatio from "./FixedRatio.svelte";
-
-
-    export let banner;
+<script lang="ts">
+  import FixedRatio from "./FixedRatio.svelte";
+  export let banner: string;
 </script>
 <div class="banner">
   <FixedRatio width={2} height={1}>

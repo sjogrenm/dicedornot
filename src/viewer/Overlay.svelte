@@ -1,14 +1,35 @@
-<script>
+<script lang="ts">
   import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
   import { ensureList, translateStringNumberList } from "../replay-utils.js";
   import { replayPreview, replay } from "../stores.js";
-  import OverlayMove from "./OverlayMove.svelte";
+  import type {Cell} from '../BB2Replay.js';
+  import OverlayMove, { Roll, Props as OverlayMoveProps } from "./OverlayMove.svelte";
   import OverlayBlock from "./OverlayBlock.svelte";
   import chroma from "chroma-js";
 
   import {team1Color, team1Gray, team0Color, team0Gray, gray} from "../theme.js";
 
-  let paths;
+  let paths: OverlayProps[];
+
+  const components = {
+    "move": OverlayMove,
+    "block": OverlayBlock,
+  }
+
+
+  type OverlayProps =
+    | {
+      type: "move"
+    } & OverlayMoveProps
+    | {
+      type: "block"
+      from: Cell,
+      to: Cell,
+      rolls: any,
+      team: SIDE,
+      pushTo?: Cell,
+      follow?: boolean,
+    }
 
   function cellEqual(a, b) {
     return a.x == b.x && a.y == b.y;
@@ -67,7 +88,7 @@
           ;
           let team = action.PlayerId < 30 ? SIDE.home : SIDE.away;
           let lastPath = paths[paths.length - 1];
-          if (lastPath && lastPath.component === OverlayMove) {
+          if (lastPath && lastPath.type === "move") {
             let lastCell = lastPath.path[lastPath.path.length - 1];
             if (cellEqual(lastCell, from)) {
               lastPath.path.push(to);
@@ -78,7 +99,7 @@
             }
           }
           paths.push({
-            component: OverlayMove,
+            type: "move",
             path: [from, to],
             rolls: rolls ? [{from, to, rolls}] : [],
             team
@@ -88,6 +109,7 @@
         case ACTION_TYPE.Blitz:
         case ACTION_TYPE.Block: {
           for (const result of ensureList(action.Results.BoardActionResult)) {
+            let last = paths[paths.length - 1];
             if (result.RollType == ROLL.Block && result.IsOrderCompleted != 1) {
               let from = action.Order.CellFrom;
               let to = action.Order.CellTo.Cell;
@@ -107,10 +129,9 @@
               } else {
                 roll = `${dieCount}D`;
               }
-              let last = paths[paths.length - 1];
               if (
                 last &&
-                last.component == OverlayBlock &&
+                last.type === "block" &&
                 last.from.x == from.x &&
                 last.from.y == from.y &&
                 last.to.x == to.x &&
@@ -119,19 +140,17 @@
                 last.rolls += ` ${roll}`;
               } else {
                 paths.push({
-                  component: OverlayBlock,
+                  type: "block",
                   from,
                   to,
                   rolls: roll,
                   team,
                 });
               }
-            } else if (result.RollType == ROLL.Push && result.IsOrderCompleted == 1) {
-              let pushTo = result.CoachChoices.ListCells.Cell;
-              paths[paths.length - 1].pushTo = pushTo;
-            } else if (result.RollType == ROLL.FollowUp && result.IsOrderCompleted == 1) {
+            } else if (result.RollType == ROLL.Push && result.IsOrderCompleted == 1 && last.type === "block") {
+              last.pushTo = result.CoachChoices.ListCells.Cell;
+            } else if (result.RollType == ROLL.FollowUp && result.IsOrderCompleted == 1 && last.type === "block") {
               let followTo = result.CoachChoices.ListCells.Cell;
-              let last = paths[paths.length - 1];
               last.follow = followTo.x != last.from.x || followTo.y != last.from.y;
             }
           }
@@ -156,6 +175,6 @@
     </filter>
   </defs>
   {#each paths as path, index}
-    <svelte:component this={path.component} {...path} {...colors(path.team, index, paths.length)} index={index+1} />
+    <svelte:component this={components[path.type]} {...path} {...colors(path.team, index, paths.length)} index={index+1} />
   {/each}
 </svg>

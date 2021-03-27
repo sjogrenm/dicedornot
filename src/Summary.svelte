@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   let gameDetails, filename, shared = false;
   import { RACE_NAMES } from "./constants.js";
   import { Row, Col, Button } from "sveltestrap";
@@ -14,7 +14,7 @@
   }
 
   async function share() {
-    await navigator.clipboard.writeText(window.location);
+    await navigator.clipboard.writeText(window.location.href);
     shared = true;
     await sleep(3000);
     shared = false;

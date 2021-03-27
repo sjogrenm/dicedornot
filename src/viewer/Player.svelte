@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {fade} from 'svelte/transition';
   import { getPlayerType, getPlayerSprite } from "../constants.js";
   import {translateStringNumberList} from "../replay-utils.js";

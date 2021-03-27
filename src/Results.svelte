@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import embed from "vega-embed";
   import * as vega from "vega";

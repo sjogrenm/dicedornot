@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import CasBox from './CasBox.svelte';
   import {SIDE} from '../constants.js';
   export let pitchPlayers, dugout, send, receive;

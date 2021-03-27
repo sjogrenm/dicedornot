@@ -1,4 +1,4 @@
-<script>
+players[players[<script lang="ts">
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";
@@ -38,15 +38,63 @@
     replayPreview,
   } from "../stores.js";
   import he from "he";
+  import type {Player as ReplayPlayer, PlayerId} from "../BB2Replay.js";
 
   export let playing = false;
 
-  let lastChainPush,
+  interface BallProps {
+    held: boolean
+  }
+
+  interface CellProps {
+    active?: boolean,
+    target?: boolean,
+    pushbackChoice?: boolean,
+    moved?: boolean,
+    plus?: number,
+  }
+
+  interface BloodProps {
+    blood: number
+  }
+
+  interface PitchCellProps {
+    cell?: CellProps,
+    dice?: number[],
+    player?: PlayerId,
+    ball?: BallProps,
+    foul?: boolean,
+    blood?: BloodProps,
+  }
+
+  interface PlayerProps {
+    data: ReplayPlayer,
+    blitz?: boolean,
+    moving?: boolean,
+    prone?: boolean,
+    team?: SIDE,
+    stunned?: boolean,
+    stupidity?: string,
+  }
+
+  let lastChainPush: PlayerId,
     races = [],
-    homeTeam = {},
-    awayTeam = {},
-    pitch = {},
-    players = {},
+    homeTeam = {
+      dugout: {
+        cas: [],
+        ko: [],
+        reserve: [],
+      },
+    },
+    awayTeam = {
+      dugout: {
+        cas: [],
+        ko: [],
+        reserve: [],
+      },
+    },
+    pitch: Record<string, PitchCellProps> = {},
+    players: Record<string, PlayerProps> = {},
     blitzerId,
     banner,
     weather = WEATHER.Nice,
@@ -107,8 +155,8 @@
   });
 
   onMount(() => {
-    let url = new URL(window.location);
-    $timing = url.searchParams.get("timing") || 300;
+    let url = new URL(window.location.href);
+    $timing = parseInt(url.searchParams.get("timing")) || 300;
     if (url.searchParams.get("st")) {
       playing = false;
     } else {
@@ -195,7 +243,7 @@
     };
   }
 
-  function setPitchSquare(cell) {
+  function setPitchSquare(cell): PitchCellProps {
     let square = pitch[`${cell.x || 0}-${cell.y || 0}`] || {};
     pitch[`${cell.x || 0}-${cell.y || 0}`] = square;
     return square;
@@ -214,24 +262,24 @@
     });
     players = {};
     boardState.ListTeams.TeamState[0].ListPitchPlayers.PlayerState.map((p) =>
-      placePlayer(p, "home")
+      placePlayer(p, SIDE.home)
     );
     boardState.ListTeams.TeamState[1].ListPitchPlayers.PlayerState.map((p) =>
-      placePlayer(p, "away")
+      placePlayer(p, SIDE.away)
     );
     if (boardState.BlitzerId) {
       players[boardState.BlitzerId].blitz = true;
     }
   }
 
-  function placePlayer(p, team) {
-    players[p.Id] = { data: p };
+  function placePlayer(p, team: SIDE) {
+    players[p.Id] = { data: p, team };
     switch (p.Situation) {
       case SITUATION.Active:
         setPitchSquare(p.Cell).player = p.Id;
         break;
       default:
-        (team == "home" ? homeTeam : awayTeam).dugout[
+        (team == SIDE.home ? homeTeam : awayTeam).dugout[
           DUGOUT_POSITIONS[p.Situation]
         ].push(p.Id);
         break;
@@ -314,7 +362,7 @@
 
   function sleep(ms) {
     let signal = abort.signal;
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const listener = () => {
         clearTimeout(timer);
         abort = new AbortController();
@@ -331,12 +379,12 @@
     });
   }
 
-  async function step(ticks) {
+  async function step(ticks=1) {
     if (skipping) {
       return;
     }
     await tick();
-    let sleepTime = $timing * (ticks || 1);
+    let sleepTime = $timing * ticks;
     await sleep(sleepTime);
   }
 
@@ -360,10 +408,10 @@
 
   async function stepReplay(updateUrl = true) {
     const step = $replay.fullReplay.ReplayStep[current.step];
-    const subStep = step[REPLAY_KEY[current.subStep]];
+    const subStep = step[REPLAY_KEY.get(current.subStep)];
     switch (current.subStep) {
       case REPLAY_SUB_STEP.SetupAction:
-        await handleSetupAction(subStep);
+        await handleSetupAction();
         break;
       case REPLAY_SUB_STEP.BoardAction:
         let action = ensureList(subStep)[current.action];
@@ -391,7 +439,7 @@
       if (!skipping) {
         $replayCurrent = current;
       }
-      let url = new URL(window.location);
+      let url = new URL(window.location.href);
       url.searchParams.set("st", current.toParam());
       window.history.replaceState({}, "", url.href);
     }
@@ -430,8 +478,20 @@
           underPreview = null;
         } else if (underPreview && previewing != $replayPreview) {
           previewing = $replayPreview;
-          homeTeam = {};
-          awayTeam = {};
+          homeTeam = {
+            dugout: {
+              cas: [],
+              ko: [],
+              reserve: [],
+            },
+          };
+          awayTeam = {
+            dugout: {
+              cas: [],
+              ko: [],
+              reserve: [],
+            },
+          };
           pitch = {};
           players = {};
           jumpToPosition($replayPreview.start, false);
@@ -447,8 +507,20 @@
           };
           playing = false;
           previewing = $replayPreview;
-          homeTeam = {};
-          awayTeam = {};
+          homeTeam = {
+            dugout: {
+              cas: [],
+              ko: [],
+              reserve: [],
+            },
+          };
+          awayTeam = {
+            dugout: {
+              cas: [],
+              ko: [],
+              reserve: [],
+            },
+          };
           pitch = {};
           players = {};
           jumpToPosition($replayPreview.start, false);
@@ -538,159 +610,6 @@
         $replayTarget = new ReplayPosition(stepI + 1);
         return;
       }
-    }
-  }
-
-  function checkRerolls() {
-    let elements = document.getElementsByClassName("reroll");
-    while (elements.length > 0) {
-      elements[0].remove();
-    }
-
-    let target = document.getElementById("homeData");
-    for (let x = 0; x < this.boardState.homeTeam.rerolls; x++) {
-      let d = document.createElement("div");
-      d.classList.add("reroll");
-      target.childNodes[12 + x].append(d);
-    }
-    for (
-      let x = this.boardState.homeTeam.rerolls;
-      this.boardState.homeTeam.rerollsAvailable < x;
-      x--
-    ) {
-      target.childNodes[12 + x - 1].childNodes[0].classList.add("used");
-    }
-
-    target = document.getElementById("awayData");
-    for (let x = 0; x < this.boardState.awayTeam.rerolls; x++) {
-      let d = document.createElement("div");
-      d.classList.add("reroll");
-      target.childNodes[target.childElementCount - 13 - x].append(d);
-    }
-    for (
-      let x = this.boardState.awayTeam.rerolls;
-      this.boardState.awayTeam.rerollsAvailable < x;
-      x--
-    ) {
-      target.childNodes[
-        target.childElementCount - x - 12
-      ].childNodes[0].classList.add("used");
-    }
-  }
-  function checkInducements() {
-    let elements = document.getElementsByClassName("inducement");
-    while (elements.length > 0) {
-      elements[0].remove();
-    }
-
-    let target = document.getElementById("homeData");
-    let n = 0;
-    for (let x = 0; x < this.boardState.homeTeam.babes; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("babe");
-      target.childNodes[n++].append(d);
-    }
-
-    if (this.boardState.homeTeam.chef) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("chef");
-      target.childNodes[n++].append(d);
-    }
-
-    if (this.boardState.homeTeam.wizard) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("wizard");
-      target.childNodes[n++].append(d);
-    }
-
-    for (let x = 0; x < this.boardState.homeTeam.bribes; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("bribe");
-      target.childNodes[n++].append(d);
-    }
-
-    for (let x = 0; x < this.boardState.homeTeam.igors; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("igor");
-      target.childNodes[n++].append(d);
-    }
-
-    for (let x = 0; x < this.boardState.homeTeam.apothecaryNumber; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("apo");
-      target.childNodes[n++].append(d);
-    }
-
-    if (
-      this.boardState.homeTeam.apothecaryNumber === 0 &&
-      this.boardState.homeTeam.teamHasApothecary
-    ) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("apo");
-      d.classList.add("used");
-      target.childNodes[n++].append(d);
-    }
-
-    target = document.getElementById("awayData");
-    n = 0;
-    for (let x = 0; x < this.boardState.awayTeam.babes; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("babe");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
-    }
-
-    if (this.boardState.awayTeam.chef) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("chef");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
-    }
-
-    if (this.boardState.awayTeam.wizard) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("wizard");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
-    }
-
-    for (let x = 0; x < this.boardState.awayTeam.bribes; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("bribe");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
-    }
-
-    for (let x = 0; x < this.boardState.awayTeam.igors; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("igor");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
-    }
-
-    for (let x = 0; x < this.boardState.awayTeam.apothecaryNumber; x++) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("apo");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
-    }
-
-    if (
-      this.boardState.awayTeam.apothecaryNumber === 0 &&
-      this.boardState.awayTeam.teamHasApothecary
-    ) {
-      let d = document.createElement("div");
-      d.classList.add("inducement");
-      d.classList.add("apo");
-      d.classList.add("used");
-      target.childNodes[target.childElementCount - 1 - n++].append(d);
     }
   }
 
@@ -815,7 +734,7 @@
           if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
             //surf
             let team = players[toPlayer].team;
-            let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
+            let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
             dugout.reserve.push(toPlayer);
             toSquare.player = null;
           }
@@ -1023,7 +942,7 @@
         } else if (actionResult.SubResultType === 3) {
           //knocked out
           let team = player.team;
-          let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
+          let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
           dugout.ko.push(player);
           pitch[playerSquareIndex].player = null;
         }
@@ -1031,7 +950,7 @@
       case 8: //casualty
         //knocked out
         let team = player.team;
-        let dugout = team == "home" ? homeTeam.dugout : awayTeam.dugout;
+        let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
         dugout.cas.push(player);
         pitch[playerSquareIndex].player = null;
         pitch[playerSquareIndex].blood = {
@@ -1072,17 +991,17 @@
             title="Slower"
             on:click={() => {
               $timing *= 1.2;
-            }}>{"-"}</Button
+            }}>{"<<"}</Button
           >
-          <Button title="Previous Turn" on:click={jumpToPreviousTurn}
-            >{"<<<"}</Button
+          <Button title="Previous Turn" on:click={() => jumpToPreviousTurn()}
+            >{"|<<<"}</Button
           >
           <Button
             title="Previous Activation"
-            on:click={jumpToPreviousActivation}>{"<<"}</Button
+            on:click={() => jumpToPreviousActivation()}>{"|<<"}</Button
           >
-          <Button title="Previous Replay Step" on:click={jumpToPreviousStep}
-            >{"<"}</Button
+          <Button title="Previous Replay Step" on:click={() => jumpToPreviousStep()}
+            >{"|<"}</Button
           >
           {#if playing}
             <Button title="Pause" on:click={() => (playing = false)}
@@ -1093,16 +1012,16 @@
               ><Icon name="play-fill" /></Button
             >
           {/if}
-          <Button title="Next Replay Step" on:click={stepReplay}>{">"}</Button>
-          <Button title="Next Activation" on:click={jumpToNextActivation}
-            >{">>"}</Button
+          <Button title="Next Replay Step" on:click={() => stepReplay()}>{">|"}</Button>
+          <Button title="Next Activation" on:click={() => jumpToNextActivation()}
+            >{">>|"}</Button
           >
-          <Button title="Next Turn" on:click={jumpToNextTurn}>{">>>"}</Button>
+          <Button title="Next Turn" on:click={() => jumpToNextTurn()}>{">>>|"}</Button>
           <Button
             title="Faster"
             on:click={() => {
               $timing /= 1.2;
-            }}>{"+"}</Button
+            }}>{">>"}</Button
           >
         </ButtonToolbar>
       </Col>
@@ -1124,9 +1043,6 @@
               <SelectedPlayer
                 {players}
                 player={$hoveredPlayer || $selectedPlayer}
-                {pitch}
-                {homeTeam}
-                {awayTeam}
               />
             </div>
           {/if}

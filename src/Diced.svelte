@@ -1,11 +1,31 @@
-<script>
-import {percentRank} from "./utils.js";
+<script lang="ts">
 
   import { Row, Col } from "sveltestrap";
   import { replay, showResultsAnalysis } from "./stores";
 
   export let homeTeam, awayTeam;
   let cumNetValues, actuals, homePercentile = 0.5, awayPercentile = 0.5;
+
+  function percentRank(array, n) {
+    var L = 0;
+    var S = 0;
+    var N = array.length
+
+    for (var i = 0; i < array.length; i++) {
+      if (array[i] < n) {
+        L += 1
+      } else if (array[i] === n) {
+        S += 1
+      } else {
+
+      }
+    }
+
+    var pct = (L + (0.5 * S)) / N
+
+    return pct
+  }
+
   $: {
     cumNetValues = { actuals: {}, simulated: {} };
     actuals = $replay.rolls.map((roll) => ({
@@ -26,15 +46,15 @@ import {percentRank} from "./utils.js";
   }
   function betterThan(team, percentile) {
     let qualifier = percentile < 0.25 ? "only " : "";
-    let count = percentile * 100;
+    let count = percentile * 100, countDisp: string;
     if (count > 99) {
-      count = count.toFixed(1);
+      countDisp = count.toFixed(1);
     } else if (count < 10) {
-      count = count.toFixed(2);
+      countDisp = count.toFixed(2);
     } else {
-      count = count.toFixed(0);
+      countDisp = count.toFixed(0);
     }
-    return `${team}'s rolls were better than ${qualifier}${count} in 100 games`;
+    return `${team}'s rolls were better than ${qualifier}${countDisp} in 100 games`;
   }
   function diced(team, percentile) {
     const sample = (items) => items[team.length % items.length];

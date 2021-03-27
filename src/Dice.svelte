@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
   import { BLOCK } from "./constants.js";
-  export let dice,
+  export let dice: Array<number | BLOCK>,
     uphill = false,
     size = 1.45,
     separator = "";

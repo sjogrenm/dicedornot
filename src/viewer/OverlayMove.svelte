@@ -1,13 +1,32 @@
-<script>
-  export let path,
-    rolls,
-    color,
+<script context="module" lang="ts">
+  import type {Cell} from '../BB2Replay.js';
+  import type {SIDE} from '../constants.js';
+
+  export interface Roll {
+    from: Cell,
+    to: Cell,
+    rolls: string,
+  }
+
+  export interface Props {
+    path: Cell[],
+    rolls: Roll[],
+    team: SIDE,
+  }
+</script>
+
+<script lang="ts">
+
+  export let path: Props['path'],
+    rolls: Props['rolls'],
+    color: string,
     textColor,
     oppColor,
     oppTextColor,
-    team,
+    team: Props['team'],
     component,
-    index = 0;
+    index = 0,
+    _rolls: _Roll[];
 
   function mixCells(cellA, cellB, pct) {
     return {
@@ -16,16 +35,24 @@
     };
   }
 
+  interface _Roll {
+    pt: Cell,
+    rolls: Roll['rolls']
+  }
+
   $: {
-    rolls.forEach(roll => {roll.pt = mixCells(roll.from, roll.to, 0.5)});
+    _rolls = rolls.map(roll => ({
+      rolls: roll.rolls,
+      pt: mixCells(roll.from, roll.to, 0.5)
+    }));
     if (path[0].x == path[1].x && path[0].y == path[1].y) {
       path.shift();
     }
     if (path.length == 1) {
       path = [{x: path[0].x, y: path[0].y + 0.3}];
-      if (rolls.length > 0) {
-        rolls[0].pt.x += 0.3;
-        rolls[0].pt.x += 0.3;
+      if (_rolls.length > 0) {
+        _rolls[0].pt.x += 0.3;
+        _rolls[0].pt.x += 0.3;
       }
     } else {
       let newStart = mixCells(path[0], path[1], 0.25);
@@ -82,7 +109,7 @@
   dominant-baseline="middle">{index}</text
 >
 
-{#each rolls as roll}
+{#each _rolls as roll}
   <line
     stroke={color}
     x1={roll.pt.x - 0.1 * roll.rolls.length/2}

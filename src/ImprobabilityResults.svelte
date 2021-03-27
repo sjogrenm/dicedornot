@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Results from "./Results.svelte";
   import Explanation from "./Explanation.svelte";
   import {improbabilitySpec} from "./vega-spec.js";

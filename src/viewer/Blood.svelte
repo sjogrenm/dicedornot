@@ -1,5 +1,5 @@
-<script>
-    export let blood = null;
+<script lang="ts">
+    export let blood: number;
 </script>
   
   <div

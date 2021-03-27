@@ -1,14 +1,14 @@
-<script>
+<script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
   import FlexGrid from "./FlexGrid.svelte";
 
   import Player from "./Player.svelte";
   import { translateStringNumberList } from "../replay-utils.js";
-  import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES } from "../constants.js";
+  import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES, SKILL } from "../constants.js";
   import he from "he";
 
   export let player, players;
-  let pitchPlayer, name, color, skills, cas;
+  let pitchPlayer, name, color, skills: SKILL[], cas;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
     pitchPlayer = players[player];

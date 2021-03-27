@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {
     SingleValue,
     SimpleDistribution,
@@ -24,7 +24,7 @@
     </summary>
     {#if open}
       <ul class="list-group" on:click|stopPropagation>
-        {#each dist.values.sort((a, b) => a.name > b.name) as value}
+        {#each dist.values.sort((a, b) => a.name > b.name ? 1 : -1) as value}
           {#if value.value instanceof Distribution}
             <li class="list-group-item list-group-item-action">
               <svelte:self
@@ -56,15 +56,9 @@
     {#if open}
       <ul class="list-group" on:click|stopPropagation>
         {#each dist.values as value}
-          {#if value instanceof Distribution}
-            <li class="list-group-item list-group-item-action">
-              <svelte:self dist={value} />
-            </li>
-          {:else}
-            <li class="list-group-item list-group-item-action">
-              {value.toFixed(2)}
-            </li>
-          {/if}
+          <li class="list-group-item list-group-item-action">
+            <svelte:self dist={value} />
+          </li>
         {/each}
       </ul>
     {/if}

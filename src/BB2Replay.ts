@@ -15,3 +15,11 @@ export interface SkillInfo {
 export interface BoardState {
 
 };
+
+export interface Player {
+    Id: PlayerId,
+};
+
+export type PlayerId = number & { __isPlayerId: any };
+
+export interface Replay { }

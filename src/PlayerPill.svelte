@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {hoveredPlayer, selectedPlayer} from "./stores.js";
   export let player;
 </script>

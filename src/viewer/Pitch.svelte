@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Grid from "./Grid.svelte";
   import PitchSquare from "./PitchSquare.svelte";
   import FixedRatio from "./FixedRatio.svelte";

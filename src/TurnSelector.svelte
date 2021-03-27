@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   export let rolls;
   import {replayCurrent, replayTarget, replayPreview} from "./stores.js";
   let turn, teamId, teamName, current, active, startIndex, endIndex;

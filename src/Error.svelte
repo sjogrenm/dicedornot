@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {error} from './stores.js';
 </script>
 

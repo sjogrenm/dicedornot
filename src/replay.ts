@@ -1,7 +1,31 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END } from "./replay-utils.js";
 import { SIDE } from "./constants.js";
+import type { Replay } from "./BB2Replay.js";
 import he from 'he';
+
+interface TeamDetails {
+  coachName: string,
+  teamName: string,
+  raceId: number,
+  score: number,
+}
+interface GameDetails {
+  //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
+  stadiumName: string,
+  stadiumType: string,
+  leagueName: string,
+  homeTeam: TeamDetails,
+  awayTeam: TeamDetails,
+}
+
+interface ParsedReplay {
+  fullReplay: Replay,
+  gameDetails: GameDetails,
+  rolls: Roll<any>[],
+  unknownRolls: UnknownRoll[],
+  version: number,
+}
 
 export function processReplay(data) {
   //console.log("replay.processReplay");
@@ -10,7 +34,6 @@ export function processReplay(data) {
   var gameDetails = extractGameDetails(data);
   console.log("Extracted game details...", gameDetails);
 
-  var playerDetails = {};
   var rolls = [];
   for (
     var stepIndex = 0;
@@ -19,8 +42,6 @@ export function processReplay(data) {
   ) {
     var replayStep = data.Replay.ReplayStep[stepIndex];
     replayStep.index = stepIndex;
-    // extractPlayerDetails(replayStep, playerDetails);
-    // extractActionsFromStep(replayStep, rolls);
     rolls = rolls.concat(Roll.fromReplayStep(
       data.Replay,
       data.Replay.ReplayStep[stepIndex - 1] && data.Replay.ReplayStep[stepIndex - 1].BoardState,
@@ -82,9 +103,8 @@ export function processReplay(data) {
   return {
     fullReplay: data.Replay,
     gameDetails: gameDetails,
-    playerDetails: playerDetails,
     rolls: validRolls,
-    unknownRolls: rolls.filter(roll => roll instanceof UnknownRoll),
+    unknownRolls: rolls.filter(roll => roll instanceof UnknownRoll) as UnknownRoll[],
     version: 1,
   };
 }
@@ -94,7 +114,7 @@ interface Value {
   expected: number,
 }
 
-export function extractGameDetails(jsonObject) {
+export function extractGameDetails(jsonObject): GameDetails {
   var firstStep = jsonObject.Replay.ReplayStep[0];
   var lastStep =
     jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1];

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import Ball from "./Ball.svelte";
   import Cell from "./Cell.svelte";

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import HomeBench from "./HomeBench.svelte";
   import TeamAids from "./TeamAids.svelte";
   import Weather from "./Weather.svelte";

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import TurnSelector from "./TurnSelector.svelte";
   import { replay, replayPreview } from "./stores.js";
   let rolls, rollsByTurn;

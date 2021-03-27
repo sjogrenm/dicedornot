@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
   import Roll from "./Roll.svelte";
   import { replayPreview } from "./stores.js";
-  export let rolls, selectedRoll;
+  import type {Roll as ReplayRoll} from "./rolls.js";
+  export let rolls: ReplayRoll<any>[], selectedRoll;
 </script>
 
 <div class="list-group" id="turn" on:mouseleave={() => ($replayPreview = null)}>

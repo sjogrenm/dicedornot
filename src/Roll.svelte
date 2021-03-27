@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Distribution from "./Distribution.svelte";
   import RollOutcomes from "./RollOutcomes.svelte";
   import { replayTarget, showResultsAnalysis } from "./stores.js";

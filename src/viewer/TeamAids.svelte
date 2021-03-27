@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 import FlexGrid from "./FlexGrid.svelte";
   export let team, reverse;
 </script>

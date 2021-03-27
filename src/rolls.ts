@@ -17,6 +17,7 @@ import {
   ROLL,
   PLAYER_TYPE,
   SIDE,
+  PlayerTV
 } from './constants.js';
 import { translateStringNumberList, ensureList, ReplayPosition, REPLAY_SUB_STEP, REPLAY_KEY } from './replay-utils.js';
 import {
@@ -35,6 +36,7 @@ import type {
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
+import { assembleParameterSignals } from 'vega-lite/build/src/parameter';
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -88,7 +90,7 @@ class Player {
   cell: Cell;
   situation: SITUATION;
   canAct: boolean;
-  skills: Array<SKILL>;
+  skills: SKILL[];
   isBallCarrier: boolean;
 
   constructor(team, playerState, boardState) {
@@ -112,11 +114,11 @@ class Player {
   }
 
   get tv() {
-    let playerTV = PLAYER_TVS[this.playerType];
-    if (playerTV.star) {
+    let playerTV = PLAYER_TVS.get(this.playerType);
+    if (playerTV.star === true) {
       return playerTV.tv;
     } else {
-      let { tv, normals, doubles, free } = PLAYER_TVS[this.playerType];
+      let { tv, normals, doubles, free } = playerTV;
       this.skills.forEach(skill => {
         if (free.includes(skill)) {
           return;
@@ -138,7 +140,7 @@ class Player {
 }
 
 class Team {
-  players: Array<Player>;
+  players: Player[];
   name: string;
   id: number;
   turn: number;
@@ -167,14 +169,14 @@ class Team {
 }
 
 interface Arguments {
-  teams: Array<Team>,
+  teams: Team[],
   activeTeamId: number,
   ballCell: Cell
 }
 
 class BoardState {
   ballCell: Cell;
-  teams: Array<Team>;
+  teams: Team[];
   activeTeamId: number;
   activeTeam: Team;
   turn: number;
@@ -230,12 +232,12 @@ class BoardState {
 interface RollArgs<Dice> {
   initialBoardState: BoardState,
   finalBoardState: BoardState,
-  skillsInEffect: Array<SkillInfo>,
+  skillsInEffect: SkillInfo[],
   rollStatus: ROLL_STATUS,
   activePlayer: Player,
   rollType: ROLL,
-  dice: Array<Dice>
-  unhandledSkills: Array<SkillInfo>,
+  dice: Dice[]
+  unhandledSkills: SkillInfo[],
   ignore: boolean,
   actionType: ACTION_TYPE,
   resultType: RESULT_TYPE,
@@ -243,7 +245,9 @@ interface RollArgs<Dice> {
   startIndex: ReplayPosition,
   isReroll: boolean,
   gameLength: number,
+  rolls?: Roll<any>[],
 }
+
 
 export class Roll<Dice> {
   _futurePlayerValue: Map<number, Distribution>;
@@ -251,25 +255,26 @@ export class Roll<Dice> {
   armorRollCache: Map<string, ArmorRoll>;
   dependentIndex?: number;
   dependentOn?: Roll<any>;
-  dependentRolls: Array<Roll<any>>;
-  dice: Array<Dice>;
+  dependentRolls: Roll<any>[];
+  dice: Dice[];
   finalBoardState: BoardState;
   gameLength: number;
   initialBoardState: BoardState;
   isReroll: boolean;
-  onTeamValues: Map<number, number>;
+  onTeamValues: Map<number, Distribution>;
   rollIndex: number;
-  rolls: Array<Roll<any>>;
+  rolls: Roll<any>[];
   rollStatus: ROLL_STATUS;
   rollType: ROLL;
-  skillsInEffect: Array<SkillInfo>;
+  skillsInEffect: SkillInfo[];
   startIndex: ReplayPosition;
-  unhandledSkills: Array<SkillInfo>;
+  endIndex?: ReplayPosition;
+  unhandledSkills: SkillInfo[];
   get rollName() { return `Unnamed Roll ${this.constructor.name}`; }
   static handledSkills = [];
   get diceSeparator() { return ', '; }
   static hideDependents = false;
-  readonly dependentConditions: Array<Function> = [];
+  readonly dependentConditions: Function[] = [];
 
   constructor(attrs: RollArgs<Dice>) {
     Object.assign(this, attrs);
@@ -374,13 +379,13 @@ export class Roll<Dice> {
     return this.dependentConditions.some(cond => cond(this, roll));
   }
 
-  value(dice?: Array<Dice>, expected?: boolean): Distribution | number {
+  value(dice?: Dice[], expected?: boolean): Distribution | number {
     throw 'value must be defined by subclass';
   }
   get expectedValue() {
     return this.possibleOutcomes.expectedValue;
   }
-  get _possibleOutcomes() {
+  get _possibleOutcomes(): Distribution {
     throw `_possibleOutcomes must be defined by subclass ${this.constructor.name}`;
   }
 
@@ -476,14 +481,14 @@ export class Roll<Dice> {
   }
 
   static fromReplayStep(replay, initialBoard, stepIndex, replayStep) {
-    if (replayStep[REPLAY_KEY[REPLAY_SUB_STEP.SetupAction]]) {
+    if (replayStep[REPLAY_KEY.get(REPLAY_SUB_STEP.SetupAction)]) {
       return new SetupAction(SetupAction.argsFromXml({
         gameLength: Math.max(...replay.ReplayStep.map(step => step.turn)),
         initialBoard,
         stepIndex,
         replayStep,
-        setupAction: replayStep[REPLAY_KEY.SetupAction],
-      }));
+        setupAction: replayStep[REPLAY_KEY.get(REPLAY_SUB_STEP.SetupAction)],
+      }))
     }
     var rolls = [];
 
@@ -587,7 +592,7 @@ export class Roll<Dice> {
     let dice = kickoffRoll.dice;
     let diceSum = dice[0] + dice[1];
     let rollClass = KICKOFF_RESULT_TYPES[diceSum];
-    let rolls: Array<Roll<any> | UnknownRoll> = [kickoffRoll];
+    let rolls: (Roll<any> | UnknownRoll)[] = [kickoffRoll];
     if (rollClass === null) {
     } else if (!rollClass) {
       rolls.push(new UnknownRoll(`Unknown Kickoff Event ${diceSum}`, replayStep));
@@ -686,35 +691,55 @@ export class Roll<Dice> {
     );
   }
 
-  onTeamValue(player) {
+  onTeamValue(player): Distribution {
     // The fraction of the teams on-pitch players that this player represents.
     return (
-      this.onTeamValues[player.id] || (
-        this.onTeamValues[player.id] =
-        this.playerValue(player).divide(
-          this.teamValue(
-            player.team,
-            [SITUATION.Active, SITUATION.Reserves, SITUATION.KO],
-            player
-          ).named('Players on Team')
-          // Scale players by the difference between a full team scoring 1.5 points per game
-          // and pitch-cleared opponent scoring 16 points per game
-        ).product(6.5 / 32).named(player.name)
+      this.onTeamValues.get(player.id) || (
+        this.onTeamValues.set(
+          player.id,
+          this.playerValue(player).divide(
+            this.teamValue(
+              player.team,
+              [SITUATION.Active, SITUATION.Reserves, SITUATION.KO],
+              player
+            ).named('Players on Team')
+            // Scale players by the difference between a full team scoring 1.5 points per game
+            // and pitch-cleared opponent scoring 16 points per game
+          ).product(6.5 / 32).named(player.name)
+        ).get(player.id)
       )
     );
   }
 
   armorRoll(player, damageBonusActive) {
     damageBonusActive = damageBonusActive || false;
+    let key = `${player.id}-${damageBonusActive}`;
     return (
-      this.armorRollCache[`${player.id}-${damageBonusActive}`] ||
-      (this.armorRollCache[`${player.id}-${damageBonusActive}`] = new ArmorRoll({
+      this.armorRollCache.get(key) ||
+      (this.armorRollCache.set(key, new ArmorRoll({
         initialBoardState: this.initialBoardState,
         finalBoardState: this.finalBoardState,
         activePlayer: player,
         modifier: damageBonusActive ? 1 : 0,
-        damageBonusActive
-      }))
+        damageBonusActive,
+        isFoul: false,
+        canPileOn: false,
+        isPileOn: false,
+        target: undefined,
+        skillsInEffect: [],
+        rollStatus: undefined,
+        rollType: ROLL.Armor,
+        dice: [1, 1],
+        unhandledSkills: [],
+        ignore: false,
+        actionType: undefined,
+        resultType: undefined,
+        subResultType: undefined,
+        startIndex: this.startIndex,
+        isReroll: false,
+        gameLength: this.gameLength,
+        rolls: this.rolls,
+      })).get(key))
     );
   }
 
@@ -1343,10 +1368,10 @@ export class ModifiedD6SumRoll extends Roll<number> {
   simulateDice() {
     return this.dice.map(() => sample([1, 2, 3, 4, 5, 6]));
   }
-  passValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
+  passValue(expected: boolean, rollTotal: number, modifiedTarget: number): Distribution {
     return new SingleValue("Pass", 0);
   }
-  failValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
+  failValue(expected: boolean, rollTotal: number, modifiedTarget: number): Distribution {
     return new SingleValue("Fail", 0);
   }
 }
@@ -1383,7 +1408,7 @@ class FoulAppearanceRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.FoulAppearance];
   static dependentConditions = [reroll, samePlayerMove];
   failValue(expected, rollTotal, modifiedTarget) {
-    return -this.onTeamValue(this.activePlayer);
+    return this.onTeamValue(this.activePlayer).product(-1);
   }
 }
 
@@ -1402,14 +1427,14 @@ class ArmorRoll extends ModifiedD6SumRoll {
   canPileOn: boolean;
   isFoul: boolean;
   isPileOn: boolean;
-  injuryRollCache: Map<boolean, InjuryRoll>;
+  injuryRollCache: Map<string, InjuryRoll>;
   damageBonusActive: boolean;
 
   get numDice() { return 2; }
   static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
   static dependentConditions = [foulDamage];
 
-  constructor(attrs) {
+  constructor(attrs: ArmorRollArgs) {
     super(attrs);
     this.injuryRollCache = new Map();
   }
@@ -1461,8 +1486,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     if (this.isFoul) {
       var foulerSkills =
         this.foulingPlayer.skills.length > 0
-          ? ` (${this.foulingPlayer.skillNames.join(', ')})`
-          : '';
+          ? ` (${this.foulingPlayer.skillNames.join(', ')})` : '';
       var fouledSkills =
         this.activePlayer.skills.length > 0
           ? ` (${this.activePlayer.skillNames.join(', ')})`
@@ -1494,8 +1518,8 @@ class ArmorRoll extends ModifiedD6SumRoll {
 
   injuryRoll(damageBonusAvailable: boolean, canPileOn: boolean, isFoul: boolean) {
     let key = `${damageBonusAvailable}-${canPileOn}-${isFoul}`;
-    let result = this.injuryRollCache[key] ||
-      (this.injuryRollCache[key] = new InjuryRoll({
+    let result = this.injuryRollCache.get(key) ||
+      (this.injuryRollCache.set(key, new InjuryRoll({
         initialBoardState: this.initialBoardState,
         finalBoardState: this.finalBoardState,
         activePlayer: this.activePlayer,
@@ -1503,7 +1527,8 @@ class ArmorRoll extends ModifiedD6SumRoll {
         skillsInEffect: [],
         canPileOn,
         isPileOn: false,
-        isFoul,
+        isFoul: this.isFoul,
+        foulingPlayer: this.foulingPlayer,
         rollStatus: undefined,
         rollType: undefined,
         dice: [],
@@ -1512,10 +1537,11 @@ class ArmorRoll extends ModifiedD6SumRoll {
         actionType: undefined,
         resultType: undefined,
         subResultType: undefined,
-        startIndex: undefined,
+        startIndex: this.startIndex,
         isReroll: false,
         gameLength: this.gameLength,
-      }));
+        rolls: this.rolls,
+      })).get(key));
     return result;
   }
 
@@ -1582,7 +1608,7 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
   failValue(expected, rollTotal, modifiedTarget) {
     // Failing Wild Animal means that this player is effectiFvely unavailable
     // for the rest of your turn, but is active on your opponents turn
-    return -this.onTeamValue(this.activePlayer);
+    return this.onTeamValue(this.activePlayer).product(-1);
   }
 }
 
@@ -1652,7 +1678,7 @@ class JumpUpRoll extends ModifiedD6SumRoll {
   failValue(expected, rollTotal, modifiedTarget) {
     // Jump Up failure means the block fails to activate, so the player is no longer
     // available for this turn.
-    return -this.onTeamValue(this.activePlayer);
+    return this.onTeamValue(this.activePlayer).product(-1);
   }
 }
 
@@ -1848,6 +1874,10 @@ export class InjuryRoll extends Roll<number> {
 
   constructor(args: InjuryRollArgs) {
     super(args);
+    console.assert(
+      this.isFoul === !(this.foulingPlayer === undefined),
+      { msg: "Must have a fouling player for a foul", roll: this }
+    )
   }
 
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
@@ -2000,7 +2030,7 @@ export class InjuryRoll extends Roll<number> {
   }
 
   get _possibleOutcomes() {
-    var outcomesByName: Map<string, Array<Outcome>> = new Map();
+    var outcomesByName: Map<string, Outcome[]> = new Map();
     for (var combination of this.diceCombinations) {
       let value = this.value(combination, true);
       var outcomeList = outcomesByName[value.name];
@@ -2019,7 +2049,7 @@ export class InjuryRoll extends Roll<number> {
         );
         const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
         return {
-          name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
+          name: minOutcome === maxOutcome ? minOutcome.toString() : `${minOutcome}-${maxOutcome}`,
           weight: outcomes.length,
           value: outcomes[0].value
         }
@@ -2077,15 +2107,6 @@ export class CasualtyRoll extends Roll<number> {
   }
   value(dice, expected): Distribution {
     return new SingleValue("CAS", 0); // Need to figure out how to grade losing player value for multiple matches
-    if (dice < 40) {
-      return 0; // Badly Hurt
-    } else if (dice < 50) {
-      return -0.5; // MNG
-    } else if (dice < 60) {
-      return -0.75; // Stat Damage
-    } else {
-      return -1; // Dead
-    }
   }
   get _possibleOutcomes() {
     var outcomes = [];
@@ -2320,7 +2341,7 @@ export class KickoffRoll extends Roll<number> {
   }
 
   get _possibleOutcomes() {
-    var outcomesByName: Map<string, Array<Distribution>> = new Map();
+    var outcomesByName: Map<string, Distribution[]> = new Map();
     for (var combination of this.diceCombinations) {
       var outcomeList = outcomesByName[this.value(combination, true).name];
       if (!outcomeList) {
@@ -2338,7 +2359,7 @@ export class KickoffRoll extends Roll<number> {
         );
         const maxOutcome = Math.max(...outcomes.map((outcome) => parseInt(outcome.name)));
         return {
-          name: minOutcome === maxOutcome ? minOutcome : `${minOutcome}-${maxOutcome}`,
+          name: minOutcome === maxOutcome ? minOutcome.toString() : `${minOutcome}-${maxOutcome}`,
           weight: outcomes.length,
           value: outcomes[0].value
         }

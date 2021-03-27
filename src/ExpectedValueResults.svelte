@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Results from "./Results.svelte";
   import { expectedValueSpec } from "./vega-spec.js";
   import Explanation from "./Explanation.svelte";

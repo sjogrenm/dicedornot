@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 
   import AwayBench from "./AwayBench.svelte";
   import TeamAids from "./TeamAids.svelte";

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { ROLL, KICKOFF_RESULT_NAMES } from "./constants.js";
   import PlayerPill from "./PlayerPill.svelte";
   import {

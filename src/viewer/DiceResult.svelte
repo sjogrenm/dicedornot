@@ -1,5 +1,5 @@
-<script>
-  export let dice;
+<script lang="ts">
+  export let dice: number[];
 
   const blockDice = [
     "attacker-down",

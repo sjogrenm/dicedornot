@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from "svelte";
   import { io } from "./io.js";
   import { replay, error } from "./stores.js";
@@ -29,13 +29,13 @@
         replayKeys = await keys();
         loading = null;
       }
-      for (const [key, value] of params) {
+      params.forEach((key, value) => {
         let cacheKey = `${key}-${value}`;
         if (replayKeys.includes(cacheKey)) {
           loadFromCache(cacheKey);
           return;
         }
-      }
+      });
       const rebblUUID = params.get("rebbl");
       if (rebblUUID) {
         loadRebblReplay(rebblUUID, false);
@@ -104,7 +104,7 @@
     });
   }
 
-  async function loadFromCache(cacheKey, updateUrl) {
+  async function loadFromCache(cacheKey: string, updateUrl = false) {
     loading = `Loading ${cacheKey} from cache`;
     console.log("Loading from cache", { cacheKey });
     const jsonReplayData = await get(cacheKey);
@@ -112,11 +112,11 @@
     if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
       try {
         let [replayType, ...replayId] = cacheKey.split('-');
-        replayId = replayId.join('-');
-        let shareURL = new URL(window.location);
+        let replayIdStr = replayId.join('-');
+        let shareURL = new URL(window.location.href);
         shareURL.search = "";
-        shareURL.fragment = "";
-        shareURL.searchParams.set(replayType, replayId);
+        shareURL.hash = "";
+        shareURL.searchParams.set(replayType, replayIdStr);
         if (updateUrl) {
           window.history.pushState({}, "", shareURL.href);
         }
@@ -138,9 +138,9 @@
         console.log("Preparing to process replay json...");
         jsonReplayData.Replay.filename = replayFile.name;
         jsonReplayData.CACHE_VERSION = CACHE_VERSION;
-        let shareURL = new URL(window.location);
+        let shareURL = new URL(window.location.href);
         shareURL.search = "";
-        shareURL.fragment = "";
+        shareURL.hash = "";
         shareURL.searchParams.set(replayType, replayId);
         if (updateUrl) {
           window.history.pushState({}, "", shareURL.href);
@@ -157,11 +157,6 @@
           $error = err;
           console.error(err);
         }
-      },
-      function (err) {
-        loading = null;
-        $error = err;
-        alert(err);
       }
     );
   }
@@ -211,6 +206,7 @@
       parseReplay(files[0], 'file', files[0].name, true);
     }
   }
+
 </script>
 
 <div>
@@ -253,9 +249,9 @@
           placeholder="Enter team name here for saved replay..."
           bind:this={cachePicker}
           on:input={(ev) => {
-            if (replays.map(replay => replay.cacheKey).includes(ev.data)) {
+            if (replays.map(replay => replay.cacheKey).includes(cachePicker.value)) {
               cachePicker.value = "";
-              loadFromCache(ev.data, true);
+              loadFromCache(cachePicker.value, true);
             }
           }}
         />

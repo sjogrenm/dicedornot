@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Turn from "./Turn.svelte";
   import {replay, replayCurrent} from "./stores.js";
   export let playing;

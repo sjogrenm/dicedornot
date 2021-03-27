@@ -1,5 +1,5 @@
 
-export const END = {
+export const END: ReplayPosition = {
   end: true,
   before: () => false,
   after: () => true,
@@ -8,6 +8,12 @@ export const END = {
   atOrBefore: (other) => other === END,
   toNextPosition: () => new ReplayPosition(),
   toParam: () => '',
+  step: undefined,
+  subStep: undefined,
+  action: undefined,
+  result: undefined,
+  sliceStepsTo: (replay, end) => [],
+  sliceActionsTo: (replay, end) => [],
 };
 
 export function ensureList(objOrList) {
@@ -34,33 +40,34 @@ export function translateStringNumberList(str) {
   return numberList;
 }
 
-export const REPLAY_SUB_STEP = {
-  SetupAction: 1,
-  Kickoff: 2,
-  BoardAction: 3,
-  EndTurn: 4,
-  BoardState: 5,
-  NextReplayStep: 6,
+export enum REPLAY_SUB_STEP {
+  SetupAction = 1,
+  Kickoff = 2,
+  BoardAction = 3,
+  EndTurn = 4,
+  BoardState = 5,
+  NextReplayStep = 6,
 }
 
-export const REPLAY_KEY = {
-  [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetUpAction',
-  [REPLAY_SUB_STEP.Kickoff]: 'RulesEventKickOffTable',
-  [REPLAY_SUB_STEP.BoardAction]: 'RulesEventBoardAction',
-  [REPLAY_SUB_STEP.EndTurn]: 'RulesEventEndTurn',
-  [REPLAY_SUB_STEP.BoardState]: 'BoardState',
-}
+export const REPLAY_KEY: Map<REPLAY_SUB_STEP, string> = new Map([
+  [REPLAY_SUB_STEP.SetupAction, 'RulesEventSetUpAction'],
+  [REPLAY_SUB_STEP.Kickoff, 'RulesEventKickOffTable'],
+  [REPLAY_SUB_STEP.BoardAction, 'RulesEventBoardAction'],
+  [REPLAY_SUB_STEP.EndTurn, 'RulesEventEndTurn'],
+  [REPLAY_SUB_STEP.BoardState, 'BoardState'],
+])
 
 
 function nextState(replayStep, subStep) {
   for (var nextSubStep = subStep; nextSubStep < REPLAY_SUB_STEP.NextReplayStep; nextSubStep++) {
-    if (replayStep[REPLAY_KEY[nextSubStep]]) {
+    if (replayStep[REPLAY_KEY.get(nextSubStep)]) {
       return nextSubStep;
     }
   }
   return REPLAY_SUB_STEP.NextReplayStep;
 }
 export class ReplayPosition {
+  end = false;
   step = 0;
   subStep = REPLAY_SUB_STEP.SetupAction;
   action = null;
@@ -75,13 +82,13 @@ export class ReplayPosition {
 
   toString() {
     if (this.subStep == REPLAY_SUB_STEP.BoardAction) {
-      return `Step-${this.step}.${REPLAY_KEY[this.subStep]}.${this.action}.${this.result}`;
+      return `Step-${this.step}.${REPLAY_KEY.get(this.subStep)}.${this.action}.${this.result}`;
     } else {
-      return `Step-${this.step}.${REPLAY_KEY[this.subStep]}`;
+      return `Step-${this.step}.${REPLAY_KEY.get(this.subStep)}`;
     }
   }
 
-  toNextPosition(replay) {
+  toNextPosition(replay): ReplayPosition {
     const replayStep = replay.ReplayStep[this.step];
     if (this.subStep == REPLAY_SUB_STEP.BoardAction) {
       const actions = ensureList(replayStep.RulesEventBoardAction);

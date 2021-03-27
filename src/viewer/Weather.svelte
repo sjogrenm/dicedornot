@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
   import {WEATHER} from "../constants.js";
-  export let weather;
+  export let weather: WEATHER;
 
   const weatherText = {
     [WEATHER.Nice]: 'perfect blood bowl weather',

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import {team1Color, team1Gray, team0Color, team0Gray, gray} from "./theme.js";
 
   function scaleToStyle(scale, prefix) {

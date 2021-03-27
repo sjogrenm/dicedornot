@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   export let width=1, height=1;
   let clazz = null;
   export { clazz as class }

@@ -9,11 +9,7 @@ function isIterable(obj) {
 interface WeightedValue {
   name: string,
   weight: number,
-  value: number | Distribution,
-}
-
-interface SimpleValue extends WeightedValue {
-  value: number,
+  value: Distribution,
 }
 
 export class Distribution {
@@ -28,7 +24,7 @@ export class Distribution {
     return this;
   }
 
-  _flat(): Array<SimpleValue> {
+  _flat(): WeightedValue[] {
     throw new Error("${this.constructor}._flat() missing implementation");
   }
   get flat() {
@@ -90,7 +86,7 @@ export class Distribution {
     }
   }
 
-  product(...values: Array<Distribution | number>) {
+  product(...values: Array<Distribution | number>): Distribution {
     values = values.filter(value => value !== null);
     if (values.length > 0) {
       return new ProductDistribution([this, ...values]);
@@ -141,7 +137,7 @@ export class SimpleDistribution extends Distribution {
   values: Array<WeightedValue>;
   constructor(values: Array<WeightedValue>, name?: string) {
     super(name)
-    const totalWeight = values.map(value => value.weight).reduce((a, b) => a + b);
+    const totalWeight = values.map(value => value.weight).reduce((a, b) => a + b, 0);
     values.forEach(value => {
       value.weight /= totalWeight;
     });
@@ -201,7 +197,7 @@ export class BinFuncDistribution extends Distribution {
   valFunc: (a: number, b: number) => number;
   nameFunc: (a: string, b: string) => string;
   distFuncName: string;
-  values: Array<Distribution | number>;
+  values: Array<Distribution>;
 
   constructor(
     valFunc: (a: number, b: number) => number,
@@ -220,7 +216,9 @@ export class BinFuncDistribution extends Distribution {
     if (values.length == 0) {
       throw new Error("empty values list");
     }
-    this.values = values;
+    this.values = values.map(v => (
+      v instanceof Distribution ? v : new SingleValue(v.toString(), v)
+    ));
   }
 
   _combine(a: Distribution | number, b: Distribution | number) {
@@ -256,26 +254,19 @@ export class BinFuncDistribution extends Distribution {
             flattened = new SimpleDistribution(flattened.flat.map(value => (
               {
                 name: this.name || this.nameFunc(value.name, next.toString()),
-                value: this.valFunc(value.value, <number>next),
+                value: this.valFunc(value.value, next.valueOf()),
                 weight: value.weight
               }
             )), this.name);
           }
         } else {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(next.flat.map(value => (
-              {
-                name: this.name || this.nameFunc(flattened, value.name),
-                value: this.valFunc(flattened, value.value),
-                weight: value.weight
-              }
-            )), this.name);
-          } else {
-            flattened = new SingleValue(
-              this.name || this.nameFunc(flattened, next.toString()),
-              this.valFunc(flattened, next),
-            )
-          }
+          flattened = new SimpleDistribution(next.flat.map(value => (
+            {
+              name: this.name || this.nameFunc(flattened, value.name),
+              value: this.valFunc(flattened, value.value),
+              weight: value.weight
+            }
+          )), this.name);
         }
       }
     }

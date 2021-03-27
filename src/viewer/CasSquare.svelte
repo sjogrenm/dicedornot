@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Player from "./Player.svelte";
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import {SITUATION, Casualties} from "../constants.js";

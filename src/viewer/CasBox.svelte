@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import Grid from './Grid.svelte';
   import CasSquare from './CasSquare.svelte';
   export let pitchPlayers, team, casType, dugout, send, receive;

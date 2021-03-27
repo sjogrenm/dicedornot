@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import ReplayLoader from "./ReplayLoader.svelte";
   import Summary from "./Summary.svelte";
   import RollDetails from "./RollDetails.svelte";
@@ -18,7 +18,7 @@
   import Todo from "./Todo.svelte";
   import Theme from "./Theme.svelte";
 
-  let homePercentile, awayPercentile, loading, playing;
+  let homePercentile: number, awayPercentile: number, loading: boolean, playing: boolean;
   $: {
     console.log("Replay", $replay);
   }
@@ -54,7 +54,7 @@
 <Theme>
   <div class="scroll-container">
     <div class="scroll-step">
-      <Nav bind:loading />
+      <Nav/>
       <Error />
     </div>
     {#if $replay}
@@ -65,8 +65,6 @@
               <Diced
                 homeTeam={$replay.gameDetails.homeTeam.coachName}
                 awayTeam={$replay.gameDetails.awayTeam.coachName}
-                {homePercentile}
-                {awayPercentile}
               />
             {/if}
             <Summary />

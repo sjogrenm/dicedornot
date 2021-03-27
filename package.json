@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "build": "snowpack build",
-    "dev": "snowpack dev"
+    "dev": "snowpack dev",
+    "check-types": "svelte-check && tsc --noEmit"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",
