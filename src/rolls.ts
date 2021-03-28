@@ -274,7 +274,7 @@ export class Roll<Dice> {
   static handledSkills = [];
   get diceSeparator() { return ', '; }
   static hideDependents = false;
-  readonly dependentConditions: Function[] = [];
+  get dependentConditions() {return [];}
 
   constructor(attrs: RollArgs<Dice>) {
     Object.assign(this, attrs);
@@ -916,7 +916,7 @@ function sameTeamMove(roll, dependent) {
 
 function setup(roll, dependent) {
   return (
-    dependent.constructor == SetupAction
+    dependent instanceof SetupAction
   )
 }
 
@@ -954,7 +954,7 @@ export class BlockRoll extends Roll<BLOCK> {
     SKILL.TakeRoot
   ];
   get diceSeparator() { return '/'; }
-  static dependentConditions = [pushOrFollow, nonFoulDamage, reroll, samePlayerMove];
+  get dependentConditions() { return [pushOrFollow, nonFoulDamage, reroll, samePlayerMove]; }
 
   static argsFromXml(xml): BlockRollArgs {
     let args = super.argsFromXml(xml);
@@ -1183,7 +1183,7 @@ export class ModifiedD6SumRoll extends Roll<number> {
   get diceSeparator() { return '+' }
   get rerollSkill() { return undefined; }
   get rerollCancelSkill() { return undefined; }
-  static dependentConditions = [reroll, samePlayerMove];
+  get dependentConditions() { return [reroll, samePlayerMove]; }
 
   constructor(args: ModifiedD6SumRollArgs) {
     super(args);
@@ -1388,7 +1388,7 @@ class PickupRoll extends ModifiedD6SumRoll {
 class BoneHeadRoll extends ModifiedD6SumRoll {
   get rollName() { return "Bone Head"; }
   static handledSkills = [SKILL.BoneHead];
-  static dependentConditions = [reroll, samePlayerMove];
+  get dependentConditions() { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
@@ -1397,7 +1397,7 @@ class BoneHeadRoll extends ModifiedD6SumRoll {
 class ReallyStupidRoll extends ModifiedD6SumRoll {
   get rollName() { return "Really Stupid"; }
   static handledSkills = [SKILL.ReallyStupid];
-  static dependentConditions = [reroll, samePlayerMove];
+  get dependentConditions() { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
@@ -1406,7 +1406,7 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
 class FoulAppearanceRoll extends ModifiedD6SumRoll {
   get rollName() { return "Foul Appearance"; }
   static handledSkills = [SKILL.FoulAppearance];
-  static dependentConditions = [reroll, samePlayerMove];
+  get dependentConditions() { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     return this.onTeamValue(this.activePlayer).product(-1);
   }
@@ -1432,7 +1432,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
 
   get numDice() { return 2; }
   static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
-  static dependentConditions = [foulDamage];
+  get dependentConditions() { return [foulDamage]; }
 
   constructor(attrs: ArmorRollArgs) {
     super(attrs);
@@ -1604,7 +1604,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
 class WildAnimalRoll extends ModifiedD6SumRoll {
   get rollName() { return "Wild Animal"; }
   static handledSkills = [SKILL.WildAnimal];
-  static dependentConditions = [reroll, samePlayerMove];
+  get dependentConditions() { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // Failing Wild Animal means that this player is effectiFvely unavailable
     // for the rest of your turn, but is active on your opponents turn
@@ -1630,7 +1630,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
   get rerollSkill() { return SKILL.Dodge; }
   get rerollCancelSkill() { return SKILL.Tackle; }
-  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
+  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
 
   static argsFromXml(xml): MoveRollArgs {
     let args = super.argsFromXml(xml);
@@ -1686,7 +1686,7 @@ class LeapRoll extends ModifiedD6SumRoll {
   cellFrom: Cell;
   cellTo: Cell;
   get rollName() { return "Leap"; }
-  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
+  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
   static argsFromXml(xml): MoveRollArgs {
     return {
       ...super.argsFromXml(xml),
@@ -1712,7 +1712,7 @@ class PassRoll extends ModifiedD6SumRoll {
   get rollName() { return "Pass"; }
   get rerollSkill() { return SKILL.Pass; }
   static handledSkills = [SKILL.Pass, SKILL.StrongArm, SKILL.Accurate];
-  static dependentConditions = [catchOrInterception, samePlayerMove, reroll];
+  get dependentConditions() { return [catchOrInterception, samePlayerMove, reroll]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
@@ -1724,7 +1724,7 @@ class PassRoll extends ModifiedD6SumRoll {
 class ThrowTeammateRoll extends ModifiedD6SumRoll {
   get rollName() { return "Throw Teammate"; }
   static handledSkills = [SKILL.ThrowTeamMate];
-  static dependentConditions = [samePlayerMove, reroll];
+  get dependentConditions() { return [samePlayerMove, reroll]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Throw teammate only turns over if the thrown player has the ball, and even then, only
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
@@ -1771,7 +1771,7 @@ class GFIRoll extends ModifiedD6SumRoll {
   get rollName() { return "GFI"; }
   static handledSkills = [SKILL.SureFeet];
   get rerollSkill() { return SKILL.SureFeet; }
-  static dependentConditions = [nonFoulDamage, reroll, samePlayerMove];
+  get dependentConditions() { return [nonFoulDamage, reroll, samePlayerMove]; }
 
   static argsFromXml(xml): MoveRollArgs {
     return {
@@ -1822,7 +1822,7 @@ class TakeRootRoll extends ModifiedD6SumRoll {
 
 class LandingRoll extends ModifiedD6SumRoll {
   get rollName() { return "Landing"; }
-  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
+  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Handle a turnover if the thrown player has the ball
     return this.knockdownValue(this.activePlayer, expected);
@@ -1831,7 +1831,7 @@ class LandingRoll extends ModifiedD6SumRoll {
 
 class FireballRoll extends ModifiedD6SumRoll {
   get rollName() { return "Fireball"; }
-  static dependentConditions = [nonFoulDamage];
+  get dependentConditions() { return [nonFoulDamage]; }
   passValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, expected);
   }
@@ -1839,7 +1839,7 @@ class FireballRoll extends ModifiedD6SumRoll {
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
   get rollName() { return "Lightning Bolt"; }
-  static dependentConditions = [reroll, samePlayerMove, nonFoulDamage];
+  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
     args.activePlayer = args.initialBoardState.playerAtPosition(xml.action.Order.CellTo.Cell);
@@ -1882,7 +1882,7 @@ export class InjuryRoll extends Roll<number> {
 
   static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
   get diceSeparator() { return '+'; }
-  static dependentConditions = [reroll];
+  get dependentConditions() { return [reroll]; }
 
   static argsFromXml(xml): InjuryRollArgs {
     const args = super.argsFromXml(xml);
@@ -2144,7 +2144,7 @@ export class MoveAction extends Roll<null> {
   cellFrom: Cell;
   cellTo: Cell;
   get rollName() { return "Move"; }
-  static dependentConditions = [sameTeamMove];
+  get dependentConditions() { return [sameTeamMove]; }
   static handledSkills = [SKILL.JumpUp];
 
   static ignore() {
@@ -2215,7 +2215,7 @@ export class KickoffRoll extends Roll<number> {
   diceSum: number;
 
   get rollName() { return "Kickoff"; }
-  static dependentConditions = [isKickoffRoll];
+  get dependentConditions() { return [isKickoffRoll]; }
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
@@ -2459,7 +2459,7 @@ export class PitchInvasionRoll extends KickoffEventRoll {
 
 export class SetupAction extends NoValueRoll {
   get rollName() { return "Setup"; }
-  static dependentConditions = [setup];
+  get dependentConditions() { return [setup]; }
   static hideDependents = true;
   static ignore(xml) {
     return false;
