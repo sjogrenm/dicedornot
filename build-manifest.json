@@ -121,7 +121,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 67923,
+      "bytes": 68125,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -998,7 +998,7 @@
       ]
     },
     "dist/viewer/Overlay.svelte.js": {
-      "bytes": 11821,
+      "bytes": 11782,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -1653,7 +1653,7 @@
           "bytesInOutput": 86711
         },
         "dist/rolls.js": {
-          "bytesInOutput": 38855
+          "bytesInOutput": 39007
         },
         "dist/replay.js": {
           "bytesInOutput": 2361
@@ -1953,7 +1953,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1395910
+      "bytes": 1396062
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
