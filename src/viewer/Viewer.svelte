@@ -1,4 +1,4 @@
-players[players[<script lang="ts">
+<script lang="ts">
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";

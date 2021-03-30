@@ -6,10 +6,10 @@ function isIterable(obj) {
   return typeof obj[Symbol.iterator] === 'function';
 }
 
-interface WeightedValue {
+interface Weighted<T> {
   name: string,
   weight: number,
-  value: Distribution,
+  value: T,
 }
 
 export class Distribution {
@@ -24,10 +24,10 @@ export class Distribution {
     return this;
   }
 
-  _flat(): WeightedValue[] {
+  _flat(): Weighted<number>[] {
     throw new Error("${this.constructor}._flat() missing implementation");
   }
-  get flat() {
+  get flat(): Weighted<number>[] {
     Object.defineProperty(this, 'flat', {
       value: Object.values(
         this._flat().reduce((acc, value) => {
@@ -72,7 +72,7 @@ export class Distribution {
     Object.defineProperty(
       this,
       'expectedValue',
-      { value: this.flat.reduce((acc, value) => acc + (value.value * value.weight), 0) }
+      { value: this.flat.reduce((acc, value) => acc + (value.value.valueOf() * value.weight), 0) }
     );
     return this.expectedValue;
   }
@@ -134,8 +134,8 @@ export class Distribution {
 }
 
 export class SimpleDistribution extends Distribution {
-  values: Array<WeightedValue>;
-  constructor(values: Array<WeightedValue>, name?: string) {
+  values: Weighted<number | Distribution>[];
+  constructor(values: Weighted<Distribution | number>[], name?: string) {
     super(name)
     const totalWeight = values.map(value => value.weight).reduce((a, b) => a + b, 0);
     values.forEach(value => {
@@ -155,6 +155,7 @@ export class SimpleDistribution extends Distribution {
         return acc;
       }, {})
     );
+    console.assert(this.values.length > 0, {this: this});
   }
   _flat() {
     return this.values.flatMap(value => {
@@ -165,7 +166,7 @@ export class SimpleDistribution extends Distribution {
           value: subvalue.value,
         }))
       }
-      return value;
+      return value as Weighted<number>;
     })
   }
 }
@@ -197,7 +198,7 @@ export class BinFuncDistribution extends Distribution {
   valFunc: (a: number, b: number) => number;
   nameFunc: (a: string, b: string) => string;
   distFuncName: string;
-  values: Array<Distribution>;
+  values: Array<Distribution | number>;
 
   constructor(
     valFunc: (a: number, b: number) => number,
@@ -213,12 +214,8 @@ export class BinFuncDistribution extends Distribution {
     if (!isIterable(values)) {
       throw new Error("values not iterable");
     }
-    if (values.length == 0) {
-      throw new Error("empty values list");
-    }
-    this.values = values.map(v => (
-      v instanceof Distribution ? v : new SingleValue(v.toString(), v)
-    ));
+    this.values = values;
+    console.assert(this.values.length > 0, {this: this});
   }
 
   _combine(a: Distribution | number, b: Distribution | number) {
@@ -242,7 +239,7 @@ export class BinFuncDistribution extends Distribution {
         if (flattened instanceof Distribution) {
           if (next instanceof Distribution) {
             flattened = new SimpleDistribution(flattened.flat.flatMap(fVal => (
-              (<Distribution>next).flat.map(nextVal => (
+              (next as Distribution).flat.map(nextVal => (
                 {
                   name: this.name || this.nameFunc(fVal.name, nextVal.name),
                   weight: fVal.weight * nextVal.weight,
@@ -260,13 +257,20 @@ export class BinFuncDistribution extends Distribution {
             )), this.name);
           }
         } else {
-          flattened = new SimpleDistribution(next.flat.map(value => (
-            {
-              name: this.name || this.nameFunc(flattened, value.name),
-              value: this.valFunc(flattened, value.value),
-              weight: value.weight
-            }
-          )), this.name);
+          if (next instanceof Distribution) {
+            flattened = new SimpleDistribution(next.flat.map(value => (
+              {
+                name: this.name || this.nameFunc(flattened, value.name),
+                value: this.valFunc(flattened, value.value),
+                weight: value.weight
+              }
+            )), this.name);
+          } else {
+            flattened = new SingleValue(
+              this.name || this.nameFunc(flattened, next.toString()),
+              this.valFunc(flattened, next),
+            )
+          }
         }
       }
     }
@@ -305,11 +309,9 @@ export class ComparativeDistribution extends Distribution {
     if (!isIterable(values)) {
       throw new Error("values not iterable");
     }
-    if (values.length == 0) {
-      throw new Error("empty values list");
-    }
     this.better = better;
     this.values = values;
+    console.assert(this.values.length > 0, {this: this});
   }
 
   _simple() {

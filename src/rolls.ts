@@ -250,9 +250,9 @@ interface RollArgs<Dice> {
 
 
 export class Roll<Dice> {
-  _futurePlayerValue: Map<number, Distribution>;
+  _futurePlayerValue: Record<number, Distribution>;
   activePlayer: Player;
-  armorRollCache: Map<string, ArmorRoll>;
+  armorRollCache: Record<string, ArmorRoll>;
   dependentIndex?: number;
   dependentOn?: Roll<any>;
   dependentRolls: Roll<any>[];
@@ -261,7 +261,7 @@ export class Roll<Dice> {
   gameLength: number;
   initialBoardState: BoardState;
   isReroll: boolean;
-  onTeamValues: Map<number, Distribution>;
+  onTeamValues: Record<number, Distribution>;
   rollIndex: number;
   rolls: Roll<any>[];
   rollStatus: ROLL_STATUS;
@@ -279,10 +279,10 @@ export class Roll<Dice> {
   constructor(attrs: RollArgs<Dice>) {
     Object.assign(this, attrs);
 
-    this.onTeamValues = new Map();
-    this.armorRollCache = new Map();
+    this.onTeamValues = {};
+    this.armorRollCache = {};
     this.dependentRolls = [];
-    this._futurePlayerValue = new Map();
+    this._futurePlayerValue = {};
 
     console.assert(
       !this.unhandledSkills || this.unhandledSkills.length == 0,
@@ -694,9 +694,8 @@ export class Roll<Dice> {
   onTeamValue(player): Distribution {
     // The fraction of the teams on-pitch players that this player represents.
     return (
-      this.onTeamValues.get(player.id) || (
-        this.onTeamValues.set(
-          player.id,
+      this.onTeamValues[player.id] || (
+        this.onTeamValues[player.id] = (
           this.playerValue(player).divide(
             this.teamValue(
               player.team,
@@ -706,7 +705,7 @@ export class Roll<Dice> {
             // Scale players by the difference between a full team scoring 1.5 points per game
             // and pitch-cleared opponent scoring 16 points per game
           ).product(6.5 / 32).named(player.name)
-        ).get(player.id)
+        )
       )
     );
   }
@@ -715,8 +714,8 @@ export class Roll<Dice> {
     damageBonusActive = damageBonusActive || false;
     let key = `${player.id}-${damageBonusActive}`;
     return (
-      this.armorRollCache.get(key) ||
-      (this.armorRollCache.set(key, new ArmorRoll({
+      this.armorRollCache[key] ||
+      (this.armorRollCache[key] = new ArmorRoll({
         initialBoardState: this.initialBoardState,
         finalBoardState: this.finalBoardState,
         activePlayer: player,
@@ -739,7 +738,7 @@ export class Roll<Dice> {
         isReroll: false,
         gameLength: this.gameLength,
         rolls: this.rolls,
-      })).get(key))
+      }))
     );
   }
 
@@ -2030,7 +2029,7 @@ export class InjuryRoll extends Roll<number> {
   }
 
   get _possibleOutcomes() {
-    var outcomesByName: Map<string, Outcome[]> = new Map();
+    var outcomesByName: Record<string, Outcome[]> = {};
     for (var combination of this.diceCombinations) {
       let value = this.value(combination, true);
       var outcomeList = outcomesByName[value.name];
@@ -2043,7 +2042,7 @@ export class InjuryRoll extends Roll<number> {
       });
     }
     return new SimpleDistribution(
-      Array.from(outcomesByName.values()).map((outcomes) => {
+      Object.values(outcomesByName).map((outcomes) => {
         const minOutcome = Math.min(
           ...outcomes.map((outcome) => parseInt(outcome.name))
         );
@@ -2341,7 +2340,7 @@ export class KickoffRoll extends Roll<number> {
   }
 
   get _possibleOutcomes() {
-    var outcomesByName: Map<string, Distribution[]> = new Map();
+    var outcomesByName: Record<string, {name: string, value: Distribution}[]> = {};
     for (var combination of this.diceCombinations) {
       var outcomeList = outcomesByName[this.value(combination, true).name];
       if (!outcomeList) {

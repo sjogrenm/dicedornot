@@ -78,7 +78,7 @@
           </div>
           <div class="col justify-content-center turns">
             <TurnSelectors />
-            <RollDetails {playing} />
+            <RollDetails/>
           </div>
         </div>
           <div class="row">

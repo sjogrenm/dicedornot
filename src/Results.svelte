@@ -77,7 +77,6 @@
     // Assign the specification to a local variable vlSpec.
 
     // Embed the visualization in the container with id `vis`
-    console.log(chartEl);
     embed(chartEl, spec).then((result) => {
       result.view.addEventListener("click", function (event, item) {
         if (item) {
