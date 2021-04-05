@@ -40,7 +40,7 @@ jobs:
                     description: commit.message.split('\n').slice(2).join('\\n'),
                     fields: [{
                       name: "links",
-                      value: `[commit](${commit.url}`,
+                      value: `[commit](${commit.url})`,
                     }],
                     footer: {
                       text: `${commit.timestamp} | ${commit.id.substr(0,7)}`
