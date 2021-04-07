@@ -1,4 +1,6 @@
 <script lang="ts">
+import { createEventDispatcher } from 'svelte';
+
   import {
     Collapse,
     Navbar,
@@ -9,7 +11,7 @@
 
   let isOpen = false;
 
-  function handleUpdate(event) {
+  function handleUpdate(event: {detail: {isOpen: boolean}}) {
     isOpen = event.detail.isOpen;
   }
 

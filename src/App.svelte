@@ -18,7 +18,7 @@
   import Todo from "./Todo.svelte";
   import Theme from "./Theme.svelte";
 
-  let homePercentile: number, awayPercentile: number, loading: boolean, playing: boolean;
+  let loading: boolean, playing: boolean;
   $: {
     console.log("Replay", $replay);
   }

@@ -293,8 +293,8 @@ export enum ACTION_TYPE {
   Blitz = 2, //Blitz
   Pass = 3, //Pass
   Handoff = 4, //Ball handoff
-  FoulAR = 5, //Armor
-  Armor = 6, //Armor
+  Foul = 5, //Foul
+  TakeDamage = 6, //Armor
   Kickoff = 7, //Pick Kickoff Location
   Scatter = 8, //Pick Kickoff Scatter KickSkill
   Catch = 9, //Catch

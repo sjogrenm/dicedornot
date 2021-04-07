@@ -1,3 +1,4 @@
+import type {MList} from './BB2Replay.js';
 
 export const END: ReplayPosition = {
   end: true,
@@ -16,11 +17,11 @@ export const END: ReplayPosition = {
   sliceActionsTo: (replay, end) => [],
 };
 
-export function ensureList(objOrList) {
-  if (objOrList && objOrList.length) {
+export function ensureList<T>(objOrList: MList<T>): T[] {
+  if (objOrList && objOrList instanceof Array) {
     return objOrList;
   } else if (objOrList) {
-    return [objOrList];
+    return [objOrList as T];
   } else {
     return [];
   }

@@ -4,12 +4,7 @@
   import * as vega from "vega";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
 
-  let rolls,
-    view,
-    playHead,
-    activeTimeout,
-    loadedReplay,
-    chartEl;
+  let rolls, view, playHead, activeTimeout, loadedReplay, chartEl;
   export let spec;
 
   onMount(() => {
@@ -88,7 +83,6 @@
       view = result.view;
       view = result.view.insert("actual", actuals).run();
       // view = view.insert("simulated", actuals).run();
-
     });
   }
 </script>

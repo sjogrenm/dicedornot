@@ -50,7 +50,13 @@
     {open}>
     <summary>
       {#if dist.name}{dist.name} &rightarrow;{/if}
-      {dist.values.reduce((name, value) => (name ? dist.nameFunc(name, value.name || value) : value.name), null)}
+      {dist.values.reduce((name, value) => {
+        if (value instanceof Distribution) {
+          return (name ? dist.nameFunc(name, value.name) : value.name)
+        } else {
+          return (name ? dist.nameFunc(name, value.toString()) : value.toString())
+        }
+      }, null)}
       {dist.valueString}
     </summary>
     {#if open}

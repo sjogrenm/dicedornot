@@ -3,6 +3,7 @@ import { END } from "./replay-utils.js";
 import { SIDE } from "./constants.js";
 import type { Replay } from "./BB2Replay.js";
 import he from 'he';
+import {xmlToJson} from "./io.js";
 
 interface TeamDetails {
   coachName: string,
@@ -19,7 +20,7 @@ interface GameDetails {
   awayTeam: TeamDetails,
 }
 
-interface ParsedReplay {
+export interface ProcessedReplay {
   fullReplay: Replay,
   gameDetails: GameDetails,
   rolls: Roll<any>[],
@@ -27,7 +28,11 @@ interface ParsedReplay {
   version: number,
 }
 
-export function processReplay(data) {
+export interface ParsedReplay {
+  Replay: Replay,
+}
+
+export function processReplay(data: ParsedReplay): ProcessedReplay {
   //console.log("replay.processReplay");
   //console.log(data);
 
@@ -41,7 +46,6 @@ export function processReplay(data) {
     stepIndex++
   ) {
     var replayStep = data.Replay.ReplayStep[stepIndex];
-    replayStep.index = stepIndex;
     rolls = rolls.concat(Roll.fromReplayStep(
       data.Replay,
       data.Replay.ReplayStep[stepIndex - 1] && data.Replay.ReplayStep[stepIndex - 1].BoardState,
@@ -137,3 +141,5 @@ export function extractGameDetails(jsonObject): GameDetails {
     },
   };
 }
+
+

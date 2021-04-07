@@ -1,3 +1,13 @@
+<script lang="ts" context="module">
+  interface Team {
+    dugout: {
+      cas: BB2.PlayerId[],
+      ko: BB2.PlayerId[],
+      reserve: BB2.PlayerId[],
+    }
+  }
+</script>
+
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
@@ -38,7 +48,7 @@
     replayPreview,
   } from "../stores.js";
   import he from "he";
-  import type {Player as ReplayPlayer, PlayerId} from "../BB2Replay.js";
+  import type * as BB2 from "../BB2Replay.js";
 
   export let playing = false;
 
@@ -61,14 +71,14 @@
   interface PitchCellProps {
     cell?: CellProps,
     dice?: number[],
-    player?: PlayerId,
+    player?: BB2.PlayerId,
     ball?: BallProps,
     foul?: boolean,
     blood?: BloodProps,
   }
 
   interface PlayerProps {
-    data: ReplayPlayer,
+    data: BB2.Player,
     blitz?: boolean,
     moving?: boolean,
     prone?: boolean,
@@ -77,16 +87,16 @@
     stupidity?: string,
   }
 
-  let lastChainPush: PlayerId,
+  let lastChainPush: BB2.PlayerId,
     races = [],
-    homeTeam = {
+    homeTeam: Team = {
       dugout: {
         cas: [],
         ko: [],
         reserve: [],
       },
     },
-    awayTeam = {
+    awayTeam: Team = {
       dugout: {
         cas: [],
         ko: [],
@@ -190,7 +200,7 @@
 
   function processTeam(side, team, active) {
     let maxRerollsThisPeriod = $replay.fullReplay.ReplayStep.reduce(
-      (acc, step) => {
+      (acc: number, step: BB2.ReplayStep) => {
         if (!step.BoardState) {
           return acc;
         }
@@ -298,68 +308,54 @@
       };
     }
   }
+  function assertExhaustive(
+    value: never,
+    message: string = 'Reached unexpected case in exhaustive switch'
+  ): never {
+    throw new Error(message);
+  }
 
-  let actions = [
-    handleMove /*Move = 0*/,
-    handleBlock /*Block = 1*/,
-    handleBlock /*Blitz = 2*/,
-    handlePass /*Pass = 3*/,
-    handleHandoff /*HandOff = 4*/,
-    handleFoul /*Foul = 5*/,
-    handleTakeDamage /*TakeDamage = 6*/,
-    handleKickoff /*KickOff = 7*/,
-    handleBall /*Ball = 8*/,
-    handleCatch /*Catch = 9*/,
-    handleTouchdown /*Touchdown = 10*/,
-    handleFrontToBack /*FrontToBack = 11*/,
-    handle /*WakeUp = 12*/,
-    handle /*EventPitchInv = 13*/,
-    handlePickup /*PickUp = 14*/,
-    handleNegaTraits /*Stupidity = 15*/,
-    handle /*Land = 16*/,
-    handle /*EatTeamMate = 17*/,
-    handle /*Shadow = 18*/,
-    handle /*Stab = 19*/,
-    handle /*FrenzyStab = 20*/,
-    handleLeap /*Leap = 21*/,
-    handle /*Chainsaw = 22*/,
-    handle /*BallAndChain = 23*/,
-    handle /*HailMaryPass = 24*/,
-    handle /*PilingOn = 25*/,
-    handle /*MultipleBlock = 26*/,
-    handle /*HypnoticGaze = 27*/,
-    handle /*KickOffReturn = 28*/,
-    handle /*PassBlock = 29*/,
-    handle /*HalflingChef = 30*/,
-    handle /*FireballLaunch = 31*/,
-    handle /*FireBallHit = 32*/,
-    handle /*LightningBolt = 33*/,
-    handle /*DeceiveReferee = 34*/,
-    handle /*ScatterPlayer = 35*/,
-    handle /*QuickSnap = 36*/,
-    handle /*HighKick = 37*/,
-    handle /*DumpOff = 38*/,
-    handle /*DivingTackle = 39*/,
-    handle /*ThrowTeamMate = 40*/,
-    handle /*MultipleStab = 41*/,
-    handleActivate /*Activate = 42*/,
-    handle /*PassBlockMoveLeap = 43*/,
-    handle /*PassBlockLeapMove = 44*/,
-    handle /*PassBlockLeap = 45*/,
-    handle /*FansNumber = 46*/,
-    handleWeather /*InitialWeather = 47*/,
-    handle /*SwelteringHeat = 48*/,
-    handle /*Feed = 49*/,
-    handle /*BombExplosionGenerator = 50*/,
-    handle /*BombExplosionHit = 51*/,
-    handle /*PassBomb = 52*/,
-    handle /*CatchBomb = 53*/,
-    handle /*ScatterBomb = 54*/,
-    handle /*ForcedPassBomb = 55*/,
-    handle /*HailMaryBomb = 56*/,
-    handleEndTurn /*Turnover = 58*/,
-  ];
-
+  function dispatchAction(action: BB2.RulesEventBoardAction, resultIndex: number) {
+    switch (action.ActionType) {
+      case ACTION_TYPE.Block:
+      case ACTION_TYPE.Blitz:
+          return handleBlock(action, resultIndex);
+      case ACTION_TYPE.Pass:
+          return handlePass(action, resultIndex);
+      case ACTION_TYPE.Handoff:
+          return handleHandoff(action);
+      case ACTION_TYPE.Foul:
+          return handleFoul(action);
+      case ACTION_TYPE.Move:
+          return handleMove(action, resultIndex);
+      case ACTION_TYPE.TakeDamage:
+          return handleTakeDamage(action, resultIndex);
+      case ACTION_TYPE.Kickoff:
+          return handleKickoff(action);
+      case ACTION_TYPE.Scatter:
+          return handleScatter(action);
+      case ACTION_TYPE.Catch:
+          return handleCatch(action, resultIndex);
+      case ACTION_TYPE.TouchDown:
+          return handleTouchdown();
+      case ACTION_TYPE.StunWake:
+          return handleStunWake(action);
+      case ACTION_TYPE.Pickup:
+          return handlePickup(action, resultIndex);
+      case ACTION_TYPE.ActivationTest:
+          return handleActivationTest(action, resultIndex);
+      case ACTION_TYPE.Leap:
+          return handleLeap(action, resultIndex);
+      case ACTION_TYPE.ActivatePlayer:
+          return handleActivate(action);
+      case ACTION_TYPE.InitialWeather:
+          return handleWeather(action, resultIndex);
+      case ACTION_TYPE.Turnover:
+          return handleTurnover(action);
+        default:
+          assertExhaustive(action, "Unhandled Action Type");
+    }
+  }
   function sleep(ms) {
     let signal = abort.signal;
     return new Promise<void>((resolve, reject) => {
@@ -390,14 +386,13 @@
 
   async function handleSetupAction() {}
 
-  async function handleBoardAction(boardAction, boardActionResult) {
-    const action = actions[boardAction.ActionType || 0];
+  async function handleBoardAction(boardAction: BB2.RulesEventBoardAction, resultIndex: number) {
     try {
-      await action(boardAction, boardActionResult);
+      await dispatchAction(boardAction, resultIndex);
       await step();
     } catch (err) {
       await step();
-      console.error("Action failed", { err, boardAction, boardActionResult });
+      console.error("Action failed", { err, boardAction, resultIndex });
       throw err;
     }
   }
@@ -422,13 +417,10 @@
             step,
           });
         }
-        let result = ensureList(action.Results.BoardActionResult)[
-          current.result
-        ];
-        await handleBoardAction(action, result);
+        await handleBoardAction(action, current.result);
         break;
       case REPLAY_SUB_STEP.EndTurn:
-        await handleEndTurn(subStep);
+        await handleTurnover(subStep);
         break;
       case REPLAY_SUB_STEP.BoardState:
         await handleBoardState(subStep);
@@ -629,7 +621,8 @@
     });
   }
 
-  function handleWeather(action, actionResult) {
+  function handleWeather(action: BB2.WeatherAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     const dice = translateStringNumberList(actionResult.CoachChoices.ListDices);
     const diceSums = {
       2: WEATHER.SwelteringHeat,
@@ -659,7 +652,7 @@
     });
   }
 
-  function handleBall(action) {
+  function handleScatter(action) {
     setPitchSquare(action.Order.CellFrom).ball = null;
     let to = action.Order.CellTo.Cell;
     setPitchSquare(to).ball = {
@@ -667,7 +660,8 @@
     };
   }
 
-  async function handleBlock(action, actionResult) {
+  async function handleBlock(action: BB2.BlockAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     let from = action.Order.CellFrom;
     let fromSquare = setPitchSquare(from);
     (fromSquare.cell = fromSquare.cell || {}).active = true;
@@ -755,7 +749,8 @@
     }
   }
 
-  function handleCatch(action, actionResult) {
+  function handleCatch(action: BB2.CatchAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     if (!actionResult.IsOrderCompleted) return;
     if (actionResult.ResultType !== 0) return;
 
@@ -763,7 +758,7 @@
     setPitchSquare(action.Order.CellTo.Cell).ball = { held: true };
   }
 
-  async function handleEndTurn(endTurn) {
+  async function handleTurnover(endTurn: BB2.TurnoverAction) {
     if (endTurn.Turnover) {
       banner = "turnover";
       clearTemporaryState();
@@ -773,36 +768,37 @@
     }
   }
 
-  async function handleFoul(action) {
+  async function handleFoul(action: BB2.FoulAction) {
     const targetSquare = setPitchSquare(action.Order.CellTo.Cell);
 
     targetSquare.foul = true;
     await step();
   }
-  function handleFrontToBack(action) {
+  function handleStunWake(action: BB2.StunWakeAction) {
     let player = setPlayer(action.PlayerId);
     player.stunned = false;
     player.prone = true;
   }
 
-  function handleHandoff(action) {
+  function handleHandoff(action: BB2.HandoffAction) {
     let from = setPitchSquare(action.Order.CellFrom);
     let to = setPitchSquare(action.Order.CellTo.Cell);
     to.ball = from.ball;
     from.ball = null;
   }
 
-  function handleKickoff(action) {
+  function handleKickoff(action: BB2.KickoffAction) {
     let square = (setPitchSquare(action.Order.CellTo.Cell).ball = {
       held: false,
     });
   }
 
-  function handleLeap(action, actionResult) {
-    handleMove(action, actionResult);
+  function handleLeap(action: BB2.LeapAction, resultIndex: number) {
+    handleMove(action, resultIndex);
   }
 
-  function handleMove(action, actionResult) {
+  function handleMove(action: BB2.MoveAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     let player = setPlayer(action.PlayerId);
     let squareFrom = setPitchSquare(action.Order.CellFrom);
     let squareTo = setPitchSquare(action.Order.CellTo.Cell);
@@ -846,7 +842,7 @@
     }
   }
 
-  function handleNegaTraits(action, actionResult) {
+  function handleActivationTest(action: BB2.ActivationTestAction, resultIndex: number) {
     /* rolltypes
       BoneHead = 20,
       ReallyStupid = 21,
@@ -856,6 +852,7 @@
       Bloodlust = 50,
 
     */
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     let square = setPitchSquare(action.Order.CellTo.Cell);
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
@@ -867,12 +864,14 @@
         [ROLL.BoneHead]: "BoneHeaded",
         [ROLL.ReallyStupid]: "Stupid",
         [ROLL.TakeRoot]: "Rooted",
+        [ROLL.WildAnimal]: "WildAnimal",
       };
       players[square.player].stupidity = STUPID_TYPES[actionResult.RollType];
     }
   }
 
-  async function handlePass(action, actionResult) {
+  async function handlePass(action: BB2.PassAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     if (!actionResult.IsOrderCompleted) {
       return;
     }
@@ -894,7 +893,8 @@
     }
   }
 
-  function handlePickup(action, actionResult) {
+  function handlePickup(action: BB2.PickupAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     if (
       actionResult.IsOrderCompleted &&
       actionResult.ResultType === RESULT_TYPE.Passed
@@ -907,11 +907,12 @@
       });
   }
 
-  function handleTakeDamage(action, actionResult) {
+  function handleTakeDamage(action: BB2.TakeDamageAction, resultIndex: number) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
     if (!actionResult.IsOrderCompleted) return;
 
     let player = setPlayer(action.PlayerId),
-      playerSquareIndex;
+      playerSquareIndex: string;
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
@@ -943,7 +944,7 @@
           //knocked out
           let team = player.team;
           let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
-          dugout.ko.push(player);
+          dugout.ko.push(pitch[playerSquareIndex].player);
           pitch[playerSquareIndex].player = null;
         }
         break;
@@ -951,7 +952,7 @@
         //knocked out
         let team = player.team;
         let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
-        dugout.cas.push(player);
+        dugout.cas.push(pitch[playerSquareIndex].player);
         pitch[playerSquareIndex].player = null;
         pitch[playerSquareIndex].blood = {
           blood: Math.floor(4 * Math.random() + 1),

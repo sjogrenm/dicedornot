@@ -1,11 +1,20 @@
+<script lang="ts" context="module">
+  import type * as BB2 from "./BB2Replay.js";
+  export interface ParsedReplay {
+    Replay: BB2.Replay,
+    CACHE_VERSION?: number,
+  }
+</script>
+
 <script lang="ts">
   import { onMount } from "svelte";
-  import { io } from "./io.js";
+  import { xmlToJson } from "./io.js";
   import { replay, error } from "./stores.js";
   import { processReplay } from "./replay.js";
   import { get, set, entries, keys } from "idb-keyval";
   import Loading from "./Loading.svelte";
   import he from "he";
+import { Replay } from "./BB2Replay.validator.js";
 
   export let button = "primary",
     loading = null;
@@ -16,6 +25,12 @@
       loadFromSearchParams();
     }
   });
+
+  enum ReplayType {
+    rebbl = "rebbl",
+    goblinspy = "gspy",
+    file = "file",
+  }
 
   let filePicker, urlPicker, cachePicker, replayKeys;
   const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
@@ -130,35 +145,32 @@
     }
   }
 
-  async function parseReplay(replayFile, replayType, replayId, updateUrl) {
+  async function parseReplay(replayFile: File, replayType: ReplayType, replayId: string, updateUrl: boolean) {
     loading = `Parsing ${replayFile.name}`;
-    io.xmlToJson(
-      replayFile,
-      function (jsonReplayData) {
-        console.log("Preparing to process replay json...");
-        jsonReplayData.Replay.filename = replayFile.name;
-        jsonReplayData.CACHE_VERSION = CACHE_VERSION;
-        let shareURL = new URL(window.location.href);
-        shareURL.search = "";
-        shareURL.hash = "";
-        shareURL.searchParams.set(replayType, replayId);
-        if (updateUrl) {
-          window.history.pushState({}, "", shareURL.href);
-        }
-        jsonReplayData.Replay.url = shareURL.href;
-        let cacheKey = `${replayType}-${replayId}`;
-        set(cacheKey, jsonReplayData);
-        console.log("Setting cache", { cacheKey, jsonReplayData });
-        try {
-          $replay = processReplay(jsonReplayData);
-          loading = null;
-        } catch (err) {
-          loading = null;
-          $error = err;
-          console.error(err);
-        }
+    for await (let jsonReplayData of xmlToJson<ParsedReplay>(replayFile)) {
+      console.log("Preparing to process replay json...");
+      jsonReplayData.Replay.filename = replayFile.name;
+      jsonReplayData.CACHE_VERSION = CACHE_VERSION;
+      let shareURL = new URL(window.location.href);
+      shareURL.search = "";
+      shareURL.hash = "";
+      shareURL.searchParams.set(replayType, replayId);
+      if (updateUrl) {
+        window.history.pushState({}, "", shareURL.href);
       }
-    );
+      jsonReplayData.Replay.url = shareURL.href;
+      let cacheKey = `${replayType}-${replayId}`;
+      set(cacheKey, jsonReplayData);
+      console.log("Setting cache", { cacheKey, jsonReplayData });
+      try {
+        $replay = processReplay(jsonReplayData);
+        loading = null;
+      } catch (err) {
+        loading = null;
+        $error = err;
+        console.error(err);
+      }
+    }
   }
 
   async function loadRebblReplay(uuid, updateUrl) {
@@ -172,7 +184,7 @@
       const blob = await fetch(replayFile.filename).then((r) => r.blob());
       loading = null;
       const file = new File([blob], replayFile.filename);
-      parseReplay(file, 'rebbl', uuid, updateUrl);
+      parseReplay(file, ReplayType.rebbl, uuid, updateUrl);
     } else {
       loadGoblinspyReplay(`cid_${uuid}`, updateUrl);
     }
@@ -190,7 +202,7 @@
       const blob = await fetch(replayFile).then((r) => r.blob());
       loading = null;
       const file = new File([blob], replayFile);
-      parseReplay(file, 'gspy', mid, updateUrl);
+      parseReplay(file, ReplayType.goblinspy, mid, updateUrl);
     } else {
       $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
       loading = null;
@@ -203,7 +215,7 @@
     $error = null;
     const files = filePicker.files;
     if (files.length > 0) {
-      parseReplay(files[0], 'file', files[0].name, true);
+      parseReplay(files[0], ReplayType.file, files[0].name, true);
     }
   }
 

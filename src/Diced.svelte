@@ -1,7 +1,7 @@
 <script lang="ts">
 
   import { Row, Col } from "sveltestrap";
-  import { replay, showResultsAnalysis } from "./stores";
+  import { replay } from "./stores";
 
   export let homeTeam, awayTeam;
   let cumNetValues, actuals, homePercentile = 0.5, awayPercentile = 0.5;
