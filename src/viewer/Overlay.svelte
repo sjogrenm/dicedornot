@@ -2,7 +2,7 @@
   import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
   import { ensureList, translateStringNumberList } from "../replay-utils.js";
   import { replayPreview, replay } from "../stores.js";
-  import type {Cell} from '../BB2Replay.js';
+  import type {Cell} from '../replay/BB2.js';
   import OverlayMove from "./OverlayMove.svelte";
   import type { Props as OverlayMoveProps } from "./OverlayMove.svelte";
   import OverlayBlock from "./OverlayBlock.svelte";

@@ -266,8 +266,12 @@ export const BLOCK_OUTCOME = {
 export enum REQUEST_TYPE {
   Unknown_0 = 0,
   ForCoach = 1, //Coach / Player,
+  Unknown_2 = 2,
   PushFollow = 3,
   UseSkillReroll = 4, // Use a Skill-reroll?
+  Unknown_7 = 7,
+  Unknown_8 = 8,
+  Unknown_13 = 13,
 };
 
 export enum ROLL_STATUS {
@@ -385,6 +389,7 @@ export enum RESULT_TYPE {
 };
 
 export enum SUB_RESULT_TYPE {
+  Unknown_N1 = -1,
   ArmorNoBreak = 1, //Not sure - after rlArmor (3) - Only after Block?
   InjuryStun = 2,
   InjuryKO = 3,
@@ -413,45 +418,45 @@ export const BLOCK_DIE = {
   4: BLOCK.DefenderDown,
 }
 
-export const RACE_ID = {
-  Human: 1,
-  Dwarf: 2,
-  Skaven: 3,
-  Orc: 4,
-  Lizardman: 5,
-  Goblin: 6,
-  WoodElf: 7,
-  Chaos: 8,
-  DarkElf: 9,
-  Undead: 10,
-  Halfling: 11,
-  Norse: 12,
-  Amazon: 13,
-  ProElf: 14,
-  HighElf: 15,
-  Khemri: 16,
-  Necromantic: 17,
-  Nurgle: 18,
-  Ogre: 19,
-  Vampire: 20,
-  ChaosDwarf: 21,
-  Underworld: 22,
-  Bretonnian: 24,
-  Kislev: 25,
-  //AllianceOfGoodness: ,
-  AfterlifeUnited: 42,
-  //UnionOfSmallPeople: ,
-  ViolenceTogether: 40,
-  //SuperiorBeingRing: ,
+export enum RACE_ID {
+  Human = 1,
+  Dwarf = 2,
+  Skaven = 3,
+  Orc = 4,
+  Lizardman = 5,
+  Goblin = 6,
+  WoodElf = 7,
+  Chaos = 8,
+  DarkElf = 9,
+  Undead = 10,
+  Halfling = 11,
+  Norse = 12,
+  Amazon = 13,
+  ProElf = 14,
+  HighElf = 15,
+  Khemri = 16,
+  Necromantic = 17,
+  Nurgle = 18,
+  Ogre = 19,
+  Vampire = 20,
+  ChaosDwarf = 21,
+  Underworld = 22,
+  Bretonnian = 24,
+  Kislev = 25,
+  //AllianceOfGoodness= ,
+  AfterlifeUnited = 42,
+  //UnionOfSmallPeople= ,
+  ViolenceTogether = 40,
+  //SuperiorBeingRing= ,
   //Chaos Gods Selection,
-  FarEastAssociation: 35,
-  AntiFurSociety: 37,
+  FarEastAssociation = 35,
+  AntiFurSociety = 37,
   //Human League,
-  ChaosPact: 33,
-  ElficGrandCoalition: 36,
+  ChaosPact = 33,
+  ElficGrandCoalition = 36,
 }
 
-export const RACE_NAMES = {
+export const RACE_NAMES: Record<RACE_ID, string> = {
   [RACE_ID.Amazon]: "Amazon",
   [RACE_ID.Bretonnian]: "Bretonnian",
   [RACE_ID.Chaos]: "Chaos",
@@ -1299,6 +1304,7 @@ export const STAR_NAMES = {
 }
 
 export enum SIDE {
+  unknown = -1,
   home = 0,
   away = 1,
 }

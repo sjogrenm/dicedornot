@@ -1,4 +1,4 @@
-import type {MList} from './BB2Replay.js';
+import type {MList} from './replay/BB2.js';
 
 export const END: ReplayPosition = {
   end: true,
@@ -27,7 +27,7 @@ export function ensureList<T>(objOrList: MList<T>): T[] {
   }
 }
 
-export function translateStringNumberList(str) {
+export function translateStringNumberList(str: string | number): number [] {
   if (str === undefined || str === null) return [];
   str = str.toString();
 

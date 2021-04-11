@@ -1,7 +1,7 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END } from "./replay-utils.js";
 import { SIDE } from "./constants.js";
-import type { Replay } from "./BB2Replay.js";
+import type { Replay } from "./replay/BB2.js";
 import he from 'he';
 import {xmlToJson} from "./io.js";
 

@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-  import type {Cell} from '../BB2Replay.js';
+  import type {Cell} from '../replay/BB2.js';
   import type {SIDE} from '../constants.js';
 
   export interface Roll {

@@ -15,5 +15,7 @@
             "dom"
         ],
         "target": "es6",
+        "outDir": "build",
+        "module": "es2015",
     },
 }

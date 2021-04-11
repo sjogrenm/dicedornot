@@ -28,7 +28,7 @@ import {
   MaxDistribution,
   Distribution
 } from './distribution.js';
-import type * as BB2 from './BB2Replay.js';
+import * as BB2 from './replay/BB2.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
@@ -244,11 +244,12 @@ interface RollArgs<Dice> {
   rolls?: Roll<any>[],
 }
 
-interface RollXML {
+interface RollXML<A extends BB2.ResultsAction<R>, R> {
+  replay: BB2.Replay,
   initialBoard: BB2.BoardState,
-  action: BB2.RulesEventBoardAction,
+  action: A,
   actionIndex: number,
-  boardActionResult: BB2.BoardActionResult,
+  boardActionResult: R,
   resultIndex: number,
   replayStep: BB2.ReplayStep,
   stepIndex: number,
@@ -304,17 +305,21 @@ export class Roll<Dice> {
         rollName: this.rollName
       }
     );
-  }
+  } 
 
-  static argsFromXml(xml: RollXML): RollArgs<any> {
+  static argsFromXml(xml: RollXML<BB2.PlayerAction & BB2.Action, BB2.BoardActionResult>): RollArgs<any> {
 
     const initialBoardState = new BoardState(BoardState.argsFromXml(xml.initialBoard));
     const activePlayerId = xml.action.PlayerId;
 
-    const skillsInEffect = ensureList(
+    const skillsInEffect = xml.boardActionResult.CoachChoices.ListSkills != "" ? ensureList(
       xml.boardActionResult.CoachChoices.ListSkills.SkillInfo
-    );
-    const rollStatus = xml.boardActionResult.RollStatus;
+    ): [];
+    let rollStatus, rollType;
+    if (BB2.isDiceRollResult(xml.boardActionResult)) {
+      rollStatus = xml.boardActionResult.RollStatus;
+      rollType = xml.boardActionResult.RollType;
+    }
 
     return {
       initialBoardState,
@@ -322,7 +327,7 @@ export class Roll<Dice> {
       rollStatus,
       finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),
       activePlayer: initialBoardState.playerById(activePlayerId),
-      rollType: xml.boardActionResult.RollType,
+      rollType,
       dice: this.dice(xml.boardActionResult),
       unhandledSkills: skillsInEffect.filter(
         (skillInfo: BB2.SkillInfo) => !this.handledSkills.includes(skillInfo.SkillId)
@@ -491,7 +496,13 @@ export class Roll<Dice> {
     if (replayStep[REPLAY_KEY.get(REPLAY_SUB_STEP.SetupAction)]) {
       return new SetupAction(SetupAction.argsFromXml({
         gameLength: Math.max(...replay.ReplayStep.flatMap(
-          step => [step.BoardState.ListTeams.TeamState[0].GameTurn, step.BoardState.ListTeams.TeamState[1].GameTurn]
+          step => {
+            if (!step.BoardState) {
+              console.log(step);
+              return [];
+            }
+            return [step.BoardState.ListTeams.TeamState[0].GameTurn, step.BoardState.ListTeams.TeamState[1].GameTurn];
+          }
         )),
         initialBoard,
         stepIndex,
@@ -575,8 +586,14 @@ export class Roll<Dice> {
       return new rollClass(
         rollClass.argsFromXml({
           replay,
-          gameLength:  Math.max(...replay.ReplayStep.flatMap(
-            step => [step.BoardState.ListTeams.TeamState[0].GameTurn, step.BoardState.ListTeams.TeamState[1].GameTurn]
+          gameLength: Math.max(...replay.ReplayStep.flatMap(
+            step => {
+              if (!step.BoardState) {
+                console.log(step);
+                return [];
+              }
+              return [step.BoardState.ListTeams.TeamState[0].GameTurn, step.BoardState.ListTeams.TeamState[1].GameTurn];
+            }
           )),
           initialBoard,
           stepIndex,
@@ -971,11 +988,15 @@ export class BlockRoll extends Roll<BLOCK> {
   get diceSeparator() { return '/'; }
   get dependentConditions() { return [pushOrFollow, nonFoulDamage, reroll, samePlayerMove]; }
 
-  static argsFromXml(xml: RollXML): BlockRollArgs {
+  static argsFromXml(xml: RollXML<BB2.BlockAction, BB2.BlockResult>): BlockRollArgs {
     let args = super.argsFromXml(xml);
+    let isRedDice = false;
+    if (BB2.isDiceRollResult(xml.boardActionResult)) {
+      isRedDice = xml.boardActionResult.Requirement < 0;
+    }
     return {
       ...args,
-      isRedDice: xml.boardActionResult.Requirement < 0,
+      isRedDice,
       attacker: args.activePlayer,
       defender: args.finalBoardState.playerAtPosition(
         xml.action.Order.CellTo.Cell
@@ -1229,11 +1250,14 @@ export class ModifiedD6SumRoll extends Roll<number> {
     );
   }
 
-  static argsFromXml(xml: RollXML): ModifiedD6SumRollArgs {
+  static argsFromXml(xml: RollXML<any, BB2.DiceRollResult>): ModifiedD6SumRollArgs {
     return {
       ...super.argsFromXml(xml),
-      modifier: ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
-        .map((modifier) => modifier.Value || 0)
+      modifier: (
+        xml.boardActionResult.ListModifiers == ""
+        ? []
+        : ensureList(xml.boardActionResult.ListModifiers.DiceModifier || [])
+      ) .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0,
       target: xml.boardActionResult.Requirement,
     }
@@ -1454,16 +1478,16 @@ class ArmorRoll extends ModifiedD6SumRoll {
     this.injuryRollCache = new Map();
   }
 
-  static argsFromXml(xml: RollXML): ArmorRollArgs {
+  static argsFromXml(xml: RollXML<BB2.TakeDamageAction | BB2.FoulAction, BB2.DiceRollResult>): ArmorRollArgs {
     const args = super.argsFromXml(xml);
 
     let canPileOn, isPileOn, isFoul, foulingPlayer, pilingOnPlayer, damageBonusActive;
 
     if (args.rollType == ROLL.PileOnArmorRoll) {
-      // The first time you see it, without an IsOrderComplete, is the choice to use PileOn
+      // The first time you see it, without an IsOrderCompleted, is the choice to use PileOn
       // The second time, with IsOrderComplete, is an actual PileOn (but there are no dice associated)
       // If there's no IsOrderComplete, then it will show up as a normal injury roll.
-      canPileOn = xml.boardActionResult.IsOrderComplete == undefined;
+      canPileOn = xml.boardActionResult.IsOrderCompleted == undefined;
     }
 
     // An Armor PileOn has a IsOrderCompleted RollType 60 right before it
@@ -1483,6 +1507,7 @@ class ArmorRoll extends ModifiedD6SumRoll {
     }
     isFoul = xml.action.ActionType == ACTION_TYPE.Foul;
     if (isFoul) {
+      // @ts-ignore
       foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
       damageBonusActive = foulingPlayer.skills.includes(SKILL.DirtyPlayer);
     }
@@ -1647,7 +1672,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
   get rerollCancelSkill() { return SKILL.Tackle; }
   get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
 
-  static argsFromXml(xml: RollXML): MoveRollArgs {
+  static argsFromXml(xml: RollXML<BB2.MoveAction, BB2.DiceRollResult>): MoveRollArgs {
     let args = super.argsFromXml(xml);
     let target, modifier;
     if (
@@ -1659,9 +1684,9 @@ class DodgeRoll extends ModifiedD6SumRoll {
       // A dodge that fails in tackle and prompts for a team reroll doesn't have the requirement attached, so
       // pull them from the later roll
       let nextActions = ensureList(xml.replay.ReplayStep[xml.stepIndex + 1].RulesEventBoardAction)
-      let nextResults = ensureList(nextActions[0].Results.BoardActionResult);
-      target = nextResults[0].Requirement;
-      modifier = ensureList(nextResults[0].ListModifiers.DiceModifier || [])
+      let nextResult = ensureList(nextActions[0].Results.BoardActionResult)[0] as BB2.DiceRollResult;
+      target = nextResult.Requirement;
+      modifier = (nextResult.ListModifiers == "" ? [] : ensureList(nextResult.ListModifiers.DiceModifier || []))
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
     }
@@ -1702,7 +1727,7 @@ class LeapRoll extends ModifiedD6SumRoll {
   cellTo: BB2.Cell;
   get rollName() { return "Leap"; }
   get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
-  static argsFromXml(xml: RollXML): MoveRollArgs {
+  static argsFromXml(xml: RollXML<BB2.MoveAction, BB2.MoveResult>): MoveRollArgs {
     return {
       ...super.argsFromXml(xml),
       cellFrom: xml.action.Order.CellFrom,
@@ -1788,7 +1813,7 @@ class GFIRoll extends ModifiedD6SumRoll {
   get rerollSkill() { return SKILL.SureFeet; }
   get dependentConditions() { return [nonFoulDamage, reroll, samePlayerMove]; }
 
-  static argsFromXml(xml: RollXML): MoveRollArgs {
+  static argsFromXml(xml: RollXML<BB2.MoveAction, BB2.MoveResult>): MoveRollArgs {
     return {
       ...super.argsFromXml(xml),
       cellFrom: xml.action.Order.CellFrom,
@@ -1899,7 +1924,7 @@ export class InjuryRoll extends Roll<number> {
   get diceSeparator() { return '+'; }
   get dependentConditions() { return [reroll]; }
 
-  static argsFromXml(xml: RollXML): InjuryRollArgs {
+  static argsFromXml(xml: RollXML<any, any>): InjuryRollArgs {
     const args = super.argsFromXml(xml);
     let canPileOn, isPileOn, pilingOnPlayer, isFoul, foulingPlayer, modifier;
 
@@ -1930,7 +1955,8 @@ export class InjuryRoll extends Roll<number> {
 
     isFoul = xml.action.ActionType == ACTION_TYPE.Foul;
     if (isFoul) {
-      foulingPlayer = args.finalBoardState.playerById(ensureList(xml.replayStep.RulesEventBoardAction)[0].PlayerId);
+      let foulAction = ensureList(xml.replayStep.RulesEventBoardAction)[0] as BB2.FoulAction;
+      foulingPlayer = args.finalBoardState.playerById(foulAction.PlayerId);
     }
 
     modifier =
@@ -2087,7 +2113,7 @@ export class CasualtyRoll extends Roll<number> {
   // TODO: Selecting the Apo result seems to read as a separate roll
   get diceSeparator() { return ''; }
 
-  static argsFromXml(xml: RollXML): CasualtyRollArgs {
+  static argsFromXml(xml: RollXML<any, any>): CasualtyRollArgs {
     return {
       ...super.argsFromXml(xml),
       isFoul: xml.action.ActionType == ACTION_TYPE.Foul,
@@ -2166,7 +2192,7 @@ export class MoveAction extends Roll<null> {
     return false;
   }
 
-  static argsFromXml(xml: RollXML): MoveActionArgs {
+  static argsFromXml(xml: RollXML<any, any>): MoveActionArgs {
     return {
       ...super.argsFromXml(xml),
       cellFrom: xml.action.Order.CellFrom,
@@ -2234,7 +2260,7 @@ export class KickoffRoll extends Roll<number> {
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml: RollXML): KickoffRollArgs {
+  static argsFromXml(xml: any): KickoffRollArgs {
     let dice = translateStringNumberList(xml.kickoff.ListDice);
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
@@ -2392,6 +2418,7 @@ interface KickoffEventRollArgs extends ModifiedD6SumRollArgs {
   messageData: BB2.KickoffEventMessageData,
 }
 
+ // @ts-ignore
 class KickoffEventRoll extends ModifiedD6SumRoll {
   kickoffTeam: SIDE;
   messageData: any;
@@ -2443,9 +2470,10 @@ interface PitchInvasionMessage {
 export class PitchInvasionRoll extends KickoffEventRoll {
   messageData: PitchInvasionMessage;
   stunned: boolean;
+  activePlayer: Player;
 
   get rollName() { return "Pitch Invasion"; }
-  constructor(args) {
+  constructor(args: KickoffEventRollArgs) {
     super(args);
     this.activePlayer = this.finalBoardState.playerById(this.messageData.RulesEventPlayerInvaded.PlayerId);
     this.dice = [this.messageData.RulesEventPlayerInvaded.Die];
@@ -2497,7 +2525,7 @@ export class SetupAction extends NoValueRoll {
   get shortDescription() {
     return this.description;
   }
-  static argsFromXml(xml: RollXML): RollArgs<null> {
+  static argsFromXml(xml: any): RollArgs<null> {
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
       finalBoardState: new BoardState(BoardState.argsFromXml(xml.replayStep.BoardState)),

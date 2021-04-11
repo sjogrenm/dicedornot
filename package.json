@@ -5,7 +5,9 @@
     "build": "snowpack build",
     "dev": "snowpack dev",
     "check-types": "svelte-check && tsc --noEmit",
-    "validateReplay": "ts-node ./bin/validateReplay"
+    "validateReplay": "npm run buildJsonSchema && npm run buildJSModules && ts-node ./bin/validateReplay.mjs",
+    "buildJsonSchema": "typescript-json-schema --strictNullChecks tsconfig.json ReplayStep > bin/replayStep.json",
+    "buildJSModules": "tsc && for file in build/*.js; do mv $file ${file%.js}.mjs; done"
   },
   "devDependencies": {
     "@babel/core": "^7.13.10",
@@ -14,7 +16,8 @@
     "@snowpack/plugin-dotenv": "^2.0.5",
     "@snowpack/plugin-webpack": "^2.0.17",
     "@tsconfig/svelte": "^1.0.10",
-    "ajv": "^8.0.5",
+    "ajv": "^7.2.4",
+    "better-ajv-errors": "^0.7.0",
     "snowpack": "^3.0.13",
     "svelte": "^3.35.0",
     "svelte-check": "^1.2.3",

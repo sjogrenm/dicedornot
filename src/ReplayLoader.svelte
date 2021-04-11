@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-  import type * as BB2 from "./BB2Replay.js";
+  import type * as BB2 from "./replay/BB2.js";
   export interface ParsedReplay {
     Replay: BB2.Replay,
     CACHE_VERSION?: number,
@@ -14,7 +14,6 @@
   import { get, set, entries, keys } from "idb-keyval";
   import Loading from "./Loading.svelte";
   import he from "he";
-import { Replay } from "./BB2Replay.validator.js";
 
   export let button = "primary",
     loading = null;
@@ -262,8 +261,8 @@ import { Replay } from "./BB2Replay.validator.js";
           bind:this={cachePicker}
           on:input={(ev) => {
             if (replays.map(replay => replay.cacheKey).includes(cachePicker.value)) {
-              cachePicker.value = "";
               loadFromCache(cachePicker.value, true);
+              cachePicker.value = "";
             }
           }}
         />

@@ -1,10 +1,10 @@
 <script lang="ts" context="module">
   interface Team {
     dugout: {
-      cas: BB2.PlayerId[],
-      ko: BB2.PlayerId[],
-      reserve: BB2.PlayerId[],
-    }
+      cas: BB2.PlayerId[];
+      ko: BB2.PlayerId[];
+      reserve: BB2.PlayerId[];
+    };
   }
 </script>
 
@@ -48,43 +48,43 @@
     replayPreview,
   } from "../stores.js";
   import he from "he";
-  import type * as BB2 from "../BB2Replay.js";
+  import type * as BB2 from "../replay/BB2.js";
 
   export let playing = false;
 
   interface BallProps {
-    held: boolean
+    held: boolean;
   }
 
   interface CellProps {
-    active?: boolean,
-    target?: boolean,
-    pushbackChoice?: boolean,
-    moved?: boolean,
-    plus?: number,
+    active?: boolean;
+    target?: boolean;
+    pushbackChoice?: boolean;
+    moved?: boolean;
+    plus?: number;
   }
 
   interface BloodProps {
-    blood: number
+    blood: number;
   }
 
   interface PitchCellProps {
-    cell?: CellProps,
-    dice?: number[],
-    player?: BB2.PlayerId,
-    ball?: BallProps,
-    foul?: boolean,
-    blood?: BloodProps,
+    cell?: CellProps;
+    dice?: number[];
+    player?: BB2.PlayerId;
+    ball?: BallProps;
+    foul?: boolean;
+    blood?: BloodProps;
   }
 
   interface PlayerProps {
-    data: BB2.Player,
-    blitz?: boolean,
-    moving?: boolean,
-    prone?: boolean,
-    team?: SIDE,
-    stunned?: boolean,
-    stupidity?: string,
+    data: BB2.Player;
+    blitz?: boolean;
+    moving?: boolean;
+    prone?: boolean;
+    team?: SIDE;
+    stunned?: boolean;
+    stupidity?: string;
   }
 
   let lastChainPush: BB2.PlayerId,
@@ -310,50 +310,61 @@
   }
   function assertExhaustive(
     value: never,
-    message: string = 'Reached unexpected case in exhaustive switch'
+    message: string = "Reached unexpected case in exhaustive switch"
   ): never {
     throw new Error(message);
   }
 
-  function dispatchAction(action: BB2.RulesEventBoardAction, resultIndex: number) {
+  function dispatchAction(
+    action: BB2.RulesEventBoardAction,
+    resultIndex: number
+  ) {
     switch (action.ActionType) {
       case ACTION_TYPE.Block:
+        return handleBlock(action, resultIndex);
       case ACTION_TYPE.Blitz:
-          return handleBlock(action, resultIndex);
+        return handleBlock(action, resultIndex);
       case ACTION_TYPE.Pass:
-          return handlePass(action, resultIndex);
+        return handlePass(action, resultIndex);
       case ACTION_TYPE.Handoff:
-          return handleHandoff(action);
+        return handleHandoff(action);
       case ACTION_TYPE.Foul:
-          return handleFoul(action);
+        return handleFoul(action);
       case ACTION_TYPE.Move:
-          return handleMove(action, resultIndex);
+        return handleMove(action, resultIndex);
       case ACTION_TYPE.TakeDamage:
-          return handleTakeDamage(action, resultIndex);
+        return handleTakeDamage(action, resultIndex);
       case ACTION_TYPE.Kickoff:
-          return handleKickoff(action);
+        return handleKickoff(action);
       case ACTION_TYPE.Scatter:
-          return handleScatter(action);
+        return handleScatter(action);
       case ACTION_TYPE.Catch:
-          return handleCatch(action, resultIndex);
+        return handleCatch(action, resultIndex);
       case ACTION_TYPE.TouchDown:
-          return handleTouchdown();
+        return handleTouchdown();
       case ACTION_TYPE.StunWake:
-          return handleStunWake(action);
+        return handleStunWake(action);
       case ACTION_TYPE.Pickup:
-          return handlePickup(action, resultIndex);
+        return handlePickup(action, resultIndex);
       case ACTION_TYPE.ActivationTest:
-          return handleActivationTest(action, resultIndex);
+        return handleActivationTest(action, resultIndex);
       case ACTION_TYPE.Leap:
-          return handleLeap(action, resultIndex);
+        return handleLeap(action, resultIndex);
       case ACTION_TYPE.ActivatePlayer:
-          return handleActivate(action);
+        return handleActivate(action);
       case ACTION_TYPE.InitialWeather:
-          return handleWeather(action, resultIndex);
+        return handleWeather(action, resultIndex);
       case ACTION_TYPE.Turnover:
-          return handleTurnover(action);
-        default:
-          assertExhaustive(action, "Unhandled Action Type");
+        return handleTurnover(action);
+      case ACTION_TYPE.FansNumber:
+      case ACTION_TYPE.WakeUp:
+        // TODO: Handle These
+        break;
+      default:
+        assertExhaustive(
+          action,
+          `Unhandled Action Type`
+        );
     }
   }
   function sleep(ms) {
@@ -375,7 +386,7 @@
     });
   }
 
-  async function step(ticks=1) {
+  async function step(ticks = 1) {
     if (skipping) {
       return;
     }
@@ -386,7 +397,10 @@
 
   async function handleSetupAction() {}
 
-  async function handleBoardAction(boardAction: BB2.RulesEventBoardAction, resultIndex: number) {
+  async function handleBoardAction(
+    boardAction: BB2.RulesEventBoardAction,
+    resultIndex: number
+  ) {
     try {
       await dispatchAction(boardAction, resultIndex);
       await step();
@@ -622,7 +636,9 @@
   }
 
   function handleWeather(action: BB2.WeatherAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     const dice = translateStringNumberList(actionResult.CoachChoices.ListDices);
     const diceSums = {
       2: WEATHER.SwelteringHeat,
@@ -633,7 +649,7 @@
     weather = diceSums[dice[0] + dice[1]] || WEATHER.Nice;
   }
 
-  function handleActivate(action) {
+  function handleActivate(action: BB2.ActivatePlayerAction) {
     clearTemporaryState();
     players[action.PlayerId].prone = false;
     Object.entries(pitch).forEach(([idx, square]) => {
@@ -652,7 +668,7 @@
     });
   }
 
-  function handleScatter(action) {
+  function handleScatter(action: BB2.ScatterAction) {
     setPitchSquare(action.Order.CellFrom).ball = null;
     let to = action.Order.CellTo.Cell;
     setPitchSquare(to).ball = {
@@ -660,8 +676,13 @@
     };
   }
 
-  async function handleBlock(action: BB2.BlockAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+  async function handleBlock(
+    action: BB2.BlockAction | BB2.BlitzAction,
+    resultIndex: number
+  ) {
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     let from = action.Order.CellFrom;
     let fromSquare = setPitchSquare(from);
     (fromSquare.cell = fromSquare.cell || {}).active = true;
@@ -750,7 +771,9 @@
   }
 
   function handleCatch(action: BB2.CatchAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     if (!actionResult.IsOrderCompleted) return;
     if (actionResult.ResultType !== 0) return;
 
@@ -798,7 +821,9 @@
   }
 
   function handleMove(action: BB2.MoveAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     let player = setPlayer(action.PlayerId);
     let squareFrom = setPitchSquare(action.Order.CellFrom);
     let squareTo = setPitchSquare(action.Order.CellTo.Cell);
@@ -826,7 +851,11 @@
       //Dodge, GFI, Leap
       squareTo.cell = squareTo.cell || {};
       let modifier =
-        ensureList(actionResult.ListModifiers.DiceModifier || [])
+        (
+          (actionResult.ListModifiers &&
+            ensureList(actionResult.ListModifiers.DiceModifier)) ||
+          []
+        )
           .map((modifier) => modifier.Value || 0)
           .reduce((a, b) => a + b, 0) || 0;
       squareTo.cell.plus = actionResult.Requirement - modifier;
@@ -842,7 +871,10 @@
     }
   }
 
-  function handleActivationTest(action: BB2.ActivationTestAction, resultIndex: number) {
+  function handleActivationTest(
+    action: BB2.ActivationTestAction,
+    resultIndex: number
+  ) {
     /* rolltypes
       BoneHead = 20,
       ReallyStupid = 21,
@@ -852,7 +884,9 @@
       Bloodlust = 50,
 
     */
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     let square = setPitchSquare(action.Order.CellTo.Cell);
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
@@ -871,7 +905,9 @@
   }
 
   async function handlePass(action: BB2.PassAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     if (!actionResult.IsOrderCompleted) {
       return;
     }
@@ -894,7 +930,9 @@
   }
 
   function handlePickup(action: BB2.PickupAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     if (
       actionResult.IsOrderCompleted &&
       actionResult.ResultType === RESULT_TYPE.Passed
@@ -908,7 +946,9 @@
   }
 
   function handleTakeDamage(action: BB2.TakeDamageAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[resultIndex];
+    let actionResult = ensureList(action.Results.BoardActionResult)[
+      resultIndex
+    ];
     if (!actionResult.IsOrderCompleted) return;
 
     let player = setPlayer(action.PlayerId),
@@ -1001,8 +1041,9 @@
             title="Previous Activation"
             on:click={() => jumpToPreviousActivation()}>{"|<<"}</Button
           >
-          <Button title="Previous Replay Step" on:click={() => jumpToPreviousStep()}
-            >{"|<"}</Button
+          <Button
+            title="Previous Replay Step"
+            on:click={() => jumpToPreviousStep()}>{"|<"}</Button
           >
           {#if playing}
             <Button title="Pause" on:click={() => (playing = false)}
@@ -1013,11 +1054,16 @@
               ><Icon name="play-fill" /></Button
             >
           {/if}
-          <Button title="Next Replay Step" on:click={() => stepReplay()}>{">|"}</Button>
-          <Button title="Next Activation" on:click={() => jumpToNextActivation()}
-            >{">>|"}</Button
+          <Button title="Next Replay Step" on:click={() => stepReplay()}
+            >{">|"}</Button
           >
-          <Button title="Next Turn" on:click={() => jumpToNextTurn()}>{">>>|"}</Button>
+          <Button
+            title="Next Activation"
+            on:click={() => jumpToNextActivation()}>{">>|"}</Button
+          >
+          <Button title="Next Turn" on:click={() => jumpToNextTurn()}
+            >{">>>|"}</Button
+          >
           <Button
             title="Faster"
             on:click={() => {
@@ -1063,23 +1109,23 @@
       </FixedRatio>
     </div>
   </div>
-{#if $replay.unknownRolls.length > 0}
-  <Alert warning>
-    <details>
-    <summary>
-      The following rolls aren't able to be analyzed yet. Please <a
-        href="https://github.com/cpennington/dicedornot/issues"
-        >open an issue on GitHub</a
-      > and attach this replay (or match link).
-    </summary>
-    <ul>
-      {#each [...new Set($replay.unknownRolls.map((roll) => roll.name))] as name}
-        <li>{name}</li>
-      {/each}
-    </ul>
-  </details>
-  </Alert>
-{/if}
+  {#if $replay.unknownRolls.length > 0}
+    <Alert warning>
+      <details>
+        <summary>
+          The following rolls aren't able to be analyzed yet. Please <a
+            href="https://github.com/cpennington/dicedornot/issues"
+            >open an issue on GitHub</a
+          > and attach this replay (or match link).
+        </summary>
+        <ul>
+          {#each [...new Set($replay.unknownRolls.map((roll) => roll.name))] as name}
+            <li>{name}</li>
+          {/each}
+        </ul>
+      </details>
+    </Alert>
+  {/if}
 </div>
 
 <style>
