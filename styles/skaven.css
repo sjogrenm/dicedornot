@@ -9,7 +9,7 @@
   --imH: 262;
 }
 
-.skaven.rat-ogre {
+.skaven.ratogre {
   --spH: 38;
 }
 
@@ -49,6 +49,6 @@
   --spY: calc(7 * var(--sm));
 }
 
-.skaven.rat-ogre {
+.skaven.ratogre {
   --spY: calc(8 * var(--sm));
 }
