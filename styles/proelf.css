@@ -1,7 +1,3 @@
-:root {
-  --pm: -28px;
-}
-
 .proelf.sprite {
   --spH: 28;
   --imW: 56;
@@ -17,25 +13,25 @@
 }
 
 .proelf.lineman2 {
-  --spY: var(--pm);
+  --spY: var(--spH);
 }
 
 .proelf.catcher1 {
-  --spY: calc(2 * var(--pm));
+  --spY: calc(2 * var(--spH));
 }
 
 .proelf.catcher2 {
-  --spY: calc(3 * var(--pm));
+  --spY: calc(3 * var(--spH));
 }
 
 .proelf.thrower {
-  --spY: calc(4 * var(--pm));
+  --spY: calc(4 * var(--spH));
 }
 
 .proelf.blitzer1 {
-  --spY: calc(5 * var(--pm));
+  --spY: calc(5 * var(--spH));
 }
 
 .proelf.blitzer2 {
-  --spY: calc(6 * var(--pm));
+  --spY: calc(6 * var(--spH));
 }
