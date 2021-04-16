@@ -361,10 +361,11 @@
         // TODO: Handle These
         break;
       default:
-        assertExhaustive(
-          action,
-          `Unhandled Action Type`
-        );
+        break;
+        // assertExhaustive(
+        //   action,
+        //   `Unhandled Action Type`
+        // );
     }
   }
   function sleep(ms) {
