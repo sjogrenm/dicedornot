@@ -331,6 +331,7 @@
       case ACTION_TYPE.Foul:
         return handleFoul(action);
       case ACTION_TYPE.Move:
+      case undefined:
         return handleMove(action, resultIndex);
       case ACTION_TYPE.TakeDamage:
         return handleTakeDamage(action, resultIndex);
