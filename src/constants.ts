@@ -263,16 +263,41 @@ export const BLOCK_OUTCOME = {
   AtMoveDePushDown: 6
 };
 
-export enum REQUEST_TYPE {
-  Unknown_0 = 0,
+export enum RESULT_REQUEST_TYPE {
+  // Unknown_0 = 0,
   ForCoach = 1, //Coach / Player,
   Unknown_2 = 2,
   PushFollow = 3,
   UseSkillReroll = 4, // Use a Skill-reroll?
-  Unknown_7 = 7,
-  Unknown_8 = 8,
-  Unknown_13 = 13,
+  // Unknown_7 = 7,
+  // Unknown_8 = 8,
+  // Unknown_13 = 13,
+  Unknown_5 = 5,
 };
+
+export enum ACTION_REQUEST_TYPE {
+  // Unknown_0 = 0,
+  ForCoach = 1, //Coach / Player,
+  // Unknown_2 = 2,
+  // PushFollow = 3,
+  // UseSkillReroll = 4, // Use a Skill-reroll?
+  // Unknown_7 = 7,
+  // Unknown_8 = 8,
+  // Unknown_13 = 13,
+
+}
+
+export enum WAITING_REQUEST_TYPE {
+  // Unknown_0 = 0,
+  // ForCoach = 1, //Coach / Player,
+  // Unknown_2 = 2,
+  // PushFollow = 3,
+  // UseSkillReroll = 4, // Use a Skill-reroll?
+  // Unknown_7 = 7,
+  // Unknown_8 = 8,
+  // Unknown_13 = 13,
+
+}
 
 export enum ROLL_STATUS {
   NoStatus = 0,
@@ -394,12 +419,20 @@ export enum SUB_RESULT_TYPE {
   InjuryStun = 2,
   InjuryKO = 3,
   InjuryCAS = 4,
+  Unknown_5 = 5,
   ChoiceUseDodgeSkill = 7, //Pick Dodge skill use?
+  Unknown_9 = 9, // From Casualty Roll
+  Unknown_11 = 11,
   CASDecay = 16,
+  Unknown_17 = 17,
   CASResult = 18, //Final CAS Result
   Fend = 35, //Blockdice against Fend, no 2nd Dice.
+  Unknown_40 = 40,
+  Unknown_56 = 56, // Push roll
   ChoiceUseDodgeTackle = 57, //Dodge vs Tackle before RR Pick
-  Unknown_68 = 68 //Pick Wrestle skill use?
+  Unknown_68 = 68, //Pick Wrestle skill use?
+  Unknown_100 = 100, // Happens on Kickoff Scatters
+  Unknown_101 = 101, // Happens during Foul Penalty
 };
 
 export enum BLOCK {
@@ -1208,7 +1241,7 @@ export enum ROLL {
   Landing = 24,
   Regeneration = 25,
   InaccuratePassScatter = 26,
-  AlwaysHungryRoll = 27,
+  AlwaysHungry = 27,
   EatTeammate = 28,
   Dauntless = 29,
   SafeThrow = 30,

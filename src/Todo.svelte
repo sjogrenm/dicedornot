@@ -38,7 +38,7 @@
     <li>
       Analyzer: Many roll types:
       <ul>
-        <li>AlwaysHungryRoll</li>
+        <li>AlwaysHungry</li>
         <li>Animosity</li>
         <li>BallAndChain</li>
         <li>Bite</li>

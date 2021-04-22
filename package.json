@@ -6,7 +6,7 @@
     "dev": "snowpack dev",
     "check-types": "svelte-check && tsc --noEmit",
     "validateReplay": "npm run buildJsonSchema && npm run buildJSModules && ts-node ./bin/validateReplay.mjs",
-    "buildJsonSchema": "typescript-json-schema --strictNullChecks tsconfig.json ReplayStep > bin/replayStep.json",
+    "buildJsonSchema": "typescript-json-schema --required --noExtraProps --strictNullChecks tsconfig.json ReplayStep > bin/replayStep.json",
     "buildJSModules": "tsc && for file in build/*.js; do mv $file ${file%.js}.mjs; done"
   },
   "devDependencies": {
@@ -35,6 +35,7 @@
     "he": "^1.2.0",
     "idb-keyval": "^5.0.4",
     "jszip": "^3.6.0",
+    "lodash": "^4.17.21",
     "sirv-cli": "^1.0.11",
     "sveltestrap": "^3.13.0",
     "underscore": "^1.12.0",

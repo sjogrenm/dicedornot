@@ -1,7 +1,7 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END } from "./replay-utils.js";
 import { SIDE } from "./constants.js";
-import type { Replay } from "./replay/BB2.js";
+import type * as BB2 from "./replay/BB2.js";
 import he from 'he';
 import {xmlToJson} from "./io.js";
 
@@ -21,7 +21,7 @@ interface GameDetails {
 }
 
 export interface ProcessedReplay {
-  fullReplay: Replay,
+  fullReplay: BB2.Replay,
   gameDetails: GameDetails,
   rolls: Roll<any>[],
   unknownRolls: UnknownRoll[],
@@ -29,7 +29,7 @@ export interface ProcessedReplay {
 }
 
 export interface ParsedReplay {
-  Replay: Replay,
+  Replay: BB2.Replay,
 }
 
 export function processReplay(data: ParsedReplay): ProcessedReplay {
@@ -46,9 +46,15 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
     stepIndex++
   ) {
     var replayStep = data.Replay.ReplayStep[stepIndex];
+
+    let initialBoardState = null;
+    let previousReplayStep: BB2.ReplayStep = data.Replay.ReplayStep[stepIndex - 1];
+    if (previousReplayStep && 'BoardState' in previousReplayStep) {
+      initialBoardState = previousReplayStep.BoardState;
+    }
     rolls = rolls.concat(Roll.fromReplayStep(
       data.Replay,
-      data.Replay.ReplayStep[stepIndex - 1] && data.Replay.ReplayStep[stepIndex - 1].BoardState,
+      initialBoardState,
       stepIndex,
       replayStep
     ));
