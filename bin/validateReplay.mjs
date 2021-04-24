@@ -20,7 +20,9 @@ const schema = JSON.parse(readFileSync('bin/replayStep.json'));
 async function _validate() {
     const validate = ajv.compile(schema);
     for (const filename of process.argv.slice(2)) {
-        for await (const replay of xmlToJson(readFileSync(filename, {flag: 'r'}))) {
+        let buffer = readFileSync(filename, {flag: 'r'});
+        console.log(buffer.length);
+        for await (const replay of xmlToJson(buffer)) {
             fs.writeFile(`${filename}.json`, JSON.stringify(replay, null, 2), (err) => {console.log(err)});
             for (const replayStep of replay.Replay.ReplayStep) {
                 const valid = validate(replayStep);

@@ -39,7 +39,7 @@ export interface PitchPlayer {
     Data: {
         LobbyId?: string,//>RowId:52220269-Server:ONLINE-StoreName:Main</LobbyId>
         Ma: number,//>4</Ma>
-        Name: string,//>blood</Name>
+        Name: string | number,//>blood</Name>
         Contract?: number,
         Value?: number,
         Ag: number,//>2</Ag>
@@ -60,6 +60,7 @@ export interface PitchPlayer {
     ListCasualties?: string,
     Situation?: SITUATION,
     ExperienceGained?: number,
+    Statistics?: any,
 }
 
 export interface Mercenary {
@@ -94,6 +95,7 @@ export interface TeamState {
     ListMercenaries: "" | {MercenarySave: MList<Mercenary>},
     SetUpTurn?: 1,
     NbSupporters: number, //>10000</NbSupporters>
+    ListNewRotters?: string,
     Side?: SIDE.away, //>1</Side>
     ApothecaryAvailable: Bool, //>1</ApothecaryAvailable>
     Data: {
@@ -131,7 +133,9 @@ export interface BoardState {
         Destination: Cell,
     },
     ActiveTeam?: SIDE,
+    Statistics?: any,
     CurrentPhase?: number,
+    ListSecretWeapons?: string,
     ListTeams: { TeamState: TeamState[] },
     Ball: { Cell: Cell, Destination: Cell, IsHeld?: 1 },
     KickOffTeam?: SIDE,
@@ -156,7 +160,7 @@ export interface GameInfos {
     TurnClockDuration: number,//>180000</TurnClockDuration>
     CoachesInfos: "" | { CoachInfos: MList<CoachInfo> },
     Id: string,//>Coach-224326-54d295cfb07037fa13e580bd3e272df6</Id>
-    LevelCabalVision: number,//>1</LevelCabalVision>
+    LevelCabalVision?: number,//>1</LevelCabalVision>
     StructStadium?: string,
     Clock: number,//>5600</Clock>
     LocalCoachSlot: number,//>-1</LocalCoachSlot>
@@ -170,44 +174,46 @@ export interface GameInfos {
     NameStadium: string,//>The disease ward</NameStadium>
     LevelStadium: number,//>1</LevelStadium>
     RowLeague: {
-        Edition: number, //>1</Edition>
-        IdOwner: number, //>211063</IdOwner>
-        Logo: string, //>Neutre_01</Logo>
-        Id: {
+        Edition?: number, //>1</Edition>
+        IdOwner?: number, //>211063</IdOwner>
+        Logo?: string, //>Neutre_01</Logo>
+        Id: "" | {
             Value: string
         },
-        Description: string
-        Phase: number, //>1</Phase>
-        Name: string, //>RRL spin and win league</Name>
+        Description?: string
+        Phase?: number, //>1</Phase>
+        Name?: string, //>RRL spin and win league</Name>
         Websites?: string, //>https://www.reddit.com/r/rebbrl/</Websites>
-        NbRegisteredTeams: number, //>4251</NbRegisteredTeams>
-        Flags: number, //>33</Flags>
+        NbRegisteredTeams?: number, //>4251</NbRegisteredTeams>
+        Official?: Bool,
+        TreasurySp?: number,
+        Flags?: number, //>33</Flags>
     },
     RowCompetition: {
-        IdPreviousEdition: {
+        IdPreviousEdition: "" | {
             Value: string, //>RowId:0-Server:ONLINE-StoreName:Main</Value>
         },
-        IdOwner: number, //>97356</IdOwner>
-        Id: {
+        IdOwner?: number, //>97356</IdOwner>
+        Id: "" | {
             Value: string, //>RowId:61632-Server:ONLINE-StoreName:Main</Value>
         },
-        LeaguePhase: number, //>1</LeaguePhase>
-        IdLeague: {
+        LeaguePhase?: number, //>1</LeaguePhase>
+        IdLeague: "" | {
             Value: string, //>RowId:25682-Server:ONLINE-StoreName:Main</Value>
         },
-        PrematchEvents: number, //>1</PrematchEvents>
-        Flags: number, //>33</Flags>
-        IdCompetitionTypes: number, //>3</IdCompetitionTypes>
+        PrematchEvents?: number, //>1</PrematchEvents>
+        Flags?: number, //>33</Flags>
+        IdCompetitionTypes?: number, //>3</IdCompetitionTypes>
         RegistrationMode?: number, //>1</RegistrationMode>
         NbRounds?: number,
         NbTeamsMax?: number,
-        CompetitionStatus: number, //>1</CompetitionStatus>
-        Name: string, //>RRL MM S2</Name>
-        LeagueEdition: number, //>1</LeagueEdition>
+        CompetitionStatus?: number, //>1</CompetitionStatus>
+        Name?: string, //>RRL MM S2</Name>
+        LeagueEdition?: number, //>1</LeagueEdition>
         CurrentRound?: number,
-        NbRegisteredTeams: number, //>3979</NbRegisteredTeams>
+        NbRegisteredTeams?: number, //>3979</NbRegisteredTeams>
         AcceptTicketRequest?: 1, //>1</AcceptTicketRequest>
-        TurnDuration: number, //>2</TurnDuration>
+        TurnDuration?: number, //>2</TurnDuration>
     }
 }
 export interface Replay {
@@ -260,7 +266,7 @@ export interface RulesEventAddMercenary {
     MercenaryType: number,
     InducementCategory: number,
     InducementsCash?: number,
-    Treasury: number,
+    Treasury?: number,
     SkillCost?: number,
 }
 
@@ -328,24 +334,17 @@ export type ReplayStep =
     }
     | {
         BoardState: BoardState,
-        RulesEventAddInducement: RulesEventAddInducement,
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventAddMercenary: RulesEventAddMercenary,
-    }
-    | {
-        BoardState: BoardState,
         RulesEventSetGeneratedPersonnalities: "",
     }
     | {
         BoardState: BoardState,
-        RulesEventApplyInducements: "" | {
+        RulesEventApplyInducements?: "" | {
             NextTeam?: 1,
             InducementValue?: number,
         },
+        RulesEventAddMercenary?: RulesEventAddMercenary,
         RulesEventAddInducement?: RulesEventAddInducement,
-        RulesEventWaitingRequest: RulesEventWaitingRequest,
+        RulesEventWaitingRequest?: RulesEventWaitingRequest,
     }
     | {
         BoardState: BoardState,
@@ -365,6 +364,9 @@ export type ReplayStep =
         RulesEventKickOffEventCancelled?: {
             StadiumStructure: string,
             EventCancelled: number,
+        },
+        RulesEventLoadGame?: {
+            BoardState: BoardState
         }
     }
 
@@ -454,8 +456,7 @@ export interface DiceRollResult<R, S extends Skills = Skills, C extends Cells = 
 // GFI = 1,
 export type GFIResult = DiceRollResult<ROLL.GFI, Skills, "">;
 // Dodge = 2,
-// DodgePick = 62,
-export type DodgeResult = DiceRollResult<ROLL.Dodge | ROLL.DodgePick>
+export type DodgeResult = DiceRollResult<ROLL.Dodge>
 export interface NoRollDodgeResult extends RollResult<ROLL.Dodge>, Choices<Skills, Cells> {};
 // Armor = 3,
 export type ArmorResult = DiceRollResult<ROLL.Armor, Skills, "">;
@@ -476,7 +477,7 @@ export type KickoffScatterResult = DiceRollResult<ROLL.KickoffScatter>;
 // ThrowIn = 11,
 export type ThrowInResult = DiceRollResult<ROLL.ThrowIn, "">;
 // Pass = 12,
-export type PassResult = DiceRollResult<ROLL.Pass, Skills, "">;
+export type PassResult = DiceRollResult<ROLL.Pass, Skills, Cells>;
 // Push = 13,
 export interface PushResult extends BaseResult, Choices { RollType: ROLL.Push };
 // FollowUp = 14,
@@ -557,7 +558,7 @@ export type BiteResult = DiceRollResult<ROLL.Bite, Skills, Cells>;
 // Bribe = 52,
 export type BribeResult = DiceRollResult<ROLL.Bribe, "", "">;
 // HalflingChef = 53,
-export type HalflingChefResult = DiceRollResult<ROLL.HalflingChef, "", "">;
+export type HalflingChefResult = RollResult<ROLL.HalflingChef> & Choices<"", ""> | DiceRollResult<ROLL.HalflingChef, "", "">;
 // Fireball = 54,
 export type FireballResult = DiceRollResult<ROLL.Fireball, "", "">;
 // LightningBolt = 55,
@@ -565,7 +566,7 @@ export type LightningBoltResult = DiceRollResult<ROLL.LightningBolt, "", "">;
 // ThrowTeammate = 56,
 export type ThrowTeammateResult = DiceRollResult<ROLL.ThrowTeammate>;
 // Multiblock = 57,
-export type MultiblockResult = DiceRollResult<ROLL.Multiblock>;
+export type MultiblockResult = RollResult<ROLL.Multiblock> & Choices<"", Cells>;
 // KickoffGust = 58,
 export type KickoffGustResult = DiceRollResult<ROLL.KickoffGust, "">;
 // PileOnArmorRoll = 59,
@@ -586,6 +587,8 @@ export interface CompletePOInjuryResult extends BaseResult, Choices {
 export type POInjuryResult = DiceRollResult<ROLL.PileOnInjuryRoll> | CompletePOInjuryResult;
 // Wrestle2 = 61, // Some sort of wrestle roll that doesn't do anything,
 export type WrestleResult = DiceRollResult<ROLL.Wrestle2>;
+// DodgePick = 62,
+export type DodgePickResult = DiceRollResult<ROLL.DodgePick>
 // StandFirm = 63,
 export type StandFirmResult = DiceRollResult<ROLL.StandFirm>;
 // Juggernaut = 64,
@@ -613,11 +616,11 @@ export interface ResultsAction<T> extends BaseAction {
 }
 
 // Move = 0, //Move
-export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | DodgeResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult> { }
+export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult> { }
 // Block = 1, //Block
-export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult> { ActionType: ACTION_TYPE.Block }
+export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult> { ActionType: ACTION_TYPE.Block }
 // Blitz = 2, //Blitz
-export interface BlitzAction extends PlayerAction, OrderAction, ResultsAction<BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | GFIResult | DodgeResult | NoRollDodgeResult | DauntlessResult | WrestleResult | NoChoicesResult | StandFirmResult | JuggernautResult | LonerResult | StandUpResult> { ActionType: ACTION_TYPE.Blitz }
+export interface BlitzAction extends PlayerAction, OrderAction, ResultsAction<DodgePickResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | NoChoicesResult | DodgeResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | JuggernautResult> { ActionType: ACTION_TYPE.Blitz }
 // Pass = 3, //Pass
 export interface PassAction extends PlayerAction, OrderT<Cell, {Cell: MList<Cell>}>, ResultsAction<PassResult | InterceptionResult | SafeThrowResult | LonerResult | AnimosityResult | AlwaysHungryResult | ThrowTeammateResult | InaccuratePassScatterResult | EatTeammateResult> { ActionType: ACTION_TYPE.Pass }
 // Handoff = 4, //Ball handoff
@@ -658,31 +661,47 @@ export interface LeapAction extends PlayerAction, OrderAction, ResultsAction<Lea
 // Chainsaw = 22,
 export interface ChainsawAction extends PlayerAction, OrderAction, ResultsAction<ChainsawArmorResult | ChainsawKickbackResult | LonerResult> { ActionType: ACTION_TYPE.Chainsaw }
 // BallChain = 23,
+export interface BallChainAction extends PlayerAction, OrderAction, ResultsAction<BallAndChainResult> { ActionType: ACTION_TYPE.BallChain }
 // HailMaryPass = 24,
+export interface HailMaryPassAction extends PlayerAction, OrderAction, ResultsAction<HailMaryPassResult> { ActionType: ACTION_TYPE.HailMaryPass }
 // PilingOn = 25,
+export interface PilingOnAction extends PlayerAction, OrderAction, ResultsAction<TakeDamageAction> { ActionType: ACTION_TYPE.PilingOn }
 // MultiBlock = 26,
+export interface MultiBlockAction extends PlayerAction, OrderT<Cell, "" | {Cell: Cell}>, ResultsAction<MultiblockResult | ProResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult> { ActionType: ACTION_TYPE.MultiBlock }
 // HypnoticGaze = 27,
+export interface HypnoticGazeAction extends PlayerAction, OrderAction, ResultsAction<HypnoticGazeResult | ProResult> { ActionType: ACTION_TYPE.HypnoticGaze }
 // KickOffReturn = 28,
+export interface KickOffReturnAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.KickOffReturn }
 // PassBlock = 29,
+export interface PassBlockAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.PassBlock }
 // HalflingChef = 30,
-export interface HalflingChefAction extends PlayerAction, OrderAction, ResultsAction<HalflingChefResult> { ActionType: ACTION_TYPE.HalflingChef }
+export interface HalflingChefAction extends NoOrderAction, ResultsAction<HalflingChefResult> { ActionType: ACTION_TYPE.HalflingChef }
 // WizardFireBallCast = 31,
+export interface WizardFireBallCastAction extends PlayerAction, OrderT<"", {Cell: Cell}>, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.WizardFireBallCast }
 // WizardFireball = 32,
+export interface WizardFireballAction extends PlayerAction, OrderAction, ResultsAction<FireballResult> { ActionType: ACTION_TYPE.WizardFireball }
 // WizardLightning = 33, //Wizard Lightning
+export interface WizardLightningAction extends PlayerAction, OrderT<"", {Cell: Cell}>, ResultsAction<LightningBoltResult> { ActionType: ACTION_TYPE.WizardLightning }
 // FoulRefCheck = 34, //Foul - Comes After Armor roll - maybe ref?
+export interface FoulRefCheckAction extends OrderAction, PlayerAction, ResultsAction<FoulRefResult | BribeResult> {ActionType: ACTION_TYPE.FoulRefCheck}
 // ScatterPlayer = 35,
 // QuickSnap = 36,
 // FreeMove = 37, //Move after High Kick
+export interface FreeMoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.FreeMove };
 // DumpOff = 38,
 // DodgeAgDivingTackle = 39,
+export interface DodgeAgDivingTackleAction extends PlayerAction, OrderAction, ResultsAction<DodgeResult> { ActionType: ACTION_TYPE.DodgeAgDivingTackle };
 // ThrowTeamMate = 40,
 // MultiStab = 41,
 // ActivatePlayer = 42, //Select Active Player
+export interface ActivatePlayerAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.ActivatePlayer };
 // PassBlockMoveLeap = 43,
 // PassBlockLeapMove = 44,
 // PassBlockLeap = 45,
 // FansNumber = 46, //After Kickoff Choice, has 2 BoardActionResults with RT 69
+export interface FansAction extends NoOrderAction, ResultsAction<FansResult> { ActionType: ACTION_TYPE.FansNumber };
 // InitialWeather = 47, //After Kickoff Choice, has 1 BoardActionResult with RT 70
+export interface WeatherAction extends NoOrderAction, ResultsAction<WeatherResult> { ActionType: ACTION_TYPE.InitialWeather }
 // SwelteringHeat = 48,
 // Feed = 49,
 // BombKnockDown = 50,
@@ -693,47 +712,52 @@ export interface HalflingChefAction extends PlayerAction, OrderAction, ResultsAc
 // BombThrowDestination = 55, // Pick the throw destination after a Bomb Catch(Intercept?)
 // HailMaryBomb = 56,
 // Turnover = 58,
-
-export interface WeatherAction extends NoOrderAction, ResultsAction<WeatherResult> { ActionType: ACTION_TYPE.InitialWeather }
 export interface TurnoverAction extends ResultsAction<NoChoicesResult> {
     ActionType: ACTION_TYPE.Turnover,
     Turnover?: Bool
 }
-export interface FoulRefCheckAction extends OrderAction, PlayerAction, ResultsAction<FoulRefResult | BribeResult> {ActionType: ACTION_TYPE.FoulRefCheck}
-export interface ActivatePlayerAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.ActivatePlayer };
-
-export interface FansAction extends NoOrderAction, ResultsAction<FansResult> { ActionType: ACTION_TYPE.FansNumber };
-export interface FreeMoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.FreeMove };
 
 export type RulesEventBoardAction =
-    | ActivatePlayerAction
-    | ActivationTestAction
-    | BlitzAction
-    | BlockAction
-    | CatchAction
-    | ChainsawAction
-    | FansAction
-    | FoulAction
-    | FoulRefCheckAction
-    | FreeMoveAction
-    | HalflingChefAction
-    | HandoffAction
-    | KickoffAction
-    | LandingAction
-    | LeapAction
     | MoveAction
+    | BlockAction
+    | BlitzAction
     | PassAction
-    | PickupAction
+    | HandoffAction
+    | FoulAction
+    | TakeDamageAction
+    | KickoffAction
     | ScatterAction
+    | CatchAction
+    | TouchDownAction
+    | StunWakeAction
+    | WakeUpAction
+    | PitchInvasionAction
+    | PickupAction
+    | ActivationTestAction
+    | LandingAction
+    | EatTeamMateAction
     | ShadowingAction
     | StabAction
-    | StunWakeAction
-    | TakeDamageAction
-    | TouchDownAction
+    | LeapAction
+    | ChainsawAction
+    | BallChainAction
+    | HailMaryPassAction
+    | PilingOnAction
+    | MultiBlockAction
+    | HypnoticGazeAction
+    | KickOffReturnAction
+    | PassBlockAction
+    | HalflingChefAction
+    | WizardFireBallCastAction
+    | WizardFireballAction
+    | WizardLightningAction
+    | FoulRefCheckAction
+    | FreeMoveAction
+    | DodgeAgDivingTackleAction
+    | ActivatePlayerAction
+    | FansAction
+    | WeatherAction
     | TurnoverAction
-    | WakeUpAction
-    | WeatherAction
-    | WeatherAction
 
 // export type BoardActionResult = DiceRollResult | CellChoiceResult | NoChoicesResult | KickoffScatterResult
 

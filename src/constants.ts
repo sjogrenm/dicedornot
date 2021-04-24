@@ -414,18 +414,27 @@ export enum RESULT_TYPE {
 };
 
 export enum SUB_RESULT_TYPE {
+  Unknown_N2 = -2,
   Unknown_N1 = -1,
   ArmorNoBreak = 1, //Not sure - after rlArmor (3) - Only after Block?
   InjuryStun = 2,
   InjuryKO = 3,
   InjuryCAS = 4,
   Unknown_5 = 5,
+  Unknown_6 = 6, // On Casualty Result
   ChoiceUseDodgeSkill = 7, //Pick Dodge skill use?
+  Unknown_8 = 8, // From Casualty Roll
   Unknown_9 = 9, // From Casualty Roll
+  Unknown_10 = 10, // From Casualty Roll
   Unknown_11 = 11,
+  Unknown_12 = 12,
+  Unknown_13 = 13,
+  Unknown_14 = 14,
+  Unknown_15 = 15, // From Casualty Roll
   CASDecay = 16,
   Unknown_17 = 17,
   CASResult = 18, //Final CAS Result
+  Unknown_22 = 22, // During Dodge Roll
   Fend = 35, //Blockdice against Fend, no 2nd Dice.
   Unknown_40 = 40,
   Unknown_56 = 56, // Push roll
@@ -433,6 +442,7 @@ export enum SUB_RESULT_TYPE {
   Unknown_68 = 68, //Pick Wrestle skill use?
   Unknown_100 = 100, // Happens on Kickoff Scatters
   Unknown_101 = 101, // Happens during Foul Penalty
+  Unknown_102 = 102, // Happens during Foul Penalty
 };
 
 export enum BLOCK {

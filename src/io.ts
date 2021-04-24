@@ -1,15 +1,15 @@
 import JSZip, { files } from 'jszip';
 import parser from 'fast-xml-parser';
-var zip = new JSZip();
 
 export async function* xmlToJson<T>(file): AsyncGenerator<T> {
+  var zip = new JSZip();
   let zipContents = await zip.loadAsync(file);
-  for (let [relPath, file] of Object.entries(zipContents.files)) {
-    let fileText = await file.async("string");
+  for (let [relPath, innerFile] of Object.entries(zipContents.files)) {
+    let fileText = await innerFile.async("string");
     var jsonObject = parser.parse(fileText, {
       ignoreAttributes: true,
     });
-    console.log(jsonObject);
+    console.log({filename: file.name, relPath, jsonObject});
     yield jsonObject;
   };
 }
