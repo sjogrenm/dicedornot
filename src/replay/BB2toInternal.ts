@@ -1,4 +1,5 @@
-import type * as BB2 from './BB2.js';
+import { SIDE } from '../constants.js';
+import * as BB2 from './BB2.js';
 import type * as Internal from './Internal.js';
 
 export function convertCell(c: BB2.Cell): Internal.Cell {
@@ -16,11 +17,17 @@ export function convertReplay(incoming: BB2.Replay): Internal.Replay {
     let outgoing: Internal.Replay = {
         teams: {
             home: {
-                players: [],
+                players: {},
+                inducements: {
+                    mercenaries: {},
+                },
                 race: null,
             },
             away: {
-                players: [],
+                players: {},
+                inducements: {
+                    mercenaries: {},
+                },
                 race: null,
             },
         },
@@ -48,5 +55,11 @@ function handleGameFinishedStep(outgoing: Internal.Replay, step: BB2.GameFinishe
 }
 
 function handleAddInducementSkillStep(outgoing: Internal.Replay, step: BB2.AddInducementSkillStep) {
+    let player = step.RulesEventAddInducementSkill.MercenaryId;
+    let side = BB2.playerIdSide(player);
+    let skill = step.RulesEventAddInducementSkill.SkillId;
+    let team = outgoing.teams[side == SIDE.home ? 'home' : 'away'];
+    team.inducements.mercenaries[player].skills.push(skill);
+    team.players[player].skills.push(skill);
     return outgoing;
 }

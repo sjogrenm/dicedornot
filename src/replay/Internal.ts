@@ -23,7 +23,12 @@ export interface Replay {
 
 export interface Team {
     players: Record<PlayerNumber, Player>,
+    inducements: Inducements,
     race: RACE_ID,
+}
+
+export interface Inducements {
+    mercenaries: Record<PlayerNumber, Player>,
 }
 
 export type Side = keyof ByTeam<any>;
@@ -35,6 +40,7 @@ export interface PlayerId {
 
 export interface Player {
     id: PlayerId,
+    skills: SKILL[],
 }
 
 export interface Checkpoint {
