@@ -158,21 +158,21 @@ export interface GameInfos {
     ServerReconnectionAllowedTime: number,//>360000</ServerReconnectionAllowedTime>
     ClientDelayDetectionPingIntervall: number,//>3000</ClientDelayDetectionPingIntervall>
     TurnClockDuration: number,//>180000</TurnClockDuration>
-    CoachesInfos: "" | { CoachInfos: MList<CoachInfo> },
+    CoachesInfos: { CoachInfos: MList<CoachInfo> },
     Id: string,//>Coach-224326-54d295cfb07037fa13e580bd3e272df6</Id>
     LevelCabalVision?: number,//>1</LevelCabalVision>
-    StructStadium?: string,
     Clock: number,//>5600</Clock>
     LocalCoachSlot: number,//>-1</LocalCoachSlot>
     State: number,//>1</State>
     Stadium: string,//>Skaven</Stadium>
+    NameStadium: string,//>The disease ward</NameStadium>
+    LevelStadium: number,//>1</LevelStadium>
+    StructStadium?: string,
     BallType: string,//>BALL_CLASSIC</BallType>
     TurnClock: number,//>120000</TurnClock>
     PlayingCoachSlot?: number,//>1</PlayingCoachSlot>
     ServerDelayDetectionThreshold: number,//>6000</ServerDelayDetectionThreshold>
     ClientReconnectionIntervall: number,//>20000</ClientReconnectionIntervall>
-    NameStadium: string,//>The disease ward</NameStadium>
-    LevelStadium: number,//>1</LevelStadium>
     RowLeague: {
         Edition?: number, //>1</Edition>
         IdOwner?: number, //>211063</IdOwner>

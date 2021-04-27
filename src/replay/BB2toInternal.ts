@@ -1,6 +1,7 @@
 import { SIDE } from '../constants.js';
 import * as BB2 from './BB2.js';
 import type * as Internal from './Internal.js';
+import he from 'he';
 
 export function convertCell(c: BB2.Cell): Internal.Cell {
     if (c === "") {
@@ -22,6 +23,8 @@ export function convertReplay(incoming: BB2.Replay): Internal.Replay {
                     mercenaries: {},
                 },
                 race: null,
+                coach: "Unknown",
+                name: "Unknown",
             },
             away: {
                 players: {},
@@ -29,17 +32,25 @@ export function convertReplay(incoming: BB2.Replay): Internal.Replay {
                     mercenaries: {},
                 },
                 race: null,
+                coach: "Unknown",
+                name: "Unknown",
             },
+        },
+        stadium: {
+            name: "Unknown Stadium",
+            type: "Unknown Stadium Type"
         },
         drives: []
     };
     for (const step of incoming.ReplayStep) {
         if ('RulesEventGameFinished' in step) {
-            outgoing = handleGameFinishedStep(outgoing, step);
+            handleGameFinishedStep(outgoing, step);
         } else if ('RulesEventAddInducementSkill' in step) {
-            outgoing = handleAddInducementSkillStep(outgoing, step);
+            handleAddInducementSkillStep(outgoing, step);
+        } else if ('GameInfo' in step) {
+            handleGameInfo(outgoing, step);
         } else {
-            badStep(step);
+            //badStep(step);
         }
     }
     return outgoing;
@@ -51,7 +62,6 @@ function badStep(step: BB2.ReplayStep) {
 }
 
 function handleGameFinishedStep(outgoing: Internal.Replay, step: BB2.GameFinishedStep) {
-    return outgoing;
 }
 
 function handleAddInducementSkillStep(outgoing: Internal.Replay, step: BB2.AddInducementSkillStep) {
@@ -61,5 +71,17 @@ function handleAddInducementSkillStep(outgoing: Internal.Replay, step: BB2.AddIn
     let team = outgoing.teams[side == SIDE.home ? 'home' : 'away'];
     team.inducements.mercenaries[player].skills.push(skill);
     team.players[player].skills.push(skill);
-    return outgoing;
+}
+
+function handleGameInfo(outgoing: Internal.Replay, step: BB2.GameInfoStep) {
+    outgoing.stadium.name = he.decode(step.GameInfos.NameStadium.toString());
+    outgoing.stadium.type = step.GameInfos.Stadium;
+    outgoing.stadium.enhancement = step.GameInfos.StructStadium;
+
+    outgoing.teams.home.coach = he.decode(step.GameInfos.CoachesInfos.CoachInfos[SIDE.home].UserId.toString());
+    outgoing.teams.away.coach = he.decode(step.GameInfos.CoachesInfos.CoachInfos[SIDE.away].UserId.toString());
+    outgoing.teams.home.race = step.BoardState.ListTeams.TeamState[SIDE.home].Data.IdRace;
+    outgoing.teams.away.race = step.BoardState.ListTeams.TeamState[SIDE.away].Data.IdRace;
+    outgoing.teams.home.name = he.decode(step.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString());
+    outgoing.teams.away.name = he.decode(step.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString());
 }

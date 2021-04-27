@@ -18,6 +18,11 @@ export interface ModifiedD6SumRoll {
 
 export interface Replay {
     teams: ByTeam<Team>,
+    stadium: {
+        name: string,
+        type: string,
+        enhancement?: string,
+    },
     drives: Drive[],
 }
 
@@ -25,6 +30,8 @@ export interface Team {
     players: Record<PlayerNumber, Player>,
     inducements: Inducements,
     race: RACE_ID,
+    coach: string,
+    name: string,
 }
 
 export interface Inducements {
