@@ -501,7 +501,6 @@ export class Roll<Dice> {
         gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
           step => {
             if (!('BoardState' in step)) {
-              console.log(step);
               return [];
             } else {
               return [step.BoardState.ListTeams.TeamState[0].GameTurn, step.BoardState.ListTeams.TeamState[1].GameTurn];

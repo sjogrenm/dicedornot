@@ -436,6 +436,9 @@
   }
 
   async function stepReplay(updateUrl = true) {
+    if (current.step > $replay.fullReplay.ReplayStep.length) {
+      console.error("Went too far", {current, replay: $replay});
+    }
     const step = $replay.fullReplay.ReplayStep[current.step];
     const subStep = step[REPLAY_KEY.get(current.subStep)];
     switch (current.subStep) {
