@@ -49,6 +49,7 @@
   } from "../stores.js";
   import he from "he";
   import type * as BB2 from "../replay/BB2.js";
+  import {convertCell} from "../replay/BB2toInternal.js";
 
   export let playing = false;
 
@@ -201,7 +202,7 @@
   function processTeam(side, team, active) {
     let maxRerollsThisPeriod = $replay.fullReplay.ReplayStep.reduce(
       (acc: number, step: BB2.ReplayStep) => {
-        if (!step.BoardState) {
+        if (!('BoardState' in step)) {
           return acc;
         }
         let stepTeam = step.BoardState.ListTeams.TeamState[side];
@@ -778,8 +779,8 @@
     if (actionResult.RollType === ROLL.FollowUp) {
       //follow up
       if (actionResult.IsOrderCompleted) {
-        const from = action.Order.CellFrom;
-        const target = ensureList(actionResult.CoachChoices.ListCells.Cell)[0];
+        const from = convertCell(action.Order.CellFrom);
+        const target = convertCell(ensureList(actionResult.CoachChoices.ListCells.Cell)[0]);
         if (from.x != target.x || from.y != target.y) {
           const fromSquare = setPitchSquare(from);
           setPitchSquare(target).player = fromSquare.player;
