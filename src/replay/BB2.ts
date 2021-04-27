@@ -8,10 +8,10 @@ export enum Bool {
     true = 1,
 }
 
-export interface Cell {
+export type Cell = {
     x?: number;
     y?: number;
-}
+} | "";
 
 export type MList<T> = T | T[];
 
@@ -302,73 +302,78 @@ export interface RulesEventSetUpConfiguration {
     }
   }
 
+export interface GameFinishedStep {RulesEventGameFinished: RulesEventGameFinished};
+export interface AddInducementSkillStep {
+    BoardState: BoardState,
+    RulesEventAddInducementSkill: {
+        Treasury?: number,
+        MercenaryId: PlayerId,
+        SkillId: SKILL
+    }
+};
+export interface GameInfoStep {
+    BoardState: BoardState,
+    GameInfos: GameInfos,
+    RulesEventWaitingRequest: RulesEventWaitingRequest,
+};
+export interface SetUpActionStep {
+    BoardState: BoardState,
+    RulesEventSetUpAction: RulesEventSetUpAction,
+    RulesEventWaitingRequest: RulesEventWaitingRequest,
+}
+export interface SetUpConfigurationStep {
+    BoardState: BoardState,
+    RulesEventSetUpConfiguration: RulesEventSetUpConfiguration,
+    RulesEventWaitingRequest: RulesEventWaitingRequest,
+}
+export interface GenPersonalityStep {
+    BoardState: BoardState,
+    RulesEventSetGeneratedPersonnalities: "",
+}
+export interface AddInducementStep {
+    BoardState: BoardState,
+    RulesEventApplyInducements?: "" | {
+        NextTeam?: 1,
+        InducementValue?: number,
+    },
+    RulesEventAddMercenary?: MList<RulesEventAddMercenary>,
+    RulesEventAddInducement?: RulesEventAddInducement,
+    RulesEventInducementsInfos?: RulesEventInducementInfos,
+    RulesEventWaitingRequest?: RulesEventWaitingRequest,
+};
+export interface GameTurnStep {
+    BoardState: BoardState,
+    RulesEventEndTurn?: RulesEventEndTurn,
+    RulesEventBoardAction?: MList<RulesEventBoardAction>,
+    RulesEventKickOffTable?: RulesEventKickOffTable,
+    RulesEventKickOffChoice?: "" | {
+        ChosingTeam?: SIDE,
+        KickOffTeam?: SIDE,
+    },
+    RulesEventForcedDices?: "",
+    RulesEventCoachChoice?: "" | {
+        IndexChosen: number
+    }
+    RulesEventSpecialAction?: RulesEventSpecialAction,
+    RulesEventWaitingRequest?: RulesEventWaitingRequest,
+    RulesEventKickOffEventCancelled?: {
+        StadiumStructure: string,
+        EventCancelled: number,
+    },
+    RulesEventLoadGame?: {
+        BoardState: BoardState
+    }
+};
+
 export type ReplayStep =
-    | {RulesEventGameFinished: RulesEventGameFinished}
-    | {
-        BoardState: BoardState,
-        RulesEventWaitingRequest: RulesEventWaitingRequest,
-        RulesEventInducementsInfos: RulesEventInducementInfos,
-        RulesEventAddInducement?: RulesEventAddInducement,
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventAddInducementSkill: {
-            MercenaryId: PlayerId,
-            SkillId: SKILL
-        }
-    }
-    | {
-        BoardState: BoardState,
-        GameInfos: GameInfos,
-        RulesEventWaitingRequest: RulesEventWaitingRequest,
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventSetUpAction: RulesEventSetUpAction,
-        RulesEventWaitingRequest: RulesEventWaitingRequest,
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventSetUpConfiguration: RulesEventSetUpConfiguration,
-        RulesEventWaitingRequest: RulesEventWaitingRequest,
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventSetGeneratedPersonnalities: "",
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventApplyInducements?: "" | {
-            NextTeam?: 1,
-            InducementValue?: number,
-        },
-        RulesEventAddMercenary?: RulesEventAddMercenary,
-        RulesEventAddInducement?: RulesEventAddInducement,
-        RulesEventWaitingRequest?: RulesEventWaitingRequest,
-    }
-    | {
-        BoardState: BoardState,
-        RulesEventEndTurn?: RulesEventEndTurn,
-        RulesEventBoardAction?: MList<RulesEventBoardAction>,
-        RulesEventKickOffTable?: RulesEventKickOffTable,
-        RulesEventKickOffChoice?: "" | {
-            ChosingTeam?: SIDE,
-            KickOffTeam?: SIDE,
-        },
-        RulesEventForcedDices?: "",
-        RulesEventCoachChoice?: "" | {
-            IndexChosen: number
-        }
-        RulesEventSpecialAction?: RulesEventSpecialAction,
-        RulesEventWaitingRequest?: RulesEventWaitingRequest,
-        RulesEventKickOffEventCancelled?: {
-            StadiumStructure: string,
-            EventCancelled: number,
-        },
-        RulesEventLoadGame?: {
-            BoardState: BoardState
-        }
-    }
+    | GameFinishedStep
+    | AddInducementSkillStep
+    | GameInfoStep
+    | SetUpActionStep
+    | SetUpConfigurationStep
+    | GenPersonalityStep
+    | AddInducementStep
+    | GameTurnStep
 
 export interface RulesEventSpecialAction {
     PlayerId: PlayerId,
@@ -440,7 +445,7 @@ type NoChoicesResult = {
 };
 
 export interface DiceModifier {
-    Cell?: "" | Cell,
+    Cell?: Cell,
     Skill?: -1 | SKILL,
     Type?: number,
     Value?: number
@@ -616,11 +621,11 @@ export interface ResultsAction<T> extends BaseAction {
 }
 
 // Move = 0, //Move
-export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult> { }
+export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | TentaclesResult> { }
 // Block = 1, //Block
-export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult> { ActionType: ACTION_TYPE.Block }
+export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult | ChainsawKickbackResult> { ActionType: ACTION_TYPE.Block }
 // Blitz = 2, //Blitz
-export interface BlitzAction extends PlayerAction, OrderAction, ResultsAction<DodgePickResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | NoChoicesResult | DodgeResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | JuggernautResult> { ActionType: ACTION_TYPE.Blitz }
+export interface BlitzAction extends PlayerAction, OrderAction, ResultsAction<DodgePickResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | NoChoicesResult | DodgeResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | JuggernautResult | TentaclesResult | ChainsawKickbackResult> { ActionType: ACTION_TYPE.Blitz }
 // Pass = 3, //Pass
 export interface PassAction extends PlayerAction, OrderT<Cell, {Cell: MList<Cell>}>, ResultsAction<PassResult | InterceptionResult | SafeThrowResult | LonerResult | AnimosityResult | AlwaysHungryResult | ThrowTeammateResult | InaccuratePassScatterResult | EatTeammateResult> { ActionType: ACTION_TYPE.Pass }
 // Handoff = 4, //Ball handoff
@@ -628,11 +633,11 @@ export interface HandoffAction extends PlayerAction, OrderAction, ResultsAction<
 // Foul = 5, //Foul
 export interface FoulAction extends OrderAction, PlayerAction, ResultsAction<NoChoicesResult | ArmorResult | InjuryResult | CasualtyResult | RegenerationResult > { ActionType: ACTION_TYPE.Foul }
 // TakeDamage = 6, //Armor
-export interface TakeDamageAction extends PlayerAction, OrderT<"" | Cell, { Cell: "" | Cell }>, ResultsAction<ArmorResult | InjuryResult | CasualtyResult | RegenerationResult | POArmorResult | POInjuryResult> { ActionType: ACTION_TYPE.TakeDamage }
+export interface TakeDamageAction extends PlayerAction, OrderT<Cell, { Cell: "" | MList<Cell> }>, ResultsAction<ArmorResult | InjuryResult | CasualtyResult | RegenerationResult | POArmorResult | POInjuryResult | ChainsawArmorResult> { ActionType: ACTION_TYPE.TakeDamage }
 // Kickoff = 7, //Pick Kickoff Location
 export interface KickoffAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.Kickoff }
 // Scatter = 8, //Pick Kickoff Scatter KickSkill
-export interface ScatterAction extends PlayerAction, OrderT<"" | Cell, {Cell: Cell}>, ResultsAction<KickoffScatterResult | ThrowInResult | TouchBackResult | KickoffGustResult > { ActionType: ACTION_TYPE.Scatter };
+export interface ScatterAction extends PlayerAction, OrderT<Cell, {Cell: Cell}>, ResultsAction<KickoffScatterResult | ThrowInResult | TouchBackResult | KickoffGustResult > { ActionType: ACTION_TYPE.Scatter };
 // Catch = 9, //Catch
 export interface CatchAction extends PlayerAction, OrderAction, ResultsAction<CatchResult | LonerResult> { ActionType: ACTION_TYPE.Catch }
 // TouchDown = 10, //Touchdown?
@@ -652,7 +657,7 @@ export interface LandingAction extends PlayerAction, OrderAction, ResultsAction<
 // EatTeamMate = 17,
 export interface EatTeamMateAction extends PlayerAction, OrderAction, ResultsAction<EatTeammateResult> { ActionType: ACTION_TYPE.EatTeamMate }
 // Shadowing = 18,
-export interface ShadowingAction extends PlayerAction, OrderT<"" | Cell, {Cell: Cell}>, ResultsAction<ShadowingResult | NoChoicesResult> {ActionType: ACTION_TYPE.Shadowing }
+export interface ShadowingAction extends PlayerAction, OrderT<Cell, {Cell: Cell}>, ResultsAction<ShadowingResult | NoChoicesResult> {ActionType: ACTION_TYPE.Shadowing }
 // Stab = 19,
 // FrenzyStab = 20,
 export interface StabAction extends PlayerAction, OrderAction, ResultsAction<StabResult> { ActionType: ACTION_TYPE.Stab | ACTION_TYPE.FrenzyStab}

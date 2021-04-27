@@ -308,17 +308,19 @@
       };
     }
   }
-  function assertExhaustive(
-    value: never,
-    message: string = "Reached unexpected case in exhaustive switch"
-  ): never {
-    throw new Error(message);
+
+  function badAction(action: never): never
+  function badAction(action: BB2.RulesEventBoardAction) {
+    console.error(`Unexpected action ${JSON.stringify(action)}`);
   }
 
   function dispatchAction(
     action: BB2.RulesEventBoardAction,
     resultIndex: number
   ) {
+    if (!('ActionType' in action)) {
+      return handleMove(action, resultIndex);
+    }
     switch (action.ActionType) {
       case ACTION_TYPE.Block:
         return handleBlock(action, resultIndex);
@@ -330,9 +332,6 @@
         return handleHandoff(action);
       case ACTION_TYPE.Foul:
         return handleFoul(action);
-      case ACTION_TYPE.Move:
-      case undefined:
-        return handleMove(action, resultIndex);
       case ACTION_TYPE.TakeDamage:
         return handleTakeDamage(action, resultIndex);
       case ACTION_TYPE.Kickoff:
@@ -359,14 +358,32 @@
         return handleTurnover(action);
       case ACTION_TYPE.FansNumber:
       case ACTION_TYPE.WakeUp:
+      case ACTION_TYPE.EventPitchInv:
+      case ACTION_TYPE.Landing:
+      case ACTION_TYPE.EatTeamMate:
+      case ACTION_TYPE.Shadowing:
+      case ACTION_TYPE.Stab:
+      case ACTION_TYPE.Chainsaw:
+      case ACTION_TYPE.FrenzyStab:
+      case ACTION_TYPE.BallChain:
+      case ACTION_TYPE.HailMaryPass:
+      case ACTION_TYPE.PilingOn:
+      case ACTION_TYPE.MultiBlock:
+      case ACTION_TYPE.HypnoticGaze:
+      case ACTION_TYPE.KickOffReturn:
+      case ACTION_TYPE.PassBlock:
+      case ACTION_TYPE.HalflingChef:
+      case ACTION_TYPE.WizardFireBallCast:
+      case ACTION_TYPE.WizardFireball:
+      case ACTION_TYPE.WizardLightning:
+      case ACTION_TYPE.FoulRefCheck:
+      case ACTION_TYPE.FreeMove:
+      case ACTION_TYPE.DodgeAgDivingTackle:
         // TODO: Handle These
+        console.warn(`Unhandled action ${JSON.stringify(action)}`);
         break;
       default:
-        break;
-        // Exhaustive(
-        //   action,
-        //   `Unhandled Action Type`
-        // );
+        badAction(action);
     }
   }
   function sleep(ms) {

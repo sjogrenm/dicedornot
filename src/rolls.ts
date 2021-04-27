@@ -29,6 +29,8 @@ import {
   Distribution
 } from './distribution.js';
 import type * as BB2 from './replay/BB2.js';
+import type * as Internal from './replay/Internal.js';
+import {convertCell} from './replay/BB2toInternal.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
@@ -50,19 +52,19 @@ function decayedHalfTurns(halfTurns: number): number {
   return decayedTurns;
 }
 
-function manhattan(a:BB2.Cell, b:BB2.Cell): number {
+function manhattan(a:Internal.Cell, b:Internal.Cell): number {
   return Math.max(
-    Math.abs((a.x || 0) - (b.x || 0)),
-    Math.abs((a.y || 0) - (b.y || 0))
+    Math.abs((a.x) - (b.x)),
+    Math.abs((a.y) - (b.y))
   );
 }
 
-function ballPositionValue(team: Team, cell: BB2.Cell): SingleValue {
+function ballPositionValue(team: Team, cell: Internal.Cell): SingleValue {
   var distToGoal;
   if (team.id == 0) {
-    distToGoal = 25 - (cell.x || 0);
+    distToGoal = 25 - (cell.x);
   } else {
-    distToGoal = (cell.x || 0);
+    distToGoal = (cell.x);
   }
   var distValue;
   if (distToGoal == 0) {
@@ -84,7 +86,7 @@ class Player {
   name: string;
   id: number;
   playerType: PLAYER_TYPE;
-  cell: BB2.Cell;
+  cell: Internal.Cell;
   situation: SITUATION;
   canAct: boolean;
   skills: SKILL[];
@@ -168,11 +170,11 @@ class Team {
 interface BoardStateArgs {
   teams: Team[],
   activeTeamId: number,
-  ballCell: BB2.Cell
+  ballCell: "" | Internal.Cell
 }
 
 class BoardState {
-  ballCell: BB2.Cell;
+  ballCell: Internal.Cell;
   teams: Team[];
   activeTeamId: number;
   activeTeam: Team;
@@ -180,12 +182,12 @@ class BoardState {
   replayStep: number;
   action: number;
 
-  constructor({ teams, activeTeamId, ballCell }: BoardStateArgs) {
+  constructor({ teams, activeTeamId, ballCell }) {
     this.teams = teams;
     this.activeTeam =
       teams.filter((team) => team.id == activeTeamId)[0] || teams[0];
     this.turn = (this.activeTeam && this.activeTeam.turn) || 0;
-    this.ballCell = ballCell;
+    this.ballCell = ballCell || {x: 0, y: 0};
   }
   static argsFromXml(boardState: BB2.BoardState) {
     let teams = boardState.ListTeams.TeamState.map(
@@ -210,10 +212,10 @@ class BoardState {
     }
   }
 
-  playerAtPosition(cell: BB2.Cell): Player {
+  playerAtPosition(cell: Internal.Cell): Player {
     for (var team of this.teams) {
       for (var player of team.players) {
-        if ((player.cell.x || 0) === (cell.x || 0) && (player.cell.y || 0) === (cell.y || 0)) {
+        if ((player.cell.x) === (cell.x) && (player.cell.y) === (cell.y)) {
           return player;
         }
       }
@@ -660,7 +662,7 @@ export class Roll<Dice> {
 
   playerValue(player) {
     var ballCell = this.initialBoardState.ballCell;
-    if ((ballCell.x || 0) < 0 || (ballCell.y || 0) < 0) {
+    if ((ballCell.x) < 0 || (ballCell.y) < 0) {
       return this.rawPlayerValue(player);
     }
     var distanceToBall = manhattan(ballCell, player.cell);
@@ -1001,7 +1003,7 @@ export class BlockRoll extends Roll<BLOCK> {
       isRedDice,
       attacker: args.activePlayer,
       defender: args.finalBoardState.playerAtPosition(
-        xml.action.Order.CellTo.Cell
+        convertCell(xml.action.Order.CellTo.Cell)
       ),
       isBlitz: args.activePlayer.team.blitzerId == args.activePlayer.id,
     }
@@ -1660,13 +1662,13 @@ class DauntlessRoll extends ModifiedD6SumRoll {
 }
 
 interface MoveRollArgs extends ModifiedD6SumRollArgs {
-  cellFrom: BB2.Cell,
-  cellTo: BB2.Cell,
+  cellFrom: Internal.Cell,
+  cellTo: Internal.Cell,
 }
 
 class DodgeRoll extends ModifiedD6SumRoll {
-  cellFrom: BB2.Cell;
-  cellTo: BB2.Cell;
+  cellFrom: Internal.Cell;
+  cellTo: Internal.Cell;
 
   get rollName() { return "Dodge"; }
   static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
@@ -1695,8 +1697,8 @@ class DodgeRoll extends ModifiedD6SumRoll {
     }
     return {
       ...args,
-      cellFrom: xml.action.Order.CellFrom,
-      cellTo: xml.action.Order.CellTo.Cell,
+      cellFrom: convertCell(xml.action.Order.CellFrom),
+      cellTo: convertCell(xml.action.Order.CellTo.Cell),
       target,
       modifier
     }
@@ -1726,15 +1728,15 @@ class JumpUpRoll extends ModifiedD6SumRoll {
 }
 
 class LeapRoll extends ModifiedD6SumRoll {
-  cellFrom: BB2.Cell;
-  cellTo: BB2.Cell;
+  cellFrom: Internal.Cell;
+  cellTo: Internal.Cell;
   get rollName() { return "Leap"; }
   get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
   static argsFromXml(xml: RollXML<BB2.LeapAction, BB2.LeapResult>): MoveRollArgs {
     return {
       ...super.argsFromXml(xml),
-      cellFrom: xml.action.Order.CellFrom,
-      cellTo: xml.action.Order.CellTo.Cell,
+      cellFrom: convertCell(xml.action.Order.CellFrom),
+      cellTo: convertCell(xml.action.Order.CellTo.Cell),
     };
   }
   failValue(expected, rollTotal, modifiedTarget) {
@@ -1809,8 +1811,8 @@ class WakeUpRoll extends ModifiedD6SumRoll {
 }
 
 class GFIRoll extends ModifiedD6SumRoll {
-  cellFrom: BB2.Cell;
-  cellTo: BB2.Cell;
+  cellFrom: Internal.Cell;
+  cellTo: Internal.Cell;
   get rollName() { return "GFI"; }
   static handledSkills = [SKILL.SureFeet];
   get rerollSkill() { return SKILL.SureFeet; }
@@ -1819,8 +1821,8 @@ class GFIRoll extends ModifiedD6SumRoll {
   static argsFromXml(xml: RollXML<BB2.MoveAction, BB2.GFIResult>): MoveRollArgs {
     return {
       ...super.argsFromXml(xml),
-      cellFrom: xml.action.Order.CellFrom,
-      cellTo: xml.action.Order.CellTo.Cell,
+      cellFrom: convertCell(xml.action.Order.CellFrom),
+      cellTo: convertCell(xml.action.Order.CellTo.Cell),
     };
   }
 
@@ -2181,13 +2183,13 @@ class RegenerationRoll extends ModifiedD6SumRoll {
 }
 
 interface MoveActionArgs extends RollArgs<null> {
-  cellFrom: BB2.Cell,
-  cellTo: BB2.Cell,
+  cellFrom: Internal.Cell,
+  cellTo: Internal.Cell,
 }
 
 export class MoveAction extends Roll<null> {
-  cellFrom: BB2.Cell;
-  cellTo: BB2.Cell;
+  cellFrom: Internal.Cell;
+  cellTo: Internal.Cell;
   get rollName() { return "Move"; }
   get dependentConditions() { return [sameTeamMove]; }
   static handledSkills = [SKILL.JumpUp];
@@ -2206,13 +2208,13 @@ export class MoveAction extends Roll<null> {
   get description() {
     const from = this.cellFrom;
     const to = this.cellTo;
-    return `Move: [${this.activePlayer.team.shortName}] ${this.activePlayer.name} - (${from.x || 0}, ${from.y || 0}) \u2192 (${to.x || 0}, ${to.y || 0})`;
+    return `Move: [${this.activePlayer.team.shortName}] ${this.activePlayer.name} - (${from.x}, ${from.y}) \u2192 (${to.x}, ${to.y})`;
   }
 
   get shortDescription() {
     const from = this.cellFrom;
     const to = this.cellTo;
-    return `Move: ${this.activePlayer.name} - (${from.x || 0}, ${from.y || 0}) \u2192 (${to.x || 0}, ${to.y || 0})`;
+    return `Move: ${this.activePlayer.name} - (${from.x}, ${from.y}) \u2192 (${to.x}, ${to.y})`;
   }
   value() {
     if (this.activePlayer && this.activePlayer.isBallCarrier) {
