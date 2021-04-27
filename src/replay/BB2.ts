@@ -1,5 +1,5 @@
 
-import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL } from "../constants.js";
+import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER } from "../constants.js";
 import type { PitchInvasionRoll } from "../rolls.js";
 
 export enum Bool {
@@ -132,6 +132,7 @@ export interface BoardState {
         Destination: Cell,
     },
     ActiveTeam?: SIDE,
+    Meteo?: WEATHER,
     Statistics?: any,
     CurrentPhase?: number,
     ListSecretWeapons?: string,
