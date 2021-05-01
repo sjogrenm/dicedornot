@@ -3,11 +3,15 @@ import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL} from '../constants.js';
 export type ByTeam<T> = {
     home: T,
     away: T
-}
+};
 
 export interface Cell {
     x: number,
     y: number,
+}
+
+export function cellEq(a: Cell, b: Cell) {
+    return a.x == b.x && a.y == b.y;
 }
 
 export interface ModifiedD6SumRoll {
@@ -27,7 +31,7 @@ export interface Replay {
 }
 
 export interface Team {
-    players: Record<PlayerNumber, Player>,
+    players: Map<PlayerNumber, Player>,
     inducements: Inducements,
     race: RACE_ID,
     coach: string,
@@ -35,7 +39,7 @@ export interface Team {
 }
 
 export interface Inducements {
-    mercenaries: Record<PlayerNumber, Player>,
+    mercenaries: Map<PlayerNumber, Player>,
 }
 
 export type Side = keyof ByTeam<any>;
@@ -55,7 +59,10 @@ export interface Checkpoint {
 }
 
 type KickoffRoll = any;
-type SetupAction = any;
+type SetupAction = {
+    players: Map<PlayerNumber, Cell>,
+    movedPlayers: Map<PlayerNumber, Cell>,
+};
 type CatchRoll = any;
 type PassRoll = any;
 type FoulRoll = any;

@@ -1,6 +1,7 @@
 import { SIDE } from '../constants.js';
 import * as BB2 from './BB2.js';
 import type * as Internal from './Internal.js';
+import {cellEq} from './Internal.js';
 import he from 'he';
 
 export function convertCell(c: BB2.Cell): Internal.Cell {
@@ -47,10 +48,12 @@ export function convertReplay(incoming: BB2.Replay): Internal.Replay {
             handleGameFinishedStep(outgoing, step);
         } else if ('RulesEventAddInducementSkill' in step) {
             handleAddInducementSkillStep(outgoing, step);
-        } else if ('GameInfo' in step) {
+        } else if ('GameInfos' in step) {
             handleGameInfo(outgoing, step);
+        } else if ('RulesEventSetUpAction' in step) {
+            handleSetUpAction(outgoing, step);
         } else {
-            //badStep(step);
+            badStep(step);
         }
     }
     return outgoing;
@@ -84,4 +87,43 @@ function handleGameInfo(outgoing: Internal.Replay, step: BB2.GameInfoStep) {
     outgoing.teams.away.race = step.BoardState.ListTeams.TeamState[SIDE.away].Data.IdRace;
     outgoing.teams.home.name = he.decode(step.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString());
     outgoing.teams.away.name = he.decode(step.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString());
+}
+
+function handleSetUpAction(outgoing: Internal.Replay, step: BB2.SetUpActionStep) {
+    const fromCell = convertCell(step.RulesEventSetUpAction.PlayerPosition);
+    const toCell = convertCell(step.RulesEventSetUpAction.NewPosition);
+    const alsoMove = step.RulesEventSetUpAction.Substitute;
+    const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam);
+    const currentDrive = last(outgoing.drives);
+    const latestSetup = last(currentDrive.setup[side]);
+    const players = new Map(latestSetup.players);
+    latestSetup.movedPlayers.forEach((position, id) => players.set(id, position));
+
+    const movedPlayer = [...players.entries()]
+        .filter(([id, position]) => cellEq(fromCell, position))
+        .map(([id, position]) => id)[0];
+
+    let movedPlayers = new Map([
+        [movedPlayer, toCell]
+    ]);
+    if (alsoMove) {
+        movedPlayers.set(alsoMove, fromCell);
+    }
+    let nextSetup = {
+        players,
+        movedPlayers
+    }
+    currentDrive.setup[side].push(nextSetup);
+}
+
+function last<T>(xs: T[]): T {
+    if (xs.length == 0) {
+        return null;
+    } else {
+        return xs[xs.length-1];
+    }
+}
+
+function convertSide(s: SIDE): Internal.Side {
+    return s == SIDE.home ? 'home' : 'away';
 }
