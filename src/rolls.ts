@@ -495,7 +495,7 @@ export class Roll<Dice> {
   static fromReplayStep(replay: BB2.Replay, initialBoard: BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep) {
     if (replayStep[REPLAY_KEY.get(REPLAY_SUB_STEP.SetupAction)]) {
       return new SetupAction(SetupAction.argsFromXml({
-        gameLength: Math.max(...replay.ReplayStep.flatMap(
+        gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
           step => {
             if (!step.BoardState) {
               console.log(step);
@@ -586,7 +586,7 @@ export class Roll<Dice> {
       return new rollClass(
         rollClass.argsFromXml({
           replay,
-          gameLength: Math.max(...replay.ReplayStep.flatMap(
+          gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
             step => {
               if (!step.BoardState) {
                 console.log(step);
@@ -690,13 +690,13 @@ export class Roll<Dice> {
       if (this.turn <= 16) {
         return 16 - team.turn;
       } else {
-        return 24 - team.turn;
+        return Math.min(24, this.gameLength || 16) - team.turn;
       }
     });
     return halfTurns[0] + halfTurns[1];
   }
 
-  get halfTurnsInHalf() {
+  get halfTurnsInHalf(): number {
     // Return the number of half-turns left in the game
     var halfTurns = this.teams.map((team) => {
       if (this.turn <= 8) {
@@ -704,7 +704,7 @@ export class Roll<Dice> {
       } else if (this.turn <= 16) {
         return 16 - team.turn;
       } else {
-        return Math.min(24, this.gameLength) - team.turn;
+        return Math.min(24, this.gameLength || 16) - team.turn;
       }
     });
     return halfTurns[0] + halfTurns[1] + 1;
