@@ -1,25 +1,17 @@
-function isIterable(obj) {
-  // checks for null and undefined
-  if (obj == null) {
-    return false;
-  }
-  return typeof obj[Symbol.iterator] === 'function';
-}
-
 interface Weighted<T> {
-  name: string,
+  name?: string,
   weight: number,
   value: T,
 }
 
 export class Distribution {
-  name: string;
+  name?: string;
 
   constructor(name?: string) {
     this.name = name;
   }
 
-  named(name) {
+  named(name?: string) {
     this.name = name;
     return this;
   }
@@ -30,7 +22,7 @@ export class Distribution {
   get flat(): Weighted<number>[] {
     Object.defineProperty(this, 'flat', {
       value: Object.values(
-        this._flat().reduce((acc, value) => {
+        this._flat().reduce((acc: Record<string, Weighted<number>>, value) => {
           const existing = acc[`${value.name}-${value.value}`];
           if (existing) {
             existing.weight += value.weight;
@@ -68,7 +60,7 @@ export class Distribution {
     return this.flat.length == 1;
   }
 
-  get expectedValue() {
+  get expectedValue(): number {
     Object.defineProperty(
       this,
       'expectedValue',
@@ -95,11 +87,11 @@ export class Distribution {
     }
   }
 
-  divide(value) {
+  divide(value: number): Distribution {
     return new DivideDistribution(this, value);
   }
 
-  subtract(value) {
+  subtract(value: number): Distribution {
     return new DifferenceDistribution(this, value);
   }
 
@@ -111,8 +103,8 @@ export class Distribution {
     return this.expectedValue;
   }
 
-  max(...rest) {
-    var best = this;
+  max(...rest: Distribution[]) {
+    let best: Distribution = this;
     for (var next of rest) {
       if (next.expectedValue > best.expectedValue) {
         best = next;
@@ -121,8 +113,8 @@ export class Distribution {
     return best;
   }
 
-  min(...rest) {
-    var best = this;
+  min(...rest: Distribution[]) {
+    let best: Distribution = this;
     for (var next of rest) {
       if (next.expectedValue < best.expectedValue) {
         best = next;
@@ -142,7 +134,7 @@ export class SimpleDistribution extends Distribution {
       value.weight /= totalWeight;
     });
     this.values = Object.values(
-      values.reduce((acc, value) => {
+      values.reduce((acc: Record<string, Weighted<number | Distribution>>, value) => {
         const existing = acc[`${value.name}`];
         if (existing) {
           if (existing.value != value.value) {
@@ -194,16 +186,23 @@ export class SingleValue extends Distribution {
   }
 }
 
+enum DistFunction {
+  add = 'add',
+  subtract = 'subtract',
+  product = 'product',
+  divide = 'divide',
+}
+
 export class BinFuncDistribution extends Distribution {
   valFunc: (a: number, b: number) => number;
-  nameFunc: (a: string, b: string) => string;
-  distFuncName: string;
+  nameFunc: (a?: string, b?: string) => string;
+  distFuncName: DistFunction;
   values: Array<Distribution | number>;
 
   constructor(
     valFunc: (a: number, b: number) => number,
-    nameFunc: (a: string, b: string) => string,
-    distFuncName: string,
+    nameFunc: (a?: string, b?: string) => string,
+    distFuncName: DistFunction,
     values: Array<Distribution | number>,
     name?: string
   ) {
@@ -211,16 +210,23 @@ export class BinFuncDistribution extends Distribution {
     this.valFunc = valFunc;
     this.nameFunc = nameFunc;
     this.distFuncName = distFuncName;
-    if (!isIterable(values)) {
-      throw new Error("values not iterable");
-    }
     this.values = values;
     console.assert(this.values.length > 0, {this: this});
   }
 
   _combine(a: Distribution | number, b: Distribution | number) {
     if (a instanceof Distribution) {
-      return a[this.distFuncName](b);
+      switch (this.distFuncName) {
+        case DistFunction.add:
+        case DistFunction.product:
+          return a[this.distFuncName](b);
+        case DistFunction.divide:
+        case DistFunction.subtract:
+          if (!(typeof b === 'number')) {
+            throw new Error(`Can only ${this.distFuncName} scalars`);
+          }
+          return a[this.distFuncName](b);
+      }
     } else if (b instanceof Distribution) {
       return b[this.distFuncName](a);
     } else {
@@ -229,49 +235,35 @@ export class BinFuncDistribution extends Distribution {
   }
 
   _flat() {
-    const valQueue = [...this.values];
-    var flattened = null;
-    while (valQueue.length > 0) {
-      var next = valQueue.shift();
-      if (!flattened) {
-        flattened = next;
+    if (!this.values) {
+      return [];
+    }
+    let flattened: Distribution;
+    let [first, ...valQueue] = this.values;
+    if (typeof first === 'number') {
+      flattened = new SingleValue(first.toString(), first)
+    } else {
+      flattened = first;
+    }
+    for (const next of valQueue) {
+      if (next instanceof Distribution) {
+        flattened = new SimpleDistribution(flattened.flat.flatMap(fVal => (
+          (next as Distribution).flat.map(nextVal => (
+            {
+              name: this.name || this.nameFunc(fVal.name, nextVal.name),
+              weight: fVal.weight * nextVal.weight,
+              value: this.valFunc(fVal.value, nextVal.value),
+            })
+          )
+        )), this.name);
       } else {
-        if (flattened instanceof Distribution) {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(flattened.flat.flatMap(fVal => (
-              (next as Distribution).flat.map(nextVal => (
-                {
-                  name: this.name || this.nameFunc(fVal.name, nextVal.name),
-                  weight: fVal.weight * nextVal.weight,
-                  value: this.valFunc(fVal.value, nextVal.value),
-                })
-              )
-            )), this.name);
-          } else {
-            flattened = new SimpleDistribution(flattened.flat.map(value => (
-              {
-                name: this.name || this.nameFunc(value.name, next.toString()),
-                value: this.valFunc(value.value, next.valueOf()),
-                weight: value.weight
-              }
-            )), this.name);
+        flattened = new SimpleDistribution(flattened.flat.map(value => (
+          {
+            name: this.name || this.nameFunc(value.name, next.toString()),
+            value: this.valFunc(value.value, next.valueOf()),
+            weight: value.weight
           }
-        } else {
-          if (next instanceof Distribution) {
-            flattened = new SimpleDistribution(next.flat.map(value => (
-              {
-                name: this.name || this.nameFunc(flattened, value.name),
-                value: this.valFunc(flattened, value.value),
-                weight: value.weight
-              }
-            )), this.name);
-          } else {
-            flattened = new SingleValue(
-              this.name || this.nameFunc(flattened, next.toString()),
-              this.valFunc(flattened, next),
-            )
-          }
-        }
+        )), this.name);
       }
     }
     return flattened.flat;
@@ -280,64 +272,58 @@ export class BinFuncDistribution extends Distribution {
 
 export class SumDistribution extends BinFuncDistribution {
   constructor(values: Array<Distribution | number>, name?: string) {
-    super((a, b) => a + b, (a, b) => `${a} + ${b}`, 'add', values, name);
+    super((a, b) => a + b, (a, b) => `${a} + ${b}`, DistFunction.add, values, name);
   }
 }
 
 export class ProductDistribution extends BinFuncDistribution {
   constructor(values: Array<Distribution | number>, name?: string) {
-    super((a, b) => a * b, (a, b) => `${a} * ${b}`, 'product', values, name);
+    super((a, b) => a * b, (a, b) => `${a} * ${b}`, DistFunction.product, values, name);
   }
 }
 
 export class DivideDistribution extends BinFuncDistribution {
   constructor(base: Distribution, divisor: number, name?: string) {
-    super((a, b) => a / b, (a, b) => `${a} / ${b}`, 'divide', [base, divisor], name)
+    super((a, b) => a / b, (a, b) => `${a} / ${b}`, DistFunction.divide, [base, divisor], name)
   }
 }
 export class DifferenceDistribution extends BinFuncDistribution {
-  constructor(base, subtract, name?: string) {
-    super((a, b) => a - b, (a, b) => `${a} - ${b}`, 'subtract', [base, subtract], name)
+  constructor(base: Distribution, subtract: number, name?: string) {
+    super((a, b) => a - b, (a, b) => `${a} - ${b}`, DistFunction.subtract, [base, subtract], name)
   }
 }
 
 export class ComparativeDistribution extends Distribution {
-  values: Array<SimpleDistribution>;
+  values: SimpleDistribution[];
   better: (a: number, b: number) => boolean;
-  constructor(better: (a: number, b: number) => boolean, values: Array<SimpleDistribution>, name) {
+  constructor(better: (a: number, b: number) => boolean, values: SimpleDistribution[], name?: string) {
     super(name)
-    if (!isIterable(values)) {
-      throw new Error("values not iterable");
-    }
     this.better = better;
     this.values = values;
     console.assert(this.values.length > 0, {this: this});
   }
 
   _simple() {
-    const valQueue = [...this.values];
-    var simplified: SimpleDistribution = null;
+    if (!this.values) {
+      return new SimpleDistribution([]);
+    }
+    let [simplified, ...valQueue] = this.values;    
 
-    while (valQueue.length > 0) {
-      var next = valQueue.shift();
-      if (!simplified) {
-        simplified = next;
-      } else {
-        simplified = new SimpleDistribution(simplified.values.flatMap(fVal => (
-          next.values.map(nextVal => (
-            {
-              name: this.better(fVal.value.valueOf(), nextVal.value.valueOf()) ? fVal.name : nextVal.name,
-              weight: fVal.weight * nextVal.weight,
-              value: this.better(fVal.value.valueOf(), nextVal.value.valueOf()) ? fVal.value : nextVal.value,
-            })
-          )
-        )));
-      }
+    for (const next of valQueue) {
+      simplified = new SimpleDistribution(simplified.values.flatMap(fVal => (
+        next.values.map(nextVal => (
+          {
+            name: this.better(fVal.value.valueOf(), nextVal.value.valueOf()) ? fVal.name : nextVal.name,
+            weight: fVal.weight * nextVal.weight,
+            value: this.better(fVal.value.valueOf(), nextVal.value.valueOf()) ? fVal.value : nextVal.value,
+          })
+        )
+      )));
     }
     return simplified;
   }
 
-  get simple() {
+  get simple(): SimpleDistribution {
     Object.defineProperty(this, 'simple', {
       value: this._simple().named(this.name)
     })

@@ -75,14 +75,14 @@ function ballPositionValue(team: Team, cell: Internal.Cell): SingleValue {
   return new SingleValue(`${distToGoal} to goal`, distValue);
 }
 
-const POINT = {
-  Actual: 'actual',
-  Simulated: 'simulated',
+enum POINT {
+  Actual = 'actual',
+  Simulated = 'simulated',
 }
 
 class Player {
   team: Team;
-  playerState;
+  playerState: BB2.PitchPlayer;
   name: string;
   id: number;
   playerType: PLAYER_TYPE;
@@ -92,7 +92,7 @@ class Player {
   skills: SKILL[];
   isBallCarrier: boolean;
 
-  constructor(team, playerState, boardState) {
+  constructor(team: Team, playerState: BB2.PitchPlayer, boardState: BB2.BoardState) {
     this.team = team;
     this.id = playerState.Data.Id;
     this.playerType = getPlayerType(playerState.Data.IdPlayerTypes);
@@ -147,7 +147,7 @@ class Team {
   teamState: BB2.TeamState;
   blitzerId: number;
 
-  constructor(teamState, boardState) {
+  constructor(teamState: BB2.TeamState, boardState: BB2.BoardState) {
     this.players = teamState.ListPitchPlayers.PlayerState.map(
       (playerState) => new Player(this, playerState, boardState)
     );
@@ -259,9 +259,8 @@ interface RollXML<A, R> {
   gameLength: number,
 }
 
-
 export class Roll<Dice> {
-  _futurePlayerValue: Record<number, Distribution>;
+  _futurePlayerValue: Record<number, number | Distribution>;
   activePlayer: Player;
   armorRollCache: Record<string, ArmorRoll>;
   dependentIndex?: number;
@@ -273,22 +272,39 @@ export class Roll<Dice> {
   initialBoardState: BoardState;
   isReroll: boolean;
   onTeamValues: Record<number, Distribution>;
-  rollIndex: number;
-  rolls: Roll<any>[];
+  rollIndex?: number;
+  rolls?: Roll<any>[];
   rollStatus: ROLL_STATUS;
   rollType: ROLL;
   skillsInEffect: BB2.SkillInfo[];
   startIndex: ReplayPosition;
   endIndex?: ReplayPosition;
   unhandledSkills: BB2.SkillInfo[];
+  ignore: boolean;
+  
   get rollName() { return `Unnamed Roll ${this.constructor.name}`; }
-  static handledSkills = [];
+  get handledSkills(): SKILL[] {return [];}
   get diceSeparator() { return ', '; }
   static hideDependents = false;
-  get dependentConditions() {return [];}
+  get dependentConditions(): DependentCondition[] {return [];}
 
   constructor(attrs: RollArgs<Dice>) {
-    Object.assign(this, attrs);
+    this.initialBoardState = attrs.initialBoardState;
+    this.finalBoardState = attrs.finalBoardState;
+    this.skillsInEffect = attrs.skillsInEffect;
+    this.rollStatus = attrs.rollStatus;
+    this.activePlayer = attrs.activePlayer;
+    this.rollType = attrs.rollType;
+    this.dice = attrs.dice;
+    this.unhandledSkills = attrs.unhandledSkills;
+    this.ignore = attrs.ignore;
+    this.actionType = attrs.actionType;
+    this.resultType = attrs.resultType;
+    this.subResultType = attrs.subResultType;
+    this.startIndex = attrs.startIndex;
+    this.isReroll = attrs.isReroll;
+    this.gameLength = attrs.gameLength;
+    this.rolls = attrs.rolls;
 
     this.onTeamValues = {};
     this.armorRollCache = {};
@@ -390,7 +406,7 @@ export class Roll<Dice> {
     return `${this.rollName}: ${this.activePlayer.name} - ${this.dice.join(this.diceSeparator)}`;
   }
 
-  isDependentRoll(roll) {
+  isDependentRoll(roll: Roll<any>) {
     return this.dependentConditions.some(cond => cond(this, roll));
   }
 
@@ -404,7 +420,7 @@ export class Roll<Dice> {
     throw `_possibleOutcomes must be defined by subclass ${this.constructor.name}`;
   }
 
-  get possibleOutcomes() {
+  get possibleOutcomes(): Distribution {
     Object.defineProperty(this, 'possibleOutcomes', { value: this._possibleOutcomes });
     return this.possibleOutcomes;
   }
@@ -462,14 +478,14 @@ export class Roll<Dice> {
       improbability: this.dependentRolls.reduce((acc, roll) => acc + roll.improbability, this.improbability),
     });
   }
-  simulated(iteration) {
+  simulated(iteration: number) {
     return this.dataPoint(
       iteration,
       POINT.Simulated,
     );
   }
 
-  dataPoint(iteration, type) {
+  dataPoint(iteration: number, type: POINT) {
     var outcomeValue;
     if (type == POINT.Actual) {
       outcomeValue = this.valueWithDependents.singularValue;
@@ -495,9 +511,9 @@ export class Roll<Dice> {
     };
   }
 
-  static fromReplayStep(replay: BB2.Replay, initialBoard: BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep) {
+  static fromReplayStep(replay: BB2.Replay, initialBoard: null | BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep): Roll<any>[] {
     if (replayStep[REPLAY_KEY.get(REPLAY_SUB_STEP.SetupAction)]) {
-      return new SetupAction(SetupAction.argsFromXml({
+      return [new SetupAction(SetupAction.argsFromXml({
         gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
           step => {
             if (!('BoardState' in step)) {
@@ -511,7 +527,7 @@ export class Roll<Dice> {
         stepIndex,
         replayStep,
         setupAction: replayStep[REPLAY_KEY.get(REPLAY_SUB_STEP.SetupAction)],
-      }))
+      }))]
     }
     var rolls = [];
 
@@ -860,14 +876,14 @@ export class Roll<Dice> {
     }
   }
 
-  get unactivatedPlayers() {
+  get unactivatedPlayers(): Player[] {
     Object.defineProperty(this, 'unactivatedPlayers', {
       value: this.activeTeam.players.filter((player) => player.canAct)
     });
     return this.unactivatedPlayers;
   }
 
-  futurePlayerValue(player) {
+  futurePlayerValue(player: Player): number | Distribution {
     let cachedValue = this._futurePlayerValue[player.id];
     if (cachedValue) {
       return cachedValue;
@@ -886,13 +902,13 @@ export class Roll<Dice> {
     if (futureActions.length) {
       result = futureActions.reduce((sum, roll) => sum + roll.expectedValue, 0);
     } else {
-      result = this.onTeamValue(player);
+      result = this.onTeamValue(player).expectedValue;
     }
     this._futurePlayerValue[player.id] = result;
     return new SingleValue(`Remaining Turn ${this.turn} value for ${player.name}`, result);
   }
 
-  get turnoverValue() {
+  get turnoverValue(): Distribution {
     // futurePlayerValue == EV of all further player actions in the turn, or an estimate if the player didn't get to act
     const playerValues = this.unactivatedPlayers.map(player => this.futurePlayerValue(player));
     var value;
@@ -911,10 +927,10 @@ export class Roll<Dice> {
 }
 
 
-function pushOrFollow(roll, dependent) {
-  return [PushChoice, FollowUpChoice].includes(
-    dependent.constructor
-  );
+type DependentCondition = (roll: Roll<any>, dependente: Roll<any>) => boolean;
+
+function pushOrFollow(roll: Roll<any>, dependent: Roll<any>): boolean {
+  return [PushChoice, FollowUpChoice].some(type => dependent instanceof type);
 }
 
 function nonFoulDamage(roll, dependent) {
@@ -978,7 +994,7 @@ export class BlockRoll extends Roll<BLOCK> {
   defender: Player;
   isBlitz: boolean;
   get rollName() { return "Block"; }
-  static handledSkills = [
+  get handledSkills(): SKILL[] {return [
     SKILL.Tackle,
     SKILL.Dodge,
     SKILL.Block,
@@ -987,9 +1003,9 @@ export class BlockRoll extends Roll<BLOCK> {
     SKILL.StandFirm,
     SKILL.Wrestle,
     SKILL.TakeRoot
-  ];
+  ]};
   get diceSeparator() { return '/'; }
-  get dependentConditions() { return [pushOrFollow, nonFoulDamage, reroll, samePlayerMove]; }
+  get dependentConditions(): DependentCondition[] { return [pushOrFollow, nonFoulDamage, reroll, samePlayerMove]; }
 
   static argsFromXml(xml: RollXML<BB2.BlockAction, BB2.BlockResult>): BlockRollArgs {
     let args = super.argsFromXml(xml);
@@ -1220,12 +1236,15 @@ export class ModifiedD6SumRoll extends Roll<number> {
   get computedModifier() { return 0; }
   get numDice() { return 1 };
   get diceSeparator() { return '+' }
-  get rerollSkill() { return undefined; }
+  get rerollSkill(): null | SKILL { return null; }
   get rerollCancelSkill() { return undefined; }
-  get dependentConditions() { return [reroll, samePlayerMove]; }
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove]; }
 
   constructor(args: ModifiedD6SumRollArgs) {
     super(args);
+    this.target = args.target;
+    this.modifier = args.modifier;
+
     console.assert(
       !this.computedTarget ||
       !this.target ||
@@ -1420,8 +1439,8 @@ export class ModifiedD6SumRoll extends Roll<number> {
 
 class PickupRoll extends ModifiedD6SumRoll {
   get rollName() { return "Pickup"; }
-  get rerollSkill() { return SKILL.SureHands; }
-  static handledSkills = [SKILL.SureHands, SKILL.BigHand, SKILL.ExtraArms];
+  get rerollSkill(): null | SKILL { return SKILL.SureHands; }
+  get handledSkills(): SKILL[] {return [SKILL.SureHands, SKILL.BigHand, SKILL.ExtraArms]};
   failValue(expected, rollTotal, modifiedTarget) {
     return this.turnoverValue;
   }
@@ -1429,8 +1448,8 @@ class PickupRoll extends ModifiedD6SumRoll {
 
 class BoneHeadRoll extends ModifiedD6SumRoll {
   get rollName() { return "Bone Head"; }
-  static handledSkills = [SKILL.BoneHead];
-  get dependentConditions() { return [reroll, samePlayerMove]; }
+  get handledSkills(): SKILL[] {return [SKILL.BoneHead]};
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
@@ -1438,8 +1457,8 @@ class BoneHeadRoll extends ModifiedD6SumRoll {
 
 class ReallyStupidRoll extends ModifiedD6SumRoll {
   get rollName() { return "Really Stupid"; }
-  static handledSkills = [SKILL.ReallyStupid];
-  get dependentConditions() { return [reroll, samePlayerMove]; }
+  get handledSkills(): SKILL[] {return [SKILL.ReallyStupid]};
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
@@ -1447,9 +1466,9 @@ class ReallyStupidRoll extends ModifiedD6SumRoll {
 
 class FoulAppearanceRoll extends ModifiedD6SumRoll {
   get rollName() { return "Foul Appearance"; }
-  static handledSkills = [SKILL.FoulAppearance];
-  get dependentConditions() { return [reroll, samePlayerMove]; }
-  failValue(expected, rollTotal, modifiedTarget) {
+  get handledSkills(): SKILL[] {return [SKILL.FoulAppearance]};
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove]; }
+  failValue() {
     return this.onTeamValue(this.activePlayer).product(-1);
   }
 }
@@ -1473,8 +1492,8 @@ class ArmorRoll extends ModifiedD6SumRoll {
   damageBonusActive: boolean;
 
   get numDice() { return 2; }
-  static handledSkills = [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn];
-  get dependentConditions() { return [foulDamage]; }
+  get handledSkills(): SKILL[] {return [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn]};
+  get dependentConditions(): DependentCondition[] { return [foulDamage]; }
 
   constructor(attrs: ArmorRollArgs) {
     super(attrs);
@@ -1646,8 +1665,8 @@ class ArmorRoll extends ModifiedD6SumRoll {
 
 class WildAnimalRoll extends ModifiedD6SumRoll {
   get rollName() { return "Wild Animal"; }
-  static handledSkills = [SKILL.WildAnimal];
-  get dependentConditions() { return [reroll, samePlayerMove]; }
+  get handledSkills(): SKILL[] {return [SKILL.WildAnimal]};
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // Failing Wild Animal means that this player is effectiFvely unavailable
     // for the rest of your turn, but is active on your opponents turn
@@ -1657,7 +1676,7 @@ class WildAnimalRoll extends ModifiedD6SumRoll {
 
 class DauntlessRoll extends ModifiedD6SumRoll {
   get rollName() { return "Dauntless"; }
-  static handledSkills = [SKILL.Dauntless];
+  get handledSkills(): SKILL[] {return [SKILL.Dauntless]};
 }
 
 interface MoveRollArgs extends ModifiedD6SumRollArgs {
@@ -1670,10 +1689,10 @@ class DodgeRoll extends ModifiedD6SumRoll {
   cellTo: Internal.Cell;
 
   get rollName() { return "Dodge"; }
-  static handledSkills = [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle];
-  get rerollSkill() { return SKILL.Dodge; }
+  get handledSkills(): SKILL[] {return [SKILL.BreakTackle, SKILL.Stunty, SKILL.TwoHeads, SKILL.Dodge, SKILL.Tackle, SKILL.PrehensileTail, SKILL.DivingTackle]};
+  get rerollSkill(): null | SKILL { return SKILL.Dodge; }
   get rerollCancelSkill() { return SKILL.Tackle; }
-  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
 
   static argsFromXml(xml: RollXML<BB2.MoveAction, BB2.DodgeResult>): MoveRollArgs {
     let args = super.argsFromXml(xml);
@@ -1718,7 +1737,7 @@ class DodgeRoll extends ModifiedD6SumRoll {
 
 class JumpUpRoll extends ModifiedD6SumRoll {
   get rollName() { return "Jump-Up"; }
-  static handledSkills = [SKILL.JumpUp];
+  get handledSkills(): SKILL[] {return [SKILL.JumpUp]};
   failValue(expected, rollTotal, modifiedTarget) {
     // Jump Up failure means the block fails to activate, so the player is no longer
     // available for this turn.
@@ -1730,7 +1749,7 @@ class LeapRoll extends ModifiedD6SumRoll {
   cellFrom: Internal.Cell;
   cellTo: Internal.Cell;
   get rollName() { return "Leap"; }
-  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
   static argsFromXml(xml: RollXML<BB2.LeapAction, BB2.LeapResult>): MoveRollArgs {
     return {
       ...super.argsFromXml(xml),
@@ -1754,9 +1773,9 @@ class LeapRoll extends ModifiedD6SumRoll {
 
 class PassRoll extends ModifiedD6SumRoll {
   get rollName() { return "Pass"; }
-  get rerollSkill() { return SKILL.Pass; }
-  static handledSkills = [SKILL.Pass, SKILL.StrongArm, SKILL.Accurate];
-  get dependentConditions() { return [catchOrInterception, samePlayerMove, reroll]; }
+  get rerollSkill(): null | SKILL { return SKILL.Pass; }
+  get handledSkills(): SKILL[] {return [SKILL.Pass, SKILL.StrongArm, SKILL.Accurate]};
+  get dependentConditions(): DependentCondition[] { return [catchOrInterception, samePlayerMove, reroll]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
     // player, then it's not a turnover.
@@ -1767,8 +1786,8 @@ class PassRoll extends ModifiedD6SumRoll {
 
 class ThrowTeammateRoll extends ModifiedD6SumRoll {
   get rollName() { return "Throw Teammate"; }
-  static handledSkills = [SKILL.ThrowTeamMate];
-  get dependentConditions() { return [samePlayerMove, reroll]; }
+  get handledSkills(): SKILL[] {return [SKILL.ThrowTeamMate]};
+  get dependentConditions(): DependentCondition[] { return [samePlayerMove, reroll]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Throw teammate only turns over if the thrown player has the ball, and even then, only
     // TODO: Failed pass doesn't turn over, it causes the ball to scatter. If it scatters to another
@@ -1781,7 +1800,7 @@ class ThrowTeammateRoll extends ModifiedD6SumRoll {
 
 class InterceptionRoll extends ModifiedD6SumRoll {
   get rollName() { return "Intercept"; }
-  static handledSkills = [SKILL.ExtraArms];
+  get handledSkills(): SKILL[] {return [SKILL.ExtraArms]};
   // Interception rolls on the thrower, not the interceptee. If it "passes",
   // then the ball is caught
   passValue(expected, rollTotal, modifiedTarget) {
@@ -1813,9 +1832,9 @@ class GFIRoll extends ModifiedD6SumRoll {
   cellFrom: Internal.Cell;
   cellTo: Internal.Cell;
   get rollName() { return "GFI"; }
-  static handledSkills = [SKILL.SureFeet];
-  get rerollSkill() { return SKILL.SureFeet; }
-  get dependentConditions() { return [nonFoulDamage, reroll, samePlayerMove]; }
+  get handledSkills(): SKILL[] {return [SKILL.SureFeet]};
+  get rerollSkill(): null | SKILL { return SKILL.SureFeet; }
+  get dependentConditions(): DependentCondition[] { return [nonFoulDamage, reroll, samePlayerMove]; }
 
   static argsFromXml(xml: RollXML<BB2.MoveAction, BB2.GFIResult>): MoveRollArgs {
     return {
@@ -1841,8 +1860,8 @@ class GFIRoll extends ModifiedD6SumRoll {
 
 class CatchRoll extends ModifiedD6SumRoll {
   get rollName() { return "Catch"; }
-  static handledSkills = [SKILL.DisturbingPresence, SKILL.Catch, SKILL.ExtraArms];
-  get rerollSkill() { return SKILL.Catch; }
+  get handledSkills(): SKILL[] {return [SKILL.DisturbingPresence, SKILL.Catch, SKILL.ExtraArms]};
+  get rerollSkill(): null | SKILL { return SKILL.Catch; }
 
   failValue(expected, rollTotal, modifiedTarget) {
     return this.turnoverValue;
@@ -1858,7 +1877,7 @@ class StandUpRoll extends ModifiedD6SumRoll {
 
 class TakeRootRoll extends ModifiedD6SumRoll {
   get rollName() { return "Take Root"; }
-  static handledSkills = [SKILL.TakeRoot];
+  get handledSkills(): SKILL[] {return [SKILL.TakeRoot]};
   failValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, false);
   }
@@ -1866,7 +1885,7 @@ class TakeRootRoll extends ModifiedD6SumRoll {
 
 class LandingRoll extends ModifiedD6SumRoll {
   get rollName() { return "Landing"; }
-  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
   failValue(expected, rollTotal, modifiedTarget) {
     // TODO: Handle a turnover if the thrown player has the ball
     return this.knockdownValue(this.activePlayer, expected);
@@ -1875,7 +1894,7 @@ class LandingRoll extends ModifiedD6SumRoll {
 
 class FireballRoll extends ModifiedD6SumRoll {
   get rollName() { return "Fireball"; }
-  get dependentConditions() { return [nonFoulDamage]; }
+  get dependentConditions(): DependentCondition[] { return [nonFoulDamage]; }
   passValue(expected, rollTotal, modifiedTarget) {
     return this.knockdownValue(this.activePlayer, expected);
   }
@@ -1883,7 +1902,7 @@ class FireballRoll extends ModifiedD6SumRoll {
 
 class LightningBoltRoll extends ModifiedD6SumRoll {
   get rollName() { return "Lightning Bolt"; }
-  get dependentConditions() { return [reroll, samePlayerMove, nonFoulDamage]; }
+  get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
   static argsFromXml(xml) {
     const args = super.argsFromXml(xml);
     args.activePlayer = args.initialBoardState.playerAtPosition(xml.action.Order.CellTo.Cell);
@@ -1924,9 +1943,9 @@ export class InjuryRoll extends Roll<number> {
     )
   }
 
-  static handledSkills = [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty];
+  get handledSkills(): SKILL[] {return [SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.Stunty]};
   get diceSeparator() { return '+'; }
-  get dependentConditions() { return [reroll]; }
+  get dependentConditions(): DependentCondition[] { return [reroll]; }
 
   static argsFromXml(xml: RollXML<any, any>): InjuryRollArgs {
     const args = super.argsFromXml(xml);
@@ -2113,7 +2132,7 @@ interface CasualtyRollArgs extends RollArgs<number> {
 export class CasualtyRoll extends Roll<number> {
   isFoul: boolean;
   get rollName() { return "Casualty"; }
-  static handledSkills = [SKILL.NurglesRot, SKILL.Decay];
+  get handledSkills(): SKILL[] {return [SKILL.NurglesRot, SKILL.Decay]};
   // TODO: Handle skills
   // TODO: Selecting the Apo result seems to read as a separate roll
   get diceSeparator() { return ''; }
@@ -2174,7 +2193,7 @@ export class CasualtyRoll extends Roll<number> {
 
 class RegenerationRoll extends ModifiedD6SumRoll {
   get rollName() { return "Regeneration"; }
-  static handledSkills = [SKILL.Regeneration];
+  get handledSkills(): SKILL[] {return [SKILL.Regeneration]};
 
   passValue(expected, rollTotal, modifiedTarget) {
     return this.koValue(this.activePlayer).product(-0.5).named('Regeneration');
@@ -2190,8 +2209,8 @@ export class MoveAction extends Roll<null> {
   cellFrom: Internal.Cell;
   cellTo: Internal.Cell;
   get rollName() { return "Move"; }
-  get dependentConditions() { return [sameTeamMove]; }
-  static handledSkills = [SKILL.JumpUp];
+  get dependentConditions(): DependentCondition[] { return [sameTeamMove]; }
+  get handledSkills(): SKILL[] {return [SKILL.JumpUp]};
 
   static ignore() {
     return false;
@@ -2261,7 +2280,7 @@ export class KickoffRoll extends Roll<number> {
   diceSum: number;
 
   get rollName() { return "Kickoff"; }
-  get dependentConditions() { return [isKickoffRoll]; }
+  get dependentConditions(): DependentCondition[] { return [isKickoffRoll]; }
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
@@ -2519,7 +2538,7 @@ export class PitchInvasionRoll extends KickoffEventRoll {
 
 export class SetupAction extends NoValueRoll {
   get rollName() { return "Setup"; }
-  get dependentConditions() { return [setup]; }
+  get dependentConditions(): DependentCondition[] { return [setup]; }
   static hideDependents = true;
   static ignore(xml) {
     return false;
@@ -2559,12 +2578,12 @@ export class SetupAction extends NoValueRoll {
 
 class PushChoice extends NoValueRoll {
   get rollName() { return "Push"; }
-  static handledSkills = [SKILL.SideStep];
+  get handledSkills(): SKILL[] {return [SKILL.SideStep]};
 }
 
 class FollowUpChoice extends NoValueRoll {
   get rollName() { return "Follow Up"; }
-  static handledSkills = [SKILL.Frenzy];
+  get handledSkills(): SKILL[] {return [SKILL.Frenzy]};
 }
 
 class FoulPenaltyRoll extends NoValueRoll { }

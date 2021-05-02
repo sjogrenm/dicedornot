@@ -3,7 +3,7 @@ import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RES
 import type { PitchInvasionRoll } from "../rolls.js";
 
 export enum Bool {
-    false = undefined,
+    false = 0,
     true = 1,
 }
 

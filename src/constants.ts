@@ -246,7 +246,7 @@ export const SKILL_CSS: Record<string, string> = Object.fromEntries(
 );
 
 export enum SITUATION {
-  Active = undefined,
+  Active = 0,
   Reserves = 1,
   KO = 2,
   Casualty = 4,
@@ -407,7 +407,7 @@ export const KICKOFF_RESULT_NAMES = {
 
 
 export enum RESULT_TYPE {
-  Passed = undefined, //Skilltest Passed
+  Passed = 0, //Skilltest Passed
   FailNoTurnover = 1, //Failed with Skill Reroll -> Failed no Turnover (Wild Animal Fail ect)
   FailTeamRR = 2, //Failed with Possible Reroll
   FailFinal = 3 //Failed No Reroll -> Final!
@@ -692,9 +692,13 @@ export enum PLAYER_TYPE {
   StarWillowRosebark = 'StarWillowRosebark',
   StarZaraTheSlayer = 'StarZaraTheSlayer',
   StarZzhargMadeye = 'StarZzhargMadeye',
+  Unknown = 'UNKNOWN',
 }
 
-export function getPlayerType(playerTypeId) {
+type PlayerId = number;
+type PlayerTypeId = number;
+
+export function getPlayerType(playerTypeId: PlayerId): PLAYER_TYPE {
 
   switch (playerTypeId) {
     case 71: case 414: case 459: return PLAYER_TYPE.AmazonBlitzer;
@@ -856,9 +860,10 @@ export function getPlayerType(playerTypeId) {
     case 225: case 727: case 728: case 99: return PLAYER_TYPE.StarZaraTheSlayer;
     case 134: case 234: case 729: case 730: return PLAYER_TYPE.StarZzhargMadeye;
   }
+  return PLAYER_TYPE.Unknown;
 }
 
-export function getPlayerSprite(playerId, playerTypeId) {
+export function getPlayerSprite(playerId: PlayerId, playerTypeId: PlayerTypeId) {
   switch (getPlayerType(playerTypeId)) {
     case PLAYER_TYPE.AmazonBlitzer: return { race: 'amazon', model: `blitzer${playerId % 2 + 1}` };
     case PLAYER_TYPE.AmazonCatcher: return { race: 'amazon', model: `catcher${playerId % 2 + 1}` };
