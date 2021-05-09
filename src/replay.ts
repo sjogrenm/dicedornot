@@ -4,6 +4,8 @@ import { SIDE } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
 import he from 'he';
 import {xmlToJson} from "./io.js";
+import { init } from "svelte/internal";
+import { initial } from "underscore";
 
 interface TeamDetails {
   coachName: string,
@@ -39,7 +41,8 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
   const gameDetails = extractGameDetails(data);
   console.log("Extracted game details...", gameDetails);
 
-  let rolls: Roll<any>[] = [];
+  let rolls: (Roll<any> | UnknownRoll)[] = [];
+  let initialBoardState: BB2.BoardState | undefined;
   for (
     var stepIndex = 0;
     stepIndex < data.Replay.ReplayStep.length;
@@ -47,20 +50,24 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
   ) {
     var replayStep = data.Replay.ReplayStep[stepIndex];
 
-    let initialBoardState = null;
-    let previousReplayStep: BB2.ReplayStep = data.Replay.ReplayStep[stepIndex - 1];
-    if (previousReplayStep && 'BoardState' in previousReplayStep) {
-      initialBoardState = previousReplayStep.BoardState;
+    if (!('BoardState' in replayStep)) {
+      continue;
     }
-    rolls = rolls.concat(Roll.fromReplayStep(
-      data.Replay,
-      initialBoardState,
-      stepIndex,
-      replayStep
-    ));
+    if (initialBoardState === null) {
+      initialBoardState = replayStep.BoardState;
+    }
+    if (initialBoardState) {
+      rolls = rolls.concat(Roll.fromReplayStep(
+        data.Replay,
+        initialBoardState,
+        stepIndex,
+        replayStep
+      ));
+    }
+    initialBoardState = replayStep.BoardState;
   }
   console.log("Extracted rolls...", { rolls });
-  let validRolls = rolls.filter((roll) => !roll.ignore);
+  let validRolls: Roll<any>[] = rolls.filter((roll) => !roll.ignore) as Roll<any>[];
   validRolls = validRolls.reduce((rolls: Roll<any>[], nextRoll) => {
     if (rolls.length == 0) {
       return [nextRoll];
@@ -80,8 +87,7 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
       lastRoll.isDependentRoll(nextRoll)
     ) {
       lastRoll.dependentRolls.push(nextRoll);
-      nextRoll.dependentOn = lastRoll;
-      nextRoll.dependentIndex = lastRoll.dependentRolls.length - 1;
+      nextRoll.dependent = {roll: lastRoll, index: lastRoll.dependentRolls.length - 1};
       return rolls;
     }
     rolls.push(nextRoll);

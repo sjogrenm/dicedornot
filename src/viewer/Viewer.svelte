@@ -25,6 +25,7 @@
     ACTION_TYPE,
     getPlayerSprite,
     SIDE,
+RACE_ID,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
@@ -34,8 +35,10 @@
     REPLAY_KEY,
     REPLAY_SUB_STEP,
     ReplayPosition,
+    ReplayPreview,
     END,
     period,
+    initialReplayPosition,
   } from "../replay-utils.js";
   import {
     replay,
@@ -49,7 +52,9 @@
   } from "../stores.js";
   import he from "he";
   import type * as BB2 from "../replay/BB2.js";
+  import type * as Internal from "../replay/Internal.js";
   import {convertCell} from "../replay/BB2toInternal.js";
+import type {ProcessedReplay} from '../replay.js';
 
   export let playing = false;
 
@@ -88,8 +93,24 @@
     stupidity?: string;
   }
 
+  interface WakeConditions {
+    replayPreview: ReplayPreview | undefined,
+    playing: boolean,
+    replayTarget: ReplayPosition | undefined,
+    replay: ProcessedReplay | undefined,
+  }
+
+  interface Preview {
+    homeTeam: Team,
+    awayTeam: Team,
+    pitch: Record<string, PitchCellProps>,
+    players: Record<string, PlayerProps>,
+    playing: boolean,
+    current: ReplayPosition,
+  }
+
   let lastChainPush: BB2.PlayerId,
-    races = [],
+    races: RACE_ID[] = [],
     homeTeam: Team = {
       dugout: {
         cas: [],
@@ -106,15 +127,15 @@
     },
     pitch: Record<string, PitchCellProps> = {},
     players: Record<string, PlayerProps> = {},
-    blitzerId,
-    banner,
+    blitzerId: Internal.PlayerNumber,
+    banner: string | null = null,
     weather = WEATHER.Nice,
     skipping = false,
-    underPreview,
-    previewing,
-    shouldWake,
+    underPreview: null | Preview = null,
+    previewing: boolean = false,
+    shouldWake: WakeConditions | undefined,
     abort = new AbortController(),
-    current = new ReplayPosition();
+    current: ReplayPosition = initialReplayPosition();
 
   const DUGOUT_POSITIONS = {
     [SITUATION.Reserves]: "reserve",
@@ -177,7 +198,7 @@
     return () => console.log("destroyed");
   });
 
-  async function resetFromBoardState(boardState) {
+  async function resetFromBoardState(boardState: BB2.BoardState) {
     homeTeam = processTeam(
       SIDE.home,
       boardState.ListTeams.TeamState[0],

@@ -1,6 +1,6 @@
 
 import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER } from "../constants.js";
-import type { PitchInvasionRoll } from "../rolls.js";
+import { PitchInvasionRoll } from "../rolls.js";
 
 export enum Bool {
     false = 0,
@@ -13,6 +13,7 @@ export type Cell = {
 } | "";
 
 export type MList<T> = T | T[];
+export type KeyedMList<K extends string, T> = "" | {[key in K]: MList<T>};
 
 export interface Inducement {
     InducementSave: MList<{
@@ -90,7 +91,7 @@ export interface TeamState {
     ListInducements: "" | MList<Inducement>,
     TeamRerollAvailable?: number,
     Bribes?: number,
-    ListPitchPlayers: "" | { PlayerState: MList<PitchPlayer> },
+    ListPitchPlayers: "" | KeyedMList<'PlayerState', PitchPlayer>,
     ListMercenaries: "" | {MercenarySave: MList<Mercenary>},
     SetUpTurn?: 1,
     NbSupporters: number, //>10000</NbSupporters>
@@ -386,7 +387,16 @@ export interface RulesEventKickOffTable {
     ListDice: string,
 }
 
-export interface KickoffEventMessageData { }
+export type KickoffEventMessageData = | PitchInvasionMessage
+export interface PitchInvasionMessage {
+  RulesEventPlayerInvaded: RulesEventPlayerInvaded,
+}
+
+export interface RulesEventPlayerInvaded {
+    PlayerId: PlayerId,
+    Die: number,
+    Stunned?: number,
+}
 
 interface OrderT<F, T> extends BaseAction {
     Order: { CellFrom: F, CellTo: T }
@@ -432,8 +442,8 @@ export interface DiceChoices<S extends Skills = Skills, C extends Cells = Cells>
 }
 
 type Dices = string | number;
-export type Skills = "" | { SkillInfo: MList<SkillInfo> };
-export type Cells = "" | { Cell: MList<Cell> };
+export type Skills = KeyedMList<"SkillInfo", SkillInfo>;
+export type Cells = KeyedMList<"Cell", Cell>;
 type NoChoicesResult = {
     IsOrderCompleted: 1,
     ListModifiers: "",
@@ -613,6 +623,8 @@ export type BombKDResult = DiceRollResult<ROLL.BombKD, "", "">;
 // ChainsawArmor = 73,
 export type ChainsawArmorResult = DiceRollResult<ROLL.ChainsawArmor, "", "">;
 
+export type PitchInvasionResult = {};
+
 interface BaseAction {
     RequestType?: ACTION_REQUEST_TYPE,
 }
@@ -647,7 +659,7 @@ export interface StunWakeAction extends PlayerAction, OrderAction, ResultsAction
 // WakeUp = 12, //Wake up after KO
 export interface WakeUpAction extends PlayerAction, OrderAction, ResultsAction<WakeUpResult> { ActionType: ACTION_TYPE.WakeUp }
 // EventPitchInv = 13,
-export interface PitchInvasionAction extends PlayerAction, NoOrderAction, ResultsAction<PitchInvasionRoll> { ActionType: ACTION_TYPE.EventPitchInv }
+export interface PitchInvasionAction extends PlayerAction, NoOrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.EventPitchInv }
 // Pickup = 14, //Pickup Ball
 export interface PickupAction extends PlayerAction, OrderAction, ResultsAction<PickupResult | LonerResult> { ActionType: ACTION_TYPE.Pickup }
 // ActivationTest = 15, //Activation Test
@@ -736,7 +748,7 @@ export type RulesEventBoardAction =
     | TouchDownAction
     | StunWakeAction
     | WakeUpAction
-    | PitchInvasionAction
+    // | PitchInvasionAction
     | PickupAction
     | ActivationTestAction
     | LandingAction

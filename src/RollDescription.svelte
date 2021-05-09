@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ROLL, KICKOFF_RESULT_NAMES } from "./constants.js";
+  import { ROLL, KICKOFF_RESULT_NAMES, KICKOFF_RESULT } from "./constants.js";
   import PlayerPill from "./PlayerPill.svelte";
   import {
     MoveAction,
@@ -9,11 +9,12 @@
     ModifiedD6SumRoll,
     CasualtyRoll,
     InjuryRoll,
-    BlockRoll
+    BlockRoll,
+    Roll
   } from "./rolls.js";
   import Dice from "./Dice.svelte";
 
-  export let roll;
+  export let roll: Roll<any>;
 </script>
 
 <div>

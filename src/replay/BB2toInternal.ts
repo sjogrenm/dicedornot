@@ -116,7 +116,7 @@ function handleSetUpAction(outgoing: Internal.Replay, step: BB2.SetUpActionStep)
     currentDrive.setup[side].push(nextSetup);
 }
 
-function last<T>(xs: T[]): T {
+function last<T>(xs: T[]): T | null {
     if (xs.length == 0) {
         return null;
     } else {

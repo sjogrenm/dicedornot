@@ -5,13 +5,13 @@ interface Weighted<T> {
 }
 
 export class Distribution {
-  name?: string;
+  name: string;
 
   constructor(name?: string) {
-    this.name = name;
+    this.name = name || "";
   }
 
-  named(name?: string) {
+  named(name: string) {
     this.name = name;
     return this;
   }
@@ -69,10 +69,10 @@ export class Distribution {
     return this.expectedValue;
   }
 
-  add(...values: Array<Distribution | number>) {
-    values = values.filter(value => value !== null);
-    if (values.length > 0) {
-      return new SumDistribution([this, ...values]);
+  add(...values: Array<Distribution | number | undefined>) {
+    let realValues = values.filter(value => value !== null) as (Distribution | number)[];
+    if (realValues.length > 0) {
+      return new SumDistribution([this, ...realValues]);
     } else {
       return this;
     }
@@ -87,11 +87,11 @@ export class Distribution {
     }
   }
 
-  divide(value: number): Distribution {
+  divide(value: number | Distribution): Distribution {
     return new DivideDistribution(this, value);
   }
 
-  subtract(value: number): Distribution {
+  subtract(value: number | Distribution): Distribution {
     return new DifferenceDistribution(this, value);
   }
 
@@ -283,12 +283,12 @@ export class ProductDistribution extends BinFuncDistribution {
 }
 
 export class DivideDistribution extends BinFuncDistribution {
-  constructor(base: Distribution, divisor: number, name?: string) {
+  constructor(base: Distribution, divisor: number | Distribution, name?: string) {
     super((a, b) => a / b, (a, b) => `${a} / ${b}`, DistFunction.divide, [base, divisor], name)
   }
 }
 export class DifferenceDistribution extends BinFuncDistribution {
-  constructor(base: Distribution, subtract: number, name?: string) {
+  constructor(base: Distribution, subtract: number | Distribution, name?: string) {
     super((a, b) => a - b, (a, b) => `${a} - ${b}`, DistFunction.subtract, [base, subtract], name)
   }
 }

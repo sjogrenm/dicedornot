@@ -39,7 +39,7 @@ export interface Team {
 }
 
 export interface Inducements {
-    mercenaries: Map<PlayerNumber, Player>,
+    mercenaries: Record<PlayerNumber, Player>,
 }
 
 export type Side = keyof ByTeam<any>;
