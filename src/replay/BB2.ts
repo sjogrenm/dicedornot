@@ -634,7 +634,7 @@ export type JuggernautResult = DiceRollResult<ROLL.Juggernaut>;
 // StandFirm2 = 65,
 export type StandFirm2Result = DiceRollResult<ROLL.StandFirm2>;
 // RaiseDead = 66,
-export type RaiseDeadResult = DiceRollResult<ROLL.RaiseDead, "", "">;
+export type RaiseDeadResult = RollResult<ROLL.RaiseDead> & Choices<"", "">;
 // Fans = 69,
 export type FansResult = DiceRollResult<ROLL.Fans, "", "">;
 // Weather = 70,
@@ -668,7 +668,7 @@ export interface HandoffAction extends PlayerAction, OrderAction, ResultsAction<
 // Foul = 5, //Foul
 export interface FoulAction extends OrderAction, PlayerAction, ResultsAction<NoChoicesResult | ArmorResult | InjuryResult | CasualtyResult | RegenerationResult > { ActionType: ACTION_TYPE.Foul }
 // TakeDamage = 6, //Armor
-export interface TakeDamageAction extends PlayerAction, OrderT<Cell, { Cell: "" | MList<Cell> }>, ResultsAction<ArmorResult | InjuryResult | CasualtyResult | RegenerationResult | POArmorResult | POInjuryResult | ChainsawArmorResult> { ActionType: ACTION_TYPE.TakeDamage }
+export interface TakeDamageAction extends PlayerAction, OrderT<Cell, { Cell: "" | MList<Cell> }>, ResultsAction<ArmorResult | InjuryResult | CasualtyResult | RegenerationResult | POArmorResult | POInjuryResult | ChainsawArmorResult | RaiseDeadResult> { ActionType: ACTION_TYPE.TakeDamage }
 // Kickoff = 7, //Pick Kickoff Location
 export interface KickoffAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.Kickoff }
 // Scatter = 8, //Pick Kickoff Scatter KickSkill
@@ -743,6 +743,7 @@ export interface FansAction extends NoOrderAction, ResultsAction<FansResult> { A
 // InitialWeather = 47, //After Kickoff Choice, has 1 BoardActionResult with RT 70
 export interface WeatherAction extends NoOrderAction, ResultsAction<WeatherResult> { ActionType: ACTION_TYPE.InitialWeather }
 // SwelteringHeat = 48,
+export interface SwealteringHeatAction extends PlayerAction, NoOrderAction, ResultsAction<SwealteringHeatResult> { ActionType: ACTION_TYPE.SwelteringHeat }
 // Feed = 49,
 // BombKnockDown = 50,
 // BombHalfDown = 51,
@@ -797,6 +798,7 @@ export type RulesEventBoardAction =
     | ActivatePlayerAction
     | FansAction
     | WeatherAction
+    | SwealteringHeatAction
     // | TurnoverAction
 
 // export type BoardActionResult = DiceRollResult | CellChoiceResult | NoChoicesResult | KickoffScatterResult

@@ -443,6 +443,7 @@ export enum SUB_RESULT_TYPE {
   Unknown_22 = 22, // During Dodge Roll
   Fend = 35, //Blockdice against Fend, no 2nd Dice.
   Unknown_40 = 40,
+  Unknown_49 = 49,
   Unknown_56 = 56, // Push roll
   ChoiceUseDodgeTackle = 57, //Dodge vs Tackle before RR Pick
   Unknown_68 = 68, //Pick Wrestle skill use?
