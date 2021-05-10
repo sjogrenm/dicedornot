@@ -1,14 +1,5 @@
-<script lang="ts" context="module">
-  interface Team {
-    dugout: {
-      cas: BB2.PlayerId[];
-      ko: BB2.PlayerId[];
-      reserve: BB2.PlayerId[];
-    };
-  }
-</script>
-
 <script lang="ts">
+  import type {Team, PitchCellProps, PlayerProps, Preview, WakeConditions, Dugout} from "./types.js";
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";
@@ -25,7 +16,7 @@
     ACTION_TYPE,
     getPlayerSprite,
     SIDE,
-RACE_ID,
+    RACE_ID,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
@@ -39,6 +30,7 @@ RACE_ID,
     END,
     period,
     initialReplayPosition,
+    ensureKeyedList,
   } from "../replay-utils.js";
   import {
     replay,
@@ -58,75 +50,70 @@ import type {ProcessedReplay} from '../replay.js';
 
   export let playing = false;
 
-  interface BallProps {
-    held: boolean;
-  }
-
-  interface CellProps {
-    active?: boolean;
-    target?: boolean;
-    pushbackChoice?: boolean;
-    moved?: boolean;
-    plus?: number;
-  }
-
-  interface BloodProps {
-    blood: number;
-  }
-
-  interface PitchCellProps {
-    cell?: CellProps;
-    dice?: number[];
-    player?: BB2.PlayerId;
-    ball?: BallProps;
-    foul?: boolean;
-    blood?: BloodProps;
-  }
-
-  interface PlayerProps {
-    data: BB2.Player;
-    blitz?: boolean;
-    moving?: boolean;
-    prone?: boolean;
-    team?: SIDE;
-    stunned?: boolean;
-    stupidity?: string;
-  }
-
-  interface WakeConditions {
-    replayPreview: ReplayPreview | undefined,
-    playing: boolean,
-    replayTarget: ReplayPosition | undefined,
-    replay: ProcessedReplay | undefined,
-  }
-
-  interface Preview {
-    homeTeam: Team,
-    awayTeam: Team,
-    pitch: Record<string, PitchCellProps>,
-    players: Record<string, PlayerProps>,
-    playing: boolean,
-    current: ReplayPosition,
-  }
-
   let lastChainPush: BB2.PlayerId,
-    races: RACE_ID[] = [],
+    races: string[] = [],
     homeTeam: Team = {
+      logo: "",
       dugout: {
         cas: [],
         ko: [],
         reserve: [],
+      },
+      score: 0,
+      name: "",
+      turn: 1,
+      active: false,
+      rerolls: {
+        available: 0,
+        total: 0,
+      },
+      inducements: {
+        wizard: false,
+        babes: 0,
+        apo: {
+          available: 0,
+          total: 0,
+        },
+        chef: false,
+        bribes: {
+          available: 0,
+          total: 0,
+        },
+        igor: false,
       },
     },
     awayTeam: Team = {
+      logo: "",
       dugout: {
         cas: [],
         ko: [],
         reserve: [],
       },
+      score: 0,
+      name: "",
+      turn: 1,
+      active: false,
+      rerolls:  {
+        available: 0,
+        total: 0,
+      },
+      inducements: {
+        wizard: false,
+        babes: 0,
+        apo: {
+          available: 0,
+          total: 0,
+        },
+        chef: false,
+        bribes: {
+          available: 0,
+          total: 0,
+        },
+        igor: false,
+      },
     },
     pitch: Record<string, PitchCellProps> = {},
-    players: Record<string, PlayerProps> = {},
+    players: Record<Internal.PlayerNumber, PlayerProps> = {},
     blitzerId: Internal.PlayerNumber,
     banner: string | null = null,
     weather = WEATHER.Nice,
@@ -137,7 +124,7 @@ import type {ProcessedReplay} from '../replay.js';
     abort = new AbortController(),
     current: ReplayPosition = initialReplayPosition();
 
-  const DUGOUT_POSITIONS = {
+  const DUGOUT_POSITIONS: Record<Exclude<SITUATION, SITUATION.Active>, keyof Dugout> = {
     [SITUATION.Reserves]: "reserve",
     [SITUATION.KO]: "ko",
     [SITUATION.Casualty]: "cas",
@@ -188,7 +175,7 @@ import type {ProcessedReplay} from '../replay.js';
 
   onMount(() => {
     let url = new URL(window.location.href);
-    $timing = parseInt(url.searchParams.get("timing")) || 300;
+    $timing = parseInt(url.searchParams.get("timing") || "300");
     if (url.searchParams.get("st")) {
       playing = false;
     } else {
@@ -210,7 +197,7 @@ import type {ProcessedReplay} from '../replay.js';
       boardState.ActiveTeam == 1
     );
     races = boardState.ListTeams.TeamState.flatMap((team) =>
-      team.ListPitchPlayers.PlayerState.map((player) => {
+      ensureKeyedList('PlayerState', team.ListPitchPlayers).map((player) => {
         const { race } = getPlayerSprite(player.Id, player.Data.IdPlayerTypes);
         return race;
       })
@@ -220,23 +207,23 @@ import type {ProcessedReplay} from '../replay.js';
     await step();
   }
 
-  function processTeam(side, team, active) {
-    let maxRerollsThisPeriod = $replay.fullReplay.ReplayStep.reduce(
+  function processTeam(side: SIDE, team: BB2.TeamState, active: boolean): Team {
+    let maxRerollsThisPeriod = $replay!.fullReplay.ReplayStep.reduce(
       (acc: number, step: BB2.ReplayStep) => {
         if (!('BoardState' in step)) {
           return acc;
         }
         let stepTeam = step.BoardState.ListTeams.TeamState[side];
-        let stepPeriod = period(stepTeam.GameTurn);
-        if (stepPeriod == period(team.GameTurn)) {
+        let stepPeriod = period(stepTeam.GameTurn || 1);
+        if (stepPeriod == period(team.GameTurn || 1)) {
           acc = Math.max(acc, stepTeam.RerollNumber || 0);
         }
         return acc;
       },
       0
     );
-    let maxApos = $replay.fullReplay.ReplayStep.reduce((acc, step) => {
-      if (!step.BoardState) {
+    let maxApos = $replay!.fullReplay.ReplayStep.reduce((acc, step) => {
+      if (!('BoardState' in step)) {
         return acc;
       }
       let stepTeam = step.BoardState.ListTeams.TeamState[side];
@@ -267,7 +254,7 @@ import type {ProcessedReplay} from '../replay.js';
         chef: team.HalflingChef == 1,
         bribes: {
           available: team.BribeNumber || 0,
-          total: team.Bribe || 0,
+          total: team.Bribes || 0,
         },
         igor: team.Igor == 1,
       },
@@ -275,57 +262,61 @@ import type {ProcessedReplay} from '../replay.js';
     };
   }
 
-  function setPitchSquare(cell): PitchCellProps {
-    let square = pitch[`${cell.x || 0}-${cell.y || 0}`] || {};
-    pitch[`${cell.x || 0}-${cell.y || 0}`] = square;
+  function setPitchSquare(cell: Internal.Cell): PitchCellProps {
+    let square = pitch[`${cell.x}-${cell.y}`] || {};
+    pitch[`${cell.x}-${cell.y}`] = square;
     return square;
   }
-  function setPlayer(id) {
+  function setPlayer(id: Internal.PlayerNumber) {
     let player = players[id];
     players[id] = player;
     return player;
   }
 
-  function setPlayerStates(boardState) {
+  function setPlayerStates(boardState: BB2.BoardState) {
     Object.values(pitch).forEach((square) => {
       if (square.player) {
-        square.player = null;
+        square.player = undefined;
       }
     });
     players = {};
-    boardState.ListTeams.TeamState[0].ListPitchPlayers.PlayerState.map((p) =>
+    ensureKeyedList('PlayerState', boardState.ListTeams.TeamState[0].ListPitchPlayers).map((p) =>
       placePlayer(p, SIDE.home)
     );
-    boardState.ListTeams.TeamState[1].ListPitchPlayers.PlayerState.map((p) =>
+    ensureKeyedList('PlayerState', boardState.ListTeams.TeamState[1].ListPitchPlayers).map((p) =>
       placePlayer(p, SIDE.away)
     );
-    if (boardState.BlitzerId) {
-      players[boardState.BlitzerId].blitz = true;
+    if (boardState.ListTeams.TeamState[0].BlitzerId) {
+      players[boardState.ListTeams.TeamState[0].BlitzerId].blitz = true;
+    }
+    if (boardState.ListTeams.TeamState[1].BlitzerId) {
+      players[boardState.ListTeams.TeamState[1].BlitzerId].blitz = true;
     }
   }
 
-  function placePlayer(p, team: SIDE) {
+  function placePlayer(p: BB2.PitchPlayer, team: SIDE) {
     players[p.Id] = { data: p, team };
-    switch (p.Situation) {
+    let situation = p.Situation || SITUATION.Active;
+    switch (situation) {
       case SITUATION.Active:
-        setPitchSquare(p.Cell).player = p.Id;
+        setPitchSquare(convertCell(p.Cell)).player = p.Id;
         break;
       default:
         (team == SIDE.home ? homeTeam : awayTeam).dugout[
-          DUGOUT_POSITIONS[p.Situation]
+          DUGOUT_POSITIONS[situation]
         ].push(p.Id);
         break;
     }
   }
 
-  function setBallPosition(boardState) {
-    let { x, y } = boardState.Ball.Cell;
+  function setBallPosition(boardState: BB2.BoardState) {
+    let { x, y } = convertCell(boardState.Ball.Cell);
     Object.values(pitch).forEach((square) => {
-      square.ball = null;
+      square.ball = undefined;
     });
 
     if (x != -1 && y != -1) {
-      setPitchSquare(boardState.Ball.Cell).ball = {
+      setPitchSquare({x, y}).ball = {
         held: boardState.Ball.IsHeld == 1,
       };
     }
@@ -380,7 +371,6 @@ import type {ProcessedReplay} from '../replay.js';
         return handleTurnover(action);
       case ACTION_TYPE.FansNumber:
       case ACTION_TYPE.WakeUp:
-      case ACTION_TYPE.EventPitchInv:
       case ACTION_TYPE.Landing:
       case ACTION_TYPE.EatTeamMate:
       case ACTION_TYPE.Shadowing:
@@ -408,7 +398,7 @@ import type {ProcessedReplay} from '../replay.js';
         badAction(action);
     }
   }
-  function sleep(ms) {
+  function sleep(ms: number) {
     let signal = abort.signal;
     return new Promise<void>((resolve, reject) => {
       const listener = () => {
@@ -452,37 +442,46 @@ import type {ProcessedReplay} from '../replay.js';
     }
   }
 
-  async function handleBoardState(boardState) {
+  async function handleBoardState(boardState: BB2.BoardState) {
     await resetFromBoardState(boardState);
   }
 
   async function stepReplay(updateUrl = true) {
-    if (current.step > $replay.fullReplay.ReplayStep.length) {
-      console.error("Went too far", {current, replay: $replay});
+    if (current.end) {
+      current = initialReplayPosition();
+      return;
     }
-    const step = $replay.fullReplay.ReplayStep[current.step];
-    const subStep = step[REPLAY_KEY.get(current.subStep)];
-    switch (current.subStep) {
-      case REPLAY_SUB_STEP.SetupAction:
-        await handleSetupAction();
-        break;
-      case REPLAY_SUB_STEP.BoardAction:
-        let action = ensureList(subStep)[current.action];
-        if (!action) {
-          console.error("No action found", {
-            subStep,
-            replayCurrent: current,
-            step,
-          });
-        }
-        await handleBoardAction(action, current.result);
-        break;
-      case REPLAY_SUB_STEP.EndTurn:
-        await handleTurnover(subStep);
-        break;
-      case REPLAY_SUB_STEP.BoardState:
-        await handleBoardState(subStep);
-        break;
+    if (current.step > $replay!.fullReplay.ReplayStep.length) {
+      console.error("Went too far", {current, replay: $replay});
+      current = initialReplayPosition();
+      return;
+    }
+    if (current.subStep != REPLAY_SUB_STEP.NextReplayStep) {
+      const step = $replay!.fullReplay.ReplayStep[current.step];
+      switch (current.subStep) {
+        case REPLAY_SUB_STEP.SetupAction:
+          await handleSetupAction();
+          break;
+        case REPLAY_SUB_STEP.BoardAction:
+          let action = ensureList(subStep)[current.action];
+          if (!action) {
+            console.error("No action found", {
+              subStep,
+              replayCurrent: current,
+              step,
+            });
+          }
+          await handleBoardAction(action, current.result);
+          break;
+        case REPLAY_SUB_STEP.EndTurn:
+          if ('RulesEventEndTurn' in step) {
+            await handleTurnover(step['RulesEventEndTurn']);
+          }
+          break;
+        case REPLAY_SUB_STEP.BoardState:
+          await handleBoardState(subStep);
+          break;
+      }
     }
     current = current.toNextPosition($replay.fullReplay);
     if (updateUrl) {

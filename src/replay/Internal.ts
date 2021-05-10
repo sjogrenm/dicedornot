@@ -31,7 +31,7 @@ export interface Replay {
 }
 
 export interface Team {
-    players: Map<PlayerNumber, Player>,
+    players: Record<PlayerNumber, Player>,
     inducements: Inducements,
     race: RACE_ID,
     coach: string,
@@ -55,17 +55,17 @@ export interface Player {
 }
 
 export interface Checkpoint {
-    _checkpointData: any
+    _checkpointData?: any
 }
 
-type KickoffRoll = any;
-type SetupAction = {
+export type KickoffRoll = {};
+export type SetupAction = {
     players: Map<PlayerNumber, Cell>,
     movedPlayers: Map<PlayerNumber, Cell>,
 };
-type CatchRoll = any;
-type PassRoll = any;
-type FoulRoll = any;
+export type CatchRoll = any;
+export type PassRoll = any;
+export type FoulRoll = any;
 
 export interface Drive extends Checkpoint {
     wakeups: ByTeam<WakeupRoll[]>;

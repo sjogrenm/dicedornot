@@ -3,7 +3,7 @@
   import { Row, Col } from "sveltestrap";
   import { replay } from "./stores";
 
-  export let homeTeam, awayTeam;
+  export let homeTeam: string, awayTeam: string;
   let cumNetValues, actuals, homePercentile = 0.5, awayPercentile = 0.5;
 
   function percentRank(array, n) {

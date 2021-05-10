@@ -2717,6 +2717,7 @@ export class UnknownRoll {
   name: string;
   xml: any;
   ignore: boolean;
+  rolls?: (Roll<any> | UnknownRoll)[];
 
   constructor(name: string, xml: any) {
     this.name = name;

@@ -4,7 +4,7 @@
   import FixedRatio from "./FixedRatio.svelte";
   import Overlay from "./Overlay.svelte";
   import {replayPreview} from "../stores.js";
-  export let pitchPlayers, homeTeam, awayTeam, pitch, send, receive;
+  export let pitchPlayers: Record<string, PlayerProps>, homeTeam, awayTeam, pitch, send, receive;
 
   let homeLogo, awayLogo;
   $: {

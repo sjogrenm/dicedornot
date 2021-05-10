@@ -1,5 +1,5 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
-import { END } from "./replay-utils.js";
+import { END, ensureList } from "./replay-utils.js";
 import { SIDE } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
 import he from 'he';
@@ -16,8 +16,8 @@ interface TeamDetails {
 interface GameDetails {
   //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
   stadiumName: string,
-  stadiumType: string,
-  leagueName: string,
+  stadiumType?: string,
+  leagueName?: string,
   homeTeam: TeamDetails,
   awayTeam: TeamDetails,
 }
@@ -131,22 +131,22 @@ interface Value {
 }
 
 export function extractGameDetails(jsonObject: ParsedReplay): GameDetails {
-  var firstStep = jsonObject.Replay.ReplayStep[0];
+  var firstStep = jsonObject.Replay.ReplayStep[0] as BB2.GameInfoStep;
   var lastStep =
-    jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1];
+    jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1] as BB2.GameFinishedStep;
   return {
     //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
     stadiumName: he.decode(firstStep.GameInfos.NameStadium.toString()),
     stadiumType: firstStep.GameInfos.StructStadium,
     leagueName: firstStep.GameInfos.RowLeague.Name && he.decode(firstStep.GameInfos.RowLeague.Name.toString()),
     homeTeam: {
-      coachName: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.home].UserId.toString()),
+      coachName: he.decode(ensureList(firstStep.GameInfos.CoachesInfos.CoachInfos)[SIDE.home].UserId.toString()),
       teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString()),
       raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.HomeScore || 0,
     },
     awayTeam: {
-      coachName: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[SIDE.away].UserId.toString()),
+      coachName: he.decode(ensureList(firstStep.GameInfos.CoachesInfos.CoachInfos)[SIDE.away].UserId.toString()),
       teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString()),
       raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.IdRace,
       score: lastStep.RulesEventGameFinished.MatchResult.Row.AwayScore || 0,

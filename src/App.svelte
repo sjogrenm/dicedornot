@@ -18,7 +18,7 @@
   import Todo from "./Todo.svelte";
   import Theme from "./Theme.svelte";
 
-  let loading: boolean, playing: boolean;
+  let loading: string | undefined, playing: boolean;
   $: {
     console.log("Replay", $replay);
   }

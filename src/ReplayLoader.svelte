@@ -16,7 +16,7 @@
   import he from "he";
 
   export let button = "primary",
-    loading = null;
+    loading: string | undefined;
   const CACHE_VERSION = 2;
 
   onMount(() => {

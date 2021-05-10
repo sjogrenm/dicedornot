@@ -46,13 +46,12 @@ export enum REPLAY_SUB_STEP {
   NextReplayStep = 6,
 }
 
-export const REPLAY_KEY: Record<REPLAY_SUB_STEP, string | null> = {
+export const REPLAY_KEY: Record<Exclude<REPLAY_SUB_STEP, REPLAY_SUB_STEP.NextReplayStep>, string> = {
   [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetUpAction',
   [REPLAY_SUB_STEP.Kickoff]: 'RulesEventKickOffTable',
   [REPLAY_SUB_STEP.BoardAction]: 'RulesEventBoardAction',
   [REPLAY_SUB_STEP.EndTurn]: 'RulesEventEndTurn',
   [REPLAY_SUB_STEP.BoardState]: 'BoardState',
-  [REPLAY_SUB_STEP.NextReplayStep]: null
 }
 
 
@@ -104,6 +103,8 @@ export function toString(position: ReplayPosition) {
     return `End`;
   } else if (position.subStep == REPLAY_SUB_STEP.BoardAction) {
     return `Step-${position.step}.${REPLAY_KEY[position.subStep]}.${position.action}.${position.result}`;
+  } else if (position.subStep == REPLAY_SUB_STEP.NextReplayStep) {
+    return `Step-${position.step}.Next`;
   } else {
     return `Step-${position.step}.${REPLAY_KEY[position.subStep]}`;
   }

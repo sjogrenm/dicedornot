@@ -70,7 +70,9 @@ export interface Mercenary {
 }
 
 export interface TeamState {
+    Igor?: Bool,
     GameTurn?: number,
+    BribeNumber?: number,
     RerollNumber?: number,
     NecromancerAvailable?: Bool,
     ApothecaryNumber?: number,
@@ -285,6 +287,20 @@ export interface RulesEventSetUpAction {
     Substitute?: PlayerId,
 }
 
+type RequireAtLeastOne<T, Keys extends keyof T = keyof T> =
+    Pick<T, Exclude<keyof T, Keys>> 
+    & {
+        [K in Keys]-?: Required<Pick<T, K>> & Partial<Pick<T, Exclude<Keys, K>>>
+    }[Keys];
+
+type RequireOnlyOne<T, Keys extends keyof T = keyof T> =
+    Pick<T, Exclude<keyof T, Keys>>
+    & {
+        [K in Keys]-?:
+            Required<Pick<T, K>>
+            & Partial<Record<Exclude<Keys, K>, undefined>>
+    }[Keys];
+
 export type RulesEventGameFinished = any;
 export type RulesEventWaitingRequest = '' | { RequestType?: WAITING_REQUEST_TYPE, ConcernedTeam?: SIDE };
 export interface RulesEventSetUpConfiguration {
@@ -331,19 +347,25 @@ export interface GenPersonalityStep {
     BoardState: BoardState,
     RulesEventSetGeneratedPersonnalities: "",
 }
-export interface AddInducementStep {
-    BoardState: BoardState,
-    RulesEventApplyInducements?: "" | {
-        NextTeam?: 1,
-        InducementValue?: number,
+export type AddInducementStep = RequireAtLeastOne<
+    {
+        RulesEventApplyInducements?: "" | {
+            NextTeam?: 1,
+            InducementValue?: number,
+        },
+        RulesEventAddMercenary?: MList<RulesEventAddMercenary>,
+        RulesEventAddInducement?: RulesEventAddInducement,
+        RulesEventInducementsInfos?: RulesEventInducementInfos,
+        RulesEventWaitingRequest?: RulesEventWaitingRequest,
     },
-    RulesEventAddMercenary?: MList<RulesEventAddMercenary>,
-    RulesEventAddInducement?: RulesEventAddInducement,
-    RulesEventInducementsInfos?: RulesEventInducementInfos,
-    RulesEventWaitingRequest?: RulesEventWaitingRequest,
+    'RulesEventApplyInducements' |
+    'RulesEventAddMercenary' |
+    'RulesEventAddInducement' |
+    'RulesEventInducementsInfos'
+> & {
+    BoardState: BoardState
 };
 export interface GameTurnStep {
-    BoardState: BoardState,
     RulesEventEndTurn?: RulesEventEndTurn,
     RulesEventBoardAction?: MList<RulesEventBoardAction>,
     RulesEventKickOffTable?: RulesEventKickOffTable,
@@ -364,6 +386,7 @@ export interface GameTurnStep {
     RulesEventLoadGame?: {
         BoardState: BoardState
     }
+    BoardState: BoardState
 };
 
 export type ReplayStep =
@@ -774,17 +797,18 @@ export type RulesEventBoardAction =
     | ActivatePlayerAction
     | FansAction
     | WeatherAction
-    | TurnoverAction
+    // | TurnoverAction
 
 // export type BoardActionResult = DiceRollResult | CellChoiceResult | NoChoicesResult | KickoffScatterResult
 
 export interface RulesEventEndTurn {
     PlayingTeam?: 1,
-    TouchdownScorer: number,
+    TouchdownScorer?: PlayerId,
     ListTeamInfos: "",
     NewDrive?: Bool,
     Turnover?: 1,
     NextTurnType?: 1 | 2,
+    NextPhase?: 6
 }
 
 export function playerIdSide(id: PlayerId): SIDE {

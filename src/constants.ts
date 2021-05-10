@@ -869,8 +869,19 @@ export function getPlayerType(playerTypeId: PlayerId): PLAYER_TYPE {
   return PLAYER_TYPE.Unknown;
 }
 
-export function getPlayerSprite(playerId: PlayerId, playerTypeId: PlayerTypeId) {
-  switch (getPlayerType(playerTypeId)) {
+export interface PlayerSprite {
+  race: string,
+  model: string,
+}
+
+function badPlayerType(playerType: never): never
+function badPlayerType(playerType: PLAYER_TYPE) {
+  console.error(`Unexpected player type ${playerType}`);
+}
+
+export function getPlayerSprite(playerId: PlayerId, playerTypeId: PlayerTypeId): PlayerSprite {
+  let playerType = getPlayerType(playerTypeId);
+  switch (playerType) {
     case PLAYER_TYPE.AmazonBlitzer: return { race: 'amazon', model: `blitzer${playerId % 2 + 1}` };
     case PLAYER_TYPE.AmazonCatcher: return { race: 'amazon', model: `catcher${playerId % 2 + 1}` };
     case PLAYER_TYPE.AmazonLinewoman: return { race: 'amazon', model: `lineman${playerId % 2 + 1}` };
@@ -1037,6 +1048,9 @@ export function getPlayerSprite(playerId: PlayerId, playerTypeId: PlayerTypeId) 
     case PLAYER_TYPE.StarWillowRosebark: return { model: 'willow-rosebark', race: 'starplayer' };
     case PLAYER_TYPE.StarZaraTheSlayer: return { model: 'zara-the-slayer', race: 'starplayer' };
     case PLAYER_TYPE.StarZzhargMadeye: return { model: 'zzharg-madeye', race: 'starplayer' };
+    case PLAYER_TYPE.Unknown: return {model: 'lineman', race: 'human'};
+    default:
+      badPlayerType(playerType);
   }
 }
 

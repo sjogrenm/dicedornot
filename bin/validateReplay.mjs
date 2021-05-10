@@ -21,7 +21,7 @@ async function _validate() {
     const validate = ajv.compile(schema);
     for (const filename of process.argv.slice(2)) {
         let buffer = readFileSync(filename, {flag: 'r'});
-        console.log(buffer.length);
+        buffer.name = filename;
         for await (const replay of xmlToJson(buffer)) {
             fs.writeFile(`${filename}.json`, JSON.stringify(replay, null, 2), (err) => {console.log(err)});
             for (const replayStep of replay.Replay.ReplayStep) {
