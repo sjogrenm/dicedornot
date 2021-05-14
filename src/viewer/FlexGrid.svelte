@@ -1,6 +1,6 @@
 <script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
-  export let width: number, height: number, reverse: boolean;
+  export let width: number, height: number, reverse: boolean = false;
 
   let inlineStyle: string;
   $: inlineStyle = (

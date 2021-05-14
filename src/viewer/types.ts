@@ -69,7 +69,7 @@ export interface PitchCellProps {
 }
 
 export interface PlayerProps {
-    data: BB2.Player;
+    data: BB2.PitchPlayer;
     blitz?: boolean;
     moving?: boolean;
     prone?: boolean;

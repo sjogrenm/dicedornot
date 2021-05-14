@@ -3,8 +3,9 @@
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import {SITUATION, Casualties} from "../constants.js";
   import {translateStringNumberList} from "../replay-utils.js";
+import type { PlayerProps } from "./types";
   export let pitchPlayers, team, dugout, row, column, width, height, casType, send, receive;
-  let player = null,
+  let player: PlayerProps = null,
     players,
     id, cas = null;
 
@@ -25,7 +26,7 @@
       if (player.data.Situation === SITUATION.Casualty) {
         cas =
           Casualties[
-            Math.max(...translateStringNumberList(player.data.ListCasualties))
+            Math.max(...translateStringNumberList(player.data.ListCasualties))-1
           ].icon;
       } else {
         cas = "Expelled";

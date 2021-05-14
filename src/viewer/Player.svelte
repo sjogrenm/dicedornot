@@ -2,14 +2,15 @@
   import {fade} from 'svelte/transition';
   import { getPlayerType, getPlayerSprite } from "../constants.js";
   import {translateStringNumberList} from "../replay-utils.js";
+import type { PitchPlayer } from '../replay/BB2.js';
 
-  export let data,
-    done = undefined,
-    moving = undefined,
-    prone = undefined,
-    stunned = undefined,
-    blitz = undefined,
-    stupidity = undefined,
+  export let data: PitchPlayer,
+    done: boolean | undefined = undefined,
+    moving: boolean | undefined = undefined,
+    prone: boolean | undefined = undefined,
+    stunned: boolean | undefined = undefined,
+    blitz: boolean | undefined = undefined,
+    stupidity: string | undefined = undefined,
     send = undefined,
     receive = undefined;
   let id, race, model, team, classes, key, _done, _prone, _stunned, _stupidity;

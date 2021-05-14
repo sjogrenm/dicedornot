@@ -145,10 +145,6 @@ export interface BoardState {
     StadiumStructure?: string,
 };
 
-export interface Player {
-    Id: PlayerId,
-};
-
 export type PlayerId = number;
 
 export interface CoachInfo {

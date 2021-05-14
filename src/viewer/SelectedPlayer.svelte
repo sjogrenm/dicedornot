@@ -4,11 +4,14 @@
 
   import Player from "./Player.svelte";
   import { translateStringNumberList } from "../replay-utils.js";
-  import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES, SKILL } from "../constants.js";
+  import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES, SKILL, Casualty } from "../constants.js";
   import he from "he";
+import type { PlayerNumber } from "../replay/Internal";
+import type { PitchPlayer } from "../replay/BB2";
+import type { PlayerProps } from "./types";
 
-  export let player, players;
-  let pitchPlayer, name, color, skills: SKILL[], cas;
+  export let player: PlayerNumber, players: Record<PlayerNumber, PlayerProps>;
+  let pitchPlayer: PlayerProps, name: string, color: string, skills: SKILL[], cas: string | undefined;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
     pitchPlayer = players[player];
@@ -18,17 +21,17 @@
     color = colorMatch ? `#${colorMatch[1].slice(2, 8)}` : "var(--gray-0)";
     skills = translateStringNumberList(pitchPlayer.data.Data.ListSkills);
 
-    if (pitchPlayer.data.Situation >= SITUATION.Casualty) {
+    if ((pitchPlayer.data.Situation || SITUATION.Active) >= SITUATION.Casualty) {
       if (pitchPlayer.data.Situation === SITUATION.Casualty) {
         cas =
           Casualties[
-            Math.max(...translateStringNumberList(pitchPlayer.data.ListCasualties))
+            Math.max(...translateStringNumberList(pitchPlayer.data.ListCasualties))-1
           ].icon;
       } else {
         cas = "Expelled";
       }
     } else {
-      cas = null;
+      cas = undefined;
     }
   }
 </script>

@@ -1230,8 +1230,14 @@ export const PLAYER_TVS: Record<PLAYER_TYPE, PlayerTV> = {
   [PLAYER_TYPE.Unknown]: {tv: 0, star: true},
 };
 
-export const Casualties = [
-  {},
+export interface Casualty {
+  dice: number,
+  icon: string,
+  result: string, 
+  effect: string
+}
+
+export const Casualties: Casualty[] = [
   { dice: 38, icon: "BadlyHurt", result: "Badly Hurt", effect: "No long term effect" },
   { dice: 41, icon: "BrokenRibs", result: "Broken Rib", effect: "Miss next game " },
   { dice: 42, icon: "GroinStrain", result: "Groin Strain", effect: "Miss next game " },
