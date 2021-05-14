@@ -1,8 +1,9 @@
 <script lang="ts">
-  import {fade} from 'svelte/transition';
-  import { getPlayerType, getPlayerSprite } from "../constants.js";
-  import {translateStringNumberList} from "../replay-utils.js";
-import type { PitchPlayer } from '../replay/BB2.js';
+  import { fade } from "svelte/transition";
+  import { getPlayerSprite } from "../constants.js";
+  import { translateStringNumberList } from "../replay-utils.js";
+  import type { PitchPlayer } from "../replay/BB2.js";
+  import type { CrossFadeFun } from "./types.js";
 
   export let data: PitchPlayer,
     done: boolean | undefined = undefined,
@@ -11,9 +12,18 @@ import type { PitchPlayer } from '../replay/BB2.js';
     stunned: boolean | undefined = undefined,
     blitz: boolean | undefined = undefined,
     stupidity: string | undefined = undefined,
-    send = undefined,
-    receive = undefined;
-  let id, race, model, team, classes, key, _done, _prone, _stunned, _stupidity;
+    send: CrossFadeFun | undefined = undefined,
+    receive: CrossFadeFun | undefined = undefined;
+  let id,
+    race,
+    model,
+    team,
+    classes: string,
+    key: string,
+    _done: boolean,
+    _prone: boolean,
+    _stunned: boolean,
+    _stupidity: string;
 
   $: {
     ({ model, race } = getPlayerSprite(data.Id, data.Data.IdPlayerTypes));
@@ -40,18 +50,18 @@ import type { PitchPlayer } from '../replay/BB2.js';
     }
   }
 
-  function inFn(node, args) {
+  function inFn(node: Element, _: any) {
     if (receive) {
       return receive(node, { key: key });
     } else {
-      return fade(node, {duration: 0});
+      return fade(node, { duration: 0 });
     }
   }
-  function outFn(node, args) {
+  function outFn(node: Element, _: any) {
     if (send) {
       return send(node, { key: key });
     } else {
-      return fade(node, {duration: 0});
+      return fade(node, { duration: 0 });
     }
   }
 </script>
@@ -140,5 +150,4 @@ import type { PitchPlayer } from '../replay/BB2.js';
     top: 0;
     left: 0;
   }
-
 </style>

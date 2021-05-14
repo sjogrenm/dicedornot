@@ -1,13 +1,24 @@
 <script lang="ts">
   import Player from "./Player.svelte";
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
-  import {SITUATION, Casualties} from "../constants.js";
-  import {translateStringNumberList} from "../replay-utils.js";
-import type { PlayerProps } from "./types";
-  export let pitchPlayers, team, dugout, row, column, width, height, casType, send, receive;
-  let player: PlayerProps = null,
+  import { SITUATION, Casualties, SIDE } from "../constants.js";
+  import { translateStringNumberList } from "../replay-utils.js";
+  import type { PlayerProps, Dugout, CrossFadeFun } from "./types";
+  import type { PlayerNumber } from "../replay/Internal";
+  export let pitchPlayers: Record<PlayerNumber, PlayerProps>,
+    team: SIDE,
+    dugout: Dugout,
+    row: number,
+    column: number,
+    width: number,
+    height: number,
+    casType: keyof Dugout,
+    send: CrossFadeFun | undefined,
+    receive: CrossFadeFun | undefined;
+  let player: PlayerProps | undefined = undefined,
     players,
-    id, cas = null;
+    id: string,
+    cas: string | undefined = undefined;
 
   $: {
     id = `${team == 1 ? "away" : "home"}-${casType}-${row}-${column}`;
@@ -22,11 +33,12 @@ import type { PlayerProps } from "./types";
       player = pitchPlayers[players[column * height + row]];
     }
 
-    if (player && player.data.Situation >= SITUATION.Casualty) {
+    if (player && (player.data.Situation || SITUATION.Active) >= SITUATION.Casualty) {
       if (player.data.Situation === SITUATION.Casualty) {
         cas =
           Casualties[
-            Math.max(...translateStringNumberList(player.data.ListCasualties))-1
+            Math.max(...translateStringNumberList(player.data.ListCasualties)) -
+              1
           ].icon;
       } else {
         cas = "Expelled";
@@ -45,7 +57,7 @@ import type { PlayerProps } from "./types";
     $hoveredPlayer = player && player.data.Id;
   }}
   on:mouseleave={() => {
-    $hoveredPlayer = null;
+    $hoveredPlayer = undefined;
   }}
 >
   {#if player}
@@ -67,7 +79,7 @@ import type { PlayerProps } from "./types";
     position: relative;
   }
 
-  .cas{
+  .cas {
     position: absolute;
     bottom: -5px;
     right: -5px;
