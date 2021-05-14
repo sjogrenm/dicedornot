@@ -1,52 +1,62 @@
 <script lang="ts">
-
   import { Row, Col } from "sveltestrap";
+  import { SIDE } from "./constants";
   import { replay } from "./stores";
+  import type { DataPoint } from "./rolls";
 
   export let homeTeam: string, awayTeam: string;
-  let cumNetValues, actuals, homePercentile = 0.5, awayPercentile = 0.5;
+  interface Value {
+    team: SIDE,
+    netValue: number
+  }
 
-  function percentRank(array, n) {
+  type Values = Record<SIDE, number>;
+
+  let cumNetValues: { actuals: Values; simulated: Record<number, Values> },
+    actuals,
+    homePercentile = 0.5,
+    awayPercentile = 0.5;
+
+  function percentRank(array: number[], n: number) {
     var L = 0;
     var S = 0;
-    var N = array.length
+    var N = array.length;
 
     for (var i = 0; i < array.length; i++) {
       if (array[i] < n) {
-        L += 1
+        L += 1;
       } else if (array[i] === n) {
-        S += 1
+        S += 1;
       } else {
-
       }
     }
 
-    var pct = (L + (0.5 * S)) / N
+    var pct = (L + 0.5 * S) / N;
 
-    return pct
+    return pct;
   }
 
   $: {
-    cumNetValues = { actuals: {}, simulated: {} };
-    actuals = $replay.rolls.map((roll) => ({
-      team: roll.activeTeam.id,
-      netValue: roll.valueWithDependents.singularValue - roll.expectedValue
+    cumNetValues = { actuals: {[SIDE.home]: 0, [SIDE.away]: 0}, simulated: {} };
+    actuals = $replay!.rolls.map((roll) => ({
+      team: roll.activeTeam ? roll.activeTeam.id : SIDE.home,
+      netValue: roll.valueWithDependents.singularValue - roll.expectedValue,
     }));
     cumNetValues.actuals = accumulateNetValue(actuals);
     updatePercentiles();
   }
 
-  function accumulateNetValue(values) {
-    let dest = {};
+  function accumulateNetValue(values: Value[]) {
+    let dest: Values = {[SIDE.home]: 0, [SIDE.away]: 0};
     values.forEach((dataPoint) => {
-      dest[dataPoint.team] =
-        (dest[dataPoint.team] || 0) + dataPoint.netValue;
+      dest[dataPoint.team] = (dest[dataPoint.team] || 0) + dataPoint.netValue;
     });
     return dest;
   }
-  function betterThan(team, percentile) {
+  function betterThan(team: string, percentile: number) {
     let qualifier = percentile < 0.25 ? "only " : "";
-    let count = percentile * 100, countDisp: string;
+    let count = percentile * 100,
+      countDisp: string;
     if (count > 99) {
       countDisp = count.toFixed(1);
     } else if (count < 10) {
@@ -56,8 +66,8 @@
     }
     return `${team}'s rolls were better than ${qualifier}${countDisp} in 100 games`;
   }
-  function diced(team, percentile) {
-    const sample = (items) => items[team.length % items.length];
+  function diced(team: string, percentile: number): string {
+    const sample = (items: string[]): string => items[team.length % items.length];
 
     if (percentile > 0.985) {
       return "Nuffle's light shone down on them.";
@@ -90,7 +100,7 @@
         "They skipped their sacrifice to Nuffle",
         "Nuffle hated them",
         "They must be in the arctic cause those dice were frozen!",
-        "The should try Necromantic next season, because their dice are dead!"
+        "The should try Necromantic next season, because their dice are dead!",
       ]);
     } else if (percentile < 0.3) {
       return sample([
@@ -98,14 +108,14 @@
         "Why do I believe in blodge?",
         "Unfair dices! Unfair game!",
         "They couldn't roll their way out of a paper bag",
-        `Who has two thumbs and none of the dice? ${team}`
+        `Who has two thumbs and none of the dice? ${team}`,
       ]);
     } else {
       return "Variance, man. Variance.";
     }
   }
 
-  function sleep(ms) {
+  function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -113,16 +123,17 @@
     await sleep(2000);
     var iteration = 0;
     for (var c = 0; c < 500; c++) {
-      console.log("Computing 50 simulated games")
+      console.log("Computing 50 simulated games");
       for (var x = 0; x < 50; x++) {
         iteration++;
-        let newValues = $replay.rolls.map((roll) => ({
-          team: roll.activeTeam.id,
+        let newValues = $replay!.rolls.map((roll) => ({
+          team: roll.activeTeam ? roll.activeTeam.id : SIDE.home,
           netValue: roll.possibleOutcomes.sample() - roll.expectedValue,
         }));
         cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
       }
-      let oldHome = homePercentile, oldAway = awayPercentile;
+      let oldHome = homePercentile,
+        oldAway = awayPercentile;
       homePercentile = percentRank(
         Object.values(cumNetValues.simulated).map((cum) => cum[0]),
         cumNetValues.actuals[0]
@@ -140,13 +151,16 @@
         awayPercentile,
         oldAway,
       });
-      if (c > 10 && Math.abs(homePercentile - oldHome) < 0.001 && Math.abs(awayPercentile - oldAway) < 0.001) {
+      if (
+        c > 10 &&
+        Math.abs(homePercentile - oldHome) < 0.001 &&
+        Math.abs(awayPercentile - oldAway) < 0.001
+      ) {
         return;
       }
 
       await sleep(100);
     }
-
   }
 </script>
 

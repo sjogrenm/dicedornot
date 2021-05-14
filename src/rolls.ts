@@ -34,9 +34,20 @@ import {convertCell} from './replay/BB2toInternal.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
-import { assembleParameterSignals } from 'vega-lite/build/src/parameter';
-import type { BlockAction } from './replay/Internal.js';
-import { update_slot_spread } from 'svelte/internal';
+
+export interface DataPoint {
+  iteration: number,
+  turn: number,
+  activeTeamId: SIDE | undefined,
+  activeTeamName: string | undefined,
+  teamId: SIDE | undefined,
+  teamName: string | undefined,
+  outcomeValue: number,
+  type: POINT,
+  expectedValue: number,
+  netValue: number,
+  rollIndex: number | undefined,
+}
 
 // TODO: Switch over to using dice.js for better clarity
 
@@ -77,8 +88,8 @@ function ballPositionValue(team: Team, cell: Internal.Cell): SingleValue {
 }
 
 enum POINT {
-  Actual = 'actual',
-  Simulated = 'simulated',
+  actual = 'actual',
+  simulated = 'simulated',
 }
 
 export class Player {
@@ -478,7 +489,7 @@ export class Roll<D> {
   }
 
   get actual() {
-    var dataPoint = this.dataPoint(-1, POINT.Actual);
+    var dataPoint = this.dataPoint(-1, POINT.actual);
     return Object.assign(dataPoint, {
       turn: this.turn,
       player: (this.activePlayer && this.activePlayer.name) || '',
@@ -498,17 +509,17 @@ export class Roll<D> {
   simulated(iteration: number) {
     return this.dataPoint(
       iteration,
-      POINT.Simulated,
+
+      POINT.simulated,
     );
   }
-
-  dataPoint(iteration: number, type: POINT) {
+  dataPoint(iteration: number, type: POINT): DataPoint {
     let outcomeValue: number;
     switch (type) {
-      case POINT.Actual:
+      case POINT.actual:
         outcomeValue = this.valueWithDependents.singularValue;
         break;
-      case POINT.Simulated:
+      case POINT.simulated:
         outcomeValue = this.possibleOutcomes.sample();
         break;
     }

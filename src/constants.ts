@@ -1375,7 +1375,6 @@ export const STAR_NAMES: Record<string, string> = {
 }
 
 export enum SIDE {
-  unknown = -1,
   home = 0,
   away = 1,
 }
