@@ -31,7 +31,7 @@
     file = "file",
   }
 
-  let filePicker, urlPicker, cachePicker, replayKeys;
+  let filePicker: HTMLInputElement, urlPicker: HTMLInputElement, cachePicker: HTMLInputElement, replayKeys: IDBValidKey[];
   const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
   const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/((cid_)?[0-9a-f]*)/i
   const spikeRE = /.*spike\.ovh\/match\?match_uuid=([0-9a-f]*)/i
@@ -41,7 +41,7 @@
       if (!replayKeys) {
         loading = "Loading saved replays";
         replayKeys = await keys();
-        loading = null;
+        loading = undefined;
       }
       params.forEach((key, value) => {
         let cacheKey = `${key}-${value}`;
@@ -88,7 +88,7 @@
     if (!replayKeys) {
         loading = "Loading saved replays";
         replayKeys = await keys();
-        loading = null;
+        loading = undefined;
     }
     const allReplays = [];
     for (const key of replayKeys) {
@@ -96,7 +96,7 @@
       const replay = await get(key);
       allReplays.push([key, replay]) ;
     }
-    loading = null;
+    loading = undefined;
     const validReplays = allReplays.filter(
       ([_, replay]) => replay.CACHE_VERSION === CACHE_VERSION
     );
@@ -135,9 +135,9 @@
           window.history.pushState({}, "", shareURL.href);
         }
         $replay = processReplay(jsonReplayData);
-        loading = null;
+        loading = undefined;
       } catch (err) {
-        loading = null;
+        loading = undefined;
         $error = err;
         console.error(err);
       }
@@ -146,7 +146,8 @@
 
   async function parseReplay(replayFile: File, replayType: ReplayType, replayId: string, updateUrl: boolean) {
     loading = `Parsing ${replayFile.name}`;
-    for await (let jsonReplayData of xmlToJson<ParsedReplay>(replayFile)) {
+    let jsonReplayFile = await xmlToJson(replayFile);
+    for (const [replayName, jsonReplayData] of Object.entries(jsonReplayFile)) {
       console.log("Preparing to process replay json...");
       jsonReplayData.Replay.filename = replayFile.name;
       jsonReplayData.CACHE_VERSION = CACHE_VERSION;
@@ -163,25 +164,25 @@
       console.log("Setting cache", { cacheKey, jsonReplayData });
       try {
         $replay = processReplay(jsonReplayData);
-        loading = null;
+        loading = undefined;
       } catch (err) {
-        loading = null;
+        loading = undefined;
         $error = err;
         console.error(err);
       }
     }
   }
 
-  async function loadRebblReplay(uuid, updateUrl) {
+  async function loadRebblReplay(uuid: string, updateUrl: boolean) {
     loading = `Loading ${uuid} from rebbl.net`;
-    $error = null;
+    $error = undefined;
     let replayFile = await fetch(
       `https://rebbl.net/api/v2/match/${uuid}/replay`
     ).then((r) => r.json());
     if (replayFile.filename && replayFile.filename != "No replay file found") {
       loading = `Downloading ${replayFile.filename}`;
       const blob = await fetch(replayFile.filename).then((r) => r.blob());
-      loading = null;
+      loading = undefined;
       const file = new File([blob], replayFile.filename);
       parseReplay(file, ReplayType.rebbl, uuid, updateUrl);
     } else {
@@ -189,9 +190,9 @@
     }
   }
 
-  async function loadGoblinspyReplay(mid, updateUrl) {
+  async function loadGoblinspyReplay(mid: string, updateUrl: boolean) {
     loading = `Loading ${mid} from GoblinSpy`;
-    $error = null;
+    $error = undefined;
     let replayFile = await fetch(
       `https://www.mordrek.com:666/api/v1/match/${mid}/url`
     ).then((r) => r.json());
@@ -199,21 +200,20 @@
     if (replayFile) {
       loading = `Downloading ${replayFile}`;
       const blob = await fetch(replayFile).then((r) => r.blob());
-      loading = null;
+      loading = undefined;
       const file = new File([blob], replayFile);
       parseReplay(file, ReplayType.goblinspy, mid, updateUrl);
     } else {
       $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
-      loading = null;
+      loading = undefined;
     }
   }
 
   async function loadReplay() {
-    console.log("Preparing to parse XML...");
-    loading = true;
-    $error = null;
+    loading = "Preparing to parse XML...";
+    $error = undefined;
     const files = filePicker.files;
-    if (files.length > 0) {
+    if (files && files.length > 0) {
       parseReplay(files[0], ReplayType.file, files[0].name, true);
     }
   }
