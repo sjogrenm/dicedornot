@@ -1,6 +1,8 @@
 <script lang="ts">
+
 import FlexGrid from "./FlexGrid.svelte";
-  export let team, reverse;
+import type { Team } from "./types";
+  export let team: Team, reverse: boolean;
 </script>
 
 <FlexGrid width={10} height={3} {reverse}>
