@@ -1,8 +1,8 @@
 <script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
-  export let width, height, reverse;
+  export let width: number, height: number, reverse: boolean;
 
-  let inlineStyle;
+  let inlineStyle: string;
   $: inlineStyle = (
     reverse ?
     "align-content: start; justify-content: end; flex-direction: row-reverse; flex-wrap: wrap" :
