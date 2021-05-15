@@ -1,5 +1,5 @@
 <script context="module" lang="ts">
-  import type {Cell} from '../replay/BB2.js';
+  import type {Cell} from '../replay/Internal.js';
   import type {SIDE} from '../constants.js';
 
   export interface Roll {
@@ -20,7 +20,7 @@
   export let path: Props['path'],
     rolls: Props['rolls'],
     color: string,
-    textColor,
+    textColor: string,
     oppColor,
     oppTextColor,
     team: Props['team'],
@@ -28,7 +28,7 @@
     index = 0,
     _rolls: _Roll[];
 
-  function mixCells(cellA, cellB, pct) {
+  function mixCells(cellA: Cell, cellB: Cell, pct: number) {
     return {
       x: cellA.x * (1 - pct) + cellB.x * pct,
       y: cellA.y * (1 - pct) + cellB.y * pct,
