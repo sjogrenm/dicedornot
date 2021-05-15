@@ -1,11 +1,11 @@
 import { append } from 'svelte/internal';
-import type { ReplayStep, Replay, MList, KeyedMList } from './replay/BB2.js';
+import type { ReplayStep, Replay, MList, KeyedMList, RulesEventBoardAction } from './replay/BB2.js';
 
 export const END: ReplayPosition = {
   end: true,
 };
 
-export function ensureList<T>(objOrList: MList<T>): T[] {
+export function ensureList<T>(objOrList: MList<T> | undefined): T[] {
   if (objOrList && objOrList instanceof Array) {
     return objOrList;
   } else if (objOrList) {
@@ -234,7 +234,7 @@ export function sliceStepsTo(replay: Replay, start: ReplayPosition, end: ReplayP
   }
   return replay.ReplayStep.slice(start.step, end.step == start.step ? end.step + 1 : end.step);
 }
-export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: ReplayPosition) {
+export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: ReplayPosition): {step: ReplayStep, action: RulesEventBoardAction}[] {
   if (start.end) {
     return [];
   }
@@ -244,9 +244,10 @@ export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: Repla
     let endAction = 'action' in end ? end.action : undefined
     let startStep = replay.ReplayStep[start.step];
     if ('RulesEventBoardAction' in startStep) {
-      return ensureList(startStep.RulesEventBoardAction)
+      let actions: RulesEventBoardAction[] = ensureList(startStep.RulesEventBoardAction)
+      return actions
         .slice(startAction || 0, endAction)
-        .map(action => ({ step: start.step, action }));
+        .map(action => ({ step: startStep, action }));
     } else {
       return [];
     }

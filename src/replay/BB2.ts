@@ -654,9 +654,11 @@ export interface ResultsAction<T> extends BaseAction {
 // Move = 0, //Move
 export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | TentaclesResult> { }
 // Block = 1, //Block
-export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult | ChainsawKickbackResult | JumpUpResult> { ActionType: ACTION_TYPE.Block }
+export type BlockResults = BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult | ChainsawKickbackResult | JumpUpResult;
+export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResults> { ActionType: ACTION_TYPE.Block }
 // Blitz = 2, //Blitz
-export interface BlitzAction extends PlayerAction, OrderAction, ResultsAction<DodgePickResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | NoChoicesResult | DodgeResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | JuggernautResult | TentaclesResult | ChainsawKickbackResult> { ActionType: ACTION_TYPE.Blitz }
+export type BlitzResults = DodgePickResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | NoChoicesResult | DodgeResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | JuggernautResult | TentaclesResult | ChainsawKickbackResult;
+export interface BlitzAction extends PlayerAction, OrderAction, ResultsAction<BlitzResults> { ActionType: ACTION_TYPE.Blitz }
 // Pass = 3, //Pass
 export interface PassAction extends PlayerAction, OrderT<Cell, {Cell: MList<Cell>}>, ResultsAction<PassResult | InterceptionResult | SafeThrowResult | LonerResult | AnimosityResult | AlwaysHungryResult | ThrowTeammateResult | InaccuratePassScatterResult | EatTeammateResult> { ActionType: ACTION_TYPE.Pass }
 // Handoff = 4, //Ball handoff

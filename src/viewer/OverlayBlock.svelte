@@ -1,17 +1,20 @@
 <script lang="ts">
+import type { Cell } from "../replay/Internal";
 
-  export let from,
-    to,
-    follow,
-    rolls,
-    color,
-    textColor,
-    pushTo,
-    oppColor,
+
+
+  export let from: Cell,
+    to: Cell,
+    follow: boolean,
+    rolls: string,
+    color: string,
+    textColor: string,
+    pushTo: Cell,
+    oppColor: string,
     index = 0;
-  let center, pushFrom;
+  let center: Cell, pushFrom: Cell;
 
-  function mixCells(cellA, cellB, pct) {
+  function mixCells(cellA: Cell, cellB: Cell, pct: number) {
     return {
       x: cellA.x * (1 - pct) + cellB.x * pct,
       y: cellA.y * (1 - pct) + cellB.y * pct,
