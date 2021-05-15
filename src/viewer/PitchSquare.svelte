@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { PlayerNumber } from "../replay/Internal.js";
+
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import Ball from "./Ball.svelte";
   import Cell from "./Cell.svelte";
@@ -6,13 +8,21 @@
   import Foul from "./Foul.svelte";
   import Player from "./Player.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  export let pitchPlayers, row, column, pitch, homeLogo, awayLogo, send, receive;
-  let player = null,
-    cell = null,
-    ball = null,
-    dice = null,
-    foul = false,
-    id;
+  import type { CrossFadeFn, PitchCellProps, PlayerProps } from "./types.js";
+  export let pitchPlayers: Record<string, PlayerProps>,
+    row: number,
+    column: number,
+    pitch: Record<string, PitchCellProps>,
+    homeLogo: string,
+    awayLogo: string,
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
+  let player: PitchCellProps["player"] = undefined,
+    cell: PitchCellProps["cell"] = undefined,
+    ball: PitchCellProps["ball"] = undefined,
+    dice: PitchCellProps["dice"] = undefined,
+    foul: PitchCellProps["foul"] = false,
+    id: string;
 
   $: {
     ({ player, cell, ball, dice, foul } = pitch[`${column}-${row}`] || {});
@@ -30,7 +40,7 @@
     $hoveredPlayer = player;
   }}
   on:mouseleave={() => {
-    $hoveredPlayer = null;
+    $hoveredPlayer = undefined;
   }}
 >
   {#if column == 0 && row == 7 && homeLogo}
@@ -55,7 +65,6 @@
     <Ball {...ball} {send} {receive} />
   {/if}
 </div>
-
 
 <style>
   .pitch-square {

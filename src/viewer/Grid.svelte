@@ -1,7 +1,6 @@
 <script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
-  export let width,
-    height;
+  export let width: number, height: number;
 </script>
 
 <FixedRatio {width} {height}>

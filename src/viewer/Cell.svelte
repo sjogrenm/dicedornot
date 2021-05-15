@@ -1,40 +1,50 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  export let plus = null,
+  import type { Fade } from "sveltestrap";
+  export let plus: number | undefined = undefined,
     active = false,
     target = false,
     pushbackChoice = false,
     moved = false,
-    row, column,
-    send,
-    receive;
+    row: number,
+    column: number,
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
   import { timing } from "../stores.js";
-  let inFn, outFn, inParms, outParms, cellClass;
+  import type { CrossFadeFn } from "./types.js";
+  let cellClass: string;
 
   $: {
-    let plusClass = plus ? `plus${plus}` : null;
-    let activeClass = active ? "active" : null;
-    let targetClass = target ? "target" : null;
-    let pushbackChoiceClass = pushbackChoice ? "pushback-choice" : null;
-    let movedClass = moved ? "moved" : null;
-    cellClass = activeClass || targetClass || pushbackChoiceClass || plusClass || movedClass || "";
-    if (active) {
-      inFn = receive;
-      outFn = send;
-      inParms = outParms = {key: "active-cell"};
-    } else {
-      inFn = outFn = fade;
-      inParms = outParms = {duration: $timing * 0.1};
-    }
+    let plusClass = plus ? `plus${plus}` : undefined;
+    let activeClass = active ? "active" : undefined;
+    let targetClass = target ? "target" : undefined;
+    let pushbackChoiceClass = pushbackChoice ? "pushback-choice" : undefined;
+    let movedClass = moved ? "moved" : undefined;
+    cellClass =
+      activeClass ||
+      targetClass ||
+      pushbackChoiceClass ||
+      plusClass ||
+      movedClass ||
+      "";
   }
 </script>
 
+{#if active}
 <div
   id={`cell_${column}_${row}`}
   class={`cell sprite ${cellClass}`}
-  in:inFn={inParms}
-  out:outFn={outParms}
+  in:send={{key: "active-cell"}}
+  out:receive={{key: "active-cell"}}
 />
+{:else}
+<div
+  id={`cell_${column}_${row}`}
+  class={`cell sprite ${cellClass}`}
+  in:fade={{duration: $timing * 0.1}}
+  out:fade={{duration: $timing * 0.1}}
+/>
+{/if}
 
 <style>
   .cell {

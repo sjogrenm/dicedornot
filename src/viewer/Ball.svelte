@@ -1,7 +1,10 @@
 <script lang="ts">
+import type { CrossFadeFn } from "./types";
+
+
   export let held = false,
-    send,
-    receive;
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
 </script>
 
 <div

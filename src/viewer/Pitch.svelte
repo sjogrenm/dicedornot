@@ -3,10 +3,16 @@
   import PitchSquare from "./PitchSquare.svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Overlay from "./Overlay.svelte";
-  import {replayPreview} from "../stores.js";
-  export let pitchPlayers: Record<string, PlayerProps>, homeTeam, awayTeam, pitch, send, receive;
+  import { replayPreview } from "../stores.js";
+  import type { CrossFadeFn, PlayerProps, Team, PitchCellProps } from "./types.js";
+  export let pitchPlayers: Record<string, PlayerProps>,
+    homeTeam: Team,
+    awayTeam: Team,
+    pitch: Record<string, PitchCellProps>,
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
 
-  let homeLogo, awayLogo;
+  let homeLogo: string, awayLogo: string;
   $: {
     homeLogo = homeTeam.logo;
     awayLogo = awayTeam.logo;
@@ -29,7 +35,7 @@
   {#if $replayPreview}
     <div class="overlay">
       <FixedRatio width={26} height={15}>
-        <Overlay/>
+        <Overlay />
       </FixedRatio>
     </div>
   {/if}
@@ -37,8 +43,8 @@
 
 <style>
   .pitch {
-    left: calc(18/1336*100%);
-    width: calc(1300/1336*100%);
+    left: calc(18 / 1336 * 100%);
+    width: calc(1300 / 1336 * 100%);
     position: relative;
   }
   .overlay {

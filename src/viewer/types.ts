@@ -11,7 +11,7 @@ import type {
 } from "../constants.js";
 import type {crossfade} from 'svelte/transition';
 
-export type CrossFadeFun = ReturnType<typeof crossfade>[number];
+export type CrossFadeFn = ReturnType<typeof crossfade>[number];
 
 export interface Dugout {
     cas: BB2.PlayerId[],

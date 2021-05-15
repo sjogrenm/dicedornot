@@ -3,7 +3,7 @@
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import { SITUATION, Casualties, SIDE } from "../constants.js";
   import { translateStringNumberList } from "../replay-utils.js";
-  import type { PlayerProps, Dugout, CrossFadeFun } from "./types";
+  import type { PlayerProps, Dugout, CrossFadeFn } from "./types";
   import type { PlayerNumber } from "../replay/Internal";
   export let pitchPlayers: Record<PlayerNumber, PlayerProps>,
     team: SIDE,
@@ -13,8 +13,8 @@
     width: number,
     height: number,
     casType: keyof Dugout,
-    send: CrossFadeFun | undefined,
-    receive: CrossFadeFun | undefined;
+    send: CrossFadeFn | undefined,
+    receive: CrossFadeFn | undefined;
   let player: PlayerProps | undefined = undefined,
     players,
     id: string,

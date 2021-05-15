@@ -3,7 +3,7 @@
   import { getPlayerSprite } from "../constants.js";
   import { translateStringNumberList } from "../replay-utils.js";
   import type { PitchPlayer } from "../replay/BB2.js";
-  import type { CrossFadeFun } from "./types.js";
+  import type { CrossFadeFn } from "./types.js";
 
   export let data: PitchPlayer,
     done: boolean | undefined = undefined,
@@ -12,8 +12,8 @@
     stunned: boolean | undefined = undefined,
     blitz: boolean | undefined = undefined,
     stupidity: string | undefined = undefined,
-    send: CrossFadeFun | undefined = undefined,
-    receive: CrossFadeFun | undefined = undefined;
+    send: CrossFadeFn | undefined = undefined,
+    receive: CrossFadeFn | undefined = undefined;
   let id,
     race,
     model,
