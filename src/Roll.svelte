@@ -3,8 +3,10 @@
   import RollOutcomes from "./RollOutcomes.svelte";
   import { replayTarget, showResultsAnalysis } from "./stores.js";
   import { Icon } from "sveltestrap";
-  export let roll, selected;
-  let actualDistributions;
+  import type { Roll } from "./rolls.js";
+  import type { Distribution as Dist } from "./distribution.js";
+  export let roll: Roll<any>, selected: boolean;
+  let actualDistributions: Dist[];
   let actualOpen = false;
   let detailsOpen = false;
 
@@ -23,16 +25,15 @@
   }
 </script>
 
-<div
-  class="row"
->
+<div class="row">
   <div class="col col-auto pr-0 pl-2">
     <div>
       <button
         href="#viewer"
         class="btn btn-secondary btn-sm"
         on:click={() => ($replayTarget = roll.startIndex)}
-        ><Icon name="arrow-down-right" title="Jump to Roll" /></button>
+        ><Icon name="arrow-down-right" title="Jump to Roll" /></button
+      >
     </div>
     {#if selected}
       <div>

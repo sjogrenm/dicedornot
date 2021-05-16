@@ -294,7 +294,7 @@ export class Roll<D> {
   get rollName() { return `Unnamed Roll ${this.constructor.name}`; }
   get handledSkills(): SKILL[] {return [];}
   get diceSeparator() { return ', '; }
-  static hideDependents = false;
+  get hideDependents() { return false; }
   get dependentConditions(): DependentCondition[] {return [];}
 
   get unhandledSkills(): BB2.SkillInfo[] {
@@ -2676,7 +2676,7 @@ export class PitchInvasionRoll extends KickoffEventRoll {
 export class SetupAction extends NoValueRoll<undefined> {
   get rollName() { return "Setup"; }
   get dependentConditions(): DependentCondition[] { return [setup]; }
-  static hideDependents = true;
+  get hideDependents() { return true; }
   static ignore(xml: RollXML<BB2.RulesEventBoardAction, any>) {
     return false;
   }

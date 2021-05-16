@@ -1,6 +1,6 @@
 <script lang="ts">
-  import {hoveredPlayer, selectedPlayer} from "./stores.js";
-  import type {Player} from './rolls.js';
+  import { hoveredPlayer, selectedPlayer } from "./stores.js";
+  import type { Player } from "./rolls.js";
   export let player: Player;
 </script>
 
