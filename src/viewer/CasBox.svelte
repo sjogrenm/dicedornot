@@ -1,13 +1,33 @@
 <script lang="ts">
-  import Grid from './Grid.svelte';
-  import CasSquare from './CasSquare.svelte';
-  export let pitchPlayers, team, casType, dugout, send, receive;
-  let width = 4, height = 2;
+  import Grid from "./Grid.svelte";
+  import CasSquare from "./CasSquare.svelte";
+  import type { SIDE } from "../constants.js";
+  import type { CrossFadeFn, Team, PlayerProps, Dugout } from "./types.js";
+  import type * as Internal from "../replay/Internal.js";
+  export let pitchPlayers: Record<Internal.PlayerNumber, PlayerProps>,
+    team: SIDE,
+    casType: keyof Dugout,
+    dugout: Dugout,
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
+  let width = 4,
+    height = 2;
 </script>
 
 <div class={`bench ${casType}`}>
   <Grid {width} {height} let:row let:column>
-    <CasSquare {pitchPlayers} {team} {width} {height} {send} {receive} {casType} {dugout} {row} {column}></CasSquare>
+    <CasSquare
+      {pitchPlayers}
+      {team}
+      {width}
+      {height}
+      {send}
+      {receive}
+      {casType}
+      {dugout}
+      {row}
+      {column}
+    />
   </Grid>
 </div>
 
