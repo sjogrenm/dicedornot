@@ -6,8 +6,18 @@
     ComparativeDistribution,
     BinFuncDistribution,
   } from "./distribution.js";
-  export let dist;
+  export let dist: Distribution;
   let open = false;
+
+  function binFuncName(dist: BinFuncDistribution) {
+    return dist.values.reduce((name: string, value: Distribution | number) => {
+        if (value instanceof Distribution) {
+          return (name ? dist.nameFunc(name, value.name) : value.name)
+        } else {
+          return (name ? dist.nameFunc(name, value.toString()) : value.toString())
+        }
+    }, "")
+  }
 </script>
 
 {#if dist instanceof SingleValue}
@@ -24,7 +34,7 @@
     </summary>
     {#if open}
       <ul class="list-group" on:click|stopPropagation>
-        {#each dist.values.sort((a, b) => a.name > b.name ? 1 : -1) as value}
+        {#each dist.values.sort((a, b) => (a.name || "") > (b.name || "") ? 1 : -1) as value}
           {#if value.value instanceof Distribution}
             <li class="list-group-item list-group-item-action">
               <svelte:self
@@ -50,13 +60,7 @@
     {open}>
     <summary>
       {#if dist.name}{dist.name} &rightarrow;{/if}
-      {dist.values.reduce((name, value) => {
-        if (value instanceof Distribution) {
-          return (name ? dist.nameFunc(name, value.name) : value.name)
-        } else {
-          return (name ? dist.nameFunc(name, value.toString()) : value.toString())
-        }
-      }, null)}
+      {binFuncName(dist)}
       {dist.valueString}
     </summary>
     {#if open}
