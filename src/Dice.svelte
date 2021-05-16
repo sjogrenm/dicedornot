@@ -5,7 +5,7 @@
     size = 1.45,
     separator = "";
 
-  let DICE_MAP = {
+  let DICE_MAP: Record<number | BLOCK, string> = {
     1: "a",
     2: "b",
     3: "c",
