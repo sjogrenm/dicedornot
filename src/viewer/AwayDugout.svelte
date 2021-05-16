@@ -1,26 +1,28 @@
 <script lang="ts">
-
   import AwayBench from "./AwayBench.svelte";
   import TeamAids from "./TeamAids.svelte";
   import TeamLogo from "./TeamLogo.svelte";
+  import type { CrossFadeFn, Team, PlayerProps } from "./types";
+  import type * as Internal from "../replay/Internal.js";
 
-  export let pitchPlayers, team, send, receive;
-
+  export let pitchPlayers: Record<Internal.PlayerNumber, PlayerProps>,
+    team: Team,
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
 </script>
 
 <div class="dugout">
-  <div class="aids"><TeamAids reverse={true} {team}/></div>
+  <div class="aids"><TeamAids reverse={true} {team} /></div>
   <div class="score"><span>{team.score || 0}</span></div>
-  <div class="turn" class:active={team.active}>{team.turn || ''}</div>
-  <div class="name">{team.name || 'Away'}</div>
+  <div class="turn" class:active={team.active}>{team.turn || ""}</div>
+  <div class="name">{team.name || "Away"}</div>
   <div class="logo">
-    <TeamLogo logo={team.logo}/>
+    <TeamLogo logo={team.logo} />
   </div>
-  <AwayBench {pitchPlayers} dugout={team.dugout} {send} {receive}/>
+  <AwayBench {pitchPlayers} dugout={team.dugout} {send} {receive} />
 </div>
 
 <style>
-
   .logo {
     position: absolute;
     width: 3.5%;
@@ -49,22 +51,22 @@
 
   .turn {
     position: absolute;
-    display:flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     left: 47%;
     font-size: calc(min(4vh, 3vw));
     text-align: center;
     width: 6%;
-    top:0;
-    height:50%;
+    top: 0;
+    height: 50%;
   }
   .turn.active {
     color: #ffb22e;
   }
   .score {
     position: absolute;
-    display:flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     left: 47%;
@@ -72,7 +74,7 @@
     text-align: center;
     width: 6%;
     bottom: 0;
-    height:50%;
+    height: 50%;
   }
   .score > span {
     margin-top: 0;
