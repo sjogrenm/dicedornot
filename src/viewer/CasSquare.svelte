@@ -21,7 +21,7 @@
     cas: string | undefined = undefined;
 
   $: {
-    id = `${team == 1 ? "away" : "home"}-${casType}-${row}-${column}`;
+    id = `${team == SIDE.away ? "away" : "home"}-${casType}-${row}-${column}`;
     if (dugout) {
       if (casType == "ko") {
         players = dugout["cas"].slice(width * height).concat(dugout[casType]);

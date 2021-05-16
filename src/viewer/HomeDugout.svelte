@@ -3,8 +3,15 @@
   import TeamAids from "./TeamAids.svelte";
   import Weather from "./Weather.svelte";
   import TeamLogo from "./TeamLogo.svelte";
+  import type { CrossFadeFn, Team, PlayerProps } from "./types";
+  import type { WEATHER } from "../constants";
+  import type * as Internal from "../replay/Internal.js";
 
-  export let pitchPlayers, team, weather, send, receive;
+  export let pitchPlayers: Record<Internal.PlayerNumber, PlayerProps>,
+    team: Team,
+    weather: WEATHER,
+    send: CrossFadeFn,
+    receive: CrossFadeFn;
 </script>
 
 <div class="dugout">
@@ -13,10 +20,10 @@
     <div class="logo">
       <TeamLogo logo={team.logo} />
     </div>
-    <div class="name">{team.name || 'Home'}</div>
+    <div class="name">{team.name || "Home"}</div>
     <div class="score"><span>{team.score || 0}</span></div>
-    <div class="turn" class:active={team.active}>{team.turn || ''}</div>
-    <div class="aids"><TeamAids {team}/></div>
+    <div class="turn" class:active={team.active}>{team.turn || ""}</div>
+    <div class="aids"><TeamAids {team} /></div>
   {/if}
   <div class="weather"><Weather {weather} /></div>
 </div>
@@ -42,7 +49,7 @@
   }
   .dugout {
     width: 100%;
-    height: calc(158/1062*100%);
+    height: calc(158 / 1062 * 100%);
     position: relative;
     color: hsl(0, 0%, 85%);
     font-family: Nuffle;
@@ -91,5 +98,4 @@
     left: 53%;
     bottom: 1%;
   }
-
 </style>
