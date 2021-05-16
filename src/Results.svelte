@@ -3,27 +3,30 @@
   import embed from "vega-embed";
   import * as vega from "vega";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
+  import type { View } from "vega";
+  import type {Roll} from "./rolls.js";
+  import {atOrAfter} from "./replay-utils.js";
 
-  let rolls, view, playHead, activeTimeout, loadedReplay, chartEl;
-  export let spec;
+  let rolls: Roll<any>[],
+    view: View,
+    playHead: number | undefined,
+    loadedReplay: string | undefined,
+    chartEl: HTMLElement;
+  export let spec: any;
 
   onMount(() => {
     return () => {
       if (view) {
         view.finalize();
       }
-      if (activeTimeout) {
-        clearTimeout(activeTimeout);
-        activeTimeout = null;
-      }
     };
   });
 
   $: {
-    rolls = $replay.rolls;
+    rolls = $replay!.rolls;
     if (rolls && $replayCurrent) {
       let nextRoll = rolls.findIndex((roll) => {
-        return roll.startIndex.atOrAfter($replayCurrent);
+        return atOrAfter(roll.startIndex, $replayCurrent);
       });
       playHead = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
     }
@@ -34,12 +37,8 @@
         .insert([{ rollIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
     }
-    if ($replay.fullReplay.filename != loadedReplay && chartEl) {
-      loadedReplay = $replay.fullReplay.filename;
-      if (activeTimeout) {
-        clearTimeout(activeTimeout);
-        activeTimeout = null;
-      }
+    if ($replay!.fullReplay.filename != loadedReplay && chartEl) {
+      loadedReplay = $replay!.fullReplay.filename;
       console.log("Results onMount", { replay: $replay });
       renderChart();
       console.log("Results onMount chart rendered");
