@@ -13,7 +13,7 @@
     $hoveredPlayer = player.id;
   }}
   on:mouseleave={() => {
-    $hoveredPlayer = null;
+    $hoveredPlayer = undefined;
   }}>{player.name}</span
 >
 
