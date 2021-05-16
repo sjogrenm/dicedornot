@@ -1,15 +1,25 @@
 <script lang="ts">
-  export let rolls;
-  import {replayCurrent, replayTarget, replayPreview} from "./stores.js";
-  let turn, teamId, teamName, current, active, startIndex, endIndex;
+  import type { SIDE } from "./constants.js";
+  import { ReplayPosition, atOrAfter, before } from "./replay-utils.js";
+
+  import type { Roll } from "./rolls.js";
+
+  export let rolls: Roll<any>[];
+  import { replayCurrent, replayTarget, replayPreview } from "./stores.js";
+  let turn: number,
+    teamId: SIDE | undefined,
+    teamName: string | undefined,
+    current: boolean,
+    startIndex: ReplayPosition,
+    endIndex: ReplayPosition;
 
   $: {
     turn = rolls[0].turn;
-    teamId = rolls[0].activeTeam.id;
-    teamName = rolls[0].activeTeam.name;
+    teamId = rolls[0].activeTeam?.id;
+    teamName = rolls[0].activeTeam?.name;
     startIndex = rolls[0].startIndex;
     endIndex = rolls[rolls.length - 1].endIndex;
-    current = $replayCurrent.atOrAfter(startIndex) && $replayCurrent.before(endIndex);
+    current = atOrAfter($replayCurrent, startIndex) && before($replayCurrent, endIndex);
   }
 </script>
 
@@ -18,7 +28,7 @@
   class:current
   title={`${teamName}: Turn ${turn}`}
   on:click={() => ($replayTarget = startIndex)}
-  on:mouseover={() => ($replayPreview = {start: startIndex, end: endIndex})}
+  on:mouseover={() => ($replayPreview = { start: startIndex, end: endIndex })}
 >
   {turn}
 </div>
