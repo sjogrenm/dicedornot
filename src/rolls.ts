@@ -2254,9 +2254,11 @@ export class InjuryRoll extends Roll<number> {
 
 interface CasualtyRollArgs extends RollArgs<number> {
   isFoul: boolean,
+  activePlayer: Player,
 }
 export class CasualtyRoll extends Roll<number> {
   isFoul: boolean;
+  activePlayer: Player;
   get rollName() { return "Casualty"; }
   get handledSkills(): SKILL[] {return [SKILL.NurglesRot, SKILL.Decay]};
   // TODO: Handle skills
@@ -2266,6 +2268,7 @@ export class CasualtyRoll extends Roll<number> {
   constructor(args: CasualtyRollArgs) {
     super(args);
     this.isFoul = args.isFoul;
+    this.activePlayer = args.activePlayer;
   }
   static argsFromXml(xml: RollXML<BB2.BlockAction | BB2.FoulAction, BB2.CasualtyResult>): CasualtyRollArgs {
     let args = super.argsFromXml(xml);
@@ -2274,6 +2277,7 @@ export class CasualtyRoll extends Roll<number> {
       // Casualty dice are also doubled up, and also both rolls appear when an apoc is used (so the last one is the valid one)
       dice: args.dice.slice(0, args.dice.length/2).slice(-1),
       isFoul: xml.action.ActionType == ACTION_TYPE.Foul,
+      activePlayer: args.activePlayer!,
     };
   }
 

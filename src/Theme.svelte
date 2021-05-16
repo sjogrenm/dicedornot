@@ -1,7 +1,9 @@
 <script lang="ts">
+import type { Color, Scale } from "chroma-js";
+
   import {team1Color, team1Gray, team0Color, team0Gray, gray} from "./theme.js";
 
-  function scaleToStyle(scale, prefix) {
+  function scaleToStyle(scale: Scale<Color>, prefix: string) {
     return scale.colors(10).map((color, idx) => `${prefix}-${idx}: ${color};`).join("\n")
   }
   let css = `

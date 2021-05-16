@@ -2,7 +2,7 @@
   import Grid from "./Grid.svelte";
   import CasSquare from "./CasSquare.svelte";
   import type { SIDE } from "../constants.js";
-  import type { CrossFadeFn, Team, PlayerProps, Dugout } from "./types.js";
+  import type { CrossFadeFn, PlayerProps, Dugout } from "./types.js";
   import type * as Internal from "../replay/Internal.js";
   export let pitchPlayers: Record<Internal.PlayerNumber, PlayerProps>,
     team: SIDE,

@@ -2,7 +2,6 @@
   import { Row, Col } from "sveltestrap";
   import { SIDE } from "./constants";
   import { replay } from "./stores";
-  import type { DataPoint } from "./rolls";
 
   export let homeTeam: string, awayTeam: string;
   interface Value {

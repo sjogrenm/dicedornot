@@ -1,6 +1,6 @@
 <script lang="ts">
   export let width=1, height=1;
-  let clazz = null;
+  let clazz: string | undefined;
   export { clazz as class }
 </script>
 
