@@ -163,7 +163,7 @@ class Team {
       (playerState) => new Player(this, playerState, boardState)
     );
     this.name = he.decode(teamState.Data.Name.toString());
-    this.id = teamState.Data.TeamId || 0;
+    this.id = teamState.Data.TeamId || SIDE.home;
     this.turn = teamState.GameTurn || 1;
     this.fame = teamState.Fame || 0;
     this.teamState = teamState;
@@ -288,7 +288,7 @@ export class Roll<D> {
   rollType: ROLL;
   skillsInEffect: BB2.SkillInfo[];
   startIndex: ReplayPosition;
-  endIndex?: ReplayPosition;
+  endIndex: ReplayPosition = {end: true};
   ignore: boolean;
 
   get rollName() { return `Unnamed Roll ${this.constructor.name}`; }

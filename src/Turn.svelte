@@ -2,13 +2,14 @@
   import Roll from "./Roll.svelte";
   import { replayPreview } from "./stores.js";
   import type {Roll as ReplayRoll} from "./rolls.js";
-  export let rolls: ReplayRoll<any>[], selectedRoll;
+import { SIDE } from "./constants";
+  export let rolls: ReplayRoll<any>[], selectedRoll: number;
 </script>
 
-<div class="list-group" id="turn" on:mouseleave={() => ($replayPreview = null)}>
+<div class="list-group" id="turn" on:mouseleave={() => ($replayPreview = undefined)}>
   {#each rolls as roll (roll.rollIndex)}
     <div
-      class={`list-group-item list-group-item-action team-${roll.activeTeam.id}`}
+      class={`list-group-item list-group-item-action team-${roll.activeTeam?.id || SIDE.home}`}
       class:active={selectedRoll == roll.rollIndex}
       on:mouseover={() => ($replayPreview = {start: roll.startIndex, end: roll.endIndex})}
     >

@@ -147,7 +147,7 @@
   async function parseReplay(replayFile: File, replayType: ReplayType, replayId: string, updateUrl: boolean) {
     loading = `Parsing ${replayFile.name}`;
     let jsonReplayFile = await xmlToJson(replayFile);
-    for (const [replayName, jsonReplayData] of Object.entries(jsonReplayFile)) {
+    for (const [_, jsonReplayData] of Object.entries(jsonReplayFile)) {
       console.log("Preparing to process replay json...");
       jsonReplayData.Replay.filename = replayFile.name;
       jsonReplayData.CACHE_VERSION = CACHE_VERSION;
@@ -259,7 +259,7 @@
           name="saved-replay-choice"
           placeholder="Enter team name here for saved replay..."
           bind:this={cachePicker}
-          on:input={(ev) => {
+          on:input={() => {
             if (replays.map(replay => replay.cacheKey).includes(cachePicker.value)) {
               loadFromCache(cachePicker.value, true);
               cachePicker.value = "";

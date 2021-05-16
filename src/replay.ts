@@ -1,6 +1,6 @@
 import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
 import { END, ensureList } from "./replay-utils.js";
-import { SIDE } from "./constants.js";
+import { SIDE, RACE_ID } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
 import he from 'he';
 import {xmlToJson} from "./io.js";
@@ -10,10 +10,10 @@ import { initial } from "underscore";
 interface TeamDetails {
   coachName: string,
   teamName: string,
-  raceId: number,
+  raceId: RACE_ID,
   score: number,
 }
-interface GameDetails {
+export interface GameDetails {
   //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
   stadiumName: string,
   stadiumType?: string,

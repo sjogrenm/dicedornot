@@ -1,15 +1,19 @@
 <script lang="ts">
-  let gameDetails, filename, shared = false;
   import { RACE_NAMES } from "./constants.js";
   import { Row, Col, Button } from "sveltestrap";
-  import {replay} from "./stores.js";
+  import { replay } from "./stores.js";
+  import type { GameDetails } from "./replay.js";
+
+  let gameDetails: GameDetails,
+    filename: string | undefined,
+    shared = false;
 
   $: {
-    gameDetails = $replay.gameDetails;
-    filename = $replay.fullReplay.filename;
+    gameDetails = $replay!.gameDetails;
+    filename = $replay!.fullReplay.filename;
   }
 
-  function sleep(ms) {
+  function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -25,7 +29,7 @@
   <Col>
     <div class="team-name home">
       <Row class="align-items-center justify-content-center">
-        <Col xs="auto" >
+        <Col xs="auto">
           <img
             class="race-logo"
             src={`/images/races/${gameDetails.homeTeam.raceId}.png`}
@@ -35,7 +39,7 @@
               `Unknown: ${gameDetails.homeTeam.raceId}`}
           />
         </Col>
-        <Col xs="auto" >
+        <Col xs="auto">
           <div class="team">{gameDetails.homeTeam.teamName}</div>
           <div class="coach">{gameDetails.homeTeam.coachName}</div>
         </Col>
@@ -85,13 +89,13 @@
 
   <Col xs="auto">
     {#if gameDetails.leagueName}
-    League: {gameDetails.leagueName}
+      League: {gameDetails.leagueName}
     {:else}
-    Friendly
+      Friendly
     {/if}
   </Col>
 
-  {#if $replay.fullReplay.url}
+  {#if $replay && $replay.fullReplay.url}
     <Col xs="auto">
       <Button on:click={share} color={shared ? "success" : "primary"}>
         {#if shared}
