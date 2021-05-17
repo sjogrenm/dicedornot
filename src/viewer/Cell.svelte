@@ -1,6 +1,5 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import type { Fade } from "sveltestrap";
   export let plus: number | undefined = undefined,
     active = false,
     target = false,

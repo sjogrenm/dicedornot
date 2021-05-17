@@ -21,10 +21,6 @@
     rolls: Props['rolls'],
     color: string,
     textColor: string,
-    oppColor,
-    oppTextColor,
-    team: Props['team'],
-    component,
     index = 0,
     _rolls: _Roll[];
 

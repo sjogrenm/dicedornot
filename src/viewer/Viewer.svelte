@@ -1,5 +1,12 @@
 <script lang="ts">
-  import type {Team, PitchCellProps, PlayerProps, Preview, WakeConditions, Dugout} from "./types.js";
+  import type {
+    Team,
+    PitchCellProps,
+    PlayerProps,
+    Preview,
+    WakeConditions,
+    Dugout,
+  } from "./types.js";
   import { onMount, tick } from "svelte";
   import { sineInOut } from "svelte/easing";
   import { crossfade } from "svelte/transition";
@@ -16,14 +23,12 @@
     ACTION_TYPE,
     getPlayerSprite,
     SIDE,
-    RACE_ID,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
   import {
     translateStringNumberList,
     ensureList,
-    REPLAY_KEY,
     REPLAY_SUB_STEP,
     ReplayPosition,
     ReplayPreview,
@@ -31,6 +36,9 @@
     period,
     initialReplayPosition,
     ensureKeyedList,
+    updateToNextPosition,
+    toParam,
+    atOrAfter,
   } from "../replay-utils.js";
   import {
     replay,
@@ -45,14 +53,28 @@
   import he from "he";
   import type * as BB2 from "../replay/BB2.js";
   import type * as Internal from "../replay/Internal.js";
-  import {convertCell} from "../replay/BB2toInternal.js";
-import type {ProcessedReplay} from '../replay.js';
+  import { convertCell } from "../replay/BB2toInternal.js";
 
   export let playing = false;
 
-  let lastChainPush: BB2.PlayerId,
+  let lastChainPush: BB2.PlayerId | undefined,
     races: string[] = [],
-    homeTeam: Team = {
+    homeTeam: Team = emptyTeam(),
+    awayTeam: Team = emptyTeam(),
+    pitch: Record<string, PitchCellProps> = {},
+    players: Record<Internal.PlayerNumber, PlayerProps> = {},
+    blitzerId: Internal.PlayerNumber,
+    banner: string | undefined = undefined,
+    weather = WEATHER.Nice,
+    skipping = false,
+    underPreview: Preview | undefined = undefined,
+    previewing: ReplayPreview | undefined = undefined,
+    shouldWake: WakeConditions | undefined,
+    abort = new AbortController(),
+    current: ReplayPosition = initialReplayPosition();
+
+  function emptyTeam(): Team {
+    return {
       logo: "",
       dugout: {
         cas: [],
@@ -81,50 +103,13 @@ import type {ProcessedReplay} from '../replay.js';
         },
         igor: false,
       },
-    },
-    awayTeam: Team = {
-      logo: "",
-      dugout: {
-        cas: [],
-        ko: [],
-        reserve: [],
-      },
-      score: 0,
-      name: "",
-      turn: 1,
-      active: false,
-      rerolls:  {
-        available: 0,
-        total: 0,
-      },
-      inducements: {
-        wizard: false,
-        babes: 0,
-        apo: {
-          available: 0,
-          total: 0,
-        },
-        chef: false,
-        bribes: {
-          available: 0,
-          total: 0,
-        },
-        igor: false,
-      },
-    },
-    pitch: Record<string, PitchCellProps> = {},
-    players: Record<Internal.PlayerNumber, PlayerProps> = {},
-    blitzerId: Internal.PlayerNumber,
-    banner: string | null = null,
-    weather = WEATHER.Nice,
-    skipping = false,
-    underPreview: null | Preview = null,
-    previewing: boolean = false,
-    shouldWake: WakeConditions | undefined,
-    abort = new AbortController(),
-    current: ReplayPosition = initialReplayPosition();
+    };
+  }
 
-  const DUGOUT_POSITIONS: Record<Exclude<SITUATION, SITUATION.Active>, keyof Dugout> = {
+  const DUGOUT_POSITIONS: Record<
+    Exclude<SITUATION, SITUATION.Active>,
+    keyof Dugout
+  > = {
     [SITUATION.Reserves]: "reserve",
     [SITUATION.KO]: "ko",
     [SITUATION.Casualty]: "cas",
@@ -158,7 +143,7 @@ import type {ProcessedReplay} from '../replay.js';
     duration: $timing * 0.5,
     easing: sineInOut,
 
-    fallback(node, params) {
+    fallback(node) {
       const style = getComputedStyle(node);
       const transform = style.transform === "none" ? "" : style.transform;
 
@@ -197,7 +182,7 @@ import type {ProcessedReplay} from '../replay.js';
       boardState.ActiveTeam == 1
     );
     races = boardState.ListTeams.TeamState.flatMap((team) =>
-      ensureKeyedList('PlayerState', team.ListPitchPlayers).map((player) => {
+      ensureKeyedList("PlayerState", team.ListPitchPlayers).map((player) => {
         const { race } = getPlayerSprite(player.Id, player.Data.IdPlayerTypes);
         return race;
       })
@@ -210,7 +195,7 @@ import type {ProcessedReplay} from '../replay.js';
   function processTeam(side: SIDE, team: BB2.TeamState, active: boolean): Team {
     let maxRerollsThisPeriod = $replay!.fullReplay.ReplayStep.reduce(
       (acc: number, step: BB2.ReplayStep) => {
-        if (!('BoardState' in step)) {
+        if (!("BoardState" in step)) {
           return acc;
         }
         let stepTeam = step.BoardState.ListTeams.TeamState[side];
@@ -223,7 +208,7 @@ import type {ProcessedReplay} from '../replay.js';
       0
     );
     let maxApos = $replay!.fullReplay.ReplayStep.reduce((acc, step) => {
-      if (!('BoardState' in step)) {
+      if (!("BoardState" in step)) {
         return acc;
       }
       let stepTeam = step.BoardState.ListTeams.TeamState[side];
@@ -280,12 +265,14 @@ import type {ProcessedReplay} from '../replay.js';
       }
     });
     players = {};
-    ensureKeyedList('PlayerState', boardState.ListTeams.TeamState[0].ListPitchPlayers).map((p) =>
-      placePlayer(p, SIDE.home)
-    );
-    ensureKeyedList('PlayerState', boardState.ListTeams.TeamState[1].ListPitchPlayers).map((p) =>
-      placePlayer(p, SIDE.away)
-    );
+    ensureKeyedList(
+      "PlayerState",
+      boardState.ListTeams.TeamState[0].ListPitchPlayers
+    ).map((p) => placePlayer(p, SIDE.home));
+    ensureKeyedList(
+      "PlayerState",
+      boardState.ListTeams.TeamState[1].ListPitchPlayers
+    ).map((p) => placePlayer(p, SIDE.away));
     if (boardState.ListTeams.TeamState[0].BlitzerId) {
       players[boardState.ListTeams.TeamState[0].BlitzerId].blitz = true;
     }
@@ -316,13 +303,13 @@ import type {ProcessedReplay} from '../replay.js';
     });
 
     if (x != -1 && y != -1) {
-      setPitchSquare({x, y}).ball = {
+      setPitchSquare({ x, y }).ball = {
         held: boardState.Ball.IsHeld == 1,
       };
     }
   }
 
-  function badAction(action: never): never
+  function badAction(action: never): never;
   function badAction(action: BB2.RulesEventBoardAction) {
     console.error(`Unexpected action ${JSON.stringify(action)}`);
   }
@@ -331,7 +318,7 @@ import type {ProcessedReplay} from '../replay.js';
     action: BB2.RulesEventBoardAction,
     resultIndex: number
   ) {
-    if (!('ActionType' in action)) {
+    if (!("ActionType" in action)) {
       return handleMove(action, resultIndex);
     }
     switch (action.ActionType) {
@@ -362,13 +349,13 @@ import type {ProcessedReplay} from '../replay.js';
       case ACTION_TYPE.ActivationTest:
         return handleActivationTest(action, resultIndex);
       case ACTION_TYPE.Leap:
-        return handleLeap(action, resultIndex);
+        return handleMove(action, resultIndex);
       case ACTION_TYPE.ActivatePlayer:
         return handleActivate(action);
       case ACTION_TYPE.InitialWeather:
         return handleWeather(action, resultIndex);
-      case ACTION_TYPE.Turnover:
-        return handleTurnover(action);
+      // case ACTION_TYPE.Turnover:
+      //   return handleTurnover(action);
       case ACTION_TYPE.FansNumber:
       case ACTION_TYPE.WakeUp:
       case ACTION_TYPE.Landing:
@@ -391,6 +378,7 @@ import type {ProcessedReplay} from '../replay.js';
       case ACTION_TYPE.FoulRefCheck:
       case ACTION_TYPE.FreeMove:
       case ACTION_TYPE.DodgeAgDivingTackle:
+      case ACTION_TYPE.SwelteringHeat:
         // TODO: Handle These
         console.warn(`Unhandled action ${JSON.stringify(action)}`);
         break;
@@ -400,7 +388,7 @@ import type {ProcessedReplay} from '../replay.js';
   }
   function sleep(ms: number) {
     let signal = abort.signal;
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve) => {
       const listener = () => {
         clearTimeout(timer);
         abort = new AbortController();
@@ -452,7 +440,7 @@ import type {ProcessedReplay} from '../replay.js';
       return;
     }
     if (current.step > $replay!.fullReplay.ReplayStep.length) {
-      console.error("Went too far", {current, replay: $replay});
+      console.error("Went too far", { current, replay: $replay });
       current = initialReplayPosition();
       return;
     }
@@ -463,45 +451,55 @@ import type {ProcessedReplay} from '../replay.js';
           await handleSetupAction();
           break;
         case REPLAY_SUB_STEP.BoardAction:
-          let action = ensureList(subStep)[current.action];
-          if (!action) {
-            console.error("No action found", {
-              subStep,
-              replayCurrent: current,
-              step,
-            });
+          if ("RulesEventBoardAction" in step) {
+            const subStep = step.RulesEventBoardAction;
+            let action = ensureList(subStep)[current.action];
+            if (!action) {
+              console.error("No action found", {
+                subStep,
+                replayCurrent: current,
+                step,
+              });
+            }
+            await handleBoardAction(action, current.result);
           }
-          await handleBoardAction(action, current.result);
           break;
         case REPLAY_SUB_STEP.EndTurn:
-          if ('RulesEventEndTurn' in step) {
-            await handleTurnover(step['RulesEventEndTurn']);
+          if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
+            await handleTurnover(step.RulesEventEndTurn);
           }
           break;
         case REPLAY_SUB_STEP.BoardState:
-          await handleBoardState(subStep);
+          if ("BoardState" in step) {
+            await handleBoardState(step.BoardState);
+          }
           break;
       }
     }
-    current = current.toNextPosition($replay.fullReplay);
+    current = updateToNextPosition($replay!.fullReplay, current);
     if (updateUrl) {
       if (!skipping) {
         $replayCurrent = current;
       }
       let url = new URL(window.location.href);
-      url.searchParams.set("st", current.toParam());
+      url.searchParams.set("st", toParam(current));
       window.history.replaceState({}, "", url.href);
     }
   }
 
-  async function jumpToPosition(position, updateUrl = true) {
+  async function jumpToPosition(position: ReplayPosition, updateUrl = true) {
     clearTemporaryState();
-    current = new ReplayPosition(
-      Math.max(0, position.step - 1),
-      REPLAY_SUB_STEP.BoardState
-    );
+    if (position.end) {
+      current = position;
+      return;
+    }
+    current = {
+      end: false,
+      step: Math.max(0, position.step - 1),
+      subStep: REPLAY_SUB_STEP.BoardState,
+    };
     skipping = true;
-    while (position.atOrAfter(current)) {
+    while (atOrAfter(position, current)) {
       await stepReplay(updateUrl);
     }
     skipping = false;
@@ -523,24 +521,16 @@ import type {ProcessedReplay} from '../replay.js';
           players = underPreview.players;
           playing = underPreview.playing;
           current = underPreview.current;
-          previewing = null;
-          underPreview = null;
-        } else if (underPreview && previewing != $replayPreview) {
+          previewing = undefined;
+          underPreview = undefined;
+        } else if (
+          underPreview &&
+          $replayPreview &&
+          previewing != $replayPreview
+        ) {
           previewing = $replayPreview;
-          homeTeam = {
-            dugout: {
-              cas: [],
-              ko: [],
-              reserve: [],
-            },
-          };
-          awayTeam = {
-            dugout: {
-              cas: [],
-              ko: [],
-              reserve: [],
-            },
-          };
+          homeTeam = emptyTeam();
+          awayTeam = emptyTeam();
           pitch = {};
           players = {};
           jumpToPosition($replayPreview.start, false);
@@ -556,26 +546,18 @@ import type {ProcessedReplay} from '../replay.js';
           };
           playing = false;
           previewing = $replayPreview;
-          homeTeam = {
-            dugout: {
-              cas: [],
-              ko: [],
-              reserve: [],
-            },
-          };
-          awayTeam = {
-            dugout: {
-              cas: [],
-              ko: [],
-              reserve: [],
-            },
-          };
+          homeTeam = emptyTeam();
+          awayTeam = emptyTeam();
           pitch = {};
           players = {};
           jumpToPosition($replayPreview.start, false);
           // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
         }
-        if (underPreview && $replayTarget == $replayPreview.start) {
+        if (
+          underPreview &&
+          $replayPreview &&
+          $replayTarget == $replayPreview.start
+        ) {
           underPreview = {
             homeTeam,
             awayTeam,
@@ -584,19 +566,19 @@ import type {ProcessedReplay} from '../replay.js';
             playing,
             current,
           };
-          $replayTarget = null;
+          $replayTarget = undefined;
           jumpToPosition($replayPreview.start);
         }
         if (current == END) {
-          current = new ReplayPosition();
+          current = initialReplayPosition();
           return;
         }
         if ($replayTarget) {
           const target = $replayTarget;
-          $replayTarget = null;
+          $replayTarget = undefined;
           await jumpToPosition(target);
         }
-        if ($replay.fullReplay && playing) {
+        if ($replay && $replay.fullReplay && playing) {
           await stepReplay();
         } else {
           await sleep(1000);
@@ -610,66 +592,107 @@ import type {ProcessedReplay} from '../replay.js';
   }
 
   function jumpToPreviousActivation() {
+    if (current.end || !$replay) {
+      return;
+    }
     for (var stepI = current.step; stepI--; stepI > 0) {
       const step = $replay.fullReplay.ReplayStep[stepI];
+      if (!("RulesEventBoardAction" in step)) {
+        continue;
+      }
       const actions = ensureList(step.RulesEventBoardAction);
-      const actionTypes = actions.map((action) => action.ActionType || 0);
+      const actionTypes = actions.map((action) =>
+        "ActionType" in action ? action.ActionType : ACTION_TYPE.Move
+      );
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
-        $replayTarget = new ReplayPosition(stepI);
+        $replayTarget = {
+          end: false,
+          step: stepI,
+          subStep: REPLAY_SUB_STEP.SetupAction,
+        };
         return;
       }
     }
   }
 
   function jumpToPreviousTurn() {
+    if (current.end || !$replay) {
+      return;
+    }
     for (var stepI = current.step - 1; stepI--; stepI > 0) {
       const step = $replay.fullReplay.ReplayStep[stepI];
-      if (step.RulesEventEndTurn) {
-        $replayTarget = new ReplayPosition(stepI + 1);
+      if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
+        $replayTarget = {
+          end: false,
+          step: stepI + 1,
+          subStep: REPLAY_SUB_STEP.SetupAction,
+        };
         return;
       }
     }
   }
   function jumpToPreviousStep() {
-    $replayTarget = new ReplayPosition(current.step - 1);
+    if (current.end || !$replay) {
+      return;
+    }
+    $replayTarget = {
+      end: false,
+      step: current.step - 1,
+      subStep: REPLAY_SUB_STEP.SetupAction,
+    };
   }
   function jumpToNextActivation() {
+    if (current.end || !$replay) {
+      return;
+    }
     for (
       var stepI = current.step;
       stepI++;
       stepI < $replay.fullReplay.ReplayStep.length
     ) {
       const step = $replay.fullReplay.ReplayStep[stepI];
+      if (!("RulesEventBoardAction" in step)) {
+        continue;
+      }
       const actions = ensureList(step.RulesEventBoardAction);
-      const actionTypes = actions.map((action) => action.ActionType || 0);
+      const actionTypes = actions.map((action) =>
+        "ActionType" in action ? action.ActionType : ACTION_TYPE.Move
+      );
       if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
-        $replayTarget = new ReplayPosition(stepI);
+        $replayTarget = {
+          end: false,
+          step: stepI,
+          subStep: REPLAY_SUB_STEP.SetupAction,
+        };
         return;
       }
     }
   }
   function jumpToNextTurn() {
+    if (current.end || !$replay) {
+      return;
+    }
     for (
       var stepI = current.step;
       stepI++;
       stepI < $replay.fullReplay.ReplayStep.length
     ) {
       const step = $replay.fullReplay.ReplayStep[stepI];
-      if (step.RulesEventEndTurn) {
-        $replayTarget = new ReplayPosition(stepI + 1);
+      if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
+        $replayTarget = {
+          end: false,
+          step: stepI + 1,
+          subStep: REPLAY_SUB_STEP.SetupAction,
+        };
         return;
       }
     }
   }
 
-  function handle() {
-    //not implemented
-  }
-
   function clearTemporaryState() {
     Object.entries(pitch).forEach(([idx, square]) => {
-      square.dice = null;
-      square.cell = null;
+      square.dice = undefined;
+      square.cell = undefined;
       square.foul = false;
       if (square.player) {
         players[square.player].moving = false;
@@ -679,11 +702,11 @@ import type {ProcessedReplay} from '../replay.js';
   }
 
   function handleWeather(action: BB2.WeatherAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+    let actionResult = ensureKeyedList("BoardActionResult", action.Results)[
       resultIndex
     ];
     const dice = translateStringNumberList(actionResult.CoachChoices.ListDices);
-    const diceSums = {
+    const diceSums: Record<number, WEATHER | undefined> = {
       2: WEATHER.SwelteringHeat,
       3: WEATHER.VerySunny,
       11: WEATHER.PouringRain,
@@ -694,7 +717,7 @@ import type {ProcessedReplay} from '../replay.js';
 
   function handleActivate(action: BB2.ActivatePlayerAction) {
     clearTemporaryState();
-    players[action.PlayerId].prone = false;
+    players[action.PlayerId || 0].prone = false;
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
         square.cell.active = false;
@@ -712,8 +735,8 @@ import type {ProcessedReplay} from '../replay.js';
   }
 
   function handleScatter(action: BB2.ScatterAction) {
-    setPitchSquare(action.Order.CellFrom).ball = null;
-    let to = action.Order.CellTo.Cell;
+    setPitchSquare(convertCell(action.Order.CellFrom)).ball = undefined;
+    let to = convertCell(action.Order.CellTo.Cell);
     setPitchSquare(to).ball = {
       held: false,
     };
@@ -723,23 +746,27 @@ import type {ProcessedReplay} from '../replay.js';
     action: BB2.BlockAction | BB2.BlitzAction,
     resultIndex: number
   ) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
-      resultIndex
-    ];
-    let from = action.Order.CellFrom;
+    let actionResult = ensureKeyedList(
+      "BoardActionResult",
+      action.Results as BB2.KeyedMList<
+        "BoardActionResult",
+        BB2.BlitzResults | BB2.BlockResults
+      >
+    )[resultIndex];
+    let from = convertCell(action.Order.CellFrom);
     let fromSquare = setPitchSquare(from);
     (fromSquare.cell = fromSquare.cell || {}).active = true;
 
-    let to = action.Order.CellTo.Cell;
+    let to = convertCell(action.Order.CellTo.Cell);
     let toSquare = setPitchSquare(to);
     let toPlayer = toSquare.player;
 
     Object.values(pitch).forEach((square) => {
-      square.dice = null;
+      square.dice = undefined;
     });
 
-    if (actionResult.RollType === ROLL.Block) {
-      let target = setPitchSquare(action.Order.CellTo.Cell);
+    if ("RollType" in actionResult && actionResult.RollType === ROLL.Block) {
+      let target = setPitchSquare(convertCell(action.Order.CellTo.Cell));
       if (!target.cell) {
         target.cell = {};
       }
@@ -757,7 +784,7 @@ import type {ProcessedReplay} from '../replay.js';
       }
       await step(4);
     }
-    if (actionResult.RollType === ROLL.Push) {
+    if ("RollType" in actionResult && actionResult.RollType === ROLL.Push) {
       //pushback
       if (actionResult.IsOrderCompleted) {
         Object.values(pitch).forEach((square) => {
@@ -767,9 +794,10 @@ import type {ProcessedReplay} from '../replay.js';
           }
         });
 
-        let pushTarget = ensureList(
-          actionResult.CoachChoices.ListCells.Cell
-        )[0];
+        let pushTarget = convertCell(ensureKeyedList(
+          "Cell",
+          actionResult.CoachChoices.ListCells
+        )[0]);
         let targetSquare = setPitchSquare(pushTarget);
         if (lastChainPush) {
           toPlayer = lastChainPush;
@@ -778,103 +806,101 @@ import type {ProcessedReplay} from '../replay.js';
         if (targetSquare.player) {
           lastChainPush = targetSquare.player;
         } else {
-          lastChainPush = null;
+          lastChainPush = undefined;
         }
 
         targetSquare.player = toPlayer;
-        toSquare.player = null;
+        toSquare.player = undefined;
       } else {
-        ensureList(actionResult.CoachChoices.ListCells.Cell).forEach((cell) => {
+        ensureKeyedList('Cell', actionResult.CoachChoices.ListCells).map(convertCell).forEach((cell) => {
           let square = setPitchSquare(cell);
           square.cell = square.cell || {};
           square.cell.pushbackChoice = true;
 
-          if (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14) {
+          if (toPlayer && (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14)) {
             //surf
             let team = players[toPlayer].team;
             let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
             dugout.reserve.push(toPlayer);
-            toSquare.player = null;
+            toSquare.player = undefined;
           }
         });
       }
     }
-    if (actionResult.RollType === ROLL.FollowUp) {
+    if ("RollType" in actionResult && actionResult.RollType === ROLL.FollowUp) {
       //follow up
       if (actionResult.IsOrderCompleted) {
         const from = convertCell(action.Order.CellFrom);
-        const target = convertCell(ensureList(actionResult.CoachChoices.ListCells.Cell)[0]);
+        const target = convertCell(
+          ensureKeyedList("Cell", actionResult.CoachChoices.ListCells)[0]
+        );
         if (from.x != target.x || from.y != target.y) {
           const fromSquare = setPitchSquare(from);
           setPitchSquare(target).player = fromSquare.player;
-          fromSquare.player = null;
+          fromSquare.player = undefined;
         }
       }
     }
   }
 
   function handleCatch(action: BB2.CatchAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
       resultIndex
     ];
     if (!actionResult.IsOrderCompleted) return;
     if (actionResult.ResultType !== 0) return;
 
-    Object.values(pitch).forEach((cell) => (cell["ball"] = null));
-    setPitchSquare(action.Order.CellTo.Cell).ball = { held: true };
+    Object.values(pitch).forEach((cell) => (cell["ball"] = undefined));
+    setPitchSquare(convertCell(action.Order.CellTo.Cell)).ball = { held: true };
   }
 
-  async function handleTurnover(endTurn: BB2.TurnoverAction) {
+  async function handleTurnover(endTurn: BB2.RulesEventEndTurn) {
     if (endTurn.Turnover) {
       banner = "turnover";
       clearTemporaryState();
       await step(5);
-      banner = null;
+      banner = undefined;
       await step();
     }
   }
 
   async function handleFoul(action: BB2.FoulAction) {
-    const targetSquare = setPitchSquare(action.Order.CellTo.Cell);
+    const targetSquare = setPitchSquare(convertCell(action.Order.CellTo.Cell));
 
     targetSquare.foul = true;
     await step();
   }
   function handleStunWake(action: BB2.StunWakeAction) {
-    let player = setPlayer(action.PlayerId);
+    let player = setPlayer(action.PlayerId || 0);
     player.stunned = false;
     player.prone = true;
   }
 
   function handleHandoff(action: BB2.HandoffAction) {
-    let from = setPitchSquare(action.Order.CellFrom);
-    let to = setPitchSquare(action.Order.CellTo.Cell);
+    let from = setPitchSquare(convertCell(action.Order.CellFrom));
+    let to = setPitchSquare(convertCell(action.Order.CellTo.Cell));
     to.ball = from.ball;
-    from.ball = null;
+    from.ball = undefined;
   }
 
   function handleKickoff(action: BB2.KickoffAction) {
-    let square = (setPitchSquare(action.Order.CellTo.Cell).ball = {
+    setPitchSquare(convertCell(action.Order.CellTo.Cell)).ball = {
       held: false,
-    });
+    };
   }
 
-  function handleLeap(action: BB2.LeapAction, resultIndex: number) {
-    handleMove(action, resultIndex);
-  }
-
-  function handleMove(action: BB2.MoveAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+  function handleMove(action: BB2.MoveAction | BB2.LeapAction, resultIndex: number) {
+    let actionResult = ensureKeyedList('BoardActionResult', action.Results as BB2.KeyedMList<'BoardActionResult', BB2.MoveResults | BB2.LeapResults>)[
       resultIndex
     ];
-    let player = setPlayer(action.PlayerId);
-    let squareFrom = setPitchSquare(action.Order.CellFrom);
-    let squareTo = setPitchSquare(action.Order.CellTo.Cell);
+    let player = setPlayer(action.PlayerId || 0);
+    let squareFrom = setPitchSquare(convertCell(action.Order.CellFrom));
+    let squareTo = setPitchSquare(convertCell(action.Order.CellTo.Cell));
 
     player.prone = false;
     player.moving = true;
     if (actionResult.IsOrderCompleted && squareTo != squareFrom) {
-      squareFrom.player = null;
+      squareFrom.player = undefined;
       squareTo.player = action.PlayerId;
     }
 
@@ -888,6 +914,7 @@ import type {ProcessedReplay} from '../replay.js';
     }
 
     if (
+      'RollType' in actionResult &&
       actionResult.RollType &&
       [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(actionResult.RollType)
     ) {
@@ -901,7 +928,7 @@ import type {ProcessedReplay} from '../replay.js';
         )
           .map((modifier) => modifier.Value || 0)
           .reduce((a, b) => a + b, 0) || 0;
-      squareTo.cell.plus = actionResult.Requirement - modifier;
+      squareTo.cell.plus = (actionResult.Requirement || 0) - modifier;
     }
 
     if (player.data.Id == blitzerId) {
@@ -909,7 +936,7 @@ import type {ProcessedReplay} from '../replay.js';
     }
     if (squareFrom.ball) {
       let ball = squareFrom.ball;
-      squareFrom.ball = null;
+      squareFrom.ball = undefined;
       squareTo.ball = ball;
     }
   }
@@ -927,35 +954,38 @@ import type {ProcessedReplay} from '../replay.js';
       Bloodlust = 50,
 
     */
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
       resultIndex
     ];
-    let square = setPitchSquare(action.Order.CellTo.Cell);
+    let square = setPitchSquare(convertCell(action.Order.CellTo.Cell));
 
-    if (actionResult.ResultType === RESULT_TYPE.Passed) {
-      //success
-      players[square.player].stupidity = null;
-    } else {
-      //failure
-      const STUPID_TYPES = {
-        [ROLL.BoneHead]: "BoneHeaded",
-        [ROLL.ReallyStupid]: "Stupid",
-        [ROLL.TakeRoot]: "Rooted",
-        [ROLL.WildAnimal]: "WildAnimal",
-      };
-      players[square.player].stupidity = STUPID_TYPES[actionResult.RollType];
+    if (square.player) {
+      if (actionResult.ResultType === RESULT_TYPE.Passed) {
+        //success
+        players[square.player].stupidity = undefined;
+      } else {
+        //failure
+        const STUPID_TYPES: Record<BB2.ActivationTestResult["RollType"] | BB2.LonerResult["RollType"], string> = {
+          [ROLL.BoneHead]: "BoneHeaded",
+          [ROLL.ReallyStupid]: "Stupid",
+          [ROLL.TakeRoot]: "Rooted",
+          [ROLL.WildAnimal]: "WildAnimal",
+          [ROLL.Loner]: "Loner",
+        };
+        players[square.player].stupidity = STUPID_TYPES[actionResult.RollType];
+      }
     }
   }
 
   async function handlePass(action: BB2.PassAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
       resultIndex
     ];
     if (!actionResult.IsOrderCompleted) {
       return;
     }
 
-    let from = setPitchSquare(action.Order.CellFrom);
+    let from = setPitchSquare(convertCell(action.Order.CellFrom));
     if (from.ball) {
       from.ball.held = false;
     }
@@ -963,17 +993,17 @@ import type {ProcessedReplay} from '../replay.js';
 
     if (actionResult.ResultType === RESULT_TYPE.Passed) {
       //success
-      let target = setPitchSquare(action.Order.CellTo.Cell);
+      let target = setPitchSquare(convertCell(ensureList(action.Order.CellTo.Cell)[0]));
       if (from.ball) {
         target.ball = from.ball;
-        from.ball = null;
+        from.ball = undefined;
       }
       await step();
     }
   }
 
   function handlePickup(action: BB2.PickupAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
       resultIndex
     ];
     if (
@@ -989,17 +1019,17 @@ import type {ProcessedReplay} from '../replay.js';
   }
 
   function handleTakeDamage(action: BB2.TakeDamageAction, resultIndex: number) {
-    let actionResult = ensureList(action.Results.BoardActionResult)[
+    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
       resultIndex
     ];
     if (!actionResult.IsOrderCompleted) return;
 
-    let player = setPlayer(action.PlayerId),
-      playerSquareIndex: string;
+    let player = setPlayer(action.PlayerId || 0),
+      playerSquareIndex: string | undefined;
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
-        square.cell.target = null;
+        square.cell.target = undefined;
       }
       if (square.player && square.player == action.PlayerId) {
         pitch[idx] = square; // Force svelte to update
@@ -1023,23 +1053,31 @@ import type {ProcessedReplay} from '../replay.js';
           if (player) {
             player.stunned = true;
           }
-        } else if (actionResult.SubResultType === 3) {
+        } else if (actionResult.SubResultType === 3 && playerSquareIndex) {
           //knocked out
           let team = player.team;
           let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
-          dugout.ko.push(pitch[playerSquareIndex].player);
-          pitch[playerSquareIndex].player = null;
+          let curPlayer = pitch[playerSquareIndex].player;
+          if (curPlayer) {
+            dugout.ko.push(curPlayer);
+          }
+          pitch[playerSquareIndex].player = undefined;
         }
         break;
       case 8: //casualty
         //knocked out
         let team = player.team;
         let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;
-        dugout.cas.push(pitch[playerSquareIndex].player);
-        pitch[playerSquareIndex].player = null;
-        pitch[playerSquareIndex].blood = {
-          blood: Math.floor(4 * Math.random() + 1),
-        };
+        if (playerSquareIndex) {
+          let curPlayer = pitch[playerSquareIndex].player;
+          if (curPlayer) {
+            dugout.cas.push(curPlayer);
+          }
+          pitch[playerSquareIndex].player = undefined;
+          pitch[playerSquareIndex].blood = {
+            blood: Math.floor(4 * Math.random() + 1),
+          };
+        }
         break;
       case 25: //regeneration
     }
@@ -1049,7 +1087,7 @@ import type {ProcessedReplay} from '../replay.js';
     banner = "touchdown";
     clearTemporaryState();
     await step(5);
-    banner = null;
+    banner = undefined;
     await step(0);
   }
 </script>
@@ -1132,7 +1170,7 @@ import type {ProcessedReplay} from '../replay.js';
             <div class="selected" class:enlarged={!!$hoveredPlayer}>
               <SelectedPlayer
                 {players}
-                player={$hoveredPlayer || $selectedPlayer}
+                player={$hoveredPlayer || $selectedPlayer || 0}
               />
             </div>
           {/if}
@@ -1152,7 +1190,7 @@ import type {ProcessedReplay} from '../replay.js';
       </FixedRatio>
     </div>
   </div>
-  {#if $replay.unknownRolls.length > 0}
+  {#if $replay && $replay.unknownRolls.length > 0}
     <Alert warning>
       <details>
         <summary>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ROLL, KICKOFF_RESULT_NAMES, KICKOFF_RESULT } from "./constants.js";
+  import { KICKOFF_RESULT_NAMES } from "./constants.js";
   import PlayerPill from "./PlayerPill.svelte";
   import {
     MoveAction,
@@ -10,7 +10,7 @@
     CasualtyRoll,
     InjuryRoll,
     BlockRoll,
-    Roll
+    Roll,
   } from "./rolls.js";
   import Dice from "./Dice.svelte";
 
@@ -46,11 +46,13 @@
         dice={roll.dice}
         separator="+"
       /> - {roll.injuryName}
-    {:else if roll instanceof ModifiedD6SumRoll}
+    {:else if roll instanceof ModifiedD6SumRoll && roll.activePlayer}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
         dice={roll.dice}
         separator="+"
       /> ({roll.modifiedTarget})
+    {:else if roll instanceof ModifiedD6SumRoll}
+      {roll.rollName}: <Dice dice={roll.dice} separator="+" /> ({roll.modifiedTarget})
     {:else if roll.activePlayer}
       {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
         dice={roll.dice}

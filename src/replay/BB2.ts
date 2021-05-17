@@ -652,7 +652,8 @@ export interface ResultsAction<T> extends BaseAction {
 }
 
 // Move = 0, //Move
-export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | TentaclesResult> { }
+export type MoveResults = NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | TentaclesResult;
+export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<MoveResults> { }
 // Block = 1, //Block
 export type BlockResults = BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult | ChainsawKickbackResult | JumpUpResult;
 export interface BlockAction extends PlayerAction, OrderAction, ResultsAction<BlockResults> { ActionType: ACTION_TYPE.Block }
@@ -694,8 +695,10 @@ export interface ShadowingAction extends PlayerAction, OrderT<Cell, {Cell: Cell}
 // Stab = 19,
 // FrenzyStab = 20,
 export interface StabAction extends PlayerAction, OrderAction, ResultsAction<StabResult> { ActionType: ACTION_TYPE.Stab | ACTION_TYPE.FrenzyStab}
+
 // Leap = 21,
-export interface LeapAction extends PlayerAction, OrderAction, ResultsAction<LeapResult | LonerResult> { ActionType: ACTION_TYPE.Leap }
+export type LeapResults = LeapResult | LonerResult;
+export interface LeapAction extends PlayerAction, OrderAction, ResultsAction<LeapResults> { ActionType: ACTION_TYPE.Leap }
 // Chainsaw = 22,
 export interface ChainsawAction extends PlayerAction, OrderAction, ResultsAction<ChainsawArmorResult | ChainsawKickbackResult | LonerResult> { ActionType: ACTION_TYPE.Chainsaw }
 // BallChain = 23,

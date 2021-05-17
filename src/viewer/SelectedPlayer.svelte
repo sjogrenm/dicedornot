@@ -4,10 +4,9 @@
 
   import Player from "./Player.svelte";
   import { translateStringNumberList } from "../replay-utils.js";
-  import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES, SKILL, Casualty } from "../constants.js";
+  import { SKILL_CSS, SITUATION, Casualties, STAR_NAMES, SKILL } from "../constants.js";
   import he from "he";
 import type { PlayerNumber } from "../replay/Internal";
-import type { PitchPlayer } from "../replay/BB2";
 import type { PlayerProps } from "./types";
 
   export let player: PlayerNumber, players: Record<PlayerNumber, PlayerProps>;

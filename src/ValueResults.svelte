@@ -13,8 +13,3 @@
   </div>
 </Explanation>
 
-<style>
-  details > summary {
-    list-style: none;
-  }
-</style>

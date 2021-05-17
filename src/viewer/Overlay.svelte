@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
-  import { ensureKeyedList, ensureList, translateStringNumberList } from "../replay-utils.js";
+  import { ensureKeyedList, translateStringNumberList } from "../replay-utils.js";
   import { replayPreview, replay } from "../stores.js";
   import type { Cell } from "../replay/Internal.js";
   import {convertCell} from "../replay/BB2toInternal.js";
@@ -15,7 +15,6 @@
     team1Gray,
     team0Color,
     team0Gray,
-    gray,
   } from "../theme.js";
 import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
 
@@ -140,11 +139,11 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
                   let from = convertCell(action.Order.CellFrom);
                   let to = convertCell(action.Order.CellTo.Cell);
                   let team = action.PlayerId || 0 < 30 ? SIDE.home : SIDE.away;
-                  let requirement = result.Requirement || 0;
                   let modifier =
                     ensureKeyedList('DiceModifier', result.ListModifiers)
                       .map((modifier) => modifier.Value || 0)
                       .reduce((a, b) => a + b, 0) || 0;
+                  let requirement = result.Requirement || 0 - modifier;
                   let dieCount =
                     translateStringNumberList(result.CoachChoices.ListDices)
                       .length / 2;

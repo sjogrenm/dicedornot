@@ -112,7 +112,7 @@ export function toString(position: ReplayPosition) {
 
 export function updateToNextPosition(replay: Replay, position: ReplayPosition) {
   if (position.end) {
-    return;
+    return END;
   }
   const replayStep = replay.ReplayStep[position.step];
   if (position.subStep == REPLAY_SUB_STEP.BoardAction) {
