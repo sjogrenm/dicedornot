@@ -1,12 +1,12 @@
 <script lang="ts">
   import RollDescription from "./RollDescription.svelte";
-  import type { Roll } from "./rolls.js";
-  export let roll: Roll<any>;
+  import type { Action } from "./rolls.js";
+  export let action: Action;
 </script>
 
-<RollDescription {roll} />
-{#if !roll.hideDependents}
-  {#each roll.dependentRolls as depRoll}
-    <RollDescription roll={depRoll} />
+<RollDescription {action} />
+{#if !action.hideDependents}
+  {#each action.dependentActions as depRoll}
+    <RollDescription action={depRoll} />
   {/each}
 {/if}

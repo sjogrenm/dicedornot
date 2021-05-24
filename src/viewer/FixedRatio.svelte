@@ -1,11 +1,11 @@
 <script lang="ts">
   export let width=1, height=1;
-  let clazz: string | undefined;
+  let clazz: string = '';
   export { clazz as class }
 </script>
 
 <div class="outer" style="padding-top: calc(({height}/{width}) * 100%)">
-  <div class={`inner ${clazz || ''}`}>
+  <div class={`inner ${clazz}`}>
     <slot/>
   </div>
 </div>

@@ -1,12 +1,12 @@
 <script lang="ts">
   import TurnSelector from "./TurnSelector.svelte";
   import { replay, replayPreview } from "./stores.js";
-import type { Roll } from "./rolls";
-  let rolls: Roll<any>[], rollsByTurn: Roll<any>[][];
+  import type { Action } from "./rolls";
+  let actions: Action[], actionsByTurn: Action[][];
 
   $: {
-    rolls = $replay!.rolls;
-    rollsByTurn = rolls.reduce((groups: Roll<any>[][], roll: Roll<any>) => {
+    actions = $replay!.actions;
+    actionsByTurn = actions.reduce((groups: Action[][], roll: Action) => {
       const lastGroup = groups[groups.length - 1];
       const lastRoll = lastGroup && lastGroup[lastGroup.length - 1];
       if (
@@ -25,7 +25,7 @@ import type { Roll } from "./rolls";
 </script>
 
 <div on:mouseleave={() => ($replayPreview = undefined)}>
-  {#each rollsByTurn as rolls}
-    <TurnSelector {rolls} />
+  {#each actionsByTurn as actions}
+    <TurnSelector {actions} />
   {/each}
 </div>

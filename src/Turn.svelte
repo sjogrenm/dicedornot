@@ -1,19 +1,19 @@
 <script lang="ts">
   import Roll from "./Roll.svelte";
   import { replayPreview } from "./stores.js";
-  import type {Roll as ReplayRoll} from "./rolls.js";
+  import type {Action} from "./rolls.js";
 import { SIDE } from "./constants";
-  export let rolls: ReplayRoll<any>[], selectedRoll: number;
+  export let actions: Action[], selectedAction: number;
 </script>
 
 <div class="list-group" id="turn" on:mouseleave={() => ($replayPreview = undefined)}>
-  {#each rolls as roll (roll.rollIndex)}
+  {#each actions as action (action.actionIndex)}
     <div
-      class={`list-group-item list-group-item-action team-${roll.activeTeam?.id || SIDE.home}`}
-      class:active={selectedRoll == roll.rollIndex}
-      on:mouseover={() => ($replayPreview = {start: roll.startIndex, end: roll.endIndex})}
+      class={`list-group-item list-group-item-action team-${action.activeTeam?.id || SIDE.home}`}
+      class:active={selectedAction == action.actionIndex}
+      on:mouseover={() => ($replayPreview = {start: action.startIndex, end: action.endIndex})}
     >
-      <Roll {roll} selected={selectedRoll == roll.rollIndex} />
+      <Roll {action} selected={selectedAction == action.actionIndex} />
     </div>
   {/each}
 </div>

@@ -13,6 +13,7 @@ export type Cell = {
 } | "";
 
 export type MList<T> = T | T[];
+type UnMList<T> = T extends any[] ? T[number] : T;
 export type KeyedMList<K extends string, T> = "" | {[key in K]: MList<T>};
 
 export interface Inducement {
@@ -141,7 +142,7 @@ export interface BoardState {
     ListSecretWeapons?: string,
     ListTeams: { TeamState: TeamState[] },
     Ball: { Cell: Cell, Destination: Cell, IsHeld?: 1 },
-    KickOffTeam?: SIDE,
+    KickOffTeam?: SIDE | -1,
     StadiumStructure?: string,
 };
 
@@ -460,10 +461,10 @@ export interface DiceChoices<S extends Skills = Skills, C extends Cells = Cells>
     }
 }
 
-type Dices = string | number;
+export type Dices = string | number;
 export type Skills = KeyedMList<"SkillInfo", SkillInfo>;
 export type Cells = KeyedMList<"Cell", Cell>;
-type NoChoicesResult = {
+interface NoChoicesResult extends BaseResult {
     IsOrderCompleted: 1,
     ListModifiers: "",
     CoachChoices: {
@@ -513,10 +514,10 @@ export type ThrowInResult = DiceRollResult<ROLL.ThrowIn, "">;
 // Pass = 12,
 export type PassResult = DiceRollResult<ROLL.Pass, Skills, Cells>;
 // Push = 13,
-export interface PushResult extends BaseResult, Choices { RollType: ROLL.Push };
+export interface PushResult extends BaseResult, Choices { RollType: ROLL.Push};
 // FollowUp = 14,
 export interface FollowUpResult extends BaseResult, Choices {
-    RollType: ROLL.FollowUp
+    RollType: ROLL.FollowUp,
 };
 // FoulPenalty = 15,
 export interface FoulRefResult extends BaseResult {
@@ -524,7 +525,7 @@ export interface FoulRefResult extends BaseResult {
         ConcernedTeam?: 1,
         ListSkills: "",
         ListCells: "",
-        ListDices?: string,
+        ListDices: Dices,
         Reroll?: Bool,
     }
     IsOrderCompleted?: 1,
@@ -651,6 +652,8 @@ export interface ResultsAction<T> extends BaseAction {
     Results: "" |{ BoardActionResult: MList<T> }
 }
 
+export type ActionResult<A extends RulesEventBoardAction> = UnMList<Exclude<A["Results"], "">["BoardActionResult"]>;
+
 // Move = 0, //Move
 export type MoveResults = NoChoicesResult | DodgeResult | DodgePickResult | NoRollDodgeResult | GFIResult | LonerResult | StandUpResult | DivingTackleResult | TentaclesResult;
 export interface MoveAction extends PlayerAction, OrderAction, ResultsAction<MoveResults> { }
@@ -666,8 +669,10 @@ export interface PassAction extends PlayerAction, OrderT<Cell, {Cell: MList<Cell
 export interface HandoffAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult | AnimosityResult> { ActionType: ACTION_TYPE.Handoff }
 // Foul = 5, //Foul
 export interface FoulAction extends OrderAction, PlayerAction, ResultsAction<NoChoicesResult | ArmorResult | InjuryResult | CasualtyResult | RegenerationResult > { ActionType: ACTION_TYPE.Foul }
+
 // TakeDamage = 6, //Armor
-export interface TakeDamageAction extends PlayerAction, OrderT<Cell, { Cell: "" | MList<Cell> }>, ResultsAction<ArmorResult | InjuryResult | CasualtyResult | RegenerationResult | POArmorResult | POInjuryResult | ChainsawArmorResult | RaiseDeadResult> { ActionType: ACTION_TYPE.TakeDamage }
+type TakeDamageResults = ArmorResult | InjuryResult | CasualtyResult | RegenerationResult | POArmorResult | POInjuryResult | ChainsawArmorResult | RaiseDeadResult;
+export interface TakeDamageAction extends PlayerAction, OrderT<Cell, { Cell: "" | MList<Cell> }>, ResultsAction<TakeDamageResults> { ActionType: ACTION_TYPE.TakeDamage }
 // Kickoff = 7, //Pick Kickoff Location
 export interface KickoffAction extends PlayerAction, OrderAction, ResultsAction<NoChoicesResult> { ActionType: ACTION_TYPE.Kickoff }
 // Scatter = 8, //Pick Kickoff Scatter KickSkill
@@ -706,7 +711,7 @@ export interface BallChainAction extends PlayerAction, OrderAction, ResultsActio
 // HailMaryPass = 24,
 export interface HailMaryPassAction extends PlayerAction, OrderAction, ResultsAction<HailMaryPassResult> { ActionType: ACTION_TYPE.HailMaryPass }
 // PilingOn = 25,
-export interface PilingOnAction extends PlayerAction, OrderAction, ResultsAction<TakeDamageAction> { ActionType: ACTION_TYPE.PilingOn }
+export interface PilingOnAction extends PlayerAction, OrderAction, ResultsAction<TakeDamageResults> { ActionType: ACTION_TYPE.PilingOn }
 // MultiBlock = 26,
 export interface MultiBlockAction extends PlayerAction, OrderT<Cell, "" | {Cell: Cell}>, ResultsAction<MultiblockResult | ProResult | BlockResult | PushResult | FollowUpResult | FoulAppearanceResult | DauntlessResult | StandFirmResult | WrestleResult | LonerResult | DodgePickResult> { ActionType: ACTION_TYPE.MultiBlock }
 // HypnoticGaze = 27,

@@ -3,20 +3,20 @@
   import RollOutcomes from "./RollOutcomes.svelte";
   import { replayTarget, showResultsAnalysis } from "./stores.js";
   import { Icon } from "sveltestrap";
-  import type { Roll } from "./rolls.js";
+  import type { Action } from "./rolls.js";
   import type { Distribution as Dist } from "./distribution.js";
-  export let roll: Roll<any>, selected: boolean;
+  export let action: Action, selected: boolean;
   let actualDistributions: Dist[];
   let actualOpen = false;
   let detailsOpen = false;
 
   $: {
-    actualDistributions = [roll, ...roll.dependentRolls].map((roll) => {
-      const dist = roll.actualValue;
+    actualDistributions = [action, ...action.dependentActions].map((action) => {
+      const dist = action.actualValue;
       if (dist.name) {
-        return dist.named(`${roll.shortDescription} - ${dist.name}`);
+        return dist.named(`${action.shortDescription} - ${dist.name}`);
       } else {
-        return dist.named(roll.shortDescription);
+        return dist.named(action.shortDescription);
       }
     });
   }
@@ -31,7 +31,7 @@
       <button
         href="#viewer"
         class="btn btn-secondary btn-sm"
-        on:click={() => ($replayTarget = roll.startIndex)}
+        on:click={() => ($replayTarget = action.startIndex)}
         ><Icon name="arrow-down-right" title="Jump to Roll" /></button
       >
     </div>
@@ -48,8 +48,8 @@
   </div>
   <div class="col pl-1 pr-2">
     {#if selected}
-      <div id="roll-{roll.rollIndex}">
-        <RollOutcomes {roll} />
+      <div id="action-{action.actionIndex}">
+        <RollOutcomes {action} />
         {#if detailsOpen}
           <ul class="list-group" on:click|stopPropagation>
             <li class="list-group-item list-group-item-action">
@@ -72,7 +72,7 @@
             </li>
             <li class="list-group-item list-group-item-action">
               <Distribution
-                dist={roll.possibleOutcomes.named("Possible Outcomes")}
+                dist={action.possibleOutcomes.named("Possible Outcomes")}
               />
             </li>
           </ul>
@@ -80,19 +80,19 @@
       </div>
     {:else}
       <div>
-        <RollOutcomes {roll} />
+        <RollOutcomes {action} />
       </div>
     {/if}
-    {#if roll.valueWithDependents.valueOf() != 0 || roll.possibleOutcomes.valueOf() != 0}
+    {#if action.valueWithDependents.valueOf() != 0 || action.possibleOutcomes.valueOf() != 0}
       <div class="row">
         {#if $showResultsAnalysis}
-          <div class="col col-auto">{roll.valueWithDependents.valueString}</div>
+          <div class="col col-auto">{action.valueWithDependents.valueString}</div>
         {/if}
-        <div class="col col-auto">{roll.possibleOutcomes.valueString}</div>
+        <div class="col col-auto">{action.possibleOutcomes.valueString}</div>
       </div>
     {/if}
   </div>
-  <!-- class={`list-group-item list-group-item-action team-${roll.activeTeam.id}`}
-class:active={selectedRoll == roll.rollIndex}
-on:click={handleClick(roll)} -->
+  <!-- class={`list-group-item list-group-item-action team-${action.activeTeam.id}`}
+class:active={selectedRoll == action.actionIndex}
+on:click={handleClick(action)} -->
 </div>

@@ -1,7 +1,6 @@
 <script context="module" lang="ts">
   import type {Cell} from '../replay/Internal.js';
-  import type {SIDE} from '../constants.js';
-
+  import type {Colors} from './types.js';
   export interface Roll {
     from: Cell,
     to: Cell,
@@ -11,7 +10,6 @@
   export interface Props {
     path: Cell[],
     rolls: Roll[],
-    team: SIDE,
   }
 </script>
 
@@ -19,10 +17,9 @@
 
   export let path: Props['path'],
     rolls: Props['rolls'],
-    color: string,
-    textColor: string,
-    index = 0,
-    _rolls: _Roll[];
+    colors: Colors,
+    index: number = 0;
+  let _rolls: _Roll[];
 
   function mixCells(cellA: Cell, cellB: Cell, pct: number) {
     return {
@@ -71,7 +68,7 @@
   >
     <polyline
       fill="none"
-      stroke={color}
+      stroke={colors.color.toString()}
       stroke-width="1"
       points="0.5,0.5 4.5,2.5 0.5,4.5"
     />
@@ -85,19 +82,19 @@
     class="move"
     marker-end="url(#pointer-{index})"
     stroke-width="0.08"
-    stroke={color}
+    stroke={colors.color.toString()}
     points={path.map((cell) => `${cell.x || 0},${cell.y || 0}`).join(" ")}
   />
 {/if}
 <circle
   filter="url(#chalk)"
-  fill={color}
+  fill={colors.color.toString()}
   cx={path[0].x}
   cy={path[0].y}
   r="0.2"
 />
 <text
-  fill={textColor}
+  fill={colors.textColor.toString()}
   x={path[0].x}
   y={path[0].y}
   font-size="0.25"
@@ -107,7 +104,7 @@
 
 {#each _rolls as roll}
   <line
-    stroke={color}
+    stroke={colors.color.toString()}
     x1={roll.pt.x - 0.1 * roll.rolls.length/2}
     y1={roll.pt.y + 0.05}
     x2={roll.pt.x + 0.1 * roll.rolls.length/2}
@@ -116,7 +113,7 @@
     stroke-linecap="round"
   />
   <!-- <text
-    stroke="rgb({color}, {color}, {color})"
+    stroke="rgb({colors.color.toString()}, {colors.color.toString()}, {colors.color.toString()})"
     stroke-width="0.2"
     x={roll.pt.x}
     y={roll.pt.y}
@@ -125,7 +122,7 @@
     dominant-baseline="middle">{roll.rolls}</text
   > -->
   <text
-    fill={textColor}
+    fill={colors.textColor.toString()}
     x={roll.pt.x}
     y={roll.pt.y}
     font-size="0.25"

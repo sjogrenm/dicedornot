@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { KICKOFF_RESULT_NAMES } from "./constants.js";
+  import { BLOCK_DIE, KICKOFF_RESULT_NAMES } from "./constants.js";
   import PlayerPill from "./PlayerPill.svelte";
   import {
     MoveAction,
@@ -10,55 +10,58 @@
     CasualtyRoll,
     InjuryRoll,
     BlockRoll,
+    Action,
     Roll,
   } from "./rolls.js";
   import Dice from "./Dice.svelte";
 
-  export let roll: Roll<any>;
+  export let action: (Action | Roll);
 </script>
 
 <div>
   <span class="dice-line">
-    {#if roll instanceof BlockRoll}
-      {roll.rollName}: <PlayerPill player={roll.activePlayer} />
-      <Dice dice={roll.dice} uphill={roll.isRedDice} separator="/" />
-      <PlayerPill player={roll.defender} />
-    {:else if roll instanceof SetupAction}
+    {#if action instanceof BlockRoll}
+      {action.actionName}: <PlayerPill player={action.activePlayer} />
+      <Dice dice={action.dice.map(face => BLOCK_DIE[face])} uphill={action.isRedDice} separator="/" />
+      <PlayerPill player={action.defender} />
+    {:else if action instanceof SetupAction}
       Set Up
-    {:else if roll instanceof MoveAction}
-      Move: <PlayerPill player={roll.activePlayer} /> - ({roll.cellFrom.x || 0}, {roll
-        .cellFrom.y || 0}) {"\u2192"} ({roll.cellTo.x || 0}, {roll.cellTo.y ||
+    {:else if action instanceof MoveAction}
+      Move: <PlayerPill player={action.activePlayer} /> - ({action.cellFrom.x || 0}, {action
+        .cellFrom.y || 0}) {"\u2192"} ({action.cellTo.x || 0}, {action.cellTo.y ||
         0})
-    {:else if roll instanceof KickoffRoll}
-      {roll.rollName}: {KICKOFF_RESULT_NAMES[roll.diceSum]}
-    {:else if roll instanceof PitchInvasionRoll}
-      {roll.rollName}: <PlayerPill player={roll.activePlayer} />
-      {roll.stunned ? "stunned!" : "safe"} - <Dice dice={roll.dice} /> ({roll.modifiedTarget})
-    {:else if roll instanceof CasualtyRoll}
-      {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
-        dice={roll.dice
+    {:else if action instanceof KickoffRoll}
+      {action.actionName}: {KICKOFF_RESULT_NAMES[action.diceSum]}
+    {:else if action instanceof PitchInvasionRoll}
+      {action.actionName}: <PlayerPill player={action.activePlayer} />
+      {action.stunned ? "stunned!" : "safe"} - <Dice dice={action.dice} /> ({action.modifiedTarget})
+    {:else if action instanceof CasualtyRoll}
+      {action.actionName}: <PlayerPill player={action.activePlayer} /> - <Dice
+        dice={action.dice
           .toString()
           .split("")
           .map((char) => parseInt(char))}
-      /> - {roll.casName(roll.dice)}
-    {:else if roll instanceof InjuryRoll}
-      {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
-        dice={roll.dice}
+      /> - {action.casName(action.dice)}
+    {:else if action instanceof InjuryRoll}
+      {action.actionName}: <PlayerPill player={action.activePlayer} /> - <Dice
+        dice={action.dice}
         separator="+"
-      /> - {roll.injuryName}
-    {:else if roll instanceof ModifiedD6SumRoll && roll.activePlayer}
-      {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
-        dice={roll.dice}
+      /> - {action.injuryName}
+    {:else if action instanceof ModifiedD6SumRoll && action.activePlayer}
+      {action.actionName}: <PlayerPill player={action.activePlayer} /> - <Dice
+        dice={action.dice}
         separator="+"
-      /> ({roll.modifiedTarget})
-    {:else if roll instanceof ModifiedD6SumRoll}
-      {roll.rollName}: <Dice dice={roll.dice} separator="+" /> ({roll.modifiedTarget})
-    {:else if roll.activePlayer}
-      {roll.rollName}: <PlayerPill player={roll.activePlayer} /> - <Dice
-        dice={roll.dice}
+      /> ({action.modifiedTarget})
+    {:else if action instanceof ModifiedD6SumRoll}
+      {action.actionName}: <Dice dice={action.dice} separator="+" /> ({action.modifiedTarget})
+    {:else if action.activePlayer && 'dice' in action}
+      {action.actionName}: <PlayerPill player={action.activePlayer} /> - <Dice
+        dice={action.dice}
       />
+    {:else if 'dice' in action}
+      {action.actionName}: <Dice dice={action.dice} />
     {:else}
-      {roll.rollName}: <Dice dice={roll.dice} />
+      {action.actionName} />
     {/if}
   </span>
 </div>

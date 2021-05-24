@@ -4,10 +4,10 @@
   import * as vega from "vega";
   import { replayCurrent, replayTarget, replay } from "./stores.js";
   import type { View } from "vega";
-  import type {Roll} from "./rolls.js";
+  import type {Action} from "./rolls.js";
   import {atOrAfter} from "./replay-utils.js";
 
-  let rolls: Roll<any>[],
+  let actions: Action[],
     view: View,
     playHead: number | undefined,
     loadedReplay: string | undefined,
@@ -23,18 +23,18 @@
   });
 
   $: {
-    rolls = $replay!.rolls;
-    if (rolls && $replayCurrent) {
-      let nextRoll = rolls.findIndex((roll) => {
+    actions = $replay!.actions;
+    if (actions && $replayCurrent) {
+      let nextRoll = actions.findIndex((roll) => {
         return atOrAfter(roll.startIndex, $replayCurrent);
       });
-      playHead = nextRoll > 0 ? rolls[nextRoll - 1].rollIndex : 0;
+      playHead = nextRoll > 0 ? actions[nextRoll - 1].actionIndex : 0;
     }
     if (view && playHead) {
       var changeSet = vega
         .changeset()
         .remove(() => true)
-        .insert([{ rollIndex: playHead }]);
+        .insert([{ actionIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
     }
     if ($replay!.fullReplay.filename != loadedReplay && chartEl) {
@@ -46,7 +46,7 @@
   }
 
   function renderChart() {
-    const valid = rolls.filter((roll) => {
+    const valid = actions.filter((roll) => {
       const dataPoint = roll.actual;
       if (!isFinite(dataPoint.outcomeValue)) {
         console.warn("Dice roll with non-finite outcome value", {
@@ -65,7 +65,7 @@
       return true;
     });
     const actuals = valid.map((roll) => roll.actual);
-    console.log("Valid rolls", valid);
+    console.log("Valid actions", valid);
     console.log("Actual points", actuals);
 
     // Assign the specification to a local variable vlSpec.
@@ -74,8 +74,8 @@
     embed(chartEl, spec).then((result) => {
       result.view.addEventListener("click", function (event, item) {
         if (item) {
-          let selectedRoll = item.datum.rollIndex;
-          $replayTarget = rolls[selectedRoll].startIndex;
+          let selectedRoll = item.datum.actionIndex;
+          $replayTarget = actions[selectedRoll].startIndex;
         }
       });
 

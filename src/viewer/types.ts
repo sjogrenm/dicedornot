@@ -10,6 +10,7 @@ import type {
     SIDE,
 } from "../constants.js";
 import type {crossfade} from 'svelte/transition';
+import type {Color} from 'chroma-js';
 
 export type CrossFadeFn = ReturnType<typeof crossfade>[number];
 
@@ -76,7 +77,7 @@ export interface PlayerProps {
     blitz?: boolean;
     moving?: boolean;
     prone?: boolean;
-    team?: SIDE;
+    team: SIDE;
     stunned?: boolean;
     stupidity?: string;
 }
@@ -95,4 +96,10 @@ export interface Preview {
     players: Record<string, PlayerProps>,
     playing: boolean,
     current: ReplayPosition,
+}
+
+export interface Colors {
+  color: Color;
+  textColor: Color;
+  oppColor: Color;
 }

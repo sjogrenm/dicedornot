@@ -1,4 +1,4 @@
-import { Roll, MoveAction, UnknownRoll } from "./rolls.js";
+import { Action, MoveAction, UnknownAction } from "./rolls.js";
 import { END, ensureList } from "./replay-utils.js";
 import { SIDE, RACE_ID } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
@@ -25,8 +25,8 @@ export interface GameDetails {
 export interface ProcessedReplay {
   fullReplay: BB2.Replay,
   gameDetails: GameDetails,
-  rolls: Roll<any>[],
-  unknownRolls: UnknownRoll[],
+  actions: Action[],
+  unknownRolls: UnknownAction[],
   version: number,
 }
 
@@ -41,7 +41,7 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
   const gameDetails = extractGameDetails(data);
   console.log("Extracted game details...", gameDetails);
 
-  let rolls: (Roll<any> | UnknownRoll)[] = [];
+  let actions: (Action | UnknownAction)[] = [];
   let initialBoardState: BB2.BoardState | undefined;
   for (
     var stepIndex = 0;
@@ -57,7 +57,7 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
       initialBoardState = replayStep.BoardState;
     }
     if (initialBoardState) {
-      rolls = rolls.concat(Roll.fromReplayStep(
+      actions = actions.concat(Action.fromReplayStep(
         data.Replay,
         initialBoardState,
         stepIndex,
@@ -66,46 +66,47 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
     }
     initialBoardState = replayStep.BoardState;
   }
-  console.log("Extracted rolls...", { rolls });
-  let validRolls: Roll<any>[] = rolls.filter((roll) => !roll.ignore) as Roll<any>[];
-  validRolls = validRolls.reduce((rolls: Roll<any>[], nextRoll) => {
-    if (rolls.length == 0) {
-      return [nextRoll];
+  console.log("Extracted actions...", { actions });
+  let validRolls: Action[] = actions.filter((action) => !action.ignore) as Action[];
+  console.log("Valid actions...", {validRolls});
+  validRolls = validRolls.reduce((actions: Action[], nextAction) => {
+    if (actions.length == 0) {
+      return [nextAction];
     }
-    let lastRoll = rolls[rolls.length - 1];
-    if (nextRoll instanceof MoveAction && lastRoll instanceof MoveAction && nextRoll.activePlayer.id == lastRoll.activePlayer.id && nextRoll.turn == lastRoll.turn) {
-      lastRoll.cellTo = nextRoll.cellTo;
-      return rolls;
+    let lastAction = actions[actions.length - 1];
+    if (nextAction instanceof MoveAction && lastAction instanceof MoveAction && nextAction.activePlayer.id == lastAction.activePlayer.id && nextAction.turn == lastAction.turn) {
+      lastAction.cellTo = nextAction.cellTo;
+      return actions;
     }
-    let lastDependentRoll = lastRoll.dependentRolls && lastRoll.dependentRolls[lastRoll.dependentRolls.length - 1];
-    if (nextRoll instanceof MoveAction && lastDependentRoll instanceof MoveAction && nextRoll.activePlayer.id == lastDependentRoll.activePlayer.id && nextRoll.turn == lastRoll.turn) {
-      lastDependentRoll.cellTo = nextRoll.cellTo;
-      return rolls;
+    let lastDependentRoll = lastAction.dependentActions && lastAction.dependentActions[lastAction.dependentActions.length - 1];
+    if (nextAction instanceof MoveAction && lastDependentRoll instanceof MoveAction && nextAction.activePlayer.id == lastDependentRoll.activePlayer.id && nextAction.turn == lastAction.turn) {
+      lastDependentRoll.cellTo = nextAction.cellTo;
+      return actions;
     }
 
     if (
-      lastRoll.isDependentRoll(nextRoll)
+      lastAction.isDependentAction(nextAction)
     ) {
-      lastRoll.dependentRolls.push(nextRoll);
-      nextRoll.dependent = {roll: lastRoll, index: lastRoll.dependentRolls.length - 1};
-      return rolls;
+      lastAction.dependentActions.push(nextAction);
+      nextAction.dependent = {action: lastAction, index: lastAction.dependentActions.length - 1};
+      return actions;
     }
-    rolls.push(nextRoll);
-    return rolls;
+    actions.push(nextAction);
+    return actions;
   }, []);
-  validRolls.forEach((roll, idx) => {
-    roll.rollIndex = idx;
-    roll.endIndex = validRolls[idx + 1] ? validRolls[idx + 1].startIndex : END;
+  validRolls.forEach((action, idx) => {
+    action.actionIndex = idx;
+    action.endIndex = validRolls[idx + 1] ? validRolls[idx + 1].startIndex : END;
   });
-  rolls.forEach(roll => {
-    roll.rolls = validRolls;
+  actions.forEach(action => {
+    action.actions = validRolls;
   })
-  console.log("Transformed rolls...", { validRolls });
-  let activationValues: Record<string, Value> = validRolls.reduce((acc: Record<string, Value>, roll) => {
-    if (roll.activePlayer) {
-      acc[`${roll.turn}-${roll.activePlayer.name}`] = {
-        actual: roll.valueWithDependents.valueOf(),
-        expected: roll.onTeamValue(roll.activePlayer).valueOf(),
+  console.log("Transformed actions...", { validRolls });
+  let activationValues: Record<string, Value> = validRolls.reduce((acc: Record<string, Value>, action) => {
+    if (action.activePlayer) {
+      acc[`${action.turn}-${action.activePlayer.name}`] = {
+        actual: action.valueWithDependents.valueOf(),
+        expected: action.onTeamValue(action.activePlayer).valueOf(),
       };
     }
     return acc;
@@ -119,8 +120,8 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
   return {
     fullReplay: data.Replay,
     gameDetails: gameDetails,
-    rolls: validRolls,
-    unknownRolls: (rolls.filter(roll => roll instanceof UnknownRoll) as unknown) as UnknownRoll[],
+    actions: validRolls,
+    unknownRolls: (actions.filter(action => action instanceof UnknownAction) as unknown) as UnknownAction[],
     version: 1,
   };
 }

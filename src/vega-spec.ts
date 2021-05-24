@@ -15,7 +15,7 @@ export const valueSpec = {
       encoding: {
         x: {
           type: 'quantitative',
-          field: 'rollIndex',
+          field: 'actionIndex',
           title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'
@@ -39,7 +39,7 @@ export const valueSpec = {
           groupby: ['activeTeamId', 'iteration', 'type']
         },
         {
-          calculate: "'#roll-' + datum.rollIndex",
+          calculate: "'#roll-' + datum.actionIndex",
           as: 'url'
         },
       ],
@@ -53,7 +53,7 @@ export const valueSpec = {
           encoding: {
             x: {
               type: 'quantitative',
-              field: 'rollIndex',
+              field: 'actionIndex',
               title: 'Action',
               axis: {
                 labelExpr: 'floor(datum.label)'
@@ -105,7 +105,7 @@ export const valueSpec = {
           encoding: {
             x: {
               type: 'quantitative',
-              field: 'rollIndex',
+              field: 'actionIndex',
               title: 'Action',
               axis: {
                 labelExpr: 'floor(datum.label)'
@@ -152,7 +152,7 @@ export const expectedValueSpec = {
       encoding: {
         x: {
           type: 'quantitative',
-          field: 'rollIndex',
+          field: 'actionIndex',
           title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'
@@ -174,7 +174,7 @@ export const expectedValueSpec = {
           groupby: ['activeTeamId', 'iteration', 'type']
         },
         {
-          calculate: "'#roll-' + datum.rollIndex",
+          calculate: "'#roll-' + datum.actionIndex",
           as: 'url'
         },
       ],
@@ -184,7 +184,7 @@ export const expectedValueSpec = {
           encoding: {
             x: {
               type: 'quantitative',
-              field: 'rollIndex',
+              field: 'actionIndex',
               title: 'Action',
               axis: {
                 labelExpr: 'floor(datum.label)'
@@ -247,7 +247,7 @@ export const valueDistributionSpec = {
       encoding: {
         x: {
           type: 'quantitative',
-          field: 'rollIndex',
+          field: 'actionIndex',
           title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'
@@ -263,7 +263,7 @@ export const valueDistributionSpec = {
           as: 'activeTeamColor'
         },
         {
-          calculate: "'#roll-' + datum.rollIndex",
+          calculate: "'#roll-' + datum.actionIndex",
           as: 'url'
         },
       ],
@@ -281,7 +281,7 @@ export const valueDistributionSpec = {
             {
               aggregate: [{ op: 'sum', field: 'weights', as: 'weight_sum' }],
               groupby: [
-                'rollIndex',
+                'actionIndex',
                 'activeTeamColor',
                 'activeTeamName',
                 'outcomes_min',
@@ -292,11 +292,11 @@ export const valueDistributionSpec = {
               ],
             },
             {
-              calculate: 'datum.rollIndex',
+              calculate: 'datum.actionIndex',
               as: 'x'
             },
             {
-              calculate: 'datum.rollIndex + clamp(datum.weight_sum, 0.2, 1) * .9',
+              calculate: 'datum.actionIndex + clamp(datum.weight_sum, 0.2, 1) * .9',
               as: 'x2'
             },
             {
@@ -372,7 +372,7 @@ export const improbabilitySpec = {
       encoding: {
         x: {
           type: 'quantitative',
-          field: 'rollIndex',
+          field: 'actionIndex',
           title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'
@@ -394,7 +394,7 @@ export const improbabilitySpec = {
           groupby: ['activeTeamId', 'iteration', 'type']
         },
         {
-          calculate: "'#roll-' + datum.rollIndex",
+          calculate: "'#roll-' + datum.actionIndex",
           as: 'url'
         },
       ],
@@ -402,7 +402,7 @@ export const improbabilitySpec = {
       encoding: {
         x: {
           type: 'quantitative',
-          field: 'rollIndex',
+          field: 'actionIndex',
           title: 'Action',
           axis: {
             labelExpr: 'floor(datum.label)'

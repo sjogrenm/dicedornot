@@ -26,12 +26,14 @@
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
+  import type {
+    ReplayPosition,
+    ReplayPreview
+  } from "../replay-utils.js";
   import {
     translateStringNumberList,
     ensureList,
     REPLAY_SUB_STEP,
-    ReplayPosition,
-    ReplayPreview,
     END,
     period,
     initialReplayPosition,
@@ -273,10 +275,10 @@
       "PlayerState",
       boardState.ListTeams.TeamState[1].ListPitchPlayers
     ).map((p) => placePlayer(p, SIDE.away));
-    if (boardState.ListTeams.TeamState[0].BlitzerId) {
+    if (boardState.ListTeams.TeamState[0].BlitzerId >= 0) {
       players[boardState.ListTeams.TeamState[0].BlitzerId].blitz = true;
     }
-    if (boardState.ListTeams.TeamState[1].BlitzerId) {
+    if (boardState.ListTeams.TeamState[1].BlitzerId >= 0) {
       players[boardState.ListTeams.TeamState[1].BlitzerId].blitz = true;
     }
   }

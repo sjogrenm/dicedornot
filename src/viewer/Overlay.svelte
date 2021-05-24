@@ -1,22 +1,26 @@
 <script lang="ts">
   import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
-  import { ensureKeyedList, translateStringNumberList } from "../replay-utils.js";
+  import {
+    ensureKeyedList,
+    translateStringNumberList,
+  } from "../replay-utils.js";
   import { replayPreview, replay } from "../stores.js";
   import type { Cell } from "../replay/Internal.js";
-  import {convertCell} from "../replay/BB2toInternal.js";
+  import { convertCell } from "../replay/BB2toInternal.js";
   import OverlayMove from "./OverlayMove.svelte";
   import type { Props as OverlayMoveProps } from "./OverlayMove.svelte";
   import OverlayBlock from "./OverlayBlock.svelte";
+  import type { Props as OverlayBlockProps } from "./OverlayBlock.svelte";
   import chroma from "chroma-js";
   import { sliceActionsTo } from "../replay-utils.js";
+  import type { Colors } from "./types.js";
 
-  import {
-    team1Color,
-    team1Gray,
-    team0Color,
-    team0Gray,
-  } from "../theme.js";
-import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
+  import { team1Color, team1Gray, team0Color, team0Gray } from "../theme.js";
+  import type {
+    BlitzResults,
+    BlockResults,
+    KeyedMList,
+  } from "../replay/BB2.js";
 
   let paths: OverlayProps[];
 
@@ -26,24 +30,22 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
   };
 
   type OverlayProps =
-    | ({
+    | {
         type: "move";
-      } & OverlayMoveProps)
+        team: SIDE;
+        props: OverlayMoveProps;
+      }
     | {
         type: "block";
-        from: Cell;
-        to: Cell;
-        rolls: any;
         team: SIDE;
-        pushTo?: Cell;
-        follow?: boolean;
+        props: OverlayBlockProps;
       };
 
   function cellEqual(a: Cell, b: Cell): boolean {
     return a.x == b.x && a.y == b.y;
   }
 
-  function colors(team: SIDE, index: number, maxIndex: number) {
+  function colors(team: SIDE, index: number, maxIndex: number): Colors {
     let colorScale, textScale, oppColorScale, oppTextScale;
     if (team == SIDE.home) {
       colorScale = team0Color;
@@ -68,7 +70,6 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
     let oppColor = oppColorScale((maxIndex - index) / maxIndex);
     let oppLightText = oppTextScale(0).brighten();
     let oppDarkText = oppTextScale(1).darken();
-    let oppTextColor;
     if (
       chroma.contrast(oppColor, oppLightText) >
       chroma.contrast(color, oppDarkText)
@@ -77,7 +78,7 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
     } else {
       textColor = oppDarkText;
     }
-    return { color, textColor, oppColor, oppTextColor };
+    return { color, textColor, oppColor };
   }
 
   $: {
@@ -90,34 +91,37 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
       if (!("ActionType" in action)) {
         let from = convertCell(action.Order.CellFrom);
         let to = convertCell(action.Order.CellTo.Cell);
-        let rolls = ensureKeyedList('BoardActionResult', action.Results)
-          .filter((result) => 'Requirement' in result)
+        let rolls = ensureKeyedList("BoardActionResult", action.Results)
+          .filter((result) => "Requirement" in result)
           .map((result) => {
             // @ts-ignore
             let requirement = result.Requirement;
             let modifier =
-              ensureKeyedList('DiceModifier', result.ListModifiers)
+              ensureKeyedList("DiceModifier", result.ListModifiers)
                 .map((modifier) => modifier.Value || 0)
                 .reduce((a, b) => a + b, 0) || 0;
             return `${requirement - modifier}+`;
           })
           .join(" ");
-        let team = action.PlayerId && action.PlayerId < 30 ? SIDE.home : SIDE.away;
+        let team =
+          action.PlayerId && action.PlayerId < 30 ? SIDE.home : SIDE.away;
         let lastPath = paths[paths.length - 1];
         if (lastPath && lastPath.type === "move") {
-          let lastCell = lastPath.path[lastPath.path.length - 1];
+          let lastCell = lastPath.props.path[lastPath.props.path.length - 1];
           if (cellEqual(lastCell, from)) {
-            lastPath.path.push(to);
+            lastPath.props.path.push(to);
             if (rolls) {
-              lastPath.rolls.push({ from, to, rolls });
+              lastPath.props.rolls.push({ from, to, rolls });
             }
-            break;
+            continue;
           }
         }
         paths.push({
           type: "move",
-          path: [from, to],
-          rolls: rolls ? [{ from, to, rolls }] : [],
+          props: {
+            path: [from, to],
+            rolls: rolls ? [{ from, to, rolls }] : [],
+          },
           team,
         });
       } else {
@@ -126,13 +130,16 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
           case ACTION_TYPE.Block:
             {
               let results: (BlockResults | BlitzResults)[] = ensureKeyedList(
-                'BoardActionResult',
-                action.Results as KeyedMList<'BoardActionResult', BlockResults | BlitzResults>
+                "BoardActionResult",
+                action.Results as KeyedMList<
+                  "BoardActionResult",
+                  BlockResults | BlitzResults
+                >
               );
               for (const result of results) {
                 let last = paths[paths.length - 1];
                 if (
-                  'RollType' in result &&
+                  "RollType" in result &&
                   result.RollType == ROLL.Block &&
                   result.IsOrderCompleted != 1
                 ) {
@@ -140,14 +147,14 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
                   let to = convertCell(action.Order.CellTo.Cell);
                   let team = action.PlayerId || 0 < 30 ? SIDE.home : SIDE.away;
                   let modifier =
-                    ensureKeyedList('DiceModifier', result.ListModifiers)
+                    ensureKeyedList("DiceModifier", result.ListModifiers)
                       .map((modifier) => modifier.Value || 0)
                       .reduce((a, b) => a + b, 0) || 0;
                   let requirement = result.Requirement || 0 - modifier;
                   let dieCount =
                     translateStringNumberList(result.CoachChoices.ListDices)
                       .length / 2;
-                  let roll;
+                  let roll = "";
                   if (requirement < 0) {
                     if (dieCount == 2) {
                       roll = "\u00BDD";
@@ -160,50 +167,54 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
                   if (
                     last &&
                     last.type === "block" &&
-                    last.from.x == from.x &&
-                    last.from.y == from.y &&
-                    last.to.x == to.x &&
-                    last.to.y == to.y
+                    last.props.from.x == from.x &&
+                    last.props.from.y == from.y &&
+                    last.props.to.x == to.x &&
+                    last.props.to.y == to.y
                   ) {
-                    last.rolls += ` ${roll}`;
+                    last.props.rolls += ` ${roll}`;
                   } else {
                     paths.push({
                       type: "block",
-                      from,
-                      to,
-                      rolls: roll,
+                      props: { from, to, rolls: roll, follow: false },
                       team,
                     });
                   }
                 } else if (
-                  'RollType' in result &&
+                  "RollType" in result &&
                   result.RollType == ROLL.Push &&
                   result.IsOrderCompleted == 1 &&
                   last.type === "block"
                 ) {
-                  let pushOptions = ensureKeyedList('Cell', result.CoachChoices.ListCells);
+                  let pushOptions = ensureKeyedList(
+                    "Cell",
+                    result.CoachChoices.ListCells
+                  );
                   if (pushOptions) {
-                    last.pushTo = convertCell(pushOptions[0]);
+                    last.props.pushTo = convertCell(pushOptions[0]);
                   }
                 } else if (
-                  'RollType' in result && 
+                  "RollType" in result &&
                   result.RollType == ROLL.FollowUp &&
                   result.IsOrderCompleted == 1 &&
                   last.type === "block"
                 ) {
-                  let followOptions = ensureKeyedList('Cell', result.CoachChoices.ListCells);
+                  let followOptions = ensureKeyedList(
+                    "Cell",
+                    result.CoachChoices.ListCells
+                  );
                   if (followOptions) {
                     let followTo = convertCell(followOptions[0]);
-                    last.follow =
-                      followTo.x != last.from.x || followTo.y != last.from.y;
+                    last.props.follow =
+                      followTo.x != last.props.from.x ||
+                      followTo.y != last.props.from.y;
                   }
                 }
               }
             }
-            break;
         }
       }
-    }
+    };
   }
 </script>
 
@@ -240,11 +251,18 @@ import type { BlitzResults, BlockResults, KeyedMList } from "../replay/BB2.js";
     </filter>
   </defs>
   {#each paths as path, index}
-    <svelte:component
-      this={components[path.type]}
-      {...path}
-      {...colors(path.team, index, paths.length)}
-      index={index + 1}
-    />
+    {#if path.type == "block"}
+      <OverlayBlock
+        {...path.props}
+        colors={colors(path.team, index, paths.length)}
+        index={index + 1}
+      />
+    {:else if path.type == "move"}
+      <OverlayMove
+        {...path.props}
+        colors={colors(path.team, index, paths.length)}
+        index={index + 1}
+      />
+    {/if}
   {/each}
 </svg>

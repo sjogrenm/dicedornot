@@ -37,9 +37,9 @@
 
   $: {
     cumNetValues = { actuals: {[SIDE.home]: 0, [SIDE.away]: 0}, simulated: {} };
-    actuals = $replay!.rolls.map((roll) => ({
-      team: roll.activeTeam ? roll.activeTeam.id : SIDE.home,
-      netValue: roll.valueWithDependents.singularValue - roll.expectedValue,
+    actuals = $replay!.actions.map((action) => ({
+      team: action.activeTeam ? action.activeTeam.id : SIDE.home,
+      netValue: action.valueWithDependents.singularValue - action.expectedValue,
     }));
     cumNetValues.actuals = accumulateNetValue(actuals);
     updatePercentiles();
@@ -63,7 +63,7 @@
     } else {
       countDisp = count.toFixed(0);
     }
-    return `${team}'s rolls were better than ${qualifier}${countDisp} in 100 games`;
+    return `${team}'s actions were better than ${qualifier}${countDisp} in 100 games`;
   }
   function diced(team: string, percentile: number): string {
     const sample = (items: string[]): string => items[team.length % items.length];
@@ -125,9 +125,9 @@
       console.log("Computing 50 simulated games");
       for (var x = 0; x < 50; x++) {
         iteration++;
-        let newValues = $replay!.rolls.map((roll) => ({
-          team: roll.activeTeam ? roll.activeTeam.id : SIDE.home,
-          netValue: roll.possibleOutcomes.sample() - roll.expectedValue,
+        let newValues = $replay!.actions.map((action) => ({
+          team: action.activeTeam ? action.activeTeam.id : SIDE.home,
+          netValue: action.possibleOutcomes.sample() - action.expectedValue,
         }));
         cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
       }

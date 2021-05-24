@@ -70,7 +70,7 @@ export class Distribution {
   }
 
   add(...values: Array<Distribution | number | undefined>) {
-    let realValues = values.filter(value => value !== null) as (Distribution | number)[];
+    let realValues = values.filter(value => value !== undefined) as (Distribution | number)[];
     if (realValues.length > 0) {
       return new SumDistribution([this, ...realValues]);
     } else {
@@ -78,10 +78,10 @@ export class Distribution {
     }
   }
 
-  product(...values: Array<Distribution | number>): Distribution {
-    values = values.filter(value => value !== null);
-    if (values.length > 0) {
-      return new ProductDistribution([this, ...values]);
+  product(...values: Array<Distribution | number | undefined>): Distribution {
+    let realValues = values.filter(value => value !== undefined) as (Distribution | number)[];
+    if (realValues.length > 0) {
+      return new ProductDistribution([this, ...realValues]);
     } else {
       return this;
     }

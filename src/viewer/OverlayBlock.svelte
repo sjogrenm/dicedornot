@@ -1,17 +1,23 @@
+<script context="module" lang="ts">
+  import type { Cell } from "../replay/Internal.js";
+  import type { Colors } from "./types.js";
+  export interface Props {
+    from: Cell;
+    to: Cell;
+    follow: boolean;
+    rolls: string;
+    pushTo?: Cell;
+  }
+</script>
+
 <script lang="ts">
-import type { Cell } from "../replay/Internal";
-
-
-
   export let from: Cell,
     to: Cell,
     follow: boolean,
     rolls: string,
-    color: string,
-    textColor: string,
-    pushTo: Cell,
-    oppColor: string,
-    index = 0;
+    colors: Colors,
+    pushTo: Cell | undefined = undefined,
+    index: number = 0;
   let center: Cell, pushFrom: Cell;
 
   function mixCells(cellA: Cell, cellB: Cell, pct: number) {
@@ -46,7 +52,7 @@ import type { Cell } from "../replay/Internal";
   >
     <polyline
       fill="none"
-      stroke={oppColor}
+      stroke={colors.oppColor.toString()}
       stroke-width="1"
       points="0.5,0.5 4.5,2.5 0.5,4.5"
     />
@@ -62,7 +68,7 @@ import type { Cell } from "../replay/Internal";
   >
     <polyline
       fill="none"
-      stroke={color}
+      stroke={colors.color.toString()}
       stroke-width="1"
       points="0.5,0.5 4.5,2.5 0.5,4.5"
     />
@@ -78,7 +84,7 @@ import type { Cell } from "../replay/Internal";
   >
     <polyline
       fill="none"
-      stroke={color}
+      stroke={colors.color.toString()}
       stroke-width="1"
       points="0.5,0.5 0.5,4.5"
     />
@@ -91,7 +97,7 @@ import type { Cell } from "../replay/Internal";
   class="move"
   marker-end={follow ? `url(#arrow-${index})` : `url(#stop-${index})`}
   stroke-width="0.08"
-  stroke={color}
+  stroke={colors.color.toString()}
   points={`${from.x},${from.y} ${to.x},${to.y}`}
 />
 {#if pushTo}
@@ -101,13 +107,13 @@ import type { Cell } from "../replay/Internal";
     class="move"
     marker-end="url(#push-{index})"
     stroke-width="0.08"
-    stroke={oppColor}
+    stroke={colors.oppColor.toString()}
     points={`${pushFrom.x},${pushFrom.y} ${pushTo.x},${pushTo.y}`}
   />
 {/if}
-<circle filter="url(#chalk)" fill={color} cx={from.x} cy={from.y} r="0.2" />
+<circle filter="url(#chalk)" fill={colors.color.toString()} cx={from.x} cy={from.y} r="0.2" />
 <text
-  fill={textColor}
+  fill={colors.textColor.toString()}
   x={from.x}
   y={from.y}
   font-size="0.25"
@@ -116,7 +122,7 @@ import type { Cell } from "../replay/Internal";
 >
 
 <line
-  stroke={color}
+  stroke={colors.color.toString()}
   x1={center.x - (0.1 * rolls.length) / 2}
   y1={center.y + 0.05}
   x2={center.x + (0.1 * rolls.length) / 2}
@@ -125,7 +131,7 @@ import type { Cell } from "../replay/Internal";
   stroke-linecap="round"
 />
 <text
-  fill={textColor}
+  fill={colors.textColor.toString()}
   x={center.x}
   y={center.y}
   font-size="0.25"

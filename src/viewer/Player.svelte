@@ -1,11 +1,12 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import { getPlayerSprite } from "../constants.js";
+  import { getPlayerSprite, SIDE } from "../constants.js";
   import { translateStringNumberList } from "../replay-utils.js";
   import type { PitchPlayer } from "../replay/BB2.js";
   import type { CrossFadeFn } from "./types.js";
 
   export let data: PitchPlayer,
+    team: SIDE,
     done: boolean | undefined = undefined,
     moving: boolean | undefined = undefined,
     prone: boolean | undefined = undefined,
@@ -17,7 +18,6 @@
   let id,
     race,
     model,
-    team,
     classes: string,
     key: string,
     _done: boolean,
@@ -28,10 +28,9 @@
   $: {
     ({ model, race } = getPlayerSprite(data.Id, data.Data.IdPlayerTypes));
     id = data.Id;
-    team = id > 30 ? "away" : "home";
     _done = done === undefined ? data.CanAct != 1 : done;
 
-    classes = [race, model, team, "sprite", "crisp", "player"].join(" ");
+    classes = [race, model, team == SIDE.home ? 'home' : 'away', "sprite", "crisp", "player"].join(" ");
     key = `player_${id}`;
     _prone = prone === undefined ? data.Status === 1 : prone;
     _stunned = stunned === undefined ? data.Status === 2 : stunned;

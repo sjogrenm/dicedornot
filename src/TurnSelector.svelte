@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { SIDE } from "./constants.js";
-  import { ReplayPosition, atOrAfter, before } from "./replay-utils.js";
+  import { atOrAfter, before } from "./replay-utils.js";
+  import type {ReplayPosition} from "./replay-utils.js";
 
-  import type { Roll } from "./rolls.js";
+  import type { Action } from "./rolls.js";
 
-  export let rolls: Roll<any>[];
+  export let actions: Action[];
   import { replayCurrent, replayTarget, replayPreview } from "./stores.js";
   let turn: number,
     teamId: SIDE | undefined,
@@ -14,11 +15,11 @@
     endIndex: ReplayPosition;
 
   $: {
-    turn = rolls[0].turn;
-    teamId = rolls[0].activeTeam?.id;
-    teamName = rolls[0].activeTeam?.name;
-    startIndex = rolls[0].startIndex;
-    endIndex = rolls[rolls.length - 1].endIndex;
+    turn = actions[0].turn;
+    teamId = actions[0].activeTeam?.id;
+    teamName = actions[0].activeTeam?.name;
+    startIndex = actions[0].startIndex;
+    endIndex = actions[actions.length - 1].endIndex;
     current = atOrAfter($replayCurrent, startIndex) && before($replayCurrent, endIndex);
   }
 </script>
