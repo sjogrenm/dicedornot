@@ -258,7 +258,7 @@ export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: Repla
         let startAction = 'action' in start ? start.action : 0;
         if (stepIdx == 0) {
           return ensureList(step.RulesEventBoardAction).slice(startAction).map(action => ({ step, action }));
-        } else if (start.step + stepIdx == endStep) {
+        } else if (start.step + stepIdx == ('step' in end ? end.step : undefined)) {
           let endAction = 'action' in end ? end.action : undefined;
           return ensureList(step.RulesEventBoardAction).slice(0, endAction).map(action => ({ step, action }));
         } else {

@@ -476,29 +476,33 @@ export class Action {
     boardActionResult: BB2.ActionResult<BB2.RulesEventBoardAction>,
   ) {
     if (boardActionResult && !('RollType' in boardActionResult)) {
-      return new MoveAction(
-        MoveAction.argsFromXml({
-          replay,
-          gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
-            step => {
-              if (!('BoardState' in step)) {
-                return [];
+      if (!('ActionType' in action)) {
+        return new MoveAction(
+          MoveAction.argsFromXml({
+            replay,
+            gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
+              step => {
+                if (!('BoardState' in step)) {
+                  return [];
+                }
+                return [
+                  step.BoardState.ListTeams.TeamState[0].GameTurn || 0, 
+                  step.BoardState.ListTeams.TeamState[1].GameTurn || 0
+                ];
               }
-              return [
-                step.BoardState.ListTeams.TeamState[0].GameTurn || 0, 
-                step.BoardState.ListTeams.TeamState[1].GameTurn || 0
-              ];
-            }
-          )),
-          initialBoard,
-          stepIndex,
-          replayStep,
-          actionIndex,
-          action: (action as BB2.MoveAction),
-          resultIndex,
-          boardActionResult: (boardActionResult as BB2.ActionResult<BB2.MoveAction>),
-        })
-      );
+            )),
+            initialBoard,
+            stepIndex,
+            replayStep,
+            actionIndex,
+            action: (action as BB2.MoveAction),
+            resultIndex,
+            boardActionResult: (boardActionResult as BB2.ActionResult<BB2.MoveAction>),
+          })
+        );
+      } else {
+        return undefined;
+      }
     }
 
     let rollClass = ROLL_TYPES[boardActionResult.RollType];

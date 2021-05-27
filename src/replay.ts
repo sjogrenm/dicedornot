@@ -67,9 +67,9 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
     initialBoardState = replayStep.BoardState;
   }
   console.log("Extracted actions...", { actions });
-  let validRolls: Action[] = actions.filter((action) => !action.ignore) as Action[];
-  console.log("Valid actions...", {validRolls});
-  validRolls = validRolls.reduce((actions: Action[], nextAction) => {
+  let validActions: Action[] = actions.filter((action) => !action.ignore) as Action[];
+  console.log("Valid actions...", {validActions});
+  validActions = validActions.reduce((actions: Action[], nextAction) => {
     if (actions.length == 0) {
       return [nextAction];
     }
@@ -94,15 +94,15 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
     actions.push(nextAction);
     return actions;
   }, []);
-  validRolls.forEach((action, idx) => {
+  validActions.forEach((action, idx) => {
     action.actionIndex = idx;
-    action.endIndex = validRolls[idx + 1] ? validRolls[idx + 1].startIndex : END;
+    action.endIndex = validActions[idx + 1] ? validActions[idx + 1].startIndex : END;
   });
   actions.forEach(action => {
-    action.actions = validRolls;
+    action.actions = validActions;
   })
-  console.log("Transformed actions...", { validRolls });
-  let activationValues: Record<string, Value> = validRolls.reduce((acc: Record<string, Value>, action) => {
+  console.log("Transformed actions...", { validActions });
+  let activationValues: Record<string, Value> = validActions.reduce((acc: Record<string, Value>, action) => {
     if (action.activePlayer) {
       acc[`${action.turn}-${action.activePlayer.name}`] = {
         actual: action.valueWithDependents.valueOf(),
@@ -120,7 +120,7 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
   return {
     fullReplay: data.Replay,
     gameDetails: gameDetails,
-    actions: validRolls,
+    actions: validActions,
     unknownRolls: (actions.filter(action => action instanceof UnknownAction) as unknown) as UnknownAction[],
     version: 1,
   };
