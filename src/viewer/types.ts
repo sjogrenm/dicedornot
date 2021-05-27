@@ -52,10 +52,10 @@ export interface BallProps {
 }
 
 export interface CellProps {
-    active?: boolean;
-    target?: boolean;
-    pushbackChoice?: boolean;
-    moved?: boolean;
+    active: boolean;
+    target: boolean;
+    pushbackChoice: boolean;
+    moved: boolean;
     plus?: number;
 }
 

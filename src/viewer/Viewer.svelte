@@ -727,7 +727,12 @@
       if (square.player) {
         if (square.player == action.PlayerId) {
           if (!square.cell) {
-            square.cell = {};
+            square.cell = {
+              active: false,
+              target: false,
+              pushbackChoice: false,
+              moved: false,
+            };
           }
           square.cell.active = true;
         }
@@ -757,7 +762,12 @@
     )[resultIndex];
     let from = convertCell(action.Order.CellFrom);
     let fromSquare = setPitchSquare(from);
-    (fromSquare.cell = fromSquare.cell || {}).active = true;
+    (fromSquare.cell = fromSquare.cell || {
+      active: false,
+      target: false,
+      pushbackChoice: false,
+      moved: false,
+    }).active = true;
 
     let to = convertCell(action.Order.CellTo.Cell);
     let toSquare = setPitchSquare(to);
@@ -770,7 +780,12 @@
     if ("RollType" in actionResult && actionResult.RollType === ROLL.Block) {
       let target = setPitchSquare(convertCell(action.Order.CellTo.Cell));
       if (!target.cell) {
-        target.cell = {};
+        target.cell = {
+          active: false,
+          target: false,
+          pushbackChoice: false,
+          moved: false,
+        };
       }
       target.cell.target = true;
 
@@ -816,7 +831,12 @@
       } else {
         ensureKeyedList('Cell', actionResult.CoachChoices.ListCells).map(convertCell).forEach((cell) => {
           let square = setPitchSquare(cell);
-          square.cell = square.cell || {};
+          square.cell = square.cell || {
+            active: false,
+            target: false,
+            pushbackChoice: false,
+            moved: false,
+          };
           square.cell.pushbackChoice = true;
 
           if (toPlayer && (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14)) {
@@ -906,12 +926,22 @@
       squareTo.player = action.PlayerId;
     }
 
-    squareFrom.cell = squareFrom.cell || {};
+    squareFrom.cell = squareFrom.cell || {
+      active: false,
+      target: false,
+      pushbackChoice: false,
+      moved: false,
+    };
     squareFrom.cell.moved = true;
     squareFrom.cell.active = false;
 
     if (actionResult.IsOrderCompleted) {
-      squareTo.cell = squareTo.cell || {};
+      squareTo.cell = squareTo.cell || {
+        active: false,
+        target: false,
+        pushbackChoice: false,
+        moved: false,
+      };
       squareTo.cell.active = true;
     }
 
@@ -921,7 +951,12 @@
       [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(actionResult.RollType)
     ) {
       //Dodge, GFI, Leap
-      squareTo.cell = squareTo.cell || {};
+      squareTo.cell = squareTo.cell || {
+        active: false,
+        target: false,
+        pushbackChoice: false,
+        moved: false,
+      };
       let modifier =
         (
           (actionResult.ListModifiers &&
@@ -1031,7 +1066,7 @@
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
-        square.cell.target = undefined;
+        square.cell.target = false;
       }
       if (square.player && square.player == action.PlayerId) {
         pitch[idx] = square; // Force svelte to update
