@@ -525,7 +525,7 @@ export interface FoulRefResult extends BaseResult {
         ConcernedTeam?: 1,
         ListSkills: "",
         ListCells: "",
-        ListDices: Dices,
+        ListDices?: Dices,
         Reroll?: Bool,
     }
     IsOrderCompleted?: 1,

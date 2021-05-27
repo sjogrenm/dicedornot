@@ -956,7 +956,7 @@ export class Roll extends Action {
       throw new Error("Unable to create a Roll from an action with no RollType");
     }
     let dice: number[];
-    if ('ListDices' in xml.boardActionResult.CoachChoices) {
+    if ('ListDices' in xml.boardActionResult.CoachChoices && xml.boardActionResult.CoachChoices.ListDices) {
       dice = this.dice(xml.boardActionResult.CoachChoices.ListDices);
     } else {
       dice = [];
