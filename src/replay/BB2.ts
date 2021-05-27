@@ -258,7 +258,14 @@ export interface RulesEventAddInducement {
     InducementsCash?: number,
     CoachSlot: 0 | 1,
     InducementCategory: number,
-    Treasury: number,
+    Treasury?: number,
+}
+
+export interface RulesEventRemoveInducement {
+    Number?: number,
+    InducementsCash?: number,
+    InducementCategory: number,
+    Treasury?: number,
 }
 
 export interface RulesEventAddMercenary {
@@ -352,13 +359,15 @@ export type AddInducementStep = RequireAtLeastOne<
         },
         RulesEventAddMercenary?: MList<RulesEventAddMercenary>,
         RulesEventAddInducement?: RulesEventAddInducement,
+        RulesEventRemoveInducement?: RulesEventRemoveInducement,
         RulesEventInducementsInfos?: RulesEventInducementInfos,
         RulesEventWaitingRequest?: RulesEventWaitingRequest,
     },
     'RulesEventApplyInducements' |
     'RulesEventAddMercenary' |
     'RulesEventAddInducement' |
-    'RulesEventInducementsInfos'
+    'RulesEventInducementsInfos' |
+    'RulesEventRemoveInducement'
 > & {
     BoardState: BoardState
 };
