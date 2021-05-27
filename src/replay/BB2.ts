@@ -711,7 +711,7 @@ export interface ShadowingAction extends PlayerAction, OrderT<Cell, {Cell: Cell}
 export interface StabAction extends PlayerAction, OrderAction, ResultsAction<StabResult> { ActionType: ACTION_TYPE.Stab | ACTION_TYPE.FrenzyStab}
 
 // Leap = 21,
-export type LeapResults = LeapResult | LonerResult;
+export type LeapResults = LeapResult | LonerResult | GFIResult;
 export interface LeapAction extends PlayerAction, OrderAction, ResultsAction<LeapResults> { ActionType: ACTION_TYPE.Leap }
 // Chainsaw = 22,
 export interface ChainsawAction extends PlayerAction, OrderAction, ResultsAction<ChainsawArmorResult | ChainsawKickbackResult | LonerResult> { ActionType: ACTION_TYPE.Chainsaw }
