@@ -159,7 +159,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 79355,
+      "bytes": 79403,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -1736,7 +1736,7 @@
           "bytesInOutput": 59
         },
         "dist/rolls.js": {
-          "bytesInOutput": 46529
+          "bytesInOutput": 46573
         },
         "dist/replay.js": {
           "bytesInOutput": 2443
@@ -2036,7 +2036,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1411472
+      "bytes": 1411516
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
