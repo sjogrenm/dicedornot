@@ -1,16 +1,14 @@
 <script lang="ts">
   import { RACE_NAMES } from "./constants.js";
   import { Row, Col, Button } from "sveltestrap";
-  import { replay } from "./stores.js";
-  import type { GameDetails } from "./replay.js";
+  import { replay as replayStore } from "./stores.js";
+  import type * as Internal from "./replay/Internal.js";
 
-  let gameDetails: GameDetails,
-    filename: string | undefined,
-    shared = false;
+  let shared = false,
+    replay: Internal.Replay;
 
   $: {
-    gameDetails = $replay!.gameDetails;
-    filename = $replay!.fullReplay.filename;
+    replay = $replayStore!.fullReplay;
   }
 
   function sleep(ms: number) {
@@ -32,16 +30,16 @@
         <Col xs="auto">
           <img
             class="race-logo"
-            src={`/images/races/${gameDetails.homeTeam.raceId}.png`}
-            alt={RACE_NAMES[gameDetails.homeTeam.raceId] ||
-              `Unknown: ${gameDetails.homeTeam.raceId}`}
-            title={RACE_NAMES[gameDetails.homeTeam.raceId] ||
-              `Unknown: ${gameDetails.homeTeam.raceId}`}
+            src={`/images/races/${replay.teams.home.race}.png`}
+            alt={RACE_NAMES[replay.teams.home.race] ||
+              `Unknown: ${replay.teams.home.race}`}
+            title={RACE_NAMES[replay.teams.home.race] ||
+              `Unknown: ${replay.teams.home.race}`}
           />
         </Col>
         <Col xs="auto">
-          <div class="team">{gameDetails.homeTeam.teamName}</div>
-          <div class="coach">{gameDetails.homeTeam.coachName}</div>
+          <div class="team">{replay.teams.home.name}</div>
+          <div class="coach">{replay.teams.home.coach}</div>
         </Col>
       </Row>
     </div>
@@ -49,25 +47,25 @@
 
   <Col xs="auto" class="text-center">
     <div class="score">
-      <span class="home">{gameDetails.homeTeam.score}</span> -
-      <span class="away">{gameDetails.awayTeam.score}</span>
+      <span class="home">{replay.finalScore.home}</span> -
+      <span class="away">{replay.finalScore.away}</span>
     </div>
   </Col>
   <Col>
     <div class="team-name away">
       <Row class="align-items-center justify-content-center">
         <Col xs="auto" class="order-12 order-lg-1">
-          <div class="team">{gameDetails.awayTeam.teamName}</div>
-          <div class="coach">{gameDetails.awayTeam.coachName}</div>
+          <div class="team">{replay.teams.away.name}</div>
+          <div class="coach">{replay.teams.away.coach}</div>
         </Col>
         <Col xs="auto" class="order-1 order-lg-12">
           <img
             class="race-logo"
-            src={`/images/races/${gameDetails.awayTeam.raceId}.png`}
-            alt={RACE_NAMES[gameDetails.awayTeam.raceId] ||
-              `Unknown: ${gameDetails.awayTeam.raceId}`}
-            title={RACE_NAMES[gameDetails.awayTeam.raceId] ||
-              `Unknown: ${gameDetails.awayTeam.raceId}`}
+            src={`/images/races/${replay.teams.away.race}.png`}
+            alt={RACE_NAMES[replay.teams.away.race] ||
+              `Unknown: ${replay.teams.away.race}`}
+            title={RACE_NAMES[replay.teams.away.race] ||
+              `Unknown: ${replay.teams.away.race}`}
           />
         </Col>
       </Row>
@@ -76,26 +74,26 @@
 </Row>
 <Row class="text-center justify-content-center align-items-center">
   <Col xs="auto">
-    {filename}
+    {replay.metadata.filename}
   </Col>
 
   <Col xs="auto">
     Stadium:
-    <span>{gameDetails.stadiumName}</span>
-    {#if gameDetails.stadiumType}
-      <span>[{gameDetails.stadiumType}]</span>
+    <span>{replay.stadium.name}</span>
+    {#if replay.stadium.enhancement}
+      <span>[{replay.stadium.enhancement}]</span>
     {/if}
   </Col>
 
   <Col xs="auto">
-    {#if gameDetails.leagueName}
-      League: {gameDetails.leagueName}
+    {#if replay.metadata.league}
+      League: {replay.metadata.league}
     {:else}
       Friendly
     {/if}
   </Col>
 
-  {#if $replay && $replay.fullReplay.url}
+  {#if replay && replay.metadata.url}
     <Col xs="auto">
       <Button on:click={share} color={shared ? "success" : "primary"}>
         {#if shared}

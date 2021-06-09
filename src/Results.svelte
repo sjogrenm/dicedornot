@@ -37,8 +37,8 @@
         .insert([{ actionIndex: playHead }]);
       view = view.change("playHead", changeSet).run();
     }
-    if ($replay!.fullReplay.filename != loadedReplay && chartEl) {
-      loadedReplay = $replay!.fullReplay.filename;
+    if ($replay!.fullReplay.metadata.filename != loadedReplay && chartEl) {
+      loadedReplay = $replay!.fullReplay.metadata.filename;
       console.log("Results onMount", { replay: $replay });
       renderChart();
       console.log("Results onMount chart rendered");
@@ -72,7 +72,7 @@
 
     // Embed the visualization in the container with id `vis`
     embed(chartEl, spec).then((result) => {
-      result.view.addEventListener("click", function (event, item) {
+      result.view.addEventListener("click", function (_, item) {
         if (item) {
           let selectedRoll = item.datum.actionIndex;
           $replayTarget = actions[selectedRoll].startIndex;

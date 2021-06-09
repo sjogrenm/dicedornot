@@ -63,8 +63,8 @@
           <div class="col">
               {#if $showResultsAnalysis}
               <Diced
-                homeTeam={$replay.gameDetails.homeTeam.coachName}
-                awayTeam={$replay.gameDetails.awayTeam.coachName}
+                homeTeam={$replay.fullReplay.teams.home.coach}
+                awayTeam={$replay.fullReplay.teams.away.coach}
               />
             {/if}
             <Summary />
@@ -72,7 +72,7 @@
         </div>
         <div class="row justify-content-center">
           <div class="col col-auto">
-            {#key $replay.fullReplay.filename}
+            {#key $replay.fullReplay.metadata.filename}
               <Viewer bind:playing />
             {/key}
           </div>

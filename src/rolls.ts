@@ -260,7 +260,7 @@ interface ActionArgs {
 }
 
 type ActionXML = {
-  replay: BB2.Replay,
+  replay: Internal.Replay,
   initialBoard: BB2.BoardState,
   replayStep: BB2.ReplayStep,
   stepIndex: number,
@@ -270,7 +270,7 @@ type ActionXML = {
   resultIndex: number,
   gameLength: number,
 } | {
-  replay: BB2.Replay,
+  replay: Internal.Replay,
   gameLength: number,
   initialBoard: BB2.BoardState,
   stepIndex: number,
@@ -397,8 +397,8 @@ export class Action {
     return false;
   }
 
-  static fromReplayStep(replay: BB2.Replay, initialBoard: BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep): (Action | UnknownAction)[] {
-    let gameLength = Math.max(16, ...replay.ReplayStep.flatMap(
+  static fromReplayStep(replay: Internal.Replay, initialBoard: BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep): (Action | UnknownAction)[] {
+    let gameLength = Math.max(16, ...replay.unhandledSteps.flatMap(
       step => {
         if (!('BoardState' in step)) {
           return [];
@@ -437,7 +437,7 @@ export class Action {
     return rolls;
   }
 
-  static fromAction(replay: BB2.Replay, initialBoard: BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep, actionIndex: number, action: BB2.RulesEventBoardAction) {
+  static fromAction(replay: Internal.Replay, initialBoard: BB2.BoardState, stepIndex: number, replayStep: BB2.ReplayStep, actionIndex: number, action: BB2.RulesEventBoardAction) {
     var results: BB2.ActionResult<BB2.RulesEventBoardAction>[] = ensureKeyedList('BoardActionResult', action.Results as BB2.KeyedMList<'BoardActionResult', any>);
     var rolls = [];
     for (var resultIndex = 0; resultIndex < results.length; resultIndex++) {
@@ -466,7 +466,7 @@ export class Action {
     return rolls;
   }
   static fromBoardActionResult(
-    replay: BB2.Replay,
+    replay: Internal.Replay,
     initialBoard: BB2.BoardState,
     stepIndex: number,
     replayStep: BB2.ReplayStep,
@@ -480,7 +480,7 @@ export class Action {
         return new MoveAction(
           MoveAction.argsFromXml({
             replay,
-            gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
+            gameLength: Math.max(16, ...replay.unhandledSteps.flatMap(
               step => {
                 if (!('BoardState' in step)) {
                   return [];
@@ -516,7 +516,7 @@ export class Action {
       return new rollClass(
         rollClass.argsFromXml({
           replay,
-          gameLength: Math.max(16, ...replay.ReplayStep.flatMap(
+          gameLength: Math.max(16, ...replay.unhandledSteps.flatMap(
             step => {
               if (!('BoardState' in step)) {
                 return [];
@@ -1034,7 +1034,7 @@ export class Roll extends Action {
   }
 
   static fromKickoffEvent(
-    replay: BB2.Replay,
+    replay: Internal.Replay,
     initialBoard: BB2.BoardState,
     stepIndex: number,
     replayStep: BB2.GameTurnStep,
@@ -1913,7 +1913,7 @@ class DodgeRoll extends PlayerD6Roll {
     ) {
       // A dodge that fails in tackle and prompts for a team reroll doesn't have the requirement attached, so
       // pull them from the later roll
-      let nextStep = xml.replay.ReplayStep[xml.stepIndex + 1];
+      let nextStep = xml.replay.unhandledSteps[xml.stepIndex + 1];
       let nextActions = 'RulesEventBoardAction' in nextStep && nextStep.RulesEventBoardAction ? ensureList(nextStep.RulesEventBoardAction) : [];
       let nextResult = ensureList(nextActions[0].Results && nextActions[0].Results.BoardActionResult)[0] as BB2.DodgeResult;
       target = nextResult.Requirement || 0;

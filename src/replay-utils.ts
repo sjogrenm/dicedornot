@@ -1,11 +1,12 @@
 import { append } from 'svelte/internal';
-import type { ReplayStep, Replay, MList, KeyedMList, RulesEventBoardAction } from './replay/BB2.js';
+import type * as BB2 from './replay/BB2.js';
+import type * as Internal from "./replay/Internal.js";
 
 export const END: ReplayPosition = {
   end: true,
 };
 
-export function ensureList<T>(objOrList: MList<T> | undefined): T[] {
+export function ensureList<T>(objOrList: BB2.MList<T> | undefined): T[] {
   if (objOrList && objOrList instanceof Array) {
     return objOrList;
   } else if (objOrList) {
@@ -15,11 +16,11 @@ export function ensureList<T>(objOrList: MList<T> | undefined): T[] {
   }
 }
 
-export function ensureKeyedList<K extends string, T>(key: K, obj: KeyedMList<K, T>): T[] {
+export function ensureKeyedList<K extends string, T>(key: K, obj: BB2.KeyedMList<K, T>): T[] {
   if (obj == "") {
     return [];
   }
-  let v: MList<T> = obj[key];
+  let v: BB2.MList<T> = obj[key];
   return ensureList(v);
 }
 
@@ -55,7 +56,7 @@ export const REPLAY_KEY: Record<Exclude<REPLAY_SUB_STEP, REPLAY_SUB_STEP.NextRep
 }
 
 
-export function nextState(replayStep: ReplayStep, subStep: REPLAY_SUB_STEP) {
+export function nextState(replayStep: BB2.ReplayStep, subStep: REPLAY_SUB_STEP) {
   for (var nextSubStep = subStep; nextSubStep < REPLAY_SUB_STEP.NextReplayStep; nextSubStep++) {
     if (nextSubStep == REPLAY_SUB_STEP.NextReplayStep) {
       return REPLAY_SUB_STEP.NextReplayStep;
@@ -110,11 +111,11 @@ export function toString(position: ReplayPosition) {
   }
 }
 
-export function updateToNextPosition(replay: Replay, position: ReplayPosition) {
+export function updateToNextPosition(replay: Internal.Replay, position: ReplayPosition) {
   if (position.end) {
     return END;
   }
-  const replayStep = replay.ReplayStep[position.step];
+  const replayStep = replay.unhandledSteps[position.step];
   if (position.subStep == REPLAY_SUB_STEP.BoardAction) {
     const actions = 'RulesEventBoardAction' in replayStep && replayStep.RulesEventBoardAction ? ensureList(replayStep.RulesEventBoardAction) : [];
     let action = actions[position.action];
@@ -132,10 +133,10 @@ export function updateToNextPosition(replay: Replay, position: ReplayPosition) {
   const next = nextState(replayStep, position.subStep + 1);
   if (next == REPLAY_SUB_STEP.NextReplayStep) {
     position.step += 1;
-    if (position.step >= replay.ReplayStep.length) {
+    if (position.step >= replay.unhandledSteps.length) {
       return END;
     }
-    position.subStep = nextState(replay.ReplayStep[position.step], REPLAY_SUB_STEP.SetupAction);
+    position.subStep = nextState(replay.unhandledSteps[position.step], REPLAY_SUB_STEP.SetupAction);
   } else {
     position.subStep = next;
   }
@@ -225,7 +226,7 @@ export function fromParam(value: string): ReplayPosition {
   return {end: false, step, subStep, action, result};
 }
 
-export function sliceStepsTo(replay: Replay, start: ReplayPosition, end: ReplayPosition) {
+export function sliceStepsTo(replay: BB2.Replay, start: ReplayPosition, end: ReplayPosition) {
   if (start.end) {
     return [];
   }
@@ -234,7 +235,7 @@ export function sliceStepsTo(replay: Replay, start: ReplayPosition, end: ReplayP
   }
   return replay.ReplayStep.slice(start.step, end.step == start.step ? end.step + 1 : end.step);
 }
-export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: ReplayPosition): {step: ReplayStep, action: RulesEventBoardAction}[] {
+export function sliceActionsTo(replay: Internal.Replay, start: ReplayPosition, end: ReplayPosition): {step: BB2.ReplayStep, action: BB2.RulesEventBoardAction}[] {
   if (start.end) {
     return [];
   }
@@ -242,9 +243,9 @@ export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: Repla
   if (!end.end && start.step == end.step) {
     let startAction = 'action' in start ? start.action : 0;
     let endAction = 'action' in end ? end.action : undefined
-    let startStep = replay.ReplayStep[start.step];
+    let startStep = replay.unhandledSteps[start.step];
     if ('RulesEventBoardAction' in startStep) {
-      let actions: RulesEventBoardAction[] = ensureList(startStep.RulesEventBoardAction)
+      let actions: BB2.RulesEventBoardAction[] = ensureList(startStep.RulesEventBoardAction)
       return actions
         .slice(startAction || 0, endAction)
         .map(action => ({ step: startStep, action }));
@@ -253,7 +254,7 @@ export function sliceActionsTo(replay: Replay, start: ReplayPosition, end: Repla
     }
   } else {
     let endStep = 'step' in end ? end.step + 1 : undefined;
-    return replay.ReplayStep.slice(start.step, endStep).flatMap((step: ReplayStep, stepIdx: number) => {
+    return replay.unhandledSteps.slice(start.step, endStep).flatMap((step: BB2.ReplayStep, stepIdx: number) => {
       if ('RulesEventBoardAction' in step) {
         let startAction = 'action' in start ? start.action : 0;
         if (stepIdx == 0) {

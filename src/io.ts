@@ -1,10 +1,10 @@
 import JSZip, { files } from 'jszip';
 import parser from 'fast-xml-parser';
 
-export async function xmlToJson(file: File): Promise<Record<string, any>> {
+export async function xmlToJson<T>(file: File): Promise<Record<string, T>> {
   var zip = new JSZip();
   let zipContents = await zip.loadAsync(file);
-  let zipFiles: Record<string, any> = {};
+  let zipFiles: Record<string, T> = {};
   for (let [relPath, innerFile] of Object.entries(zipContents.files)) {
     console.log("Parsing file...", {filename: file.name, relPath});
     try {

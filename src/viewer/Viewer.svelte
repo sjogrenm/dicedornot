@@ -195,7 +195,7 @@
   }
 
   function processTeam(side: SIDE, team: BB2.TeamState, active: boolean): Team {
-    let maxRerollsThisPeriod = $replay!.fullReplay.ReplayStep.reduce(
+    let maxRerollsThisPeriod = $replay!.fullReplay.unhandledSteps.reduce(
       (acc: number, step: BB2.ReplayStep) => {
         if (!("BoardState" in step)) {
           return acc;
@@ -209,7 +209,7 @@
       },
       0
     );
-    let maxApos = $replay!.fullReplay.ReplayStep.reduce((acc, step) => {
+    let maxApos = $replay!.fullReplay.unhandledSteps.reduce((acc: number, step: BB2.ReplayStep) => {
       if (!("BoardState" in step)) {
         return acc;
       }
@@ -441,13 +441,13 @@
       current = initialReplayPosition();
       return;
     }
-    if (current.step > $replay!.fullReplay.ReplayStep.length) {
+    if (current.step > $replay!.fullReplay.unhandledSteps.length) {
       console.error("Went too far", { current, replay: $replay });
       current = initialReplayPosition();
       return;
     }
     if (current.subStep != REPLAY_SUB_STEP.NextReplayStep) {
-      const step = $replay!.fullReplay.ReplayStep[current.step];
+      const step = $replay!.fullReplay.unhandledSteps[current.step];
       switch (current.subStep) {
         case REPLAY_SUB_STEP.SetupAction:
           await handleSetupAction();
@@ -536,7 +536,7 @@
           pitch = {};
           players = {};
           jumpToPosition($replayPreview.start, false);
-          // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
+          // resetFromBoardState($replay.fullReplay.unhandledSteps[$replayPreview.start.step - 1].BoardState, true);
         } else if (!underPreview && $replayPreview) {
           underPreview = {
             homeTeam,
@@ -553,7 +553,7 @@
           pitch = {};
           players = {};
           jumpToPosition($replayPreview.start, false);
-          // resetFromBoardState($replay.fullReplay.ReplayStep[$replayPreview.start.step - 1].BoardState, true);
+          // resetFromBoardState($replay.fullReplay.unhandledSteps[$replayPreview.start.step - 1].BoardState, true);
         }
         if (
           underPreview &&
@@ -598,7 +598,7 @@
       return;
     }
     for (var stepI = current.step; stepI--; stepI > 0) {
-      const step = $replay.fullReplay.ReplayStep[stepI];
+      const step = $replay.fullReplay.unhandledSteps[stepI];
       if (!("RulesEventBoardAction" in step)) {
         continue;
       }
@@ -622,7 +622,7 @@
       return;
     }
     for (var stepI = current.step - 1; stepI--; stepI > 0) {
-      const step = $replay.fullReplay.ReplayStep[stepI];
+      const step = $replay.fullReplay.unhandledSteps[stepI];
       if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
         $replayTarget = {
           end: false,
@@ -650,9 +650,9 @@
     for (
       var stepI = current.step;
       stepI++;
-      stepI < $replay.fullReplay.ReplayStep.length
+      stepI < $replay.fullReplay.unhandledSteps.length
     ) {
-      const step = $replay.fullReplay.ReplayStep[stepI];
+      const step = $replay.fullReplay.unhandledSteps[stepI];
       if (!("RulesEventBoardAction" in step)) {
         continue;
       }
@@ -677,9 +677,9 @@
     for (
       var stepI = current.step;
       stepI++;
-      stepI < $replay.fullReplay.ReplayStep.length
+      stepI < $replay.fullReplay.unhandledSteps.length
     ) {
-      const step = $replay.fullReplay.ReplayStep[stepI];
+      const step = $replay.fullReplay.unhandledSteps[stepI];
       if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
         $replayTarget = {
           end: false,

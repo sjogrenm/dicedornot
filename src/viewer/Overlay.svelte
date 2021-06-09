@@ -24,11 +24,6 @@
 
   let paths: OverlayProps[];
 
-  const components = {
-    move: OverlayMove,
-    block: OverlayBlock,
-  };
-
   type OverlayProps =
     | {
         type: "move";
