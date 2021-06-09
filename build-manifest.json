@@ -16,7 +16,7 @@
       "bytes": 168,
       "imports": []
     },
-    "_snowpack/pkg/common/index-2bcd54bb.js": {
+    "_snowpack/pkg/common/index-5c26bcaf.js": {
       "bytes": 31452,
       "imports": []
     },
@@ -24,7 +24,7 @@
       "bytes": 931,
       "imports": [
         {
-          "path": "_snowpack/pkg/common/index-2bcd54bb.js",
+          "path": "_snowpack/pkg/common/index-5c26bcaf.js",
           "kind": "import-statement"
         }
       ]
@@ -37,7 +37,7 @@
       "bytes": 70,
       "imports": [
         {
-          "path": "_snowpack/pkg/common/index-2bcd54bb.js",
+          "path": "_snowpack/pkg/common/index-5c26bcaf.js",
           "kind": "import-statement"
         }
       ]
@@ -81,13 +81,13 @@
       "bytes": 1785,
       "imports": [
         {
-          "path": "_snowpack/pkg/common/index-2bcd54bb.js",
+          "path": "_snowpack/pkg/common/index-5c26bcaf.js",
           "kind": "import-statement"
         }
       ]
     },
     "dist/replay-utils.js": {
-      "bytes": 7006,
+      "bytes": 6986,
       "imports": []
     },
     "dist/stores.js": {
@@ -134,7 +134,7 @@
       ]
     },
     "dist/replay/BB2toInternal.js": {
-      "bytes": 7093,
+      "bytes": 5476,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -159,7 +159,7 @@
       ]
     },
     "dist/rolls.js": {
-      "bytes": 79419,
+      "bytes": 79403,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -188,7 +188,7 @@
       ]
     },
     "dist/replay.js": {
-      "bytes": 3244,
+      "bytes": 4525,
       "imports": [
         {
           "path": "dist/rolls.js",
@@ -197,11 +197,19 @@
         {
           "path": "dist/replay-utils.js",
           "kind": "import-statement"
+        },
+        {
+          "path": "dist/constants.js",
+          "kind": "import-statement"
+        },
+        {
+          "path": "_snowpack/pkg/he.js",
+          "kind": "import-statement"
         }
       ]
     },
     "_snowpack/pkg/idb-keyval.js": {
-      "bytes": 2995,
+      "bytes": 2646,
       "imports": []
     },
     "dist/Loading.svelte.css": {
@@ -221,34 +229,8 @@
         }
       ]
     },
-    "_snowpack/pkg/common/vega-util.module-75b163aa.js": {
-      "bytes": 19343,
-      "imports": []
-    },
-    "_snowpack/pkg/common/vega.module-84cf72dd.js": {
-      "bytes": 1182042,
-      "imports": [
-        {
-          "path": "_snowpack/pkg/common/vega-util.module-75b163aa.js",
-          "kind": "import-statement"
-        }
-      ]
-    },
-    "_snowpack/pkg/vega.js": {
-      "bytes": 3895,
-      "imports": [
-        {
-          "path": "_snowpack/pkg/common/vega.module-84cf72dd.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/common/vega-util.module-75b163aa.js",
-          "kind": "import-statement"
-        }
-      ]
-    },
     "dist/ReplayLoader.svelte.js": {
-      "bytes": 20275,
+      "bytes": 19362,
       "imports": [
         {
           "path": "dist/ReplayLoader.svelte.css",
@@ -285,14 +267,6 @@
         {
           "path": "_snowpack/pkg/he.js",
           "kind": "import-statement"
-        },
-        {
-          "path": "dist/replay/BB2toInternal.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/vega.js",
-          "kind": "import-statement"
         }
       ]
     },
@@ -304,7 +278,7 @@
       "bytes": 192,
       "imports": []
     },
-    "_snowpack/pkg/common/index-4da146ef.js": {
+    "_snowpack/pkg/common/index-9b62c6d8.js": {
       "bytes": 4806,
       "imports": [
         {
@@ -312,7 +286,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "_snowpack/pkg/common/index-2bcd54bb.js",
+          "path": "_snowpack/pkg/common/index-5c26bcaf.js",
           "kind": "import-statement"
         }
       ]
@@ -321,11 +295,11 @@
       "bytes": 66205,
       "imports": [
         {
-          "path": "_snowpack/pkg/common/index-2bcd54bb.js",
+          "path": "_snowpack/pkg/common/index-5c26bcaf.js",
           "kind": "import-statement"
         },
         {
-          "path": "_snowpack/pkg/common/index-4da146ef.js",
+          "path": "_snowpack/pkg/common/index-9b62c6d8.js",
           "kind": "import-statement"
         },
         {
@@ -334,38 +308,8 @@
         }
       ]
     },
-    "_snowpack/pkg/common/common-ebf533ab.js": {
-      "bytes": 136369,
-      "imports": [
-        {
-          "path": "_snowpack/pkg/common/vega-util.module-75b163aa.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/common/_commonjsHelpers-4f56b6ba.js",
-          "kind": "import-statement"
-        }
-      ]
-    },
-    "_snowpack/pkg/vega-lite/build/src/channeldef.js": {
-      "bytes": 195,
-      "imports": [
-        {
-          "path": "_snowpack/pkg/common/common-ebf533ab.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/common/vega-util.module-75b163aa.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/common/_commonjsHelpers-4f56b6ba.js",
-          "kind": "import-statement"
-        }
-      ]
-    },
     "dist/Summary.svelte.js": {
-      "bytes": 26609,
+      "bytes": 26806,
       "imports": [
         {
           "path": "dist/Summary.svelte.css",
@@ -385,10 +329,6 @@
         },
         {
           "path": "dist/stores.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/vega-lite/build/src/channeldef.js",
           "kind": "import-statement"
         }
       ]
@@ -616,7 +556,7 @@
       "bytes": 149,
       "imports": [
         {
-          "path": "_snowpack/pkg/common/index-4da146ef.js",
+          "path": "_snowpack/pkg/common/index-9b62c6d8.js",
           "kind": "import-statement"
         },
         {
@@ -624,7 +564,7 @@
           "kind": "import-statement"
         },
         {
-          "path": "_snowpack/pkg/common/index-2bcd54bb.js",
+          "path": "_snowpack/pkg/common/index-5c26bcaf.js",
           "kind": "import-statement"
         }
       ]
@@ -1248,7 +1188,7 @@
       ]
     },
     "dist/viewer/Viewer.svelte.js": {
-      "bytes": 63843,
+      "bytes": 63795,
       "imports": [
         {
           "path": "dist/viewer/Viewer.svelte.css",
@@ -1416,29 +1356,34 @@
       "bytes": 60,
       "imports": []
     },
+    "_snowpack/pkg/common/vega.module-d77aac5f.js": {
+      "bytes": 1200547,
+      "imports": []
+    },
     "_snowpack/pkg/vega-embed.js": {
-      "bytes": 786614,
+      "bytes": 906964,
       "imports": [
         {
           "path": "_snowpack/pkg/common/_commonjsHelpers-4f56b6ba.js",
           "kind": "import-statement"
         },
         {
-          "path": "_snowpack/pkg/common/vega.module-84cf72dd.js",
+          "path": "_snowpack/pkg/common/vega.module-d77aac5f.js",
           "kind": "import-statement"
-        },
+        }
+      ]
+    },
+    "_snowpack/pkg/vega.js": {
+      "bytes": 3893,
+      "imports": [
         {
-          "path": "_snowpack/pkg/common/vega-util.module-75b163aa.js",
-          "kind": "import-statement"
-        },
-        {
-          "path": "_snowpack/pkg/common/common-ebf533ab.js",
+          "path": "_snowpack/pkg/common/vega.module-d77aac5f.js",
           "kind": "import-statement"
         }
       ]
     },
     "dist/Results.svelte.js": {
-      "bytes": 4093,
+      "bytes": 4075,
       "imports": [
         {
           "path": "dist/Results.svelte.css",
@@ -1607,7 +1552,7 @@
       ]
     },
     "dist/App.svelte.js": {
-      "bytes": 25041,
+      "bytes": 25026,
       "imports": [
         {
           "path": "dist/App.svelte.css",
@@ -1739,7 +1684,7 @@
         "dist/App.svelte.css": {
           "bytesInOutput": 0
         },
-        "_snowpack/pkg/common/index-2bcd54bb.js": {
+        "_snowpack/pkg/common/index-5c26bcaf.js": {
           "bytesInOutput": 10009
         },
         "_snowpack/pkg/svelte/internal.js": {
@@ -1767,7 +1712,7 @@
           "bytesInOutput": 431
         },
         "dist/replay-utils.js": {
-          "bytesInOutput": 2989
+          "bytesInOutput": 2969
         },
         "dist/stores.js": {
           "bytesInOutput": 247
@@ -1779,25 +1724,25 @@
           "bytesInOutput": 4453
         },
         "dist/replay/BB2.js": {
-          "bytesInOutput": 118
+          "bytesInOutput": 75
         },
         "dist/replay/Internal.js": {
-          "bytesInOutput": 114
+          "bytesInOutput": 71
         },
         "_snowpack/pkg/he.js": {
           "bytesInOutput": 86707
         },
         "dist/replay/BB2toInternal.js": {
-          "bytesInOutput": 4326
+          "bytesInOutput": 59
         },
         "dist/rolls.js": {
-          "bytesInOutput": 46589
+          "bytesInOutput": 46573
         },
         "dist/replay.js": {
-          "bytesInOutput": 1604
+          "bytesInOutput": 2443
         },
         "_snowpack/pkg/idb-keyval.js": {
-          "bytesInOutput": 795
+          "bytesInOutput": 716
         },
         "dist/Loading.svelte.css": {
           "bytesInOutput": 0
@@ -1805,17 +1750,8 @@
         "dist/Loading.svelte.js": {
           "bytesInOutput": 793
         },
-        "_snowpack/pkg/common/vega-util.module-75b163aa.js": {
-          "bytesInOutput": 7964
-        },
-        "_snowpack/pkg/common/vega.module-84cf72dd.js": {
-          "bytesInOutput": 499218
-        },
-        "_snowpack/pkg/vega.js": {
-          "bytesInOutput": 0
-        },
         "dist/ReplayLoader.svelte.js": {
-          "bytesInOutput": 8255
+          "bytesInOutput": 8111
         },
         "dist/Summary.svelte.css": {
           "bytesInOutput": 0
@@ -1823,26 +1759,20 @@
         "_snowpack/pkg/common/index-0205b586.js": {
           "bytesInOutput": 89
         },
-        "_snowpack/pkg/common/index-4da146ef.js": {
-          "bytesInOutput": 1824
+        "_snowpack/pkg/common/index-9b62c6d8.js": {
+          "bytesInOutput": 1822
         },
         "_snowpack/pkg/sveltestrap.js": {
-          "bytesInOutput": 20697
-        },
-        "_snowpack/pkg/common/common-ebf533ab.js": {
-          "bytesInOutput": 49965
-        },
-        "_snowpack/pkg/vega-lite/build/src/channeldef.js": {
-          "bytesInOutput": 0
+          "bytesInOutput": 20611
         },
         "dist/Summary.svelte.js": {
-          "bytesInOutput": 9753
+          "bytesInOutput": 9651
         },
         "dist/Turn.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/Distribution.svelte.js": {
-          "bytesInOutput": 7040
+          "bytesInOutput": 7018
         },
         "dist/RollDescription.svelte.css": {
           "bytesInOutput": 0
@@ -1851,37 +1781,37 @@
           "bytesInOutput": 0
         },
         "dist/PlayerPill.svelte.js": {
-          "bytesInOutput": 741
+          "bytesInOutput": 737
         },
         "dist/Dice.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/Dice.svelte.js": {
-          "bytesInOutput": 1627
+          "bytesInOutput": 1623
         },
         "dist/RollDescription.svelte.js": {
-          "bytesInOutput": 7886
+          "bytesInOutput": 7858
         },
         "dist/RollOutcomes.svelte.js": {
-          "bytesInOutput": 1577
+          "bytesInOutput": 1573
         },
         "dist/Roll.svelte.js": {
-          "bytesInOutput": 5711
+          "bytesInOutput": 5703
         },
         "dist/Turn.svelte.js": {
-          "bytesInOutput": 1879
+          "bytesInOutput": 1875
         },
         "dist/RollDetails.svelte.js": {
-          "bytesInOutput": 1353
+          "bytesInOutput": 1349
         },
         "dist/About.svelte.js": {
-          "bytesInOutput": 800
+          "bytesInOutput": 798
         },
         "dist/Nav.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/Nav.svelte.js": {
-          "bytesInOutput": 1631
+          "bytesInOutput": 1621
         },
         "dist/viewer/Viewer.svelte.css": {
           "bytesInOutput": 0
@@ -1905,10 +1835,10 @@
           "bytesInOutput": 0
         },
         "dist/viewer/FixedRatio.svelte.js": {
-          "bytesInOutput": 909
+          "bytesInOutput": 905
         },
         "dist/viewer/Grid.svelte.js": {
-          "bytesInOutput": 2717
+          "bytesInOutput": 2707
         },
         "dist/viewer/CasSquare.svelte.css": {
           "bytesInOutput": 0
@@ -1917,16 +1847,16 @@
           "bytesInOutput": 0
         },
         "dist/viewer/Player.svelte.js": {
-          "bytesInOutput": 2271
+          "bytesInOutput": 2267
         },
         "dist/viewer/CasSquare.svelte.js": {
-          "bytesInOutput": 2478
+          "bytesInOutput": 2474
         },
         "dist/viewer/CasBox.svelte.js": {
-          "bytesInOutput": 1461
+          "bytesInOutput": 1455
         },
         "dist/viewer/HomeBench.svelte.js": {
-          "bytesInOutput": 1408
+          "bytesInOutput": 1404
         },
         "dist/viewer/TeamAids.svelte.css": {
           "bytesInOutput": 0
@@ -1935,25 +1865,25 @@
           "bytesInOutput": 0
         },
         "dist/viewer/FlexGrid.svelte.js": {
-          "bytesInOutput": 1258
+          "bytesInOutput": 1252
         },
         "dist/viewer/TeamAids.svelte.js": {
-          "bytesInOutput": 4692
+          "bytesInOutput": 4686
         },
         "dist/viewer/Weather.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/Weather.svelte.js": {
-          "bytesInOutput": 1076
+          "bytesInOutput": 1070
         },
         "dist/viewer/TeamLogo.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/TeamLogo.svelte.js": {
-          "bytesInOutput": 1000
+          "bytesInOutput": 994
         },
         "dist/viewer/HomeDugout.svelte.js": {
-          "bytesInOutput": 2440
+          "bytesInOutput": 2436
         },
         "dist/viewer/AwayDugout.svelte.css": {
           "bytesInOutput": 0
@@ -1962,10 +1892,10 @@
           "bytesInOutput": 0
         },
         "dist/viewer/AwayBench.svelte.js": {
-          "bytesInOutput": 1408
+          "bytesInOutput": 1404
         },
         "dist/viewer/AwayDugout.svelte.js": {
-          "bytesInOutput": 1823
+          "bytesInOutput": 1819
         },
         "dist/viewer/Pitch.svelte.css": {
           "bytesInOutput": 0
@@ -1977,91 +1907,97 @@
           "bytesInOutput": 0
         },
         "dist/viewer/Ball.svelte.js": {
-          "bytesInOutput": 611
+          "bytesInOutput": 607
         },
         "dist/viewer/Cell.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/Cell.svelte.js": {
-          "bytesInOutput": 2221
+          "bytesInOutput": 2213
         },
         "dist/viewer/DiceResult.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/DiceResult.svelte.js": {
-          "bytesInOutput": 1171
+          "bytesInOutput": 1167
         },
         "dist/viewer/Foul.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/Foul.svelte.js": {
-          "bytesInOutput": 287
+          "bytesInOutput": 285
         },
         "dist/viewer/PitchSquare.svelte.js": {
-          "bytesInOutput": 4642
+          "bytesInOutput": 4638
         },
         "dist/viewer/OverlayMove.svelte.js": {
-          "bytesInOutput": 4073
+          "bytesInOutput": 4069
         },
         "dist/viewer/OverlayBlock.svelte.js": {
-          "bytesInOutput": 4952
+          "bytesInOutput": 4948
         },
         "_snowpack/pkg/chroma-js.js": {
-          "bytesInOutput": 42086
+          "bytesInOutput": 42084
         },
         "dist/theme.js": {
           "bytesInOutput": 274
         },
         "dist/viewer/Overlay.svelte.js": {
-          "bytesInOutput": 4890
+          "bytesInOutput": 4880
         },
         "dist/viewer/Pitch.svelte.js": {
-          "bytesInOutput": 2162
+          "bytesInOutput": 2154
         },
         "dist/viewer/SelectedPlayer.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/SelectedPlayer.svelte.js": {
-          "bytesInOutput": 5444
+          "bytesInOutput": 5434
         },
         "dist/viewer/Banner.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/viewer/Banner.svelte.js": {
-          "bytesInOutput": 761
+          "bytesInOutput": 755
         },
         "dist/viewer/Viewer.svelte.js": {
-          "bytesInOutput": 24809
+          "bytesInOutput": 24729
         },
         "dist/Diced.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/Diced.svelte.js": {
-          "bytesInOutput": 4510
+          "bytesInOutput": 4500
         },
         "dist/TurnSelector.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/TurnSelector.svelte.js": {
-          "bytesInOutput": 1110
+          "bytesInOutput": 1106
         },
         "dist/TurnSelectors.svelte.js": {
-          "bytesInOutput": 1415
+          "bytesInOutput": 1411
         },
         "dist/Error.svelte.css": {
           "bytesInOutput": 0
         },
         "dist/Error.svelte.js": {
-          "bytesInOutput": 1263
+          "bytesInOutput": 1255
         },
         "dist/Results.svelte.css": {
           "bytesInOutput": 0
         },
+        "_snowpack/pkg/common/vega.module-d77aac5f.js": {
+          "bytesInOutput": 507406
+        },
         "_snowpack/pkg/vega-embed.js": {
-          "bytesInOutput": 294013
+          "bytesInOutput": 344176
+        },
+        "_snowpack/pkg/vega.js": {
+          "bytesInOutput": 0
         },
         "dist/Results.svelte.js": {
-          "bytesInOutput": 1448
+          "bytesInOutput": 1430
         },
         "dist/Explanation.svelte.css": {
           "bytesInOutput": 0
@@ -2094,13 +2030,13 @@
           "bytesInOutput": 680
         },
         "dist/App.svelte.js": {
-          "bytesInOutput": 8477
+          "bytesInOutput": 8471
         },
         "dist/main.js": {
           "bytesInOutput": 69
         }
       },
-      "bytes": 1415411
+      "bytes": 1411516
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
