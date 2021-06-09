@@ -1,23 +1,19 @@
-<script lang="ts" context="module">
-  import type * as BB2 from "./replay/BB2.js";
-  export interface ParsedReplay {
-    Replay: BB2.Replay,
-    CACHE_VERSION?: number,
-  }
-</script>
-
 <script lang="ts">
   import { onMount } from "svelte";
   import { xmlToJson } from "./io.js";
   import { replay, error } from "./stores.js";
   import { processReplay } from "./replay.js";
-  import { get, set, entries, keys } from "idb-keyval";
+  import { get, set, entries, keys, del} from "idb-keyval";
   import Loading from "./Loading.svelte";
   import he from "he";
+  import type {ParsedReplay} from "./types.js";
+  import type * as BB2 from "./replay/BB2.js";
+  import {convertReplay} from "./replay/BB2toInternal.js";
+import { key } from "vega";
 
   export let button = "primary",
     loading: string | undefined;
-  const CACHE_VERSION = 2;
+  const CACHE_VERSION = 4;
 
   onMount(() => {
     if (!$replay) {
@@ -35,6 +31,21 @@
   const rebblRE = /.*rebbl\.net\/rebbl\/match\/([0-9a-f]*)/i;
   const goblinspyRE = /.*mordrek\.com\/gspy\/.*match\/((cid_)?[0-9a-f]*)/i
   const spikeRE = /.*spike\.ovh\/match\?match_uuid=([0-9a-f]*)/i
+
+  async function replayFromCache(key: IDBValidKey): Promise<ParsedReplay | undefined> {
+    let cachedReplay = await get(key);
+    if (cachedReplay.CACHE_VERSION != CACHE_VERSION) {
+      del(key);
+      return undefined;
+    } else {
+      return cachedReplay;
+    }
+  }
+
+  async function putReplayIntoCache(key: IDBValidKey, replay: ParsedReplay) {
+    console.log("Setting cache", { key, replay });
+    return set(key, replay);
+  }
 
   async function loadFromSearchParams() {
       const params = new URLSearchParams(window.location.search);
@@ -90,29 +101,35 @@
         replayKeys = await keys();
         loading = undefined;
     }
-    const allReplays = [];
+    const allReplays: {key: IDBValidKey, replay: ParsedReplay}[] = [];
     for (const key of replayKeys) {
       loading = `Loading ${key}`;
-      const replay = await get(key);
-      allReplays.push([key, replay]) ;
+      const replay = await replayFromCache(key);
+      if (replay) {
+        allReplays.push({key, replay});
+      }
     }
     loading = undefined;
     const validReplays = allReplays.filter(
-      ([_, replay]) => replay.CACHE_VERSION === CACHE_VERSION
+      ({key, replay}) => replay.CACHE_VERSION === CACHE_VERSION
     );
-    return validReplays.map(([cacheKey, replayJSON]) => {
-      const firstStep = replayJSON.Replay.ReplayStep[0];
-      const matchResult =
-        replayJSON.Replay.ReplayStep[replayJSON.Replay.ReplayStep.length - 1]
-          .RulesEventGameFinished.MatchResult;
+    allReplays.filter(
+      ({key, replay}) => {
+        if (replay.CACHE_VERSION != CACHE_VERSION) {
+          del(key);
+        }
+      }
+    )
+    console.log(allReplays);
+    return validReplays.map(({key: cacheKey, replay: replayJSON}) => {
       return {
-        homeCoach: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[0].UserId.toString()),
-        homeTeam: he.decode(firstStep.BoardState.ListTeams.TeamState[0].Data.Name.toString()),
-        homeScore: matchResult.Row.HomeScore || 0,
-        awayCoach: he.decode(firstStep.GameInfos.CoachesInfos.CoachInfos[1].UserId.toString()),
-        awayTeam: he.decode(firstStep.BoardState.ListTeams.TeamState[1].Data.Name.toString()),
-        awayScore: matchResult.Row.AwayScore || 0,
-        date: new Date(matchResult.Row.Finished),
+        homeCoach: replayJSON.replay.teams.home.coach,
+        homeTeam: replayJSON.replay.teams.home.name,
+        homeScore: replayJSON.replay.finalScore.home,
+        awayCoach: replayJSON.replay.teams.away.coach,
+        awayTeam: replayJSON.replay.teams.away.name,
+        awayScore: replayJSON.replay.finalScore.away,
+        date: replayJSON.replay.metadata.datePlayed,
         cacheKey,
       };
     });
@@ -121,9 +138,10 @@
   async function loadFromCache(cacheKey: string, updateUrl = false) {
     loading = `Loading ${cacheKey} from cache`;
     console.log("Loading from cache", { cacheKey });
-    const jsonReplayData = await get(cacheKey);
+    const jsonReplayData = await replayFromCache(cacheKey);
     console.log("Loaded", {jsonReplayData});
-    if (jsonReplayData && jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
+    if (jsonReplayData)
+     if (jsonReplayData.CACHE_VERSION === CACHE_VERSION) {
       try {
         let [replayType, ...replayId] = cacheKey.split('-');
         let replayIdStr = replayId.join('-');
@@ -141,16 +159,19 @@
         $error = err;
         console.error(err);
       }
+    } else {
+      console.log("Deleting from cache", {cacheKey});
+      del(cacheKey);
     }
   }
 
   async function parseReplay(replayFile: File, replayType: ReplayType, replayId: string, updateUrl: boolean) {
     loading = `Parsing ${replayFile.name}`;
-    let jsonReplayFile = await xmlToJson(replayFile);
+    let jsonReplayFile: Record<string, {Replay: BB2.Replay}> = await xmlToJson(replayFile);
     for (const [_, jsonReplayData] of Object.entries(jsonReplayFile)) {
       console.log("Preparing to process replay json...");
-      jsonReplayData.Replay.filename = replayFile.name;
-      jsonReplayData.CACHE_VERSION = CACHE_VERSION;
+      const cacheableReplay = {replay: convertReplay(jsonReplayData.Replay), CACHE_VERSION};
+      cacheableReplay.replay.metadata.filename = replayFile.name;
       let shareURL = new URL(window.location.href);
       shareURL.search = "";
       shareURL.hash = "";
@@ -158,12 +179,11 @@
       if (updateUrl) {
         window.history.pushState({}, "", shareURL.href);
       }
-      jsonReplayData.Replay.url = shareURL.href;
+      cacheableReplay.replay.metadata.url = shareURL.href;
       let cacheKey = `${replayType}-${replayId}`;
-      set(cacheKey, jsonReplayData);
-      console.log("Setting cache", { cacheKey, jsonReplayData });
+      putReplayIntoCache(cacheKey, cacheableReplay);
       try {
-        $replay = processReplay(jsonReplayData);
+        $replay = processReplay(cacheableReplay);
         loading = undefined;
       } catch (err) {
         loading = undefined;

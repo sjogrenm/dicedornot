@@ -1,4 +1,6 @@
+import type { DateTime } from 'vega-lite/build/src/datetime';
 import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL} from '../constants.js';
+import type * as BB2 from './BB2.js';
 
 export type ByTeam<T> = {
     home: T,
@@ -28,6 +30,14 @@ export interface Replay {
         enhancement?: string,
     },
     drives: Drive[],
+    unhandledSteps: BB2.ReplayStep[],
+    finalScore: ByTeam<number>,
+    metadata: {
+        url?: string,
+        filename?: string,
+        league?: string,
+        datePlayed: Date,
+    }
 }
 
 export interface Team {

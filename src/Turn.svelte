@@ -2,7 +2,7 @@
   import Roll from "./Roll.svelte";
   import { replayPreview } from "./stores.js";
   import type {Action} from "./rolls.js";
-import { SIDE } from "./constants";
+  import { SIDE } from "./constants";
   export let actions: Action[], selectedAction: number;
 </script>
 

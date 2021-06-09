@@ -1,11 +1,10 @@
 import { Action, MoveAction, UnknownAction } from "./rolls.js";
-import { END, ensureList } from "./replay-utils.js";
-import { SIDE, RACE_ID } from "./constants.js";
+import { END } from "./replay-utils.js";
+import type { RACE_ID } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
+import type * as Internal from "./replay/Internal.js";
 import he from 'he';
-import {xmlToJson} from "./io.js";
-import { init } from "svelte/internal";
-import { initial } from "underscore";
+import type {ParsedReplay} from "./types.js";
 
 interface TeamDetails {
   coachName: string,
@@ -23,32 +22,30 @@ export interface GameDetails {
 }
 
 export interface ProcessedReplay {
-  fullReplay: BB2.Replay,
-  gameDetails: GameDetails,
+  fullReplay: Internal.Replay,
   actions: Action[],
   unknownRolls: UnknownAction[],
   version: number,
-}
-
-export interface ParsedReplay {
-  Replay: BB2.Replay,
 }
 
 export function processReplay(data: ParsedReplay): ProcessedReplay {
   //console.log("replay.processReplay");
   //console.log(data);
 
-  const gameDetails = extractGameDetails(data);
-  console.log("Extracted game details...", gameDetails);
+  console.log("Extracted game details...", {
+    teams: data.replay.teams,
+    stadium: data.replay.stadium,
+    metadata: data.replay.metadata
+  });
 
   let actions: (Action | UnknownAction)[] = [];
   let initialBoardState: BB2.BoardState | undefined;
   for (
     var stepIndex = 0;
-    stepIndex < data.Replay.ReplayStep.length;
+    stepIndex < data.replay.unhandledSteps.length;
     stepIndex++
   ) {
-    var replayStep = data.Replay.ReplayStep[stepIndex];
+    var replayStep = data.replay.unhandledSteps[stepIndex];
 
     if (!('BoardState' in replayStep)) {
       continue;
@@ -58,7 +55,7 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
     }
     if (initialBoardState) {
       actions = actions.concat(Action.fromReplayStep(
-        data.Replay,
+        data.replay,
         initialBoardState,
         stepIndex,
         replayStep
@@ -118,8 +115,7 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
   });
 
   return {
-    fullReplay: data.Replay,
-    gameDetails: gameDetails,
+    fullReplay: data.replay,
     actions: validActions,
     unknownRolls: (actions.filter(action => action instanceof UnknownAction) as unknown) as UnknownAction[],
     version: 1,
@@ -129,30 +125,6 @@ export function processReplay(data: ParsedReplay): ProcessedReplay {
 interface Value {
   actual: number,
   expected: number,
-}
-
-export function extractGameDetails(jsonObject: ParsedReplay): GameDetails {
-  var firstStep = jsonObject.Replay.ReplayStep[0] as BB2.GameInfoStep;
-  var lastStep =
-    jsonObject.Replay.ReplayStep[jsonObject.Replay.ReplayStep.length - 1] as BB2.GameFinishedStep;
-  return {
-    //fileName: lastStep.RulesEventGameFinished.MatchResult.Row.ReplayFilename,
-    stadiumName: he.decode(firstStep.GameInfos.NameStadium.toString()),
-    stadiumType: firstStep.GameInfos.StructStadium,
-    leagueName: firstStep.GameInfos.RowLeague.Name && he.decode(firstStep.GameInfos.RowLeague.Name.toString()),
-    homeTeam: {
-      coachName: he.decode(ensureList(firstStep.GameInfos.CoachesInfos.CoachInfos)[SIDE.home].UserId.toString()),
-      teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.Name.toString()),
-      raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.home].Data.IdRace,
-      score: lastStep.RulesEventGameFinished.MatchResult.Row.HomeScore || 0,
-    },
-    awayTeam: {
-      coachName: he.decode(ensureList(firstStep.GameInfos.CoachesInfos.CoachInfos)[SIDE.away].UserId.toString()),
-      teamName: he.decode(firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.Name.toString()),
-      raceId: firstStep.BoardState.ListTeams.TeamState[SIDE.away].Data.IdRace,
-      score: lastStep.RulesEventGameFinished.MatchResult.Row.AwayScore || 0,
-    },
-  };
 }
 
 
