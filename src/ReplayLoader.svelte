@@ -45,6 +45,7 @@
       del(key);
       return undefined;
     } else {
+      console.log("Loaded replay from cache", {cachedReplay});
       return convertReplay(cachedReplay.Replay);
     }
   }
@@ -61,13 +62,13 @@
         replayKeys = await keys();
         loading = undefined;
       }
-      params.forEach((key, value) => {
+      for (const [key, value] of params) {
         let cacheKey = `${key}-${value}`;
         if (replayKeys.includes(cacheKey)) {
           loadFromCache(cacheKey);
           return;
         }
-      });
+      };
       const rebblUUID = params.get("rebbl");
       if (rebblUUID) {
         loadRebblReplay(rebblUUID, false);

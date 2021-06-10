@@ -21,7 +21,9 @@ class Replay {
         private foundUnhandledStep = false,
         public finalScore: I.ByTeam<number> = {home: 0, away: 0},
         public metadata: Partial<I.Replay['metadata']> = {},
-    ) { }
+    ) {
+        this.unhandledSteps = [...this.unhandledSteps];
+    }
 
     finalize(): I.Replay {
         return {
