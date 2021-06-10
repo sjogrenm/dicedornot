@@ -134,7 +134,7 @@
       ]
     },
     "dist/replay/BB2toInternal.js": {
-      "bytes": 7522,
+      "bytes": 7574,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -222,7 +222,7 @@
       ]
     },
     "dist/ReplayLoader.svelte.js": {
-      "bytes": 19876,
+      "bytes": 19945,
       "imports": [
         {
           "path": "dist/ReplayLoader.svelte.css",
@@ -1725,7 +1725,7 @@
           "bytesInOutput": 86707
         },
         "dist/replay/BB2toInternal.js": {
-          "bytesInOutput": 4607
+          "bytesInOutput": 4652
         },
         "dist/rolls.js": {
           "bytesInOutput": 46589
@@ -1743,7 +1743,7 @@
           "bytesInOutput": 793
         },
         "dist/ReplayLoader.svelte.js": {
-          "bytesInOutput": 8071
+          "bytesInOutput": 8126
         },
         "dist/Summary.svelte.css": {
           "bytesInOutput": 0
@@ -2028,7 +2028,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1415454
+      "bytes": 1415554
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
