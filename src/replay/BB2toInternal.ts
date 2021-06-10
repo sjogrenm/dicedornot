@@ -92,7 +92,7 @@ function emptySetup(): I.SetupAction {
 }
 
 export function convertCell(c: B.Cell): I.Cell {
-    if (c === "") {
+    if (!c) {
         return {x: 0, y: 0};
     } else {
         return {
