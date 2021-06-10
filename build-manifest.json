@@ -134,7 +134,7 @@
       ]
     },
     "dist/replay/BB2toInternal.js": {
-      "bytes": 5476,
+      "bytes": 5470,
       "imports": [
         {
           "path": "dist/constants.js",
@@ -1733,7 +1733,7 @@
           "bytesInOutput": 86707
         },
         "dist/replay/BB2toInternal.js": {
-          "bytesInOutput": 59
+          "bytesInOutput": 54
         },
         "dist/rolls.js": {
           "bytesInOutput": 46573
@@ -2036,7 +2036,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1411516
+      "bytes": 1411511
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
