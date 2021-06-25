@@ -238,6 +238,8 @@ export function convertCell(c: B.Cell): I.Cell {
 export function convertReplay(incoming: B.Replay): I.Replay {
     let outgoing: Replay = new Replay(incoming.ReplayStep);
     outgoing.processSteps(incoming);
+    outgoing.metadata.filename = incoming.filename;
+    outgoing.metadata.url = incoming.url;
     return outgoing.finalize();
 }
 
