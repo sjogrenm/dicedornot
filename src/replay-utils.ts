@@ -1,10 +1,7 @@
-import { append } from 'svelte/internal';
 import type * as BB2 from './replay/BB2.js';
-import type * as Internal from "./replay/Internal.js";
-
-export const END: ReplayPosition = {
-  end: true,
-};
+import * as Internal from "./replay/Internal.js";
+import parser from 'fast-xml-parser';
+import he from 'he';
 
 export function ensureList<T>(objOrList: BB2.MList<T> | undefined): T[] {
   if (objOrList && objOrList instanceof Array) {
@@ -24,7 +21,7 @@ export function ensureKeyedList<K extends string, T>(key: K, obj: BB2.KeyedMList
   return ensureList(v);
 }
 
-export function translateStringNumberList(str: string | number | undefined): number [] {
+export function translateStringNumberList(str: string | number | undefined): number[] {
   if (str === undefined || str === null) return [];
   str = str.toString();
 
@@ -69,206 +66,169 @@ export function nextState(replayStep: BB2.ReplayStep, subStep: REPLAY_SUB_STEP) 
   return REPLAY_SUB_STEP.NextReplayStep;
 }
 
-export function initialReplayPosition(): ReplayPosition {
-  return {
-    end: false,
-    subStep: REPLAY_SUB_STEP.SetupAction,
-    step: 0,
+export type ReplayPosition = GameOver | BB2ReplayPosition | InternalReplayPosition;
+
+export type GameOver = { end: true }
+
+export type BB2BoardActionResultPosition = {
+  stepIdx: number,
+  step: BB2.GameTurnStep,
+  subStep: REPLAY_SUB_STEP.BoardAction,
+  actionIdx: number,
+  action: BB2.RulesEventBoardAction,
+  resultIdx: number,
+  result: BB2.ActionResult<BB2.RulesEventBoardAction>
+};
+export type BB2BoardStatePosition =  {
+  stepIdx: number,
+  step: BB2.GameTurnStep,
+  subStep: REPLAY_SUB_STEP.BoardState,
+  boardState: BB2.BoardState,
+};
+
+export type BB2EndTurnPosition = {
+  stepIdx: number,
+  step: BB2.GameTurnStep,
+  subStep: REPLAY_SUB_STEP.EndTurn,
+  endTurn: BB2.RulesEventEndTurn,
+};
+
+export type BB2KickoffPosition = {
+  stepIdx: number,
+  step: BB2.GameTurnStep,
+  subStep: REPLAY_SUB_STEP.Kickoff,
+  kickoff: BB2.RulesEventKickOffTable,
+};
+
+export type BB2KickoffMessagePosition = {
+  stepIdx: number,
+  step: BB2.GameTurnStep,
+  subStep: REPLAY_SUB_STEP.Kickoff,
+  kickoff: BB2.RulesEventKickOffTable,
+  kickoffMessage: BB2.KickoffEventMessageData,
+};
+
+export type BB2SetupPosition = {
+  stepIdx: number,
+  step: BB2.SetUpActionStep,
+  subStep: REPLAY_SUB_STEP.SetupAction,
+  setup: BB2.RulesEventSetUpAction,
+};
+
+export type BB2ReplayPosition =
+  BB2BoardActionResultPosition | BB2BoardStatePosition | BB2EndTurnPosition | BB2KickoffPosition | BB2KickoffMessagePosition | BB2SetupPosition;
+
+export type InternalReplayPosition =
+  {
+    driveIdx: number,
+    wakeupSide: Internal.Side,
+    rollIdx: number,
+    roll: Internal.WakeupRoll,
+  } |
+  {
+    driveIdx: number,
+    setupSide: Internal.Side,
+    actionIdx: number,
+    action: Internal.SetupAction,
+  } | {
+    driveIdx: number,
+    turnIdx: number,
+    wizard: 'start' | 'end',
+    roll: Internal.WizardRoll,
+  } | {
+    driveIdx: number,
+    turnIdx: number,
+    activationIdx: number,
+    actionStepIdx: number,
+    actionStep: Internal.ActionStep,
   }
+
+export function gameOver(position: ReplayPosition): position is GameOver {
+  return 'end' in position;
 }
 
-export type ReplayPosition =
-| {
-  end: true
+export function isBB2Position(position: ReplayPosition): position is BB2ReplayPosition {
+  return 'stepIdx' in position;
 }
-| {
-  end: false,
-  step: number,
-  subStep: REPLAY_SUB_STEP.BoardAction,
-  action: number,
-  result: number,
-}
-| {
-  end: false,
-  step: number,
-  subStep: Exclude<REPLAY_SUB_STEP, REPLAY_SUB_STEP.BoardAction>
+
+export function isInternalPosition(position: ReplayPosition): position is InternalReplayPosition {
+  return !(gameOver(position) || isBB2Position(position));
 }
 
 export interface ReplayPreview {
-  start: ReplayPosition,
-  end: ReplayPosition,
+  start: number,
+  end: number | undefined,
 }
 
-export function toString(position: ReplayPosition) {
-  if (position.end) {
-    return `End`;
-  } else if (position.subStep == REPLAY_SUB_STEP.BoardAction) {
-    return `Step-${position.step}.${REPLAY_KEY[position.subStep]}.${position.action}.${position.result}`;
-  } else if (position.subStep == REPLAY_SUB_STEP.NextReplayStep) {
-    return `Step-${position.step}.Next`;
-  } else {
-    return `Step-${position.step}.${REPLAY_KEY[position.subStep]}`;
+export function linearReplay(replay: Internal.Replay & { _linearReplayCache?: ReplayPosition[] }): ReplayPosition[] {
+  if (!replay._linearReplayCache) {
+    replay._linearReplayCache = new Array(..._linearReplay(replay));
+    console.log("Linear Replay Cache", {linear: replay._linearReplayCache});
   }
+  return replay._linearReplayCache;
 }
 
-export function updateToNextPosition(replay: Internal.Replay, position: ReplayPosition) {
-  if (position.end) {
-    return END;
-  }
-  const replayStep = replay.unhandledSteps[position.step];
-  if (position.subStep == REPLAY_SUB_STEP.BoardAction) {
-    const actions = 'RulesEventBoardAction' in replayStep && replayStep.RulesEventBoardAction ? ensureList(replayStep.RulesEventBoardAction) : [];
-    let action = actions[position.action];
-    const results = action.Results ? ensureList(action.Results.BoardActionResult) : [];
-    if (position.result + 1 < results.length) {
-      position.result += 1;
-      return position;
-    }
-    if (position.action + 1 < actions.length) {
-      position.result = 0;
-      position.action += 1;
-      return position;
-    }
-  }
-  const next = nextState(replayStep, position.subStep + 1);
-  if (next == REPLAY_SUB_STEP.NextReplayStep) {
-    position.step += 1;
-    if (position.step >= replay.unhandledSteps.length) {
-      return END;
-    }
-    position.subStep = nextState(replay.unhandledSteps[position.step], REPLAY_SUB_STEP.SetupAction);
-  } else {
-    position.subStep = next;
-  }
-  if (position.subStep == REPLAY_SUB_STEP.BoardAction) {
-    position.action = position.result = 0;
-  }
-  return position;
-}
-
-export function after(first: ReplayPosition, second: ReplayPosition) {
-  if (!second) {
-    throw new Error("Can't compare ReplayPosition to undefined")
-  }
-  if (second.end) {
-    return false;
-  }
-  if (first.end) {
-    return true;
-  }
-  if (first.step > second.step) {
-    return true;
-  }
-  if (first.step < second.step) {
-    return false;
-  }
-  if (first.subStep > second.subStep) {
-    return true;
-  }
-  if (first.subStep < second.subStep) {
-    return false;
-  }
-  if (first.subStep == REPLAY_SUB_STEP.BoardAction && second.subStep == REPLAY_SUB_STEP.BoardAction) {
-    if (first.action > second.action) {
-      return true;
-    }
-    if (first.action < second.action) {
-      return false;
-    }
-    if (first.result > second.result) {
-      return true;
-    }
-    if (first.result < second.result) {
-      return false;
-    }
-  }
-  return false;
-}
-
-export function equal(first: ReplayPosition, second: ReplayPosition) {
-  if (first.end && second.end) {
-    return true;
-  }
-  if (!first.end && !second.end) {
-    if (first.subStep == REPLAY_SUB_STEP.BoardAction && second.subStep == REPLAY_SUB_STEP.BoardAction) {
-      return (first.step == second.step && first.subStep == second.subStep && first.action == second.action && first.result == second.result);
-    } else {
-      return (first.step == second.step && first.subStep == second.subStep);
-    }
-  } else {
-    return false;
-  }
-}
-
-export function atOrAfter(first: ReplayPosition, second: ReplayPosition) {
-  return after(first, second) || equal(first, second);
-}
-export function before(first: ReplayPosition, second: ReplayPosition) {
-  return after(second, first);
-}
-export function atOrBefore(first: ReplayPosition, second: ReplayPosition) {
-  return atOrAfter(second, first);
-}
-export function toParam(position: ReplayPosition): string {
-  if (position.end) {
-    return 'end';
-  } else if (position.subStep === REPLAY_SUB_STEP.BoardAction) {
-    return [position.step, position.subStep, position.action, position.result].join('-');
-  } else {
-    return [position.step, position.subStep].join('-');
-  }
-}
-export function fromParam(value: string): ReplayPosition {
-  if (value == 'end') {
-    return {end: true};
-  }
-  let [step, subStep, action, result] = value.split('-').map(x => parseInt(x));
-  return {end: false, step, subStep, action, result};
-}
-
-export function sliceStepsTo(replay: BB2.Replay, start: ReplayPosition, end: ReplayPosition) {
-  if (start.end) {
-    return [];
-  }
-  if (end.end) {
-    return replay.ReplayStep.slice(start.step);
-  }
-  return replay.ReplayStep.slice(start.step, end.step == start.step ? end.step + 1 : end.step);
-}
-export function sliceActionsTo(replay: Internal.Replay, start: ReplayPosition, end: ReplayPosition): {step: BB2.ReplayStep, action: BB2.RulesEventBoardAction}[] {
-  if (start.end) {
-    return [];
-  }
-
-  if (!end.end && start.step == end.step) {
-    let startAction = 'action' in start ? start.action : 0;
-    let endAction = 'action' in end ? end.action : undefined
-    let startStep = replay.unhandledSteps[start.step];
-    if ('RulesEventBoardAction' in startStep) {
-      let actions: BB2.RulesEventBoardAction[] = ensureList(startStep.RulesEventBoardAction)
-      return actions
-        .slice(startAction || 0, endAction)
-        .map(action => ({ step: startStep, action }));
-    } else {
-      return [];
-    }
-  } else {
-    let endStep = 'step' in end ? end.step + 1 : undefined;
-    return replay.unhandledSteps.slice(start.step, endStep).flatMap((step: BB2.ReplayStep, stepIdx: number) => {
-      if ('RulesEventBoardAction' in step) {
-        let startAction = 'action' in start ? start.action : 0;
-        if (stepIdx == 0) {
-          return ensureList(step.RulesEventBoardAction).slice(startAction).map(action => ({ step, action }));
-        } else if (start.step + stepIdx == ('step' in end ? end.step : undefined)) {
-          let endAction = 'action' in end ? end.action : undefined;
-          return ensureList(step.RulesEventBoardAction).slice(0, endAction).map(action => ({ step, action }));
-        } else {
-          return ensureList(step.RulesEventBoardAction).map(action => ({ step, action }));
-        }
-      } else {
-        return [];
+function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
+  for (const [driveIdx, drive] of replay.drives.entries()) {
+    for (const wakeupSide of [drive.wakeups.first, Internal.other(drive.wakeups.first)]) {
+      for (const [rollIdx, roll] of drive.wakeups[wakeupSide].entries()) {
+        yield { driveIdx, wakeupSide, rollIdx, roll };
       }
-    })
+    }
+    for (const setupSide of [drive.setups.first, Internal.other(drive.setups.first)]) {
+      for (const [actionIdx, action] of drive.setups[setupSide].entries()) {
+        yield { driveIdx, setupSide, actionIdx, action };
+      }
+    }
+    for (const [turnIdx, turn] of drive.turns.entries()) {
+      if (turn.startWizard) {
+        yield { driveIdx, turnIdx, wizard: 'start', roll: turn.startWizard };
+      }
+      for (const [activationIdx, activation] of turn.activations.entries()) {
+        for (const [actionStepIdx, actionStep] of activation.actionSteps.entries()) {
+          yield { driveIdx, turnIdx, activationIdx, actionStepIdx, actionStep }
+        }
+      }
+      if (turn.endWizard) {
+        yield { driveIdx, turnIdx, wizard: 'end', roll: turn.endWizard };
+      }
+    }
+  }
+  for (const [stepIdx, step] of replay.unhandledSteps.entries()) {
+    if ('RulesEventSetUpAction' in step) {
+      yield { stepIdx, subStep: REPLAY_SUB_STEP.SetupAction, step, setup: step.RulesEventSetUpAction };
+    }
+    if ('RulesEventKickOffTable' in step && step.RulesEventKickOffTable) {
+      yield { stepIdx, subStep: REPLAY_SUB_STEP.Kickoff, step, kickoff: step.RulesEventKickOffTable };
+      
+      for (const msg of ensureKeyedList('StringMessage', step.RulesEventKickOffTable.EventResults)) {
+        let messageData = parser.parse(he.decode(msg.MessageData), {
+          ignoreAttributes: true,
+        }) as BB2.KickoffEventMessageData;
+        yield { stepIdx, subStep: REPLAY_SUB_STEP.Kickoff, step, kickoff: step.RulesEventKickOffTable, kickoffMessage: messageData };
+      };
+    }
+    if ('RulesEventBoardAction' in step) {
+      let actions: BB2.RulesEventBoardAction[] = ensureList(step.RulesEventBoardAction);
+      for (const [actionIdx, action] of actions.entries()) {
+        if (!action.Results) {
+          continue;
+        }
+        if ('BoardActionResult' in action.Results) {
+          // @ts-ignore
+          let results: BB2.ActionResult<typeof action>[] = ensureKeyedList('BoardActionResult', action.Results);
+          for (const [resultIdx, result] of results.entries()) {
+            yield { stepIdx, subStep: REPLAY_SUB_STEP.BoardAction, step, actionIdx, action, resultIdx, result };
+          }
+        }
+      }
+    }
+    if ('RulesEventEndTurn' in step && step.RulesEventEndTurn) {
+      yield { stepIdx, subStep: REPLAY_SUB_STEP.EndTurn, step, endTurn: step.RulesEventEndTurn };
+    }
+    if ('BoardState' in step) {
+      yield { stepIdx, subStep: REPLAY_SUB_STEP.BoardState, step, boardState: step.BoardState };
+    }
   }
 }
 

@@ -2,16 +2,14 @@
   import Turn from "./Turn.svelte";
   import { replay, replayCurrent } from "./stores.js";
   import type { Action } from "./rolls.js";
-  import { after, atOrAfter } from "./replay-utils.js";
-  import type {ReplayPosition} from "./replay-utils.js";
   let actions: Action[],
     actionsByTurn: Action[][],
     selectedAction: number | undefined,
     currentTurnActions: Action[] | undefined;
 
-  function actionForReplayPosition(position: ReplayPosition) {
+  function actionForReplayPosition(position: number): number | undefined {
     let nextAction = actions.findIndex((action) => {
-      return after(action.startIndex, position);
+      return position < action.startIndex;
     });
     return nextAction > 0 ? actions[nextAction - 1].actionIndex : 0;
   }
@@ -37,9 +35,9 @@
       let startIndex = turnActions[0].startIndex;
       let endIndex = turnActions[turnActions.length - 1].endIndex;
       return (
-        atOrAfter($replayCurrent, startIndex) &&
+        startIndex <= $replayCurrent &&
         endIndex &&
-        after(endIndex, $replayCurrent)
+        $replayCurrent < endIndex
       );
     });
   }

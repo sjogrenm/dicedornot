@@ -1,7 +1,5 @@
 <script lang="ts">
   import type { SIDE } from "./constants.js";
-  import { atOrAfter, before } from "./replay-utils.js";
-  import type {ReplayPosition} from "./replay-utils.js";
 
   import type { Action } from "./rolls.js";
 
@@ -11,8 +9,8 @@
     teamId: SIDE | undefined,
     teamName: string | undefined,
     current: boolean,
-    startIndex: ReplayPosition,
-    endIndex: ReplayPosition;
+    startIndex: number,
+    endIndex: number | undefined;
 
   $: {
     turn = actions[0].turn;
@@ -20,7 +18,7 @@
     teamName = actions[0].activeTeam?.name;
     startIndex = actions[0].startIndex;
     endIndex = actions[actions.length - 1].endIndex;
-    current = atOrAfter($replayCurrent, startIndex) && before($replayCurrent, endIndex);
+    current = startIndex <= $replayCurrent && (endIndex == undefined || $replayCurrent < endIndex);
   }
 </script>
 

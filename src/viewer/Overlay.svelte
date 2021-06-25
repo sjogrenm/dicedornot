@@ -2,6 +2,7 @@
   import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
   import {
     ensureKeyedList,
+    linearReplay,
     translateStringNumberList,
   } from "../replay-utils.js";
   import { replayPreview, replay } from "../stores.js";
@@ -12,7 +13,6 @@
   import OverlayBlock from "./OverlayBlock.svelte";
   import type { Props as OverlayBlockProps } from "./OverlayBlock.svelte";
   import chroma from "chroma-js";
-  import { sliceActionsTo } from "../replay-utils.js";
   import type { Colors } from "./types.js";
 
   import { team1Color, team1Gray, team0Color, team0Gray } from "../theme.js";
@@ -78,138 +78,143 @@
 
   $: {
     paths = [];
-    for (const { action } of sliceActionsTo(
-      $replay!.fullReplay,
+    for (const position of linearReplay($replay!.fullReplay!).slice(
       $replayPreview!.start,
       $replayPreview!.end
     )) {
-      if (!("ActionType" in action)) {
-        let from = convertCell(action.Order.CellFrom);
-        let to = convertCell(action.Order.CellTo.Cell);
-        let rolls = ensureKeyedList("BoardActionResult", action.Results)
-          .filter((result) => "Requirement" in result)
-          .map((result) => {
-            // @ts-ignore
-            let requirement = result.Requirement;
-            let modifier =
-              ensureKeyedList("DiceModifier", result.ListModifiers)
-                .map((modifier) => modifier.Value || 0)
-                .reduce((a, b) => a + b, 0) || 0;
-            return `${requirement - modifier}+`;
-          })
-          .join(" ");
-        let team =
-          action.PlayerId && action.PlayerId < 30 ? SIDE.home : SIDE.away;
-        let lastPath = paths[paths.length - 1];
-        if (lastPath && lastPath.type === "move") {
-          let lastCell = lastPath.props.path[lastPath.props.path.length - 1];
-          if (cellEqual(lastCell, from)) {
-            lastPath.props.path.push(to);
-            if (rolls) {
-              lastPath.props.rolls.push({ from, to, rolls });
-            }
-            continue;
-          }
+      if ('subStep' in position && 'action' in position) {
+        let action = position.action;
+        if (position.resultIdx > 0) {
+          continue;
         }
-        paths.push({
-          type: "move",
-          props: {
-            path: [from, to],
-            rolls: rolls ? [{ from, to, rolls }] : [],
-          },
-          team,
-        });
-      } else {
-        switch (action.ActionType) {
-          case ACTION_TYPE.Blitz:
-          case ACTION_TYPE.Block:
-            {
-              let results: (BlockResults | BlitzResults)[] = ensureKeyedList(
-                "BoardActionResult",
-                action.Results as KeyedMList<
+        if (!("ActionType" in action) && 'Order' in action) {
+          let from = convertCell(action.Order.CellFrom);
+          let to = convertCell(action.Order.CellTo.Cell);
+          let rolls = ensureKeyedList("BoardActionResult", action.Results)
+            .filter((result) => "Requirement" in result)
+            .map((result) => {
+              // @ts-ignore
+              let requirement = result.Requirement;
+              let modifier =
+                ensureKeyedList("DiceModifier", result.ListModifiers)
+                  .map((modifier) => modifier.Value || 0)
+                  .reduce((a, b) => a + b, 0) || 0;
+              return `${requirement - modifier}+`;
+            })
+            .join(" ");
+          let team =
+            action.PlayerId && action.PlayerId < 30 ? SIDE.home : SIDE.away;
+          let lastPath = paths[paths.length - 1];
+          if (lastPath && lastPath.type === "move") {
+            let lastCell = lastPath.props.path[lastPath.props.path.length - 1];
+            if (cellEqual(lastCell, from)) {
+              lastPath.props.path.push(to);
+              if (rolls) {
+                lastPath.props.rolls.push({ from, to, rolls });
+              }
+              continue;
+            }
+          }
+          paths.push({
+            type: "move",
+            props: {
+              path: [from, to],
+              rolls: rolls ? [{ from, to, rolls }] : [],
+            },
+            team,
+          });
+        } else if ('ActionType' in action) {
+          switch (action.ActionType) {
+            case ACTION_TYPE.Blitz:
+            case ACTION_TYPE.Block:
+              {
+                let results: (BlockResults | BlitzResults)[] = ensureKeyedList(
                   "BoardActionResult",
-                  BlockResults | BlitzResults
-                >
-              );
-              for (const result of results) {
-                let last = paths[paths.length - 1];
-                if (
-                  "RollType" in result &&
-                  result.RollType == ROLL.Block &&
-                  result.IsOrderCompleted != 1
-                ) {
-                  let from = convertCell(action.Order.CellFrom);
-                  let to = convertCell(action.Order.CellTo.Cell);
-                  let team = action.PlayerId || 0 < 30 ? SIDE.home : SIDE.away;
-                  let modifier =
-                    ensureKeyedList("DiceModifier", result.ListModifiers)
-                      .map((modifier) => modifier.Value || 0)
-                      .reduce((a, b) => a + b, 0) || 0;
-                  let requirement = result.Requirement || 0 - modifier;
-                  let dieCount =
-                    translateStringNumberList(result.CoachChoices.ListDices)
-                      .length / 2;
-                  let roll = "";
-                  if (requirement < 0) {
-                    if (dieCount == 2) {
-                      roll = "\u00BDD";
-                    } else if (dieCount == 3) {
-                      roll = "\u2153D";
-                    }
-                  } else {
-                    roll = `${dieCount}D`;
-                  }
+                  action.Results as KeyedMList<
+                    "BoardActionResult",
+                    BlockResults | BlitzResults
+                  >
+                );
+                for (const result of results) {
+                  let last = paths[paths.length - 1];
                   if (
-                    last &&
-                    last.type === "block" &&
-                    last.props.from.x == from.x &&
-                    last.props.from.y == from.y &&
-                    last.props.to.x == to.x &&
-                    last.props.to.y == to.y
+                    "RollType" in result &&
+                    result.RollType == ROLL.Block &&
+                    result.IsOrderCompleted != 1
                   ) {
-                    last.props.rolls += ` ${roll}`;
-                  } else {
-                    paths.push({
-                      type: "block",
-                      props: { from, to, rolls: roll, follow: false },
-                      team,
-                    });
-                  }
-                } else if (
-                  "RollType" in result &&
-                  result.RollType == ROLL.Push &&
-                  result.IsOrderCompleted == 1 &&
-                  last.type === "block"
-                ) {
-                  let pushOptions = ensureKeyedList(
-                    "Cell",
-                    result.CoachChoices.ListCells
-                  );
-                  if (pushOptions) {
-                    last.props.pushTo = convertCell(pushOptions[0]);
-                  }
-                } else if (
-                  "RollType" in result &&
-                  result.RollType == ROLL.FollowUp &&
-                  result.IsOrderCompleted == 1 &&
-                  last.type === "block"
-                ) {
-                  let followOptions = ensureKeyedList(
-                    "Cell",
-                    result.CoachChoices.ListCells
-                  );
-                  if (followOptions) {
-                    let followTo = convertCell(followOptions[0]);
-                    last.props.follow =
-                      followTo.x != last.props.from.x ||
-                      followTo.y != last.props.from.y;
+                    let from = convertCell(action.Order.CellFrom);
+                    let to = convertCell(action.Order.CellTo.Cell);
+                    let team = action.PlayerId || 0 < 30 ? SIDE.home : SIDE.away;
+                    let modifier =
+                      ensureKeyedList("DiceModifier", result.ListModifiers)
+                        .map((modifier) => modifier.Value || 0)
+                        .reduce((a, b) => a + b, 0) || 0;
+                    let requirement = result.Requirement || 0 - modifier;
+                    let dieCount =
+                      translateStringNumberList(result.CoachChoices.ListDices)
+                        .length / 2;
+                    let roll = "";
+                    if (requirement < 0) {
+                      if (dieCount == 2) {
+                        roll = "\u00BDD";
+                      } else if (dieCount == 3) {
+                        roll = "\u2153D";
+                      }
+                    } else {
+                      roll = `${dieCount}D`;
+                    }
+                    if (
+                      last &&
+                      last.type === "block" &&
+                      last.props.from.x == from.x &&
+                      last.props.from.y == from.y &&
+                      last.props.to.x == to.x &&
+                      last.props.to.y == to.y
+                    ) {
+                      last.props.rolls += ` ${roll}`;
+                    } else {
+                      paths.push({
+                        type: "block",
+                        props: { from, to, rolls: roll, follow: false },
+                        team,
+                      });
+                    }
+                  } else if (
+                    "RollType" in result &&
+                    result.RollType == ROLL.Push &&
+                    result.IsOrderCompleted == 1 &&
+                    last.type === "block"
+                  ) {
+                    let pushOptions = ensureKeyedList(
+                      "Cell",
+                      result.CoachChoices.ListCells
+                    );
+                    if (pushOptions) {
+                      last.props.pushTo = convertCell(pushOptions[0]);
+                    }
+                  } else if (
+                    "RollType" in result &&
+                    result.RollType == ROLL.FollowUp &&
+                    result.IsOrderCompleted == 1 &&
+                    last.type === "block"
+                  ) {
+                    let followOptions = ensureKeyedList(
+                      "Cell",
+                      result.CoachChoices.ListCells
+                    );
+                    if (followOptions) {
+                      let followTo = convertCell(followOptions[0]);
+                      last.props.follow =
+                        followTo.x != last.props.from.x ||
+                        followTo.y != last.props.from.y;
+                    }
                   }
                 }
               }
-            }
+          }
         }
-      }
-    };
+      };
+    }
   }
 </script>
 

@@ -1,6 +1,5 @@
 
 import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER } from "../constants.js";
-import { PitchInvasionRoll } from "../rolls.js";
 
 export enum Bool {
     false = 0,
@@ -412,7 +411,7 @@ export interface RulesEventSpecialAction {
 
 export interface RulesEventKickOffTable {
     Event?: number
-    EventResults: "" | { StringMessage: MList<{ Name: string, MessageData: string }> },
+    EventResults: KeyedMList<"StringMessage", { Name: string, MessageData: string }>,
     ListDice: string,
 }
 
@@ -658,7 +657,7 @@ interface BaseAction {
     RequestType?: ACTION_REQUEST_TYPE,
 }
 export interface ResultsAction<T> extends BaseAction {
-    Results: "" |{ BoardActionResult: MList<T> }
+    Results: KeyedMList<"BoardActionResult", T>
 }
 
 export type ActionResult<A extends RulesEventBoardAction> = UnMList<Exclude<A["Results"], "">["BoardActionResult"]>;

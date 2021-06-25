@@ -85,7 +85,7 @@ export interface PlayerProps {
 export interface WakeConditions {
     replayPreview: ReplayPreview | undefined,
     playing: boolean,
-    replayTarget: ReplayPosition | undefined,
+    replayTarget: number | undefined,
     replay: ProcessedReplay | undefined,
 }
 
@@ -95,7 +95,7 @@ export interface Preview {
     pitch: Record<string, PitchCellProps>,
     players: Record<string, PlayerProps>,
     playing: boolean,
-    current: ReplayPosition,
+    current: number,
 }
 
 export interface Colors {

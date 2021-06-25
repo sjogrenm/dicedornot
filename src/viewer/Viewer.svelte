@@ -28,19 +28,17 @@
   import Banner from "./Banner.svelte";
   import type {
     ReplayPosition,
-    ReplayPreview
+    ReplayPreview,
+  } from "../replay-utils.js";
+  import {
+    linearReplay,
   } from "../replay-utils.js";
   import {
     translateStringNumberList,
     ensureList,
     REPLAY_SUB_STEP,
-    END,
     period,
-    initialReplayPosition,
     ensureKeyedList,
-    updateToNextPosition,
-    toParam,
-    atOrAfter,
   } from "../replay-utils.js";
   import {
     replay,
@@ -73,7 +71,8 @@
     previewing: ReplayPreview | undefined = undefined,
     shouldWake: WakeConditions | undefined,
     abort = new AbortController(),
-    current: ReplayPosition = initialReplayPosition();
+    current: number = 0,
+    positions: ReplayPosition[] = [];
 
   function emptyTeam(): Team {
     return {
@@ -139,6 +138,7 @@
       shouldWake.replay = $replay;
       abort.abort();
     }
+    positions = $replay ? linearReplay($replay!.fullReplay) : [];
   }
 
   const [send, receive] = crossfade({
@@ -276,10 +276,10 @@
       boardState.ListTeams.TeamState[1].ListPitchPlayers
     ).map((p) => placePlayer(p, SIDE.away));
     if (boardState.ListTeams.TeamState[0].BlitzerId >= 0) {
-      players[boardState.ListTeams.TeamState[0].BlitzerId].blitz = true;
+      setPlayer(boardState.ListTeams.TeamState[0].BlitzerId).blitz = true;
     }
     if (boardState.ListTeams.TeamState[1].BlitzerId >= 0) {
-      players[boardState.ListTeams.TeamState[1].BlitzerId].blitz = true;
+      setPlayer(boardState.ListTeams.TeamState[1].BlitzerId).blitz = true;
     }
   }
 
@@ -318,44 +318,44 @@
 
   function dispatchAction(
     action: BB2.RulesEventBoardAction,
-    resultIndex: number
+    result: BB2.ActionResult<BB2.RulesEventBoardAction>,
   ) {
     if (!("ActionType" in action)) {
-      return handleMove(action, resultIndex);
+      return handleMove(action, result as BB2.ActionResult<typeof action>);
     }
     switch (action.ActionType) {
       case ACTION_TYPE.Block:
-        return handleBlock(action, resultIndex);
+        return handleBlock(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.Blitz:
-        return handleBlock(action, resultIndex);
+        return handleBlock(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.Pass:
-        return handlePass(action, resultIndex);
+        return handlePass(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.Handoff:
         return handleHandoff(action);
       case ACTION_TYPE.Foul:
         return handleFoul(action);
       case ACTION_TYPE.TakeDamage:
-        return handleTakeDamage(action, resultIndex);
+        return handleTakeDamage(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.Kickoff:
         return handleKickoff(action);
       case ACTION_TYPE.Scatter:
         return handleScatter(action);
       case ACTION_TYPE.Catch:
-        return handleCatch(action, resultIndex);
+        return handleCatch(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.TouchDown:
         return handleTouchdown();
       case ACTION_TYPE.StunWake:
         return handleStunWake(action);
       case ACTION_TYPE.Pickup:
-        return handlePickup(action, resultIndex);
+        return handlePickup(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.ActivationTest:
-        return handleActivationTest(action, resultIndex);
+        return handleActivationTest(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.Leap:
-        return handleMove(action, resultIndex);
+        return handleMove(action, result as BB2.ActionResult<typeof action>);
       case ACTION_TYPE.ActivatePlayer:
         return handleActivate(action);
       case ACTION_TYPE.InitialWeather:
-        return handleWeather(action, resultIndex);
+        return handleWeather(action, result as BB2.ActionResult<typeof action>);
       // case ACTION_TYPE.Turnover:
       //   return handleTurnover(action);
       case ACTION_TYPE.FansNumber:
@@ -420,14 +420,14 @@
 
   async function handleBoardAction(
     boardAction: BB2.RulesEventBoardAction,
-    resultIndex: number
+    result: BB2.ActionResult<BB2.RulesEventBoardAction>,
   ) {
     try {
-      await dispatchAction(boardAction, resultIndex);
+      await dispatchAction(boardAction, result);
       await step();
     } catch (err) {
       await step();
-      console.error("Action failed", { err, boardAction, resultIndex });
+      console.error("Action failed", { err, boardAction, result });
       throw err;
     }
   }
@@ -437,71 +437,55 @@
   }
 
   async function stepReplay(updateUrl = true) {
-    if (current.end) {
-      current = initialReplayPosition();
-      return;
+    if (current > positions.length) {
+      current = 0;
     }
-    if (current.step > $replay!.fullReplay.unhandledSteps.length) {
-      console.error("Went too far", { current, replay: $replay });
-      current = initialReplayPosition();
-      return;
-    }
-    if (current.subStep != REPLAY_SUB_STEP.NextReplayStep) {
-      const step = $replay!.fullReplay.unhandledSteps[current.step];
-      switch (current.subStep) {
+    const currentPosition = positions[current];
+
+    if ('stepIdx' in currentPosition) {
+      switch (currentPosition.subStep) {
         case REPLAY_SUB_STEP.SetupAction:
           await handleSetupAction();
           break;
         case REPLAY_SUB_STEP.BoardAction:
-          if ("RulesEventBoardAction" in step) {
-            const subStep = step.RulesEventBoardAction;
-            let action = ensureList(subStep)[current.action];
-            if (!action) {
-              console.error("No action found", {
-                subStep,
-                replayCurrent: current,
-                step,
-              });
-            }
-            await handleBoardAction(action, current.result);
-          }
+          await handleBoardAction(currentPosition.action, currentPosition.result);
           break;
         case REPLAY_SUB_STEP.EndTurn:
-          if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
-            await handleTurnover(step.RulesEventEndTurn);
-          }
+          await handleTurnover(currentPosition.endTurn);
           break;
         case REPLAY_SUB_STEP.BoardState:
-          if ("BoardState" in step) {
-            await handleBoardState(step.BoardState);
-          }
+          await handleBoardState(currentPosition.boardState);
           break;
       }
+    } else {
+
     }
-    current = updateToNextPosition($replay!.fullReplay, current);
     if (updateUrl) {
       if (!skipping) {
         $replayCurrent = current;
       }
       let url = new URL(window.location.href);
-      url.searchParams.set("st", toParam(current));
+      url.searchParams.set("st", current.toString());
       window.history.replaceState({}, "", url.href);
     }
+    current++;
   }
 
-  async function jumpToPosition(position: ReplayPosition, updateUrl = true) {
+  async function jumpToPosition(position: number, updateUrl = true) {
     clearTemporaryState();
-    if (position.end) {
-      current = position;
-      return;
+    // Walk back through the replay to find the most recent step with
+    // the board state
+    for (current = position; current >= 0; current--) {
+      let currentPosition = positions[current];
+      if ('subStep' in currentPosition && currentPosition.subStep == REPLAY_SUB_STEP.BoardState) {
+        break;
+      }
+      if ('driveIdx' in currentPosition) {
+        break;
+      }
     }
-    current = {
-      end: false,
-      step: Math.max(0, position.step - 1),
-      subStep: REPLAY_SUB_STEP.BoardState,
-    };
     skipping = true;
-    while (atOrAfter(position, current)) {
+    while (current < position) {
       await stepReplay(updateUrl);
     }
     skipping = false;
@@ -571,8 +555,8 @@
           $replayTarget = undefined;
           jumpToPosition($replayPreview.start);
         }
-        if (current == END) {
-          current = initialReplayPosition();
+        if (current >= positions.length) {
+          current = 0;
           return;
         }
         if ($replayTarget) {
@@ -594,98 +578,136 @@
   }
 
   function jumpToPreviousActivation() {
-    if (current.end || !$replay) {
+    if (!$replay) {
       return;
     }
-    for (var stepI = current.step; stepI--; stepI > 0) {
-      const step = $replay.fullReplay.unhandledSteps[stepI];
-      if (!("RulesEventBoardAction" in step)) {
-        continue;
+    if (current >= positions.length) {
+      current = positions.length - 1;
+    }
+    let startingPosition = positions[current];
+    for (let target = current - 1; target >= 0; target--) {
+      let targetPosition = positions[target];
+      if (
+        'activationIdx' in targetPosition &&
+        (
+          ('activationIdx' in startingPosition && targetPosition.activationIdx < startingPosition.activationIdx) ||
+          ('turnIdx' in startingPosition && targetPosition.turnIdx < startingPosition.turnIdx) ||
+          ('driveIdx' in startingPosition && targetPosition.driveIdx < startingPosition.driveIdx) ||
+          // All internal-format replay positions are before BB2 format replay positions
+          !('driveIdx' in startingPosition)
+        ) &&
+        targetPosition.actionStepIdx == 0
+      ) {
+        $replayTarget = target;
+        return;
       }
-      const actions = ensureList(step.RulesEventBoardAction);
-      const actionTypes = actions.map((action) =>
-        "ActionType" in action ? action.ActionType : ACTION_TYPE.Move
-      );
-      if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
-        $replayTarget = {
-          end: false,
-          step: stepI,
-          subStep: REPLAY_SUB_STEP.SetupAction,
-        };
+      if (
+        'action' in targetPosition &&
+        'ActionType' in targetPosition.action &&
+        targetPosition.action.ActionType == ACTION_TYPE.ActivatePlayer
+      ) {
+        $replayTarget = target;
         return;
       }
     }
   }
 
   function jumpToPreviousTurn() {
-    if (current.end || !$replay) {
+
+    if (!$replay) {
       return;
     }
-    for (var stepI = current.step - 1; stepI--; stepI > 0) {
-      const step = $replay.fullReplay.unhandledSteps[stepI];
-      if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
-        $replayTarget = {
-          end: false,
-          step: stepI + 1,
-          subStep: REPLAY_SUB_STEP.SetupAction,
-        };
+    if (current >= positions.length) {
+      current = positions.length - 1;
+    }
+    let startingPosition = positions[current];
+    for (let target = current - 1; target >= 0; target--) {
+      let targetPosition = positions[target];
+      if (
+        'activationIdx' in targetPosition &&
+        (
+          ('turnIdx' in startingPosition && targetPosition.turnIdx < startingPosition.turnIdx) ||
+          ('driveIdx' in startingPosition && targetPosition.driveIdx < startingPosition.driveIdx) ||
+          // All internal-format replay positions are before BB2 format replay positions
+          !('driveIdx' in startingPosition)
+        ) &&
+        targetPosition.activationIdx == 0
+      ) {
+        $replayTarget = target;
+        return;
+      }
+      if (
+        'subStep' in targetPosition &&
+        targetPosition.subStep == REPLAY_SUB_STEP.EndTurn
+      ) {
+        $replayTarget = target + 2;
         return;
       }
     }
   }
   function jumpToPreviousStep() {
-    if (current.end || !$replay) {
-      return;
-    }
-    $replayTarget = {
-      end: false,
-      step: current.step - 1,
-      subStep: REPLAY_SUB_STEP.SetupAction,
-    };
+    $replayTarget = current - 1;
   }
   function jumpToNextActivation() {
-    if (current.end || !$replay) {
+    if (!$replay) {
       return;
     }
-    for (
-      var stepI = current.step;
-      stepI++;
-      stepI < $replay.fullReplay.unhandledSteps.length
-    ) {
-      const step = $replay.fullReplay.unhandledSteps[stepI];
-      if (!("RulesEventBoardAction" in step)) {
-        continue;
+    if (current <= positions.length) {
+      current = positions.length - 1;
+    }
+    let startingPosition = positions[current];
+    for (let target = current + 1; target < positions.length; target++) {
+      let targetPosition = positions[target];
+      if (
+        'activationIdx' in targetPosition &&
+        (
+          ('activationIdx' in startingPosition && targetPosition.activationIdx > startingPosition.activationIdx) ||
+          ('turnIdx' in startingPosition && targetPosition.turnIdx > startingPosition.turnIdx) ||
+          ('driveIdx' in startingPosition && targetPosition.driveIdx > startingPosition.driveIdx)
+        ) &&
+        targetPosition.actionStepIdx == 0
+      ) {
+        $replayTarget = target;
+        return;
       }
-      const actions = ensureList(step.RulesEventBoardAction);
-      const actionTypes = actions.map((action) =>
-        "ActionType" in action ? action.ActionType : ACTION_TYPE.Move
-      );
-      if (actionTypes.includes(ACTION_TYPE.ActivatePlayer)) {
-        $replayTarget = {
-          end: false,
-          step: stepI,
-          subStep: REPLAY_SUB_STEP.SetupAction,
-        };
+      if (
+        'action' in targetPosition &&
+        'ActionType' in targetPosition.action &&
+        targetPosition.action.ActionType == ACTION_TYPE.ActivatePlayer
+      ) {
+        $replayTarget = target;
         return;
       }
     }
   }
   function jumpToNextTurn() {
-    if (current.end || !$replay) {
+    if (!$replay) {
       return;
     }
-    for (
-      var stepI = current.step;
-      stepI++;
-      stepI < $replay.fullReplay.unhandledSteps.length
-    ) {
-      const step = $replay.fullReplay.unhandledSteps[stepI];
-      if ("RulesEventEndTurn" in step && step.RulesEventEndTurn) {
-        $replayTarget = {
-          end: false,
-          step: stepI + 1,
-          subStep: REPLAY_SUB_STEP.SetupAction,
-        };
+    if (current >= positions.length) {
+      current = positions.length - 1;
+    }
+    let startingPosition = positions[current];
+    for (let target = current + 1; target < positions.length; target++) {
+      let targetPosition = positions[target];
+      if (
+        'activationIdx' in targetPosition &&
+        (
+          ('turnIdx' in startingPosition && targetPosition.turnIdx > startingPosition.turnIdx) ||
+          ('driveIdx' in startingPosition && targetPosition.driveIdx > startingPosition.driveIdx) ||
+          // All internal-format replay positions are before BB2 format replay positions
+          !('driveIdx' in startingPosition)
+        ) &&
+        targetPosition.activationIdx == 0
+      ) {
+        $replayTarget = target;
+        return;
+      }
+      if (
+        'subStep' in targetPosition &&
+        targetPosition.subStep == REPLAY_SUB_STEP.EndTurn
+      ) {
+        $replayTarget = target + 1;
         return;
       }
     }
@@ -697,17 +719,14 @@
       square.cell = undefined;
       square.foul = false;
       if (square.player) {
-        players[square.player].moving = false;
+        setPlayer(square.player).moving = false;
       }
       pitch[idx] = square;
     });
   }
 
-  function handleWeather(action: BB2.WeatherAction, resultIndex: number) {
-    let actionResult = ensureKeyedList("BoardActionResult", action.Results)[
-      resultIndex
-    ];
-    const dice = translateStringNumberList(actionResult.CoachChoices.ListDices);
+  function handleWeather(action: BB2.WeatherAction, result: BB2.ActionResult<BB2.WeatherAction>) {
+    const dice = translateStringNumberList(result.CoachChoices.ListDices);
     const diceSums: Record<number, WEATHER | undefined> = {
       2: WEATHER.SwelteringHeat,
       3: WEATHER.VerySunny,
@@ -719,7 +738,7 @@
 
   function handleActivate(action: BB2.ActivatePlayerAction) {
     clearTemporaryState();
-    players[action.PlayerId || 0].prone = false;
+    setPlayer(action.PlayerId || 0).prone = false;
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
         square.cell.active = false;
@@ -751,15 +770,8 @@
 
   async function handleBlock(
     action: BB2.BlockAction | BB2.BlitzAction,
-    resultIndex: number
+    result: BB2.ActionResult<BB2.BlockAction | BB2.BlitzAction>,
   ) {
-    let actionResult = ensureKeyedList(
-      "BoardActionResult",
-      action.Results as BB2.KeyedMList<
-        "BoardActionResult",
-        BB2.BlitzResults | BB2.BlockResults
-      >
-    )[resultIndex];
     let from = convertCell(action.Order.CellFrom);
     let fromSquare = setPitchSquare(from);
     (fromSquare.cell = fromSquare.cell || {
@@ -777,7 +789,7 @@
       square.dice = undefined;
     });
 
-    if ("RollType" in actionResult && actionResult.RollType === ROLL.Block) {
+    if ("RollType" in result && result.RollType === ROLL.Block) {
       let target = setPitchSquare(convertCell(action.Order.CellTo.Cell));
       if (!target.cell) {
         target.cell = {
@@ -789,21 +801,21 @@
       }
       target.cell.target = true;
 
-      if (actionResult.IsOrderCompleted) {
+      if (result.IsOrderCompleted) {
         target["dice"] = [
-          translateStringNumberList(actionResult.CoachChoices.ListDices)[0],
+          translateStringNumberList(result.CoachChoices.ListDices)[0],
         ];
       } else {
         let dice = translateStringNumberList(
-          actionResult.CoachChoices.ListDices
+          result.CoachChoices.ListDices
         );
         target.dice = dice.slice(0, dice.length / 2);
       }
       await step(4);
     }
-    if ("RollType" in actionResult && actionResult.RollType === ROLL.Push) {
+    if ("RollType" in result && result.RollType === ROLL.Push) {
       //pushback
-      if (actionResult.IsOrderCompleted) {
+      if (result.IsOrderCompleted) {
         Object.values(pitch).forEach((square) => {
           if (square.cell) {
             square.cell.pushbackChoice = false;
@@ -813,7 +825,7 @@
 
         let pushTarget = convertCell(ensureKeyedList(
           "Cell",
-          actionResult.CoachChoices.ListCells
+          result.CoachChoices.ListCells
         )[0]);
         let targetSquare = setPitchSquare(pushTarget);
         if (lastChainPush) {
@@ -829,7 +841,7 @@
         targetSquare.player = toPlayer;
         toSquare.player = undefined;
       } else {
-        ensureKeyedList('Cell', actionResult.CoachChoices.ListCells).map(convertCell).forEach((cell) => {
+        ensureKeyedList('Cell', result.CoachChoices.ListCells).map(convertCell).forEach((cell) => {
           let square = setPitchSquare(cell);
           square.cell = square.cell || {
             active: false,
@@ -849,12 +861,12 @@
         });
       }
     }
-    if ("RollType" in actionResult && actionResult.RollType === ROLL.FollowUp) {
+    if ("RollType" in result && result.RollType === ROLL.FollowUp) {
       //follow up
-      if (actionResult.IsOrderCompleted) {
+      if (result.IsOrderCompleted) {
         const from = convertCell(action.Order.CellFrom);
         const target = convertCell(
-          ensureKeyedList("Cell", actionResult.CoachChoices.ListCells)[0]
+          ensureKeyedList("Cell", result.CoachChoices.ListCells)[0]
         );
         if (from.x != target.x || from.y != target.y) {
           const fromSquare = setPitchSquare(from);
@@ -865,12 +877,9 @@
     }
   }
 
-  function handleCatch(action: BB2.CatchAction, resultIndex: number) {
-    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
-      resultIndex
-    ];
-    if (!actionResult.IsOrderCompleted) return;
-    if (actionResult.ResultType !== 0) return;
+  function handleCatch(action: BB2.CatchAction, result: BB2.ActionResult<BB2.CatchAction>) {
+    if (!result.IsOrderCompleted) return;
+    if (result.ResultType !== 0) return;
 
     Object.values(pitch).forEach((cell) => (cell["ball"] = undefined));
     setPitchSquare(convertCell(action.Order.CellTo.Cell)).ball = { held: true };
@@ -911,17 +920,14 @@
     };
   }
 
-  function handleMove(action: BB2.MoveAction | BB2.LeapAction, resultIndex: number) {
-    let actionResult = ensureKeyedList('BoardActionResult', action.Results as BB2.KeyedMList<'BoardActionResult', BB2.MoveResults | BB2.LeapResults>)[
-      resultIndex
-    ];
+  function handleMove(action: BB2.MoveAction | BB2.LeapAction, result: BB2.ActionResult<BB2.MoveAction | BB2.LeapAction>) {
     let player = setPlayer(action.PlayerId || 0);
     let squareFrom = setPitchSquare(convertCell(action.Order.CellFrom));
     let squareTo = setPitchSquare(convertCell(action.Order.CellTo.Cell));
 
     player.prone = false;
     player.moving = true;
-    if (actionResult.IsOrderCompleted && squareTo != squareFrom) {
+    if (result.IsOrderCompleted && squareTo != squareFrom) {
       squareFrom.player = undefined;
       squareTo.player = action.PlayerId;
     }
@@ -935,7 +941,7 @@
     squareFrom.cell.moved = true;
     squareFrom.cell.active = false;
 
-    if (actionResult.IsOrderCompleted) {
+    if (result.IsOrderCompleted) {
       squareTo.cell = squareTo.cell || {
         active: false,
         target: false,
@@ -946,9 +952,9 @@
     }
 
     if (
-      'RollType' in actionResult &&
-      actionResult.RollType &&
-      [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(actionResult.RollType)
+      'RollType' in result &&
+      result.RollType &&
+      [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(result.RollType)
     ) {
       //Dodge, GFI, Leap
       squareTo.cell = squareTo.cell || {
@@ -959,13 +965,13 @@
       };
       let modifier =
         (
-          (actionResult.ListModifiers &&
-            ensureList(actionResult.ListModifiers.DiceModifier)) ||
+          (result.ListModifiers &&
+            ensureList(result.ListModifiers.DiceModifier)) ||
           []
         )
           .map((modifier) => modifier.Value || 0)
           .reduce((a, b) => a + b, 0) || 0;
-      squareTo.cell.plus = (actionResult.Requirement || 0) - modifier;
+      squareTo.cell.plus = (result.Requirement || 0) - modifier;
     }
 
     if (player.data.Id == blitzerId) {
@@ -980,7 +986,7 @@
 
   function handleActivationTest(
     action: BB2.ActivationTestAction,
-    resultIndex: number
+    result: BB2.ActionResult<BB2.ActivationTestAction>,
   ) {
     /* rolltypes
       BoneHead = 20,
@@ -991,15 +997,12 @@
       Bloodlust = 50,
 
     */
-    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
-      resultIndex
-    ];
     let square = setPitchSquare(convertCell(action.Order.CellTo.Cell));
 
     if (square.player) {
-      if (actionResult.ResultType === RESULT_TYPE.Passed) {
+      if (result.ResultType === RESULT_TYPE.Passed) {
         //success
-        players[square.player].stupidity = undefined;
+        setPlayer(square.player).stupidity = undefined;
       } else {
         //failure
         const STUPID_TYPES: Record<BB2.ActivationTestResult["RollType"] | BB2.LonerResult["RollType"], string> = {
@@ -1009,16 +1012,13 @@
           [ROLL.WildAnimal]: "WildAnimal",
           [ROLL.Loner]: "Loner",
         };
-        players[square.player].stupidity = STUPID_TYPES[actionResult.RollType];
+        setPlayer(square.player).stupidity = STUPID_TYPES[result.RollType];
       }
     }
   }
 
-  async function handlePass(action: BB2.PassAction, resultIndex: number) {
-    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
-      resultIndex
-    ];
-    if (!actionResult.IsOrderCompleted) {
+  async function handlePass(action: BB2.PassAction, result: BB2.ActionResult<BB2.PassAction>) {
+    if (!result.IsOrderCompleted) {
       return;
     }
 
@@ -1028,7 +1028,7 @@
     }
     await step(0.5);
 
-    if (actionResult.ResultType === RESULT_TYPE.Passed) {
+    if (result.ResultType === RESULT_TYPE.Passed) {
       //success
       let target = setPitchSquare(convertCell(ensureList(action.Order.CellTo.Cell)[0]));
       if (from.ball) {
@@ -1039,13 +1039,10 @@
     }
   }
 
-  function handlePickup(action: BB2.PickupAction, resultIndex: number) {
-    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
-      resultIndex
-    ];
+  function handlePickup(action: BB2.PickupAction, result: BB2.ActionResult<BB2.PickupAction>) {
     if (
-      actionResult.IsOrderCompleted &&
-      actionResult.ResultType === RESULT_TYPE.Passed
+      result.IsOrderCompleted &&
+      result.ResultType === RESULT_TYPE.Passed
     )
       Object.values(pitch).forEach((square) => {
         if (square["ball"]) {
@@ -1055,11 +1052,8 @@
       });
   }
 
-  function handleTakeDamage(action: BB2.TakeDamageAction, resultIndex: number) {
-    let actionResult = ensureKeyedList('BoardActionResult', action.Results)[
-      resultIndex
-    ];
-    if (!actionResult.IsOrderCompleted) return;
+  function handleTakeDamage(action: BB2.TakeDamageAction, result: BB2.ActionResult<BB2.TakeDamageAction>) {
+    if (!result.IsOrderCompleted) return;
 
     let player = setPlayer(action.PlayerId || 0),
       playerSquareIndex: string | undefined;
@@ -1074,9 +1068,9 @@
       }
     });
 
-    switch (actionResult.RollType) {
+    switch (result.RollType) {
       case 3: //armor
-        if (actionResult.ResultType === 1) {
+        if (result.ResultType === 1) {
           // armor failed
           //knocked down
           if (player) {
@@ -1085,12 +1079,12 @@
         }
         break;
       case 4: //injury
-        if (actionResult.SubResultType === 2) {
+        if (result.SubResultType === 2) {
           //stunned
           if (player) {
             player.stunned = true;
           }
-        } else if (actionResult.SubResultType === 3 && playerSquareIndex) {
+        } else if (result.SubResultType === 3 && playerSquareIndex) {
           //knocked out
           let team = player.team;
           let dugout = team == SIDE.home ? homeTeam.dugout : awayTeam.dugout;

@@ -5,7 +5,6 @@
   import { replayCurrent, replayTarget, replay } from "./stores.js";
   import type { View } from "vega";
   import type {Action} from "./rolls.js";
-  import {atOrAfter} from "./replay-utils.js";
 
   let actions: Action[],
     view: View,
@@ -26,7 +25,7 @@
     actions = $replay!.actions;
     if (actions && $replayCurrent) {
       let nextRoll = actions.findIndex((roll) => {
-        return atOrAfter(roll.startIndex, $replayCurrent);
+        return $replayCurrent <= roll.startIndex ;
       });
       playHead = nextRoll > 0 ? actions[nextRoll - 1].actionIndex : 0;
     }

@@ -1,4 +1,3 @@
-import type { DateTime } from 'vega-lite/build/src/datetime';
 import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL} from '../constants.js';
 import type * as BB2 from './BB2.js';
 
@@ -29,6 +28,7 @@ export interface Replay {
         type: string,
         enhancement?: string,
     },
+    gameLength: number,
     drives: Drive[],
     unhandledSteps: BB2.ReplayStep[],
     finalScore: ByTeam<number>,
@@ -52,8 +52,12 @@ export interface Inducements {
     mercenaries: Record<PlayerNumber, Player>,
 }
 
-export type Side = keyof ByTeam<any>;
+export type Side = "home" | "away";
+export function other(side: Side): Side {
+    return side == "home" ? "away" : "home";
+}
 export type PlayerNumber = number;
+export type KickoffOrder<T> = {first: Side, home: T, away: T};
 export interface PlayerId {
     side: Side,
     number: PlayerNumber;
@@ -78,8 +82,8 @@ export type PassRoll = any;
 export type FoulRoll = any;
 
 export interface Drive extends Checkpoint {
-    wakeups: ByTeam<WakeupRoll[]>;
-    setup: ByTeam<SetupAction[]>;
+    wakeups: KickoffOrder<WakeupRoll[]>;
+    setups: KickoffOrder<SetupAction[]>;
     kickoff: KickoffRoll;
     turns: Turn[];
 }
@@ -94,7 +98,7 @@ export enum WizardType {
 export interface WizardRoll {
     type: WizardType,
     target: Cell,
-    effects: ModifiedD6SumRoll,
+    effects: ModifiedD6SumRoll[],
 } 
 
 export interface Turn extends Checkpoint {
@@ -109,6 +113,7 @@ export interface Activation extends Checkpoint {
     playerId: PlayerId,
     test?: ActivationTest,
     action: Action,
+    actionSteps: ActionStep[],
 }
 
 export type Action =
@@ -118,6 +123,8 @@ export type Action =
     | MoveAction
     | FoulAction
     | HandoffAction
+
+export type ActionStep = null;
 
 export type MovePath = Cell[];
 

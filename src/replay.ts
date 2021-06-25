@@ -1,5 +1,5 @@
 import { Action, MoveAction, UnknownAction } from "./rolls.js";
-import { END } from "./replay-utils.js";
+import { linearReplay } from "./replay-utils.js";
 import type { RACE_ID } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
 import type * as Internal from "./replay/Internal.js";
@@ -39,27 +39,25 @@ export function processReplay(replay: Internal.Replay): ProcessedReplay {
   let actions: (Action | UnknownAction)[] = [];
   let initialBoardState: BB2.BoardState | undefined;
   for (
-    var stepIndex = 0;
-    stepIndex < replay.unhandledSteps.length;
-    stepIndex++
+    const [positionIdx, position] of linearReplay(replay).entries()
   ) {
-    var replayStep = replay.unhandledSteps[stepIndex];
-
-    if (!('BoardState' in replayStep)) {
-      continue;
-    }
-    if (initialBoardState === null) {
-      initialBoardState = replayStep.BoardState;
+    if (initialBoardState === null && 'boardState' in position) {
+      initialBoardState = position.boardState;
     }
     if (initialBoardState) {
-      actions = actions.concat(Action.fromReplayStep(
+      let action = Action.fromReplayPosition(
         replay,
         initialBoardState,
-        stepIndex,
-        replayStep
-      ));
+        positionIdx,
+        position
+      );
+      if (action) {
+        actions.push(action);
+      }
     }
-    initialBoardState = replayStep.BoardState;
+    if ('boardState' in position) {
+      initialBoardState = position.boardState;
+    }
   }
   console.log("Extracted actions...", { actions });
   let validActions: Action[] = actions.filter((action) => !action.ignore) as Action[];
@@ -91,7 +89,7 @@ export function processReplay(replay: Internal.Replay): ProcessedReplay {
   }, []);
   validActions.forEach((action, idx) => {
     action.actionIndex = idx;
-    action.endIndex = validActions[idx + 1] ? validActions[idx + 1].startIndex : END;
+    action.endIndex = validActions[idx + 1] ? validActions[idx + 1].startIndex : undefined;
   });
   actions.forEach(action => {
     action.actions = validActions;
