@@ -1041,7 +1041,7 @@
       ]
     },
     "dist/viewer/Overlay.svelte.js": {
-      "bytes": 14942,
+      "bytes": 15041,
       "imports": [
         {
           "path": "_snowpack/pkg/svelte/internal.js",
@@ -1928,7 +1928,7 @@
           "bytesInOutput": 274
         },
         "dist/viewer/Overlay.svelte.js": {
-          "bytesInOutput": 4970
+          "bytesInOutput": 5037
         },
         "dist/viewer/Pitch.svelte.js": {
           "bytesInOutput": 2154
@@ -1973,7 +1973,7 @@
           "bytesInOutput": 0
         },
         "_snowpack/pkg/common/vega.module-d77aac5f.js": {
-          "bytesInOutput": 507408
+          "bytesInOutput": 507410
         },
         "_snowpack/pkg/vega-embed.js": {
           "bytesInOutput": 344176
@@ -2021,7 +2021,7 @@
           "bytesInOutput": 69
         }
       },
-      "bytes": 1413753
+      "bytes": 1413822
     },
     "../~~bundle~~/dist/main.css": {
       "imports": [],
