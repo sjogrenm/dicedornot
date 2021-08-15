@@ -1,4 +1,4 @@
-import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL} from '../constants.js';
+import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL, PLAYER_TYPE, WEATHER, STATUS, SITUATION, MODIFIER_TYPE} from '../constants.js';
 import type * as BB2 from './BB2.js';
 
 export type ByTeam<T> = {
@@ -38,18 +38,23 @@ export interface Replay {
         league?: string,
         datePlayed: Date,
     }
+    fans: ByTeam<Roll>,
+    initialWeather: WEATHER,
+    coinFlipWinner: Side,
+    initialKickingTeam: Side,
 }
 
 export interface Team {
-    players: Record<PlayerNumber, Player>,
+    players: Map<PlayerNumber, Player>,
     inducements: Inducements,
     race: RACE_ID,
     coach: string,
     name: string,
+    logo: string,
 }
 
 export interface Inducements {
-    mercenaries: Record<PlayerNumber, Player>,
+    mercenaries: Map<PlayerNumber, Player>,
 }
 
 export type Side = "home" | "away";
@@ -63,29 +68,80 @@ export interface PlayerId {
     number: PlayerNumber;
 }
 
+export interface DiceRoll {
+    dice: number[],
+    modifiers: DiceModifier[],
+    target?: number,
+};
+
+export interface WithPileOn {
+    pileOn?: DiceRoll,
+}
+
+export interface Damage {
+    player: PlayerId,
+    injury?: DiceRoll,
+    armor?: DiceRoll & WithPileOn,
+    casualty?: DiceRoll & WithPileOn,
+    regeneration?: DiceRoll,
+    raiseDead?: boolean,
+}
+
 export interface Player {
     id: PlayerId,
     skills: SKILL[],
+    type: PLAYER_TYPE,
+    name: string,
+    stats: {
+        ma: number,
+        st: number,
+        ag: number,
+        av: number,
+    }
+    casualties?: number[],
 }
 
+export interface PlayerState {
+    usedSkills: SKILL[],
+    canAct: boolean,
+    status: STATUS,
+    disabled: boolean,
+    blitzer: boolean,
+    situation: SITUATION,
+    casualties?: number[],
+}
 export interface Checkpoint {
-    _checkpointData?: any
+    playerPositions: Map<PlayerNumber, Cell>
 }
 
-export type KickoffRoll = {};
+export type KickoffRoll = {
+    dice: number[],
+};
 export type SetupAction = {
-    players: Map<PlayerNumber, Cell>,
+    checkpoint: Checkpoint,
     movedPlayers: Map<PlayerNumber, Cell>,
 };
 export type CatchRoll = any;
 export type PassRoll = any;
 export type FoulRoll = any;
+export interface TakeDamageRoll {
+    player: PlayerId;
+    dice: number[];
+};
 
-export interface Drive extends Checkpoint {
+export interface Drive {
+    initialScore: ByTeam<number>;
     wakeups: KickoffOrder<WakeupRoll[]>;
     setups: KickoffOrder<SetupAction[]>;
-    kickoff: KickoffRoll;
+    kickoff: {
+        eventRoll: KickoffRoll,
+        target: Cell,
+        scatters: Cell[],
+        rockDamage?: TakeDamageRoll[],
+    };
     turns: Turn[];
+    touchdownScorer?: Player;
+    finalScore: ByTeam<number>;
 }
 
 export interface WakeupRoll extends ModifiedD6SumRoll {
@@ -106,7 +162,7 @@ export interface Turn extends Checkpoint {
     side: keyof ByTeam<any>,
     activations: Activation[],
     startWizard?: WizardRoll,
-    endWizard?: WizardRoll,
+    endWizard?: WizardRoll
 }
 
 export interface Activation extends Checkpoint {
@@ -202,4 +258,16 @@ export interface Reroll<R> {
     roll: R,
     reroll?: R,
     rerollSource: "team" | SKILL
+}
+
+export interface Roll {
+    dice: number[],
+    total: number,
+}
+
+export interface DiceModifier {
+    skill?: SKILL,
+    value?: number,
+    cell?: Cell,
+    type?: MODIFIER_TYPE,
 }
