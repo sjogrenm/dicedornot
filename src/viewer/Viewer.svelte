@@ -437,7 +437,7 @@
   }
 
   async function stepReplay(updateUrl = true) {
-    if (current > positions.length) {
+    if (current >= positions.length) {
       current = 0;
     }
     const currentPosition = positions[current];
@@ -557,7 +557,7 @@
         }
         if (current >= positions.length) {
           current = 0;
-          return;
+          continue;
         }
         if ($replayTarget) {
           const target = $replayTarget;
