@@ -36,8 +36,7 @@
       let endIndex = turnActions[turnActions.length - 1].endIndex;
       return (
         startIndex <= $replayCurrent &&
-        endIndex &&
-        $replayCurrent < endIndex
+        (!endIndex || $replayCurrent < endIndex)
       );
     });
   }
