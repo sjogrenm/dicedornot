@@ -575,6 +575,7 @@
         console.error(err);
       }
     }
+    console.error("Player Loop terminated unexpectedly");
   }
 
   function jumpToPreviousActivation() {
