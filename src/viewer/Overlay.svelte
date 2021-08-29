@@ -141,7 +141,7 @@
                 >
               );
               for (const result of results) {
-                let last = paths[paths.length - 1];
+                let last: OverlayProps = paths[paths.length - 1];
                 if (
                   "RollType" in result &&
                   result.RollType == ROLL.Block &&
@@ -185,6 +185,7 @@
                     });
                   }
                 } else if (
+                  last &&
                   "RollType" in result &&
                   result.RollType == ROLL.Push &&
                   result.IsOrderCompleted == 1 &&
@@ -198,6 +199,7 @@
                     last.props.pushTo = convertCell(pushOptions[0]);
                   }
                 } else if (
+                  last &&
                   "RollType" in result &&
                   result.RollType == ROLL.FollowUp &&
                   result.IsOrderCompleted == 1 &&
