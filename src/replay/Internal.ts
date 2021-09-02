@@ -110,8 +110,10 @@ export interface PlayerState {
     situation: SITUATION,
     casualties?: number[],
 }
+
+export type PlayerPositions = Map<PlayerNumber, Cell>;
 export interface Checkpoint {
-    playerPositions: Map<PlayerNumber, Cell>
+    playerPositions: PlayerPositions
 }
 
 export type KickoffEvent = {
@@ -120,7 +122,7 @@ export type KickoffEvent = {
 };
 export type SetupAction = {
     checkpoint: Checkpoint,
-    movedPlayers: Map<PlayerNumber, Cell>,
+    movedPlayers: PlayerPositions,
 };
 export type CatchRoll = any;
 export type PassRoll = any;

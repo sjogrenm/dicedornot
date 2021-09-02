@@ -29,6 +29,7 @@ class Replay {
         public initialWeather: WEATHER | undefined = undefined,
         public coinFlipWinner: I.Side = "home",
         public initialKickingTeam: I.Side = "home",
+        public checkpoint: I.Checkpoint = {playerPositions: new Map()},
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
         this.gameLength = Math.max(16, ...this.unhandledSteps.flatMap(step => {
@@ -105,10 +106,21 @@ class Replay {
                 'BoardState' in step
             ) {
                 this.handleGameTurnStep(step);
+                this.captureCheckpoint(step.BoardState);
             } else {
                 badStep(step);
             }
         }
+    }
+
+    captureCheckpoint(boardState: B.BoardState) {
+        let allPlayers = [
+            ...ensureKeyedList("PlayerState", boardState.ListTeams.TeamState[0].ListPitchPlayers),
+            ...ensureKeyedList("PlayerState", boardState.ListTeams.TeamState[1].ListPitchPlayers)
+        ]
+        this.checkpoint = {
+            playerPositions: new Map(allPlayers.map(player => [player.Id, convertCell(player.Cell)]))
+        };
     }
 
     handleGameFinishedStep(step: B.GameFinishedStep) {
@@ -310,7 +322,7 @@ class Replay {
         }
         if (step.RulesEventBoardAction) {
             let actions = ensureList(step.RulesEventBoardAction);
-            let converters = actions.map(action => actionConverter(this, action));
+            let converters = actions.map(action => actionConverter(this, step, action));
             if (converters.some(converter => converter == undefined)) {
                 this.cantHandle(step, "Not all action types can be converted");
                 return
@@ -348,7 +360,7 @@ function assert(condition: any, msg?: string): asserts condition {
     }
 }
 
-function actionConverter(replay: Replay, action: B.RulesEventBoardAction): undefined | (() => void) {
+function actionConverter(replay: Replay, step: B.GameTurnStep, action: B.RulesEventBoardAction): undefined | (() => void) {
     if ('ActionType' in action) {
         switch (action.ActionType) {
             case ACTION_TYPE.FansNumber:
@@ -361,6 +373,8 @@ function actionConverter(replay: Replay, action: B.RulesEventBoardAction): undef
                 return () => convertKickoffScatter(replay, action);
             case ACTION_TYPE.TakeDamage:
                 return () => convertTakeDamage(replay, action);
+            case ACTION_TYPE.ActivatePlayer:
+                return () => convertActivatePlayer(replay, step, action);
             default:
                 return undefined;
         }
@@ -469,6 +483,26 @@ function convertTakeDamage(replay: Replay, action: B.TakeDamageAction): void {
     }
 }
 
+function convertActivatePlayer(replay: Replay, step: B.GameTurnStep, action: B.ActivatePlayerAction) {
+    let drive = replay.lastDrive();
+    let turn = last(drive.turns);
+    let playerNumber = action.PlayerId || 0;
+    let playerSide = playerNumberToSide(playerNumber);
+    let teamState = step.BoardState.ListTeams.TeamState[playerSide == 'home' ? 0 : 1];
+    if (!turn || turn.side != playerSide || turn.number != teamState.GameTurn) {
+        turn = new Turn(
+            teamState.GameTurn || 0,
+            playerSide,
+            replay.checkpoint.playerPositions,
+        )
+        drive.turns.push(turn);
+    }
+    turn.activations.push(new Activation(
+        {side: playerSide, number: playerNumber}, 
+        replay.checkpoint.playerPositions
+    ));
+}
+
 class Team {
     constructor(
         public players: Map<I.PlayerNumber, I.Player> = new Map(),
@@ -500,7 +534,7 @@ class Drive {
             scatters?: I.Cell[],
             rockDamage?: I.TakeDamageRoll[],
         } = {},
-        public turns: I.Turn[] = [],
+        public turns: Turn[] = [],
         public initialScore: I.ByTeam<number> = { home: 0, away: 0 },
         public finalScore?: I.ByTeam<number>,
     ) {
@@ -516,12 +550,46 @@ class Drive {
                 target: requireValue(this.kickoff.target, 'Missing kickoff.target', this),
                 scatters: requireValue(this.kickoff.scatters, 'Missing kickoff.scatters', this),
             },
+            turns: this.turns.map(turn => turn.finalize()),
             finalScore: this.finalScore || this.initialScore,
         };
     }
 }
 
+class Turn {
+    constructor(
+        public number: number,
+        public side: keyof I.ByTeam<any>,
+        public playerPositions: I.PlayerPositions,
+        public activations: Activation[] = [],
+        public startWizard?: I.WizardRoll,
+        public endWizard?: I.WizardRoll,
+    ) {}
 
+    finalize(): I.Turn {
+        return {
+            ...this,
+            activations: this.activations.map(activation => activation.finalize())
+        }
+    }
+}
+
+class Activation {
+    constructor(
+        public playerId: I.PlayerId,
+        public playerPositions: I.PlayerPositions,
+        public test?: I.ActivationTest,
+        public action?: I.Action,
+        public actionSteps: I.ActionStep[] = [],
+    ) {}
+
+    finalize(): I.Activation {
+        return {
+            ...this,
+            action: requireValue(this.action, 'Missing activation action', this),
+        }
+    }
+}
 
 function emptySetup(): I.SetupAction {
     return {
