@@ -24,7 +24,6 @@
         (!endIndex || $replayCurrent < endIndex)
       );
     });
-    console.log(selectedAction, currentTurnActions);
   }
 </script>
 
