@@ -18,16 +18,14 @@
       blitzer: false,
       situation: SITUATION.Active,
     },
-    team: SIDE,
     done: boolean | undefined = undefined,
     moving: boolean | undefined = undefined,
     prone: boolean | undefined = undefined,
     stunned: boolean | undefined = undefined,
     blitz: boolean | undefined = undefined,
     stupidity: string | undefined = undefined,
-    id,
-    race,
-    model,
+    race: string,
+    model: string,
     classes: string,
     key: string,
     _done: boolean,
@@ -37,11 +35,10 @@
 
   $: {
     ({ model, race } = getPlayerSprite(playerDef.id.number, playerDef.type));
-    id = playerDef.id;
     _done = done === undefined ? (!playerState.canAct) : done;
 
-    classes = [race, model, team == SIDE.home ? 'home' : 'away', "sprite", "crisp", "player"].join(" ");
-    key = `player_${id}`;
+    classes = [race, model, playerDef.id.side, "sprite", "crisp", "player"].join(" ");
+    key = `player_${playerDef.id.number}`;
     _prone = prone === undefined ? playerState.status === STATUS.prone : prone;
     _stunned = stunned === undefined ? playerState.status === STATUS.stunned : stunned;
     if (stupidity === undefined && playerState.disabled) {
