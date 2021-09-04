@@ -2,8 +2,8 @@
   import Turn from "./Turn.svelte";
   import { replay, replayCurrent } from "./stores.js";
   import type { Action } from "./rolls.js";
+  export let actionsByTurn: Action[][];
   let actions: Action[],
-    actionsByTurn: Action[][],
     selectedAction: number | undefined,
     currentTurnActions: Action[] | undefined;
 
@@ -16,21 +16,6 @@
   $: {
     actions = $replay!.actions;
     selectedAction = actionForReplayPosition($replayCurrent);
-    actionsByTurn = actions.reduce((groups: Action[][], action: Action) => {
-      const lastGroup: Action[] = groups[groups.length - 1];
-      const lastAction = lastGroup && lastGroup[lastGroup.length - 1];
-      if (
-        !lastGroup ||
-        !lastAction ||
-        lastAction.activeTeam?.id != action.activeTeam?.id ||
-        lastAction.turn != action.turn
-      ) {
-        groups.push([action]);
-      } else {
-        lastGroup.push(action);
-      }
-      return groups;
-    }, []);
     currentTurnActions = actionsByTurn.find((turnActions) => {
       let startIndex = turnActions[0].startIndex;
       let endIndex = turnActions[turnActions.length - 1].endIndex;
@@ -39,10 +24,11 @@
         (!endIndex || $replayCurrent < endIndex)
       );
     });
+    console.log(selectedAction, currentTurnActions);
   }
 </script>
 
-{#if selectedAction && selectedAction >= 0 && currentTurnActions && currentTurnActions.length > 0}
+{#if selectedAction != undefined && selectedAction >= 0 && currentTurnActions && currentTurnActions.length > 0}
   <div class="details-list">
     <Turn actions={currentTurnActions} {selectedAction} />
   </div>

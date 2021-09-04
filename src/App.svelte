@@ -1,14 +1,12 @@
 <script lang="ts">
   import ReplayLoader from "./ReplayLoader.svelte";
   import Summary from "./Summary.svelte";
-  import RollDetails from "./RollDetails.svelte";
   import About from "./About.svelte";
   import Nav from "./Nav.svelte";
   import Viewer from "./viewer/Viewer.svelte";
   import Diced from "./Diced.svelte";
   import { Jumbotron } from "sveltestrap";
   import { replay, showResultsAnalysis } from "./stores.js";
-  import TurnSelectors from "./TurnSelectors.svelte";
   import Error from "./Error.svelte";
   import ImprobabilityResults from "./ImprobabilityResults.svelte";
   import ValueResults from "./ValueResults.svelte";
@@ -17,6 +15,7 @@
   import Terminology from "./Terminology.svelte";
   import Todo from "./Todo.svelte";
   import Theme from "./Theme.svelte";
+  import ActionPane from "./ActionPane.svelte";
 
   let loading: string | undefined, playing: boolean;
   $: {
@@ -77,8 +76,7 @@
             {/key}
           </div>
           <div class="col justify-content-center turns">
-            <TurnSelectors />
-            <RollDetails/>
+            <ActionPane/>
           </div>
         </div>
           <div class="row">
