@@ -298,9 +298,9 @@
   }
 
   function setPlayerStates(boardState: BB2.BoardState) {
-    Object.values(pitch).forEach((square) => {
-      if (square.player) {
-        square.player = undefined;
+    Array.from(pitch.values()).forEach((square) => {
+      if (square.player != undefined) {
+        delete square.player;
       }
     });
     $playerStates = new Map();
@@ -536,6 +536,13 @@
     } else {
       // TODO: Game Over
     }
+    let playerIds = Array.from(pitch.values())
+      .map((cell: PitchCellProps) => cell.player)
+      .filter(number => number != undefined);
+    if (playerIds.length != (new Set(playerIds)).size) {
+      console.error("Player numbers on the pitch are non-unique", playerIds);
+      debugger;
+    }
     if (updateUrl) {
       if (!skipping) {
         $replayCurrent = current;
@@ -580,11 +587,8 @@
     while (true) {
       try {
         if (underPreview && !$replayPreview) {
-          teams = underPreview.teams;
-          pitch = underPreview.pitch;
+          ({teams, pitch, playing, current} = underPreview);
           $playerStates = underPreview.playerStates;
-          playing = underPreview.playing;
-          current = underPreview.current;
           previewing = undefined;
           underPreview = undefined;
         } else if (
@@ -812,8 +816,6 @@
         $playerDefs.set(playerNumber, player);
       }
     }
-
-    console.log("Teams", { teams });
   }
 
   function handleGameStart(position: {
