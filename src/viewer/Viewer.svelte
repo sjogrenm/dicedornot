@@ -732,9 +732,7 @@
     if (!$replay) {
       return;
     }
-    if (current <= positions.length) {
-      current = positions.length - 1;
-    }
+    current = Math.min(current, positions.length - 1);
     let startingPosition = positions[current];
     for (let target = current + 1; target < positions.length; target++) {
       let targetPosition = positions[target];
