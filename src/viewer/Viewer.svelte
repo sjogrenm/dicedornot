@@ -593,8 +593,7 @@
           previewing != $replayPreview
         ) {
           previewing = $replayPreview;
-          teams.home = emptyTeam();
-          teams.away = emptyTeam();
+          teams = {home: emptyTeam(), away: emptyTeam()};
           pitch = new Map();
           $playerStates = new Map();
           jumpToPosition($replayPreview.start, false);
@@ -610,8 +609,7 @@
           };
           playing = false;
           previewing = $replayPreview;
-          teams.home = emptyTeam();
-          teams.away = emptyTeam();
+          teams = {home: emptyTeam(), away: emptyTeam()};
           pitch = new Map();
           $playerStates = new Map();
           jumpToPosition($replayPreview.start, false);
