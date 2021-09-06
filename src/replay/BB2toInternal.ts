@@ -80,9 +80,11 @@ class Replay {
                 'BoardState' in step
             ) {
                 this.handleGameTurnStep(step);
-                this.captureCheckpoint(step.BoardState);
             } else {
                 badStep(step);
+            }
+            if ('BoardState' in step) {
+                this.captureCheckpoint(step.BoardState);
             }
         }
     }
