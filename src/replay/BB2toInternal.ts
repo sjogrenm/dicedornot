@@ -189,7 +189,7 @@ class Replay {
         }
 
         let nextSetup = {
-            checkpoint: { playerPositions: players },
+            checkpoint: this.checkpoint,
             movedPlayers: new Map(step.RulesEventSetUpConfiguration.ListPlayersPositions.PlayerPosition.map(pos => {
                 return [pos.PlayerId || 0, convertCell(pos.Position)];
             }))
@@ -207,19 +207,13 @@ class Replay {
             currentDrive.setups = { first: side, home: [], away: [] };
         }
         let currentSetup = currentDrive.setups[side];
-        let latestSetup = last(currentSetup);
-        let players: Map<I.PlayerNumber, I.Cell>;
-        if (latestSetup) {
-            players = new Map(latestSetup.checkpoint.playerPositions);
-            latestSetup.movedPlayers.forEach((position, id) => players.set(id, position));
-        } else {
-            players = new Map();
-        }
+        let players: Map<I.PlayerNumber, I.Cell> = this.checkpoint.playerPositions;
 
         const movedPlayer = [...players.entries()]
             .filter(([id, position]) => cellEq(fromCell, position))
             .map(([id, position]) => id)[0];
 
+        console.assert(movedPlayer != undefined, "Couldn't find moved player", step, this);
         let movedPlayers = new Map([
             [movedPlayer, toCell]
         ]);
@@ -227,7 +221,7 @@ class Replay {
             movedPlayers.set(alsoMove, fromCell);
         }
         let nextSetup = {
-            checkpoint: { playerPositions: players },
+            checkpoint: this.checkpoint,
             movedPlayers
         }
         currentSetup.push(nextSetup);
@@ -263,7 +257,7 @@ class Replay {
         ) {
             let drive = last(this.drives);
             if (drive === undefined) {
-                drive = new Drive();
+                drive = new Drive(this.checkpoint);
                 this.drives.push(drive);
             }
             drive.kickoff.event = {
@@ -282,13 +276,13 @@ class Replay {
         }
         if (step.RulesEventEndTurn) {
             if (step.RulesEventEndTurn.NewDrive) {
-                this.drives.push(new Drive());
+                this.drives.push(new Drive(this.checkpoint));
             }
         }
         if (step.RulesEventKickOffTable) {
             let drive = last(this.drives);
             if (drive === undefined) {
-                drive = new Drive();
+                drive = new Drive(this.checkpoint);
                 this.drives.push(drive);
             }
             drive.kickoff.event = {
@@ -323,7 +317,7 @@ class Replay {
 
     addDrive(): Drive {
         let lastDrive = last(this.drives);
-        let drive = new Drive();
+        let drive = new Drive(this.checkpoint);
         drive.initialScore = lastDrive && lastDrive.finalScore ? lastDrive.finalScore : { home: 0, away: 0 };
         this.drives.push(drive);
         return drive;
@@ -492,6 +486,7 @@ class Team {
 
 class Drive {
     constructor(
+        public checkpoint: I.Checkpoint,
         public wakeups: I.KickoffOrder<I.WakeupRoll[]> = {first: "home", home: [], away: []},
         public setups: I.KickoffOrder<I.SetupAction[]> = {first: "home", home: [], away: []},
         public kickoff: I.Drive['kickoff'] = {

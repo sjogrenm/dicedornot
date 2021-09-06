@@ -541,7 +541,6 @@
       .filter(number => number != undefined);
     if (playerIds.length != (new Set(playerIds)).size) {
       console.error("Player numbers on the pitch are non-unique", playerIds);
-      debugger;
     }
     if (updateUrl) {
       if (!skipping) {
@@ -816,6 +815,17 @@
     }
   }
 
+  function handleCheckpoint(checkpoint: Internal.Checkpoint) {
+    pitch.forEach(cell => {
+      if (cell.player != undefined) {
+        delete cell.player;
+      }
+    })
+    checkpoint.playerPositions.forEach((cell, id) => {
+      setPitchSquare(cell).player = id;
+    })
+  }
+
   function handleGameStart(position: {
     type: "gameStart";
     replay: Internal.Replay;
@@ -828,6 +838,7 @@
     driveIdx: number;
     drive: Internal.Drive;
   }) {
+    handleCheckpoint(position.drive.checkpoint);
     teams.home.score = position.drive.initialScore.home;
     teams.away.score = position.drive.initialScore.away;
   }

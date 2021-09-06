@@ -133,6 +133,7 @@ export interface TakeDamageRoll {
 };
 
 export interface Drive {
+    checkpoint: Checkpoint,
     initialScore: ByTeam<number>;
     wakeups: KickoffOrder<WakeupRoll[]>;
     setups: KickoffOrder<SetupAction[]>;
