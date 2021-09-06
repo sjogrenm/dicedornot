@@ -19,14 +19,14 @@ class Replay {
     constructor(
         public unhandledSteps: B.ReplayStep[],
         public teams: I.ByTeam<Team> = { home: new Team(), away: new Team() },
-        public stadium: Partial<I.Replay['stadium']> = {},
+        public stadium: I.Replay['stadium'] = {name: "N/A", type: ""},
         public drives: Drive[] = [],
         private foundUnhandledStep = false,
         public finalScore: I.ByTeam<number> = { home: 0, away: 0 },
-        public metadata: Partial<I.Replay['metadata']> = {},
+        public metadata: I.Replay['metadata'] = {datePlayed: new Date()},
         public gameLength: number = 0,
-        public fans: I.ByTeam<I.Roll | undefined> = { home: undefined, away: undefined },
-        public initialWeather: WEATHER | undefined = undefined,
+        public fans: I.ByTeam<I.Roll> = { home: {dice: [], total: 0}, away: {dice: [], total: 0} },
+        public initialWeather: WEATHER = WEATHER.Nice,
         public coinFlipWinner: I.Side = "home",
         public initialKickingTeam: I.Side = "home",
         public checkpoint: I.Checkpoint = {playerPositions: new Map()},
@@ -42,32 +42,6 @@ class Replay {
                 ];
             }
         }));
-    }
-
-    finalize(): I.Replay {
-        return {
-            ...this,
-            teams: {
-                home: this.teams.home.finalize(),
-                away: this.teams.away.finalize(),
-            },
-            stadium: {
-                ...this.stadium,
-                name: requireValue(this.stadium.name, 'Missing stadium.name', this),
-                type: requireValue(this.stadium.type, 'Missing stadium.type', this),
-            },
-            drives: this.drives.map(drive => drive.finalize()),
-            finalScore: this.finalScore,
-            metadata: {
-                ...this.metadata,
-                datePlayed: requireValue(this.metadata.datePlayed, 'Missing metadata.datePlayed', this),
-            },
-            fans: {
-                home: requireValue(this.fans.home, 'Missing fans.home', this),
-                away: requireValue(this.fans.away, 'Missing fans.away', this),
-            },
-            initialWeather: requireValue(this.initialWeather, 'Missing initialWeather', this),
-        };
     }
 
     processUnorderedSteps() {
@@ -507,52 +481,26 @@ class Team {
     constructor(
         public players: Map<I.PlayerNumber, I.Player> = new Map(),
         public inducements: I.Inducements = { mercenaries: new Map() },
-        public race?: RACE_ID,
-        public coach?: string,
-        public name?: string,
-        public logo?: string,
+        public race: RACE_ID = RACE_ID.Human,
+        public coach: string = "N/A",
+        public name: string = "N/A",
+        public logo: string = "",
     ) { }
-
-    finalize(): I.Team {
-        return {
-            ...this,
-            race: requireValue(this.race, 'Missing race', this),
-            coach: requireValue(this.coach, 'Missing coach', this),
-            name: requireValue(this.name, 'Missing name', this),
-            logo: requireValue(this.logo, 'Missing logo', this),
-        };
-    }
 }
 
 class Drive {
     constructor(
-        public wakeups?: I.KickoffOrder<I.WakeupRoll[]>,
-        public setups?: I.KickoffOrder<I.SetupAction[]>,
-        public kickoff: {
-            event?: I.KickoffEvent,
-            target?: I.Cell,
-            scatters?: I.Cell[],
-            rockDamage?: I.TakeDamageRoll[],
-        } = {},
+        public wakeups: I.KickoffOrder<I.WakeupRoll[]> = {first: "home", home: [], away: []},
+        public setups: I.KickoffOrder<I.SetupAction[]> = {first: "home", home: [], away: []},
+        public kickoff: I.Drive['kickoff'] = {
+            event: {dice: [], cancelled: false},
+            target: {x: -1, y: -1},
+            scatters: [],
+        },
         public turns: Turn[] = [],
         public initialScore: I.ByTeam<number> = { home: 0, away: 0 },
-        public finalScore?: I.ByTeam<number>,
+        public finalScore: I.ByTeam<number> = { home: 0, away: 0 },
     ) {
-    }
-
-    finalize(): I.Drive {
-        return {
-            ...this,
-            setups: requireValue(this.setups, 'Missing setups', this),
-            wakeups: this.wakeups || { first: "home", home: [], away: [] },
-            kickoff: {
-                event: requireValue(this.kickoff.event, 'Missing kickoff.event', this),
-                target: requireValue(this.kickoff.target, 'Missing kickoff.target', this),
-                scatters: requireValue(this.kickoff.scatters, 'Missing kickoff.scatters', this),
-            },
-            turns: this.turns.map(turn => turn.finalize()),
-            finalScore: this.finalScore || this.initialScore,
-        };
     }
 }
 
@@ -565,13 +513,6 @@ class Turn {
         public startWizard?: I.WizardRoll,
         public endWizard?: I.WizardRoll,
     ) {}
-
-    finalize(): I.Turn {
-        return {
-            ...this,
-            activations: this.activations.map(activation => activation.finalize())
-        }
-    }
 }
 
 class Activation {
@@ -579,23 +520,13 @@ class Activation {
         public playerId: I.PlayerId,
         public playerPositions: I.PlayerPositions,
         public test?: I.ActivationTest,
-        public action?: I.Action,
+        public action: I.Action = {
+            actionType: ACTION_TYPE.Move,
+            player: {number: 0, side: "home"},
+            path: [],
+        },
         public actionSteps: I.ActionStep[] = [],
     ) {}
-
-    finalize(): I.Activation {
-        return {
-            ...this,
-            action: requireValue(this.action, 'Missing activation action', this),
-        }
-    }
-}
-
-function emptySetup(): I.SetupAction {
-    return {
-        checkpoint: { playerPositions: new Map() },
-        movedPlayers: new Map(),
-    };
 }
 
 export function convertCell(c: B.Cell): I.Cell {
@@ -615,25 +546,7 @@ export function convertReplay(incoming: B.Replay): I.Replay {
     outgoing.metadata.url = incoming.url;
     outgoing.processSteps();
     console.log("Finished converting", { outgoing });
-    try {
-        return outgoing.finalize();
-    } catch (e) {
-        console.error("Error finalizing ordered steps, using only unordered steps", e);
-        outgoing = new Replay(incoming.ReplayStep);
-        outgoing.metadata.filename = incoming.filename;
-        outgoing.metadata.url = incoming.url;
-        outgoing.processUnorderedSteps();
-        outgoing.fans.home = {
-            dice: [],
-            total: 0,
-        }
-        outgoing.fans.away = {
-            dice: [],
-            total: 0,
-        }
-        outgoing.initialWeather = WEATHER.Nice;
-        return outgoing.finalize();
-    }
+    return outgoing;
 }
 
 function badResult(result: never): never
