@@ -617,12 +617,21 @@ export function convertReplay(incoming: B.Replay): I.Replay {
     console.log("Finished converting", { outgoing });
     try {
         return outgoing.finalize();
-    } catch {
-        console.error("Error finalizing ordered steps, using only unordered steps");
+    } catch (e) {
+        console.error("Error finalizing ordered steps, using only unordered steps", e);
         outgoing = new Replay(incoming.ReplayStep);
         outgoing.metadata.filename = incoming.filename;
         outgoing.metadata.url = incoming.url;
         outgoing.processUnorderedSteps();
+        outgoing.fans.home = {
+            dice: [],
+            total: 0,
+        }
+        outgoing.fans.away = {
+            dice: [],
+            total: 0,
+        }
+        outgoing.initialWeather = WEATHER.Nice;
         return outgoing.finalize();
     }
 }
