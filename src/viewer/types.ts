@@ -74,7 +74,6 @@ export interface PitchCellProps {
 }
 
 export type Pitch = Map<string, PitchCellProps>;
-export type PlayerStates = Map<Internal.PlayerNumber, Internal.PlayerState>;
 export type PlayerDefinitions = Map<Internal.PlayerNumber, Internal.Player>;
 export type PlayerProperties = Map<Internal.PlayerNumber, PlayerProps>;
 
@@ -96,7 +95,7 @@ export interface WakeConditions {
 export interface Preview {
     teams: Internal.ByTeam<Team>,
     pitch: Map<string, PitchCellProps>,
-    playerStates: PlayerStates,
+    playerStates: Internal.PlayerStates,
     playerProperties: PlayerProperties,
     playing: boolean,
     current: number,

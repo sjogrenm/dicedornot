@@ -102,6 +102,7 @@ export interface Player {
 }
 
 export interface PlayerState {
+    pitchCell?: Cell,
     usedSkills: SKILL[],
     canAct: boolean,
     status: STATUS,
@@ -112,8 +113,9 @@ export interface PlayerState {
 }
 
 export type PlayerPositions = Map<PlayerNumber, Cell>;
+export type PlayerStates = Map<PlayerNumber, PlayerState>;
 export interface Checkpoint {
-    playerPositions: PlayerPositions
+    playerStates: PlayerStates,
 }
 
 export type KickoffEvent = {
@@ -161,7 +163,8 @@ export interface WizardRoll {
     effects: ModifiedD6SumRoll[],
 } 
 
-export interface Turn extends Checkpoint {
+export interface Turn {
+    checkpoint: Checkpoint,
     number: number,
     side: keyof ByTeam<any>,
     activations: Activation[],
@@ -169,7 +172,8 @@ export interface Turn extends Checkpoint {
     endWizard?: WizardRoll
 }
 
-export interface Activation extends Checkpoint {
+export interface Activation {
+    checkpoint: Checkpoint,
     playerId: PlayerId,
     test?: ActivationTest,
     action: Action,

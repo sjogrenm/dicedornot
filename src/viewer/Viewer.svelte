@@ -824,8 +824,10 @@
         delete cell.player;
       }
     })
-    checkpoint.playerPositions.forEach((cell, id) => {
-      setPitchSquare(cell).player = id;
+    checkpoint.playerStates.forEach((state, id) => {
+      if (state.pitchCell) {
+        setPitchSquare(state.pitchCell).player = id;
+      }
     })
   }
 
@@ -866,28 +868,11 @@
     setupSide: Internal.Side;
     action: Internal.SetupAction;
   }) {
-    for (let idx of pitch.keys()) {
-      let pitchSquare = pitch.get(idx);
-      if (!pitchSquare || !pitchSquare.player) {
-        continue;
-      }
-      let player = pitchSquare.player;
-      if (
-        position.action.checkpoint.playerPositions.has(player) ||
-        position.action.movedPlayers.has(player)
-      ) {
-        pitchSquare.player = undefined;
-      }
-    }
-    for (let [
-      player,
-      cell,
-    ] of position.action.checkpoint.playerPositions.entries()) {
-      if (!position.action.movedPlayers.has(player)) {
-        setPitchSquare(cell).player = player;
-      }
-    }
     for (let [player, cell] of position.action.movedPlayers) {
+      let oldCell = position.action.checkpoint.playerStates.get(player)?.pitchCell;
+      if (oldCell) {
+        delete setPitchSquare(oldCell).player;
+      }
       setPitchSquare(cell).player = player;
     }
     await step();

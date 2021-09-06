@@ -1,7 +1,8 @@
 import { writable } from 'svelte/store';
 import type { ReplayPreview } from './replay-utils';
 import type {ProcessedReplay} from './replay.js';
-import type {PlayerStates, PlayerDefinitions, PlayerProperties} from './viewer/types.js';
+import type {PlayerDefinitions, PlayerProperties} from './viewer/types.js';
+import type {PlayerStates} from './replay/Internal.js';
 
 let startingUrl = new URL(window.location.href);
 let target: number | undefined;

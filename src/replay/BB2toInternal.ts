@@ -29,7 +29,7 @@ class Replay {
         public initialWeather: WEATHER = WEATHER.Nice,
         public coinFlipWinner: I.Side = "home",
         public initialKickingTeam: I.Side = "home",
-        public checkpoint: I.Checkpoint = {playerPositions: new Map()},
+        public checkpoint: I.Checkpoint = {playerStates: new Map()},
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
         this.gameLength = Math.max(16, ...this.unhandledSteps.flatMap(step => {
@@ -90,13 +90,15 @@ class Replay {
     }
 
     captureCheckpoint(boardState: B.BoardState) {
-        let allPlayers = [
-            ...ensureKeyedList("PlayerState", boardState.ListTeams.TeamState[0].ListPitchPlayers),
-            ...ensureKeyedList("PlayerState", boardState.ListTeams.TeamState[1].ListPitchPlayers)
-        ]
-        this.checkpoint = {
-            playerPositions: new Map(allPlayers.map(player => [player.Id, convertCell(player.Cell)]))
+        let checkpoint = {
+            playerStates: new Map(),
         };
+        for (let team of boardState.ListTeams.TeamState) {
+            for (let player of ensureKeyedList("PlayerState", team.ListPitchPlayers)) {
+                checkpoint.playerStates.set(player.Id, convertPlayerState(team, player));
+            }
+        }
+        return checkpoint;
     }
 
     handleGameFinishedStep(step: B.GameFinishedStep) {
@@ -179,14 +181,6 @@ class Replay {
             currentDrive.setups = { first: side, home: [], away: [] };
         }
         let currentSetup = currentDrive.setups[side];
-        let latestSetup = last(currentSetup);
-        let players: Map<I.PlayerNumber, I.Cell>;
-        if (latestSetup) {
-            players = new Map(latestSetup.checkpoint.playerPositions);
-            latestSetup.movedPlayers.forEach((position, id) => players.set(id, position));
-        } else {
-            players = new Map();
-        }
 
         let nextSetup = {
             checkpoint: this.checkpoint,
@@ -207,24 +201,25 @@ class Replay {
             currentDrive.setups = { first: side, home: [], away: [] };
         }
         let currentSetup = currentDrive.setups[side];
-        let players: Map<I.PlayerNumber, I.Cell> = this.checkpoint.playerPositions;
+        let players: Map<I.PlayerNumber, I.PlayerState> = this.checkpoint.playerStates;
 
         const movedPlayer = [...players.entries()]
-            .filter(([id, position]) => cellEq(fromCell, position))
-            .map(([id, position]) => id)[0];
+            .find(([_, state]) => state.pitchCell && cellEq(fromCell, state.pitchCell));
 
         console.assert(movedPlayer != undefined, "Couldn't find moved player", step, this);
-        let movedPlayers = new Map([
-            [movedPlayer, toCell]
-        ]);
-        if (alsoMove) {
-            movedPlayers.set(alsoMove, fromCell);
+        if (movedPlayer != undefined) {
+            let movedPlayers = new Map([
+                [movedPlayer[0], toCell]
+            ]);
+            if (alsoMove) {
+                movedPlayers.set(alsoMove, fromCell);
+            }
+            let nextSetup = {
+                checkpoint: this.checkpoint,
+                movedPlayers
+            }
+            currentSetup.push(nextSetup);
         }
-        let nextSetup = {
-            checkpoint: this.checkpoint,
-            movedPlayers
-        }
-        currentSetup.push(nextSetup);
     }
 
     handleGameTurnStep(step: B.GameTurnStep) {
@@ -463,13 +458,13 @@ function convertActivatePlayer(replay: Replay, step: B.GameTurnStep, action: B.A
         turn = new Turn(
             teamState.GameTurn || 0,
             playerSide,
-            replay.checkpoint.playerPositions,
+            replay.checkpoint,
         )
         drive.turns.push(turn);
     }
     turn.activations.push(new Activation(
         {side: playerSide, number: playerNumber}, 
-        replay.checkpoint.playerPositions
+        replay.checkpoint
     ));
 }
 
@@ -505,7 +500,7 @@ class Turn {
     constructor(
         public number: number,
         public side: keyof I.ByTeam<any>,
-        public playerPositions: I.PlayerPositions,
+        public checkpoint: I.Checkpoint,
         public activations: Activation[] = [],
         public startWizard?: I.WizardRoll,
         public endWizard?: I.WizardRoll,
@@ -515,7 +510,7 @@ class Turn {
 class Activation {
     constructor(
         public playerId: I.PlayerId,
-        public playerPositions: I.PlayerPositions,
+        public checkpoint: I.Checkpoint,
         public test?: I.ActivationTest,
         public action: I.Action = {
             actionType: ACTION_TYPE.Move,
