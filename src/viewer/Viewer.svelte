@@ -261,6 +261,9 @@
   }
 
   function setPitchSquare(cell: Internal.Cell): PitchCellProps {
+    if (cell.x == -1 && cell.y == -1) {
+      return {};
+    }
     pitch = pitch;
     let key = `${cell.x}-${cell.y}`;
     let square = pitch.get(key);
