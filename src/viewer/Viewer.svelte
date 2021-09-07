@@ -816,6 +816,7 @@
         $playerDefs.set(playerNumber, player);
       }
     }
+    $playerDefs = $playerDefs;
   }
 
   function handleCheckpoint(checkpoint: Internal.Checkpoint) {

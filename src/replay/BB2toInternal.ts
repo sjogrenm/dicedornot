@@ -98,7 +98,7 @@ class Replay {
                 checkpoint.playerStates.set(player.Id, convertPlayerState(team, player));
             }
         }
-        return checkpoint;
+        this.checkpoint = checkpoint;
     }
 
     handleGameFinishedStep(step: B.GameFinishedStep) {
@@ -594,6 +594,7 @@ export function convertPlayerState(t: B.TeamState, p: B.PitchPlayer): I.PlayerSt
         blitzer: t.BlitzerId == p.Id,
         situation: p.Situation || SITUATION.Active,
         casualties: translateStringNumberList(p.ListCasualties),
+        pitchCell: convertCell(p.Cell)
     };
 }
 
