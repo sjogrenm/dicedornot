@@ -1,5 +1,6 @@
 import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL, PLAYER_TYPE, WEATHER, STATUS, SITUATION, MODIFIER_TYPE} from '../constants.js';
 import type * as BB2 from './BB2.js';
+import type {DeepReadonly} from "ts-essentials";
 
 export type ByTeam<T> = {
     home: T,
@@ -62,7 +63,7 @@ export function other(side: Side): Side {
     return side == "home" ? "away" : "home";
 }
 export type PlayerNumber = number;
-export type KickoffOrder<T> = {first: Side, home: T, away: T};
+export type KickoffOrder<T> = {home: T, away: T};
 export interface PlayerId {
     side: Side,
     number: PlayerNumber;
@@ -115,7 +116,8 @@ export interface PlayerState {
 export type PlayerPositions = Map<PlayerNumber, Cell>;
 export type PlayerStates = Map<PlayerNumber, PlayerState>;
 export interface Checkpoint {
-    playerStates: PlayerStates,
+    playerStates: DeepReadonly<PlayerStates>,
+    boardState?: any
 }
 
 export type KickoffEvent = {
@@ -136,18 +138,19 @@ export interface TakeDamageRoll {
 
 export interface Drive {
     checkpoint: Checkpoint,
-    initialScore: ByTeam<number>;
-    wakeups: KickoffOrder<WakeupRoll[]>;
-    setups: KickoffOrder<SetupAction[]>;
+    initialScore: ByTeam<number>,
+    kickingTeam: Side,
+    wakeups: KickoffOrder<WakeupRoll[]>,
+    setups: KickoffOrder<SetupAction[]>,
     kickoff: {
         event: KickoffEvent,
         target: Cell,
         scatters: Cell[],
         rockDamage?: TakeDamageRoll[],
-    };
-    turns: Turn[];
-    touchdownScorer?: Player;
-    finalScore: ByTeam<number>;
+    },
+    turns: Turn[],
+    touchdownScorer?: Player,
+    finalScore: ByTeam<number>,
 }
 
 export interface WakeupRoll extends ModifiedD6SumRoll {

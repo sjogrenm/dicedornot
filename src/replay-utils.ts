@@ -185,12 +185,12 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
   yield { type: 'gameStart', replay };
   for (const [driveIdx, drive] of replay.drives.entries()) {
     yield { type: 'driveStart', driveIdx, drive }
-    for (const wakeupSide of [drive.wakeups.first, Internal.other(drive.wakeups.first)]) {
+    for (const wakeupSide of [drive.kickingTeam, Internal.other(drive.kickingTeam)]) {
       for (const [rollIdx, roll] of drive.wakeups[wakeupSide].entries()) {
         yield { type: 'wakeupRoll', driveIdx, wakeupSide, rollIdx, roll };
       }
     }
-    for (const setupSide of [drive.setups.first, Internal.other(drive.setups.first)]) {
+    for (const setupSide of [drive.kickingTeam, Internal.other(drive.kickingTeam)]) {
       for (const [actionIdx, action] of drive.setups[setupSide].entries()) {
         yield { type: 'setupAction', driveIdx, setupSide, actionIdx, action };
       }

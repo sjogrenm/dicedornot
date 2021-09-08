@@ -7,6 +7,7 @@ import { ensureKeyedList, ensureList, translateStringNumberList } from '../repla
 import { all, first } from 'underscore';
 import { distance } from 'chroma-js';
 import type { replay } from '../stores.js';
+import type {DeepReadonly} from "ts-essentials";
 
 function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
     if (v === undefined) {
@@ -46,7 +47,7 @@ class Replay {
 
     processUnorderedSteps() {
         // Handle un-ordered replay steps
-        for (let step of this.unhandledSteps) {
+        for (const step of this.unhandledSteps) {
             if ('RulesEventGameFinished' in step) {
                 this.handleGameFinishedStep(step);
             } else if ('GameInfos' in step) {
@@ -58,7 +59,7 @@ class Replay {
     processSteps() {
         this.processUnorderedSteps();
         while (!this.foundUnhandledStep && this.unhandledSteps.length > 0) {
-            let step = this.unhandledSteps.shift()!;
+            const step = this.unhandledSteps.shift()!;
             if ('RulesEventGameFinished' in step || 'GameInfos' in step) {
                 // Handled as an unordered replay step
             } else if ('RulesEventAddInducementSkill' in step) {
@@ -84,21 +85,22 @@ class Replay {
                 badStep(step);
             }
             if ('BoardState' in step) {
-                this.captureCheckpoint(step.BoardState);
+                this.checkpoint = this.captureCheckpoint(step.BoardState);
             }
         }
     }
 
     captureCheckpoint(boardState: B.BoardState) {
-        let checkpoint = {
+        const checkpoint = {
             playerStates: new Map(),
+            boardState,
         };
-        for (let team of boardState.ListTeams.TeamState) {
-            for (let player of ensureKeyedList("PlayerState", team.ListPitchPlayers)) {
+        for (const team of boardState.ListTeams.TeamState) {
+            for (const player of ensureKeyedList("PlayerState", team.ListPitchPlayers)) {
                 checkpoint.playerStates.set(player.Id, convertPlayerState(team, player));
             }
         }
-        this.checkpoint = checkpoint;
+        return checkpoint;
     }
 
     handleGameFinishedStep(step: B.GameFinishedStep) {
@@ -140,11 +142,11 @@ class Replay {
     }
 
     handleAddInducementSkillStep(step: B.AddInducementSkillStep) {
-        let player = step.RulesEventAddInducementSkill.MercenaryId;
-        let side = convertSide(B.playerIdSide(player));
-        let skill = step.RulesEventAddInducementSkill.SkillId;
-        let team = this.teams[side];
-        let merc = team.inducements.mercenaries.get(player);
+        const player = step.RulesEventAddInducementSkill.MercenaryId;
+        const side = convertSide(B.playerIdSide(player));
+        const skill = step.RulesEventAddInducementSkill.SkillId;
+        const team = this.teams[side];
+        const merc = team.inducements.mercenaries.get(player);
         if (merc) {
             merc.skills.push(skill);
         } else {
@@ -161,7 +163,7 @@ class Replay {
         for (const side of ['home', 'away'] as I.Side[]) {
             this.teams[side].coach = he.decode(ensureList(step.GameInfos.CoachesInfos.CoachInfos)[SIDE[side]].UserId.toString());
 
-            let bb2Team = step.BoardState.ListTeams.TeamState[SIDE[side]];
+            const bb2Team = step.BoardState.ListTeams.TeamState[SIDE[side]];
             this.teams[side].race = bb2Team.Data.IdRace;
             this.teams[side].name = he.decode(bb2Team.Data.Name.toString());
             this.teams[side].logo = bb2Team.Data.Logo;
@@ -176,13 +178,10 @@ class Replay {
 
     handleSetUpConfiguration(step: B.SetUpConfigurationStep) {
         const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam || SIDE.home);
-        let currentDrive = this.lastDrive();
-        if (currentDrive.setups == undefined) {
-            currentDrive.setups = { first: side, home: [], away: [] };
-        }
-        let currentSetup = currentDrive.setups[side];
+        const currentDrive = this.lastDrive();
+        const currentSetup = currentDrive.setups[side];
 
-        let nextSetup = {
+        const nextSetup = {
             checkpoint: this.checkpoint,
             movedPlayers: new Map(step.RulesEventSetUpConfiguration.ListPlayersPositions.PlayerPosition.map(pos => {
                 return [pos.PlayerId || 0, convertCell(pos.Position)];
@@ -196,25 +195,22 @@ class Replay {
         const toCell = convertCell(step.RulesEventSetUpAction.NewPosition);
         const alsoMove = step.RulesEventSetUpAction.Substitute;
         const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam || SIDE.home);
-        let currentDrive = this.lastDrive();
-        if (currentDrive.setups == undefined) {
-            currentDrive.setups = { first: side, home: [], away: [] };
-        }
-        let currentSetup = currentDrive.setups[side];
-        let players: Map<I.PlayerNumber, I.PlayerState> = this.checkpoint.playerStates;
+        const currentDrive = this.lastDrive();
+        const currentSetup = currentDrive.setups[side];
+        const players: DeepReadonly<Map<I.PlayerNumber, I.PlayerState>> = this.checkpoint.playerStates;
 
         const movedPlayer = [...players.entries()]
             .find(([_, state]) => state.pitchCell && cellEq(fromCell, state.pitchCell));
 
         console.assert(movedPlayer != undefined, "Couldn't find moved player", step, this);
         if (movedPlayer != undefined) {
-            let movedPlayers = new Map([
+            const movedPlayers = new Map([
                 [movedPlayer[0], toCell]
             ]);
             if (alsoMove) {
                 movedPlayers.set(alsoMove, fromCell);
             }
-            let nextSetup = {
+            const nextSetup = {
                 checkpoint: this.checkpoint,
                 movedPlayers
             }
@@ -250,11 +246,7 @@ class Replay {
         if (
             step.RulesEventKickOffEventCancelled
         ) {
-            let drive = last(this.drives);
-            if (drive === undefined) {
-                drive = new Drive(this.checkpoint);
-                this.drives.push(drive);
-            }
+            const drive = this.lastDrive();
             drive.kickoff.event = {
                 dice: [step.RulesEventKickOffEventCancelled.EventCancelled],
                 cancelled: true,
@@ -271,23 +263,22 @@ class Replay {
         }
         if (step.RulesEventEndTurn) {
             if (step.RulesEventEndTurn.NewDrive) {
-                this.drives.push(new Drive(this.checkpoint));
+                this.drives.push(new Drive(
+                    this.captureCheckpoint(step.BoardState),
+                    convertSide(step.RulesEventEndTurn.PlayingTeam || SIDE.home),
+                ));
             }
         }
         if (step.RulesEventKickOffTable) {
-            let drive = last(this.drives);
-            if (drive === undefined) {
-                drive = new Drive(this.checkpoint);
-                this.drives.push(drive);
-            }
+            let drive = this.lastDrive();
             drive.kickoff.event = {
                 dice: translateStringNumberList(step.RulesEventKickOffTable.ListDice),
                 cancelled: false,
             }
         }
         if (step.RulesEventBoardAction) {
-            let actions = ensureList(step.RulesEventBoardAction);
-            let converters = actions.map(action => actionConverter(this, step, action));
+            const actions = ensureList(step.RulesEventBoardAction);
+            const converters = actions.map(action => actionConverter(this, step, action));
             if (converters.some(converter => converter == undefined)) {
                 this.cantHandle(step, "Not all action types can be converted");
                 return
@@ -305,16 +296,8 @@ class Replay {
     lastDrive(): Drive {
         let drive = last(this.drives);
         if (!drive) {
-            drive = this.addDrive();
+            throw new Error("No drive created when required");
         }
-        return drive;
-    }
-
-    addDrive(): Drive {
-        let lastDrive = last(this.drives);
-        let drive = new Drive(this.checkpoint);
-        drive.initialScore = lastDrive && lastDrive.finalScore ? lastDrive.finalScore : { home: 0, away: 0 };
-        this.drives.push(drive);
         return drive;
     }
 }
@@ -351,7 +334,7 @@ function actionConverter(replay: Replay, step: B.GameTurnStep, action: B.RulesEv
 function convertFansNumber(replay: Replay, action: B.FansAction): void {
     for (const fanRoll of ensureKeyedList("BoardActionResult", action.Results)) {
         const team = convertSide(fanRoll.CoachChoices.ConcernedTeam || 0);
-        let dice = translateStringNumberList(fanRoll.CoachChoices.ListDices);
+        const dice = translateStringNumberList(fanRoll.CoachChoices.ListDices);
         replay.fans[team] = {
             dice,
             total: dice[0] + dice[1],
@@ -360,18 +343,18 @@ function convertFansNumber(replay: Replay, action: B.FansAction): void {
 };
 
 function convertInitialWeather(replay: Replay, action: B.WeatherAction): void {
-    let result = ensureKeyedList("BoardActionResult", action.Results)[0];
-    let dice = translateStringNumberList(result.CoachChoices.ListDices);
+    const result = ensureKeyedList("BoardActionResult", action.Results)[0];
+    const dice = translateStringNumberList(result.CoachChoices.ListDices);
     replay.initialWeather = weatherTable(dice[0] + dice[1]);
 }
 
 function convertKickoffTarget(replay: Replay, action: B.KickoffAction): void {
-    let drive = replay.lastDrive();
+    const drive = replay.lastDrive();
     drive.kickoff.target = convertCell(action.Order.CellTo.Cell);
 }
 
 function convertKickoffScatter(replay: Replay, action: B.ScatterAction): void {
-    let drive = replay.lastDrive();
+    const drive = replay.lastDrive();
     if (drive.kickoff.scatters == undefined) {
         drive.kickoff.scatters = [];
     }
@@ -396,8 +379,8 @@ function convertKickoffScatter(replay: Replay, action: B.ScatterAction): void {
 }
 
 function convertTakeDamage(replay: Replay, action: B.TakeDamageAction): void {
-    let drive = replay.lastDrive();
-    let damage: I.Damage = {
+    const drive = replay.lastDrive();
+    const damage: I.Damage = {
         player: {
             side: playerNumberToSide(action.PlayerId || 0),
             number: action.PlayerId || 0,
@@ -449,11 +432,11 @@ function convertTakeDamage(replay: Replay, action: B.TakeDamageAction): void {
 }
 
 function convertActivatePlayer(replay: Replay, step: B.GameTurnStep, action: B.ActivatePlayerAction) {
-    let drive = replay.lastDrive();
+    const drive = replay.lastDrive();
     let turn = last(drive.turns);
-    let playerNumber = action.PlayerId || 0;
-    let playerSide = playerNumberToSide(playerNumber);
-    let teamState = step.BoardState.ListTeams.TeamState[playerSide == 'home' ? 0 : 1];
+    const playerNumber = action.PlayerId || 0;
+    const playerSide = playerNumberToSide(playerNumber);
+    const teamState = step.BoardState.ListTeams.TeamState[playerSide == 'home' ? 0 : 1];
     if (!turn || turn.side != playerSide || turn.number != teamState.GameTurn) {
         turn = new Turn(
             teamState.GameTurn || 0,
@@ -482,8 +465,9 @@ class Team {
 class Drive {
     constructor(
         public checkpoint: I.Checkpoint,
-        public wakeups: I.KickoffOrder<I.WakeupRoll[]> = {first: "home", home: [], away: []},
-        public setups: I.KickoffOrder<I.SetupAction[]> = {first: "home", home: [], away: []},
+        public kickingTeam: I.Side,
+        public wakeups: I.KickoffOrder<I.WakeupRoll[]> = {home: [], away: []},
+        public setups: I.KickoffOrder<I.SetupAction[]> = {home: [], away: []},
         public kickoff: I.Drive['kickoff'] = {
             event: {dice: [], cancelled: false},
             target: {x: -1, y: -1},
@@ -533,7 +517,7 @@ export function convertCell(c: B.Cell): I.Cell {
 }
 
 export function convertReplay(incoming: B.Replay): I.Replay {
-    let outgoing: Replay = new Replay(incoming.ReplayStep);
+    const outgoing: Replay = new Replay(incoming.ReplayStep);
     outgoing.metadata.filename = incoming.filename;
     outgoing.metadata.url = incoming.url;
     outgoing.processSteps();
@@ -599,7 +583,7 @@ export function convertPlayerState(t: B.TeamState, p: B.PitchPlayer): I.PlayerSt
 }
 
 function convertDiceModifier(modifier: B.DiceModifier): I.DiceModifier {
-    let result: I.DiceModifier = {};
+    const result: I.DiceModifier = {};
     if (modifier.Cell) {
         result.cell = convertCell(modifier.Cell);
     }
@@ -616,7 +600,7 @@ function convertDiceModifier(modifier: B.DiceModifier): I.DiceModifier {
 }
 
 function convertDiceRollResult<R>(result: B.DiceRollResult<R, B.Skills, B.Cells>): I.DiceRoll {
-    let roll: I.DiceRoll = {
+    const roll: I.DiceRoll = {
         dice: translateStringNumberList(result.CoachChoices.ListDices),
         modifiers: ensureKeyedList("DiceModifier", result.ListModifiers).map(modifier => convertDiceModifier(modifier))
     };

@@ -41,6 +41,7 @@
     "lodash": "^4.17.21",
     "sirv-cli": "^1.0.11",
     "sveltestrap": "^3.13.0",
+    "ts-essentials": "^8.1.0",
     "underscore": "^1.12.0",
     "vega": "^5.19.1",
     "vega-embed": "^6.15.2",

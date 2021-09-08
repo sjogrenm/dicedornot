@@ -60,6 +60,7 @@
     convertPlayerDefinition,
     convertPlayerState,
   } from "../replay/BB2toInternal.js";
+  import _ from "underscore";
 
   export let playing = false;
 
@@ -188,15 +189,6 @@
       boardState.ListTeams.TeamState[1],
       boardState.ActiveTeam == 1
     );
-    races = boardState.ListTeams.TeamState.flatMap((team) =>
-      ensureKeyedList("PlayerState", team.ListPitchPlayers).map((player) => {
-        const { race } = getPlayerSprite(
-          player.Id,
-          getPlayerType(player.Data.IdPlayerTypes)
-        );
-        return race;
-      })
-    ).filter((v, i, a) => a.indexOf(v) === i);
     setPlayerStates(boardState);
     setBallPosition(boardState);
     await step();
@@ -260,8 +252,12 @@
     };
   }
 
+  function offPitch(cell: Internal.Cell): boolean {
+    return cell.x == -1 && cell.y == -1
+  }
+
   function setPitchSquare(cell: Internal.Cell): PitchCellProps {
-    if (cell.x == -1 && cell.y == -1) {
+    if (offPitch(cell)) {
       return {};
     }
     pitch = pitch;
@@ -541,9 +537,13 @@
     }
     let playerIds = Array.from(pitch.values())
       .map((cell: PitchCellProps) => cell.player)
-      .filter(number => number != undefined);
-    if (playerIds.length != (new Set(playerIds)).size) {
-      console.error("Player numbers on the pitch are non-unique", playerIds);
+      .filter((number) => number != undefined);
+    if (playerIds.length != new Set(playerIds).size) {
+      console.error(
+        "Player numbers on the pitch are non-unique",
+        playerIds,
+        current
+      );
     }
     if (updateUrl) {
       if (!skipping) {
@@ -589,7 +589,7 @@
     while (true) {
       try {
         if (underPreview && !$replayPreview) {
-          ({teams, pitch, playing, current} = underPreview);
+          ({ teams, pitch, playing, current } = underPreview);
           $playerStates = underPreview.playerStates;
           previewing = undefined;
           underPreview = undefined;
@@ -599,7 +599,7 @@
           previewing != $replayPreview
         ) {
           previewing = $replayPreview;
-          teams = {home: emptyTeam(), away: emptyTeam()};
+          teams = { home: emptyTeam(), away: emptyTeam() };
           pitch = new Map();
           $playerStates = new Map();
           jumpToPosition($replayPreview.start, false);
@@ -615,7 +615,7 @@
           };
           playing = false;
           previewing = $replayPreview;
-          teams = {home: emptyTeam(), away: emptyTeam()};
+          teams = { home: emptyTeam(), away: emptyTeam() };
           pitch = new Map();
           $playerStates = new Map();
           jumpToPosition($replayPreview.start, false);
@@ -816,20 +816,77 @@
         $playerDefs.set(playerNumber, player);
       }
     }
+
+    races = Array.from($playerDefs.values())
+      .map((player) => {
+        const { race } = getPlayerSprite(player.id.number, player.type);
+        return race;
+      })
+      .filter((v, i, a) => a.indexOf(v) === i);
     $playerDefs = $playerDefs;
   }
 
-  function handleCheckpoint(checkpoint: Internal.Checkpoint) {
-    pitch.forEach(cell => {
+  function validateCheckpoint(checkpoint: Internal.Checkpoint) {
+    checkpoint.playerStates.forEach((state, id) => {
+      if (state.pitchCell) {
+        if (offPitch(state.pitchCell)) {
+          console.assert(
+            Array.from(pitch.values()).find(state => state.player == id) == undefined,
+            "Player unexpectedly on pitch",
+            {current, id, pitch, state}
+          )
+        } else {
+          let pitchSquare = setPitchSquare(state.pitchCell);
+          console.assert(
+            pitchSquare.player == id,
+            "Player in pitchSquare didn't match player in checkpoint",
+            {current, id, pitch, state}
+          );
+        }
+      }
+      console.assert(
+        _.isEqual($playerStates.get(id), state),
+        "Player state didn't match checkpoint",
+        {current, id, playerStates: $playerStates, checkpointState: state}
+      );
+    });
+  }
+
+  function resetToCheckpoint(checkpoint: Internal.Checkpoint) {
+    pitch.forEach((cell) => {
       if (cell.player != undefined) {
         delete cell.player;
       }
-    })
+    });
+    teams.home.dugout = {cas: [], ko: [], reserve: []};
+    teams.away.dugout = {cas: [], ko: [], reserve: []};
     checkpoint.playerStates.forEach((state, id) => {
       if (state.pitchCell) {
-        setPitchSquare(state.pitchCell).player = id;
+        let pitchSquare = setPitchSquare(state.pitchCell);
+        pitchSquare.player = id;
       }
-    })
+      $playerStates.set(id, {
+        ...state,
+        usedSkills: [...state.usedSkills],
+        casualties: state.casualties ? [...state.casualties] : undefined,
+      });
+      const side = playerNumberToSide(id);
+      switch (state.situation) {
+        case SITUATION.Casualty:
+        case SITUATION.SentOff:
+          teams[side].dugout.cas.push(id);
+          break;
+        case SITUATION.KO:
+          teams[side].dugout.ko.push(id);
+          break;
+        case SITUATION.Reserves:
+          teams[side].dugout.reserve.push(id);
+          break;
+      }
+    });
+    teams = teams;
+    $playerStates = $playerStates;
+    pitch = pitch;
   }
 
   function handleGameStart(position: {
@@ -844,7 +901,7 @@
     driveIdx: number;
     drive: Internal.Drive;
   }) {
-    handleCheckpoint(position.drive.checkpoint);
+    resetToCheckpoint(position.drive.checkpoint);
     teams.home.score = position.drive.initialScore.home;
     teams.away.score = position.drive.initialScore.away;
   }
@@ -869,12 +926,29 @@
     setupSide: Internal.Side;
     action: Internal.SetupAction;
   }) {
+    validateCheckpoint(position.action.checkpoint);
     for (let [player, cell] of position.action.movedPlayers) {
-      let oldCell = position.action.checkpoint.playerStates.get(player)?.pitchCell;
-      if (oldCell) {
-        delete setPitchSquare(oldCell).player;
+      let oldCell =
+        position.action.checkpoint.playerStates.get(player)?.pitchCell;
+      if (oldCell)  {
+        const oldSquare = setPitchSquare(oldCell);
+        if (oldSquare.player == player) {
+          delete oldSquare.player;
+        }
       }
       setPitchSquare(cell).player = player;
+      const playerState = setPlayerState(player);
+      playerState.pitchCell = cell;
+      if (offPitch(cell)) {
+        playerState.situation = SITUATION.Reserves;
+        teams[playerNumberToSide(player)].dugout.reserve.push(player);
+      } else {
+        playerState.situation = SITUATION.Active;
+        const reserveIndex = teams[playerNumberToSide(player)].dugout.reserve.indexOf(player);
+        if (reserveIndex > -1) {
+          teams[playerNumberToSide(player)].dugout.reserve.splice(reserveIndex, 1);
+        }
+      }
     }
     await step();
   }
@@ -960,7 +1034,7 @@
         let dice = translateStringNumberList(result.CoachChoices.ListDices);
         target.dice = dice.slice(0, dice.length / 2);
       }
-      await step(4);
+      await step(2);
     }
     if ("RollType" in result && result.RollType === ROLL.Push) {
       //pushback

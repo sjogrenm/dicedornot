@@ -9,15 +9,8 @@
     send: CrossFadeFn | undefined = undefined,
     receive: CrossFadeFn | undefined = undefined;
   let
-    playerDef: Player = $playerDefs.get(player)!,
-    playerState: PlayerState = $playerStates.get(player) || {
-      usedSkills: [],
-      canAct: true,
-      status: STATUS.standing,
-      disabled: false,
-      blitzer: false,
-      situation: SITUATION.Active,
-    },
+    playerDef: Player,
+    playerState: PlayerState,
     done: boolean | undefined = undefined,
     moving: boolean | undefined = undefined,
     prone: boolean | undefined = undefined,
@@ -34,6 +27,15 @@
     _stupidity: string;
 
   $: {
+    playerDef = $playerDefs.get(player)!;
+    playerState = $playerStates.get(player) || {
+      usedSkills: [],
+      canAct: true,
+      status: STATUS.standing,
+      disabled: false,
+      blitzer: false,
+      situation: SITUATION.Active,
+    };
     ({ model, race } = getPlayerSprite(playerDef.id.number, playerDef.type));
     _done = done === undefined ? (!playerState.canAct) : done;
 
