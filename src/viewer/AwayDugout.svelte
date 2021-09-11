@@ -14,7 +14,7 @@
 <div class="dugout">
   <div class="aids"><TeamAids reverse={true} {team} /></div>
   <div class="score"><span>{team.score || 0}</span></div>
-  <div class="turn" class:active={team.active}>{team.turn || ""}</div>
+    <div class="turn" class:active={team.active} title="Turn {team.turn || ""}">{team.turn || ""}</div>
   <div class="name">{team.name || "Away"}</div>
   <div class="logo">
     <TeamLogo logo={team.logo} />

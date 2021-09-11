@@ -8,28 +8,28 @@ import type { Team } from "./types";
 <FlexGrid width={10} height={3} {reverse}>
   {#if team.rerolls}
     {#each Array(team.rerolls.total) as _, i}
-      <div class="reroll sprite" class:used={i >= team.rerolls.available} />
+      <div class="reroll sprite" class:used={i >= team.rerolls.available} title="Team Reroll"/>
     {/each}
     <div class="break"/>
   {/if}
   {#if team.inducements}
     {#if team.inducements.wizard}
-      <div class="inducement sprite wizard"/>
+      <div class="inducement sprite wizard" title="Wizard"/>
     {/if}
     {#if team.inducements.chef}
-      <div class="inducement sprite chef"/>
+      <div class="inducement sprite chef" title="Chef"/>
     {/if}
     {#if team.inducements.igor}
-      <div class="inducement sprite igor"/>
+      <div class="inducement sprite igor" title="Igor"/>
     {/if}
     {#each Array(team.inducements.apo.total) as _, i}
-      <div class="inducement sprite apo" class:used={i >= team.inducements.apo.available}/>
+      <div class="inducement sprite apo" class:used={i >= team.inducements.apo.available} title="Apothecary"/>
     {/each}
     {#each Array(team.inducements.babes) as _}
-      <div class="inducement sprite babe"/>
+      <div class="inducement sprite babe" title="Bloodweiser Babe"/>
     {/each}
     {#each Array(team.inducements.bribes.total) as _, i}
-      <div class="inducement sprite bribe" class:used={i >= team.inducements.bribes.available}/>
+      <div class="inducement sprite bribe" class:used={i >= team.inducements.bribes.available} title="Bribe"/>
     {/each}
   {/if}
   <!-- <div class="grid_item_dice">

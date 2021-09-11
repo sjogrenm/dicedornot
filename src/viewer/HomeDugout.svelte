@@ -22,7 +22,7 @@
     </div>
     <div class="name">{team.name || "Home"}</div>
     <div class="score"><span>{team.score || 0}</span></div>
-    <div class="turn" class:active={team.active}>{team.turn || ""}</div>
+    <div class="turn" class:active={team.active} title="Turn {team.turn || ""}">{team.turn || ""}</div>
     <div class="aids"><TeamAids {team} /></div>
   {/if}
   <div class="weather"><Weather {weather} /></div>
