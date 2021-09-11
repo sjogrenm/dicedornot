@@ -1832,7 +1832,6 @@ class DodgeRoll extends PlayerD6Roll {
     assert('resultPosition' in xml);
     let {result, stepIdx, action} = xml.resultPosition;
     let args = super.argsFromXml(xml);
-    let target = 0, modifier = 0;
     if (
       'SubResultType' in result &&
       result.SubResultType && ([
@@ -1845,17 +1844,15 @@ class DodgeRoll extends PlayerD6Roll {
       let nextStep = xml.replay.unhandledSteps[stepIdx + 1];
       let nextActions = 'RulesEventBoardAction' in nextStep && nextStep.RulesEventBoardAction ? ensureList(nextStep.RulesEventBoardAction) : [];
       let nextResult = ensureList(nextActions[0].Results && nextActions[0].Results.BoardActionResult)[0] as BB2.DodgeResult;
-      target = nextResult.Requirement || 0;
-      modifier = (nextResult.ListModifiers == "" ? [] : ensureList(nextResult.ListModifiers.DiceModifier || []))
+      args.target = nextResult.Requirement || 0;
+      args.modifier = (nextResult.ListModifiers == "" ? [] : ensureList(nextResult.ListModifiers.DiceModifier || []))
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
     }
     return {
       ...args,
       cellFrom: convertCell(action.Order.CellFrom),
-      cellTo: convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0]),
-      target,
-      modifier
+      cellTo: convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0])
     }
   }
   failValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
