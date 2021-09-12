@@ -21,9 +21,9 @@
     <PitchSquare
       {homeLogo}
       {awayLogo}
-      {pitch}
       {row}
       {column}
+      {...(pitch.get(`${column}-${row}`) || {})}
     />
   </Grid>
   {#if $replayPreview}

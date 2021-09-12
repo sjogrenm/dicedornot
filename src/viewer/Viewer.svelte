@@ -22,7 +22,6 @@
     getPlayerSprite,
     SIDE,
     weatherTable,
-    getPlayerType,
     STATUS,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
@@ -317,7 +316,7 @@
   function setBallPosition(boardState: BB2.BoardState) {
     let { x, y } = convertCell(boardState.Ball.Cell);
     Object.values(pitch).forEach((square) => {
-      square.ball = undefined;
+      delete square.ball;
     });
 
     if (x != -1 && y != -1) {
@@ -1118,7 +1117,7 @@
     let from = setPitchSquare(convertCell(action.Order.CellFrom));
     let to = setPitchSquare(convertCell(action.Order.CellTo.Cell));
     to.ball = from.ball;
-    from.ball = undefined;
+    delete from.ball;
   }
 
   function handleKickoff(action: BB2.KickoffAction) {

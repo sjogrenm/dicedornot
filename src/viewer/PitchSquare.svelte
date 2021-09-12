@@ -1,4 +1,5 @@
 <script lang="ts">
+  import {afterUpdate, onMount} from "svelte";
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import Ball from "./Ball.svelte";
   import Cell from "./Cell.svelte";
@@ -10,20 +11,26 @@
   export let
     row: number,
     column: number,
-    pitch: Pitch,
     homeLogo: string,
-    awayLogo: string;
-  let player: PitchCellProps["player"] = undefined,
+    awayLogo: string,
+    player: PitchCellProps["player"] = undefined,
     cell: PitchCellProps["cell"] = undefined,
     ball: PitchCellProps["ball"] = undefined,
     dice: PitchCellProps["dice"] = undefined,
-    foul: PitchCellProps["foul"] = false,
-    id: string;
+    foul: PitchCellProps["foul"] = false;
+    let id: string;
 
   $: {
-    ({ player, cell, ball, dice, foul } = pitch.get(`${column}-${row}`) || {});
     id = `pitch-${row}-${column}`;
   }
+
+	afterUpdate(() => {
+		console.log(`Updated PitchSquare ${id}`);
+	});
+
+	onMount(() => {
+		console.log(`Mounted PitchSquare ${id}`);
+	});
 </script>
 
 <div
