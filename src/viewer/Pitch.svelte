@@ -4,12 +4,10 @@
   import FixedRatio from "./FixedRatio.svelte";
   import Overlay from "./Overlay.svelte";
   import { replayPreview } from "../stores.js";
-  import type { CrossFadeFn, Team, Pitch } from "./types.js";
+  import type { Team, Pitch } from "./types.js";
   import type * as Internal from "../replay/Internal.js";
   export let teams: Internal.ByTeam<Team>,
-    pitch: Pitch,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+    pitch: Pitch;
 
   let homeLogo: string, awayLogo: string;
   $: {
@@ -24,8 +22,6 @@
       {homeLogo}
       {awayLogo}
       {pitch}
-      {send}
-      {receive}
       {row}
       {column}
     />

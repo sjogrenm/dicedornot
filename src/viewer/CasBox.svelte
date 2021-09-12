@@ -6,9 +6,7 @@
   export let
     team: SIDE,
     casType: keyof Dugout,
-    dugout: Dugout,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+    dugout: Dugout;
   let width = 4,
     height = 2;
 </script>
@@ -19,8 +17,6 @@
       {team}
       {width}
       {height}
-      {send}
-      {receive}
       {casType}
       {dugout}
       {row}

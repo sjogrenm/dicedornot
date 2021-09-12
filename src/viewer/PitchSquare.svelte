@@ -6,15 +6,13 @@
   import Foul from "./Foul.svelte";
   import Player from "./Player.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import type { CrossFadeFn, PitchCellProps, Pitch } from "./types.js";
+  import type { PitchCellProps, Pitch } from "./types.js";
   export let
     row: number,
     column: number,
     pitch: Pitch,
     homeLogo: string,
-    awayLogo: string,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+    awayLogo: string;
   let player: PitchCellProps["player"] = undefined,
     cell: PitchCellProps["cell"] = undefined,
     ball: PitchCellProps["ball"] = undefined,
@@ -48,10 +46,10 @@
     <TeamLogo logo={awayLogo.toLowerCase()} />
   {/if}
   {#if cell}
-    <Cell {...cell} {send} {receive} {row} {column} />
+    <Cell {...cell}{row} {column} />
   {/if}
   {#if player}
-    <Player {player} {send} {receive} />
+    <Player {player}/>
   {/if}
   {#if dice}
     <DiceResult {dice} />
@@ -60,7 +58,7 @@
     <Foul />
   {/if}
   {#if ball}
-    <Ball {...ball} {send} {receive} />
+    <Ball {...ball}/>
   {/if}
 </div>
 

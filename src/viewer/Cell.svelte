@@ -6,13 +6,12 @@
     pushbackChoice = false,
     moved = false,
     row: number,
-    column: number,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
-  import { timing } from "../stores.js";
-  import type { CrossFadeFn } from "./types.js";
+    column: number;
+  import { timing, transition } from "../stores.js";
   let cellClass: string;
 
+  $: send = $transition.send;
+  $: receive = $transition.receive;
   $: {
     let plusClass = plus ? `plus${plus}` : undefined;
     let activeClass = active ? "active" : undefined;
@@ -30,19 +29,19 @@
 </script>
 
 {#if active}
-<div
-  id={`cell_${column}_${row}`}
-  class={`cell sprite ${cellClass}`}
-  in:send={{key: "active-cell"}}
-  out:receive={{key: "active-cell"}}
-/>
+  <div
+    id={`cell_${column}_${row}`}
+    class={`cell sprite ${cellClass}`}
+    in:send={{ key: "active-cell" }}
+    out:receive={{ key: "active-cell" }}
+  />
 {:else}
-<div
-  id={`cell_${column}_${row}`}
-  class={`cell sprite ${cellClass}`}
-  in:fade={{duration: $timing * 0.1}}
-  out:fade={{duration: $timing * 0.1}}
-/>
+  <div
+    id={`cell_${column}_${row}`}
+    class={`cell sprite ${cellClass}`}
+    in:fade={{ duration: $timing * 0.1 }}
+    out:fade={{ duration: $timing * 0.1 }}
+  />
 {/if}
 
 <style>

@@ -8,14 +8,12 @@
 
   export let
     team: Team,
-    weather: WEATHER,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+    weather: WEATHER;
 </script>
 
 <div class="dugout">
   {#if team}
-    <HomeBench dugout={team.dugout} {send} {receive} />
+    <HomeBench dugout={team.dugout} />
     <div class="logo">
       <TeamLogo logo={team.logo} />
     </div>

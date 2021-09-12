@@ -2,12 +2,9 @@
   import { fade } from "svelte/transition";
   import { getPlayerSprite, SIDE, SITUATION, STATUS } from "../constants.js";
   import type { PlayerNumber, Player, PlayerState } from "../replay/Internal.js";
-  import type { CrossFadeFn } from "./types.js";
-  import {playerDefs, playerStates} from "../stores.js";
+  import {playerDefs, playerStates, transition} from "../stores.js";
 
-  export let player: PlayerNumber,
-    send: CrossFadeFn | undefined = undefined,
-    receive: CrossFadeFn | undefined = undefined;
+  export let player: PlayerNumber;
   let
     playerDef: Player,
     playerState: PlayerState,
@@ -26,6 +23,8 @@
     _stunned: boolean,
     _stupidity: string;
 
+  $: send = $transition.send;
+  $: receive = $transition.receive;
   $: {
     playerDef = $playerDefs.get(player)!;
     playerState = $playerStates.get(player) || {

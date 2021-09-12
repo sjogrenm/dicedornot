@@ -11,9 +11,7 @@
     column: number,
     width: number,
     height: number,
-    casType: keyof Dugout,
-    send: CrossFadeFn | undefined,
-    receive: CrossFadeFn | undefined;
+    casType: keyof Dugout;
   let player: IPlayer | undefined = undefined,
     playerState: PlayerState | undefined = undefined,
     players,
@@ -65,7 +63,7 @@
   }}
 >
   {#if player}
-    <Player player={player.id.number} {send} {receive} />
+    <Player player={player.id.number} />
     {#if cas}
       <img class="cas" src={`/images/skills/${cas}.png`} alt={cas} />
     {/if}

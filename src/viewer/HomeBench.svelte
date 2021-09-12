@@ -1,10 +1,8 @@
 <script lang="ts">
   import CasBox from "./CasBox.svelte";
   import { SIDE } from "../constants.js";
-  import type { CrossFadeFn, Dugout } from "./types.js";
-  export let dugout: Dugout,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+  import type { Dugout } from "./types.js";
+  export let dugout: Dugout;
   const casTypes: (keyof Dugout)[] = ["cas", "ko", "reserve"];
 </script>
 
@@ -14,8 +12,6 @@
     team={SIDE.home}
     {casType}
     {dugout}
-    {send}
-    {receive}
   />
   {/each}
 </div>

@@ -1,10 +1,9 @@
 <script lang="ts">
-import type { CrossFadeFn } from "./types";
+  import { transition } from "../stores.js";
 
-
-  export let held = false,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+  export let held = false;
+  $: send = $transition.send;
+  $: receive = $transition.receive;
 </script>
 
 <div

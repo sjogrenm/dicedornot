@@ -8,8 +8,6 @@
     Dugout,
   } from "./types.js";
   import { onMount, tick } from "svelte";
-  import { sineInOut } from "svelte/easing";
-  import { crossfade } from "svelte/transition";
   import { Row, Col, ButtonToolbar, Button, Icon, Alert } from "sveltestrap";
   import HomeDugout from "./HomeDugout.svelte";
   import AwayDugout from "./AwayDugout.svelte";
@@ -146,28 +144,9 @@
     positions = $replay ? linearReplay($replay!.fullReplay) : [];
   }
 
-  const [send, receive] = crossfade({
-    duration: $timing * 0.5,
-    easing: sineInOut,
-
-    fallback(node) {
-      const style = getComputedStyle(node);
-      const transform = style.transform === "none" ? "" : style.transform;
-
-      return {
-        duration: $timing * 0.5,
-        easing: sineInOut,
-        css: (t) => `
-					transform: ${transform} scale(${t});
-					opacity: ${t}
-				`,
-      };
-    },
-  });
-
   onMount(() => {
     let url = new URL(window.location.href);
-    $timing = parseInt(url.searchParams.get("timing") || "300");
+    $timing = parseInt(url.searchParams.get("timing") || $timing.toString());
     if (url.searchParams.get("st")) {
       playing = false;
     } else {
@@ -1442,14 +1421,14 @@
     <div class="pitch-scroll">
       <FixedRatio width={1335} height={1061}>
         <div class="pitch">
-          <HomeDugout team={teams.home} {weather} {send} {receive} />
+          <HomeDugout team={teams.home} {weather}/>
           {#if $selectedPlayer || $hoveredPlayer}
             <div class="selected" class:enlarged={!!$hoveredPlayer}>
               <SelectedPlayer player={$hoveredPlayer || $selectedPlayer || 0} />
             </div>
           {/if}
-          <Pitch {pitch} {teams} {send} {receive} />
-          <AwayDugout team={teams.away} {send} {receive} />
+          <Pitch {pitch} {teams} />
+          <AwayDugout team={teams.away} />
         </div>
         {#if banner}
           <Banner {banner} />

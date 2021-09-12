@@ -4,9 +4,7 @@
   import TeamLogo from "./TeamLogo.svelte";
   import type { CrossFadeFn, Team} from "./types";
 
-  export let team: Team,
-    send: CrossFadeFn,
-    receive: CrossFadeFn;
+  export let team: Team;
 </script>
 
 <div class="dugout">
@@ -17,7 +15,7 @@
   <div class="logo">
     <TeamLogo logo={team.logo} />
   </div>
-  <AwayBench dugout={team.dugout} {send} {receive} />
+  <AwayBench dugout={team.dugout} />
 </div>
 
 <style>
