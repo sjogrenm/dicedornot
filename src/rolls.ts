@@ -1065,16 +1065,16 @@ function catchOrInterception(roll: Action, dependent: Action) {
 interface BlockRollArgs extends RollArgs {
   activePlayer: Player,
   isRedDice: boolean,
-  attacker: Player,
-  defender: Player,
+  attacker: Player | undefined,
+  defender: Player | undefined,
   isBlitz: boolean,
 }
 
 export class BlockRoll extends Roll {
   activePlayer: Player;
   isRedDice: boolean;
-  attacker: Player;
-  defender: Player;
+  attacker: Player | undefined;
+  defender: Player | undefined;
   isBlitz: boolean;
   get actionName() { return "Block"; }
   get handledSkills(): SKILL[] {
@@ -1100,6 +1100,11 @@ export class BlockRoll extends Roll {
     this.attacker = attrs.attacker;
     this.defender = attrs.defender;
     this.isBlitz = attrs.isBlitz;
+    console.assert(
+      this.attacker != undefined && this.defender != undefined,
+      "Block Roll was missing attacker or defender",
+      this
+    )
   }
 
   static argsFromXml(xml: ActionXML): BlockRollArgs {
@@ -1110,20 +1115,24 @@ export class BlockRoll extends Roll {
     if ('Requirement' in result) {
       isRedDice = (result.Requirement || 0) < 0;
     }
+    let defender = (args.initialBoardState.playerAtPosition(
+      convertCell(ensureKeyedList('Cell', xml.resultPosition.action.Order.CellTo)[0])
+    ));
     return {
       ...args,
       dice: args.dice.slice(0, args.dice.length / 2),
       activePlayer: args.activePlayer!,
       isRedDice,
-      attacker: args.activePlayer!,
-      defender: (args.finalBoardState.playerAtPosition(
-        convertCell(ensureKeyedList('Cell', xml.resultPosition.action.Order.CellTo)[0])
-      ))!,
-      isBlitz: args.activePlayer!.team.blitzerId == args.activePlayer!.id,
+      attacker: args.activePlayer,
+      defender,
+      isBlitz: args.activePlayer != undefined && args.activePlayer.team.blitzerId == args.activePlayer.id,
     }
   }
 
   get description() {
+    if (this.attacker == undefined || this.defender == undefined) {
+      return "Block Roll missing attacker or defender";
+    }
     var uphill = this.isRedDice ? ' uphill' : '';
     var attackerSkills =
       this.attacker.skills.length > 0
@@ -1157,9 +1166,12 @@ export class BlockRoll extends Roll {
     return super.ignore(xml);
   }
 
-  dieValue(result: BLOCK, expected: boolean) {
+  dieValue(result: BLOCK, expected: boolean): Distribution {
     const attacker = this.attacker;
     const defender = this.defender;
+    if (attacker == undefined || defender == undefined) {
+      return new SingleValue("Block Roll missing attacker or defender", 0);
+    }
     var attackerSkills = attacker.skills;
     var defenderSkills = defender.skills;
 
@@ -1265,6 +1277,9 @@ export class BlockRoll extends Roll {
   }
 
   get improbability() {
+    if (this.attacker == undefined || this.defender == undefined) {
+      return 0;
+    }
     let bothDownSafe = this.attacker.skills.includes(SKILL.Block) || this.attacker.skills.includes(SKILL.Wrestle);
     let unsafeFaces = [BLOCK.AttackerDown, BLOCK.BothDown];
     if (bothDownSafe) {
