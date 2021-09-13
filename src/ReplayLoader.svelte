@@ -119,7 +119,7 @@
       loadGoblinspyReplay(`cid_${spikeMatch[1]}`, true);
       return;
     }
-    $error = `Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd, https://www.mordrek.com/gspy/comp/1234/match/abcd1234, or https://spike.ovh/match?match_uuid=abcd1234`;
+    error.set(`Unable to understad match url ${urlPicker.value}. Try something like https://rebbl.net/rebbl/match/1234abcd, https://www.mordrek.com/gspy/comp/1234/match/abcd1234, or https://spike.ovh/match?match_uuid=abcd1234`);
   }
 
   async function cachedReplays(): Promise<ReplayMetadata[]> {
@@ -176,11 +176,11 @@
         if (updateUrl) {
           window.history.pushState({}, "", shareURL.href);
         }
-        $replay = processReplay(jsonReplayData);
+        replay.set(processReplay(jsonReplayData));
         loading = undefined;
       } catch (err) {
         loading = undefined;
-        $error = err;
+        error.set(err);
         console.error(err);
       }
   }
@@ -203,11 +203,11 @@
       let cacheKey = `${replayType}-${replayId}`;
       putReplayIntoCache(cacheKey, cacheableReplay);
       try {
-        $replay = processReplay(convertReplay(cacheableReplay.Replay));
+        replay.set(processReplay(convertReplay(cacheableReplay.Replay)));
         loading = undefined;
       } catch (err) {
         loading = undefined;
-        $error = err;
+        error.set(err);
         console.error(err);
       }
     }
@@ -215,7 +215,7 @@
 
   async function loadRebblReplay(uuid: string, updateUrl: boolean) {
     loading = `Loading ${uuid} from rebbl.net`;
-    $error = undefined;
+    error.set(undefined);
     let replayFile = await fetch(
       `https://rebbl.net/api/v2/match/${uuid}/replay`
     ).then((r) => r.json());
@@ -232,7 +232,7 @@
 
   async function loadGoblinspyReplay(mid: string, updateUrl: boolean) {
     loading = `Loading ${mid} from GoblinSpy`;
-    $error = undefined;
+    error.set(undefined);
     let replayFile = await fetch(
       `https://www.mordrek.com:666/api/v1/match/${mid}/url`
     ).then((r) => r.json());
@@ -244,14 +244,14 @@
       const file = new File([blob], replayFile);
       parseReplay(file, ReplayType.goblinspy, mid, updateUrl);
     } else {
-      $error = `Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`;
+      error.set(`Unable to load replay for https://www.mordrek.com/gspy/match/${mid}. Try again later.`);
       loading = undefined;
     }
   }
 
   async function loadReplay() {
     loading = "Preparing to parse XML...";
-    $error = undefined;
+    error.set(undefined);
     const files = filePicker.files;
     if (files && files.length > 0) {
       parseReplay(files[0], ReplayType.file, files[0].name, true);

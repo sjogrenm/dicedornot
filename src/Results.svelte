@@ -74,7 +74,7 @@
       result.view.addEventListener("click", function (_, item) {
         if (item) {
           let selectedRoll = item.datum.actionIndex;
-          $replayTarget = actions[selectedRoll].startIndex;
+          replayTarget.set(actions[selectedRoll].startIndex);
         }
       });
 

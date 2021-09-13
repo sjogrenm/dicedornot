@@ -6,12 +6,12 @@
   export let actions: Action[], selectedAction: number;
 </script>
 
-<div class="list-group" id="turn" on:mouseleave={() => ($replayPreview = undefined)}>
+<div class="list-group" id="turn" on:mouseleave={() => (replayPreview.set(undefined))}>
   {#each actions as action (action.actionIndex)}
     <div
       class={`list-group-item list-group-item-action team-${action.activeTeam?.id || SIDE.home}`}
       class:active={selectedAction == action.actionIndex}
-      on:mouseover={() => ($replayPreview = {start: action.startIndex, end: action.endIndex})}
+      on:mouseover={() => (replayPreview.set({start: action.startIndex, end: action.endIndex}))}
     >
       <Roll {action} selected={selectedAction == action.actionIndex} />
     </div>

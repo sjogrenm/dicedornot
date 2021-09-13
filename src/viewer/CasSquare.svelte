@@ -2,7 +2,7 @@
   import Player from "./Player.svelte";
   import { selectedPlayer, hoveredPlayer, playerDefs, playerStates } from "../stores.js";
   import { SITUATION, Casualties, SIDE } from "../constants.js";
-  import type { Dugout, CrossFadeFn } from "./types";
+  import type { Dugout } from "./types";
   import type { Player as IPlayer, PlayerState } from "../replay/Internal";
   export let
     team: SIDE,
@@ -53,13 +53,13 @@
   class="cas-square"
   {id}
   on:click={() => {
-    $selectedPlayer = player && player.id.number;
+    selectedPlayer.set(player && player.id.number);
   }}
   on:mouseover={() => {
-    $hoveredPlayer = player && player.id.number;
+    hoveredPlayer.set(player && player.id.number);
   }}
   on:mouseleave={() => {
-    $hoveredPlayer = undefined;
+    hoveredPlayer.set(undefined);
   }}
 >
   {#if player}

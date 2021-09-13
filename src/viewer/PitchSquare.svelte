@@ -7,7 +7,7 @@
   import Foul from "./Foul.svelte";
   import Player from "./Player.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import type { PitchCellProps, Pitch } from "./types.js";
+  import type { PitchCellProps } from "./types.js";
   export let
     row: number,
     column: number,
@@ -37,13 +37,13 @@
   class="pitch-square"
   {id}
   on:click={() => {
-    $selectedPlayer = player;
+    selectedPlayer.set(player);
   }}
   on:mouseover={() => {
-    $hoveredPlayer = player;
+    hoveredPlayer.set(player);
   }}
   on:mouseleave={() => {
-    $hoveredPlayer = undefined;
+    hoveredPlayer.set(undefined);
   }}
 >
   {#if column == 0 && row == 7 && homeLogo}
@@ -53,7 +53,7 @@
     <TeamLogo logo={awayLogo.toLowerCase()} />
   {/if}
   {#if cell}
-    <Cell {...cell}{row} {column} />
+    <Cell {...cell} {row} {column} />
   {/if}
   {#if player}
     <Player {player}/>

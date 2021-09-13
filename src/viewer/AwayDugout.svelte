@@ -2,7 +2,7 @@
   import AwayBench from "./AwayBench.svelte";
   import TeamAids from "./TeamAids.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import type { CrossFadeFn, Team} from "./types";
+  import type { Team} from "./types";
 
   export let team: Team;
 </script>

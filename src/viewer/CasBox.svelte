@@ -2,7 +2,7 @@
   import Grid from "./Grid.svelte";
   import CasSquare from "./CasSquare.svelte";
   import type { SIDE } from "../constants.js";
-  import type { CrossFadeFn, Dugout } from "./types.js";
+  import type { Dugout } from "./types.js";
   export let
     team: SIDE,
     casType: keyof Dugout,

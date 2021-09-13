@@ -1,6 +1,6 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import { getPlayerSprite, SIDE, SITUATION, STATUS } from "../constants.js";
+  import { getPlayerSprite, SITUATION, STATUS } from "../constants.js";
   import type { PlayerNumber, Player, PlayerState } from "../replay/Internal.js";
   import {playerDefs, playerStates, transition} from "../stores.js";
 

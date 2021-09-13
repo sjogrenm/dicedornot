@@ -1,7 +1,7 @@
 <script lang="ts">
   import CasBox from "./CasBox.svelte";
   import { SIDE } from "../constants.js";
-  import type { CrossFadeFn, Dugout } from "./types.js";
+  import type { Dugout } from "./types.js";
   export let dugout: Dugout;
   const casTypes: (keyof Dugout)[] = ["reserve", "ko", "cas"];
 </script>

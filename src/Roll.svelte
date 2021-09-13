@@ -31,7 +31,7 @@
       <button
         href="#viewer"
         class="btn btn-secondary btn-sm"
-        on:click={() => ($replayTarget = action.startIndex)}
+        on:click={() => (replayTarget.set(action.startIndex))}
         ><Icon name="arrow-down-right" title="Jump to Roll" /></button
       >
     </div>

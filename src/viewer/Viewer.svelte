@@ -525,7 +525,7 @@
     }
     if (updateUrl) {
       if (!skipping) {
-        $replayCurrent = current;
+        replayCurrent.set(current);
       }
       let url = new URL(window.location.href);
       url.searchParams.set("st", current.toString());
@@ -559,7 +559,7 @@
     $playerStates = $playerStates;
     await step();
     if (updateUrl) {
-      $replayCurrent = current;
+      replayCurrent.set(current);
     }
   }
 
@@ -630,11 +630,10 @@
         }
       } catch (err) {
         playing = false;
-        $error = err;
+        error.set(err);
         console.error(err);
       }
     }
-    console.error("Player Loop terminated unexpectedly");
   }
 
   function jumpToPreviousActivation() {
@@ -867,14 +866,14 @@
     pitch = pitch;
   }
 
-  function handleGameStart(position: {
+  async function handleGameStart(position: {
     type: "gameStart";
     replay: Internal.Replay;
   }) {
     weather = position.replay.initialWeather;
   }
 
-  function handleDriveStart(position: {
+  async function handleDriveStart(position: {
     type: "driveStart";
     driveIdx: number;
     drive: Internal.Drive;

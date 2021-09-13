@@ -26,8 +26,8 @@
   class={`btn team team-${teamId}`}
   class:current
   title={`${teamName}: Turn ${turn}`}
-  on:click={() => ($replayTarget = startIndex)}
-  on:mouseover={() => ($replayPreview = { start: startIndex, end: endIndex })}
+  on:click={() => (replayTarget.set(startIndex))}
+  on:mouseover={() => (replayPreview.set({ start: startIndex, end: endIndex }))}
 >
   {turn}
 </div>

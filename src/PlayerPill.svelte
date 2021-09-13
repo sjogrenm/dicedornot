@@ -7,13 +7,13 @@
 <span
   class="badge badge-pill pill-team-{player.team.id}"
   on:click={() => {
-    $selectedPlayer = player.id;
+    selectedPlayer.set(player.id);
   }}
   on:mouseover={() => {
-    $hoveredPlayer = player.id;
+    hoveredPlayer.set(player.id);
   }}
   on:mouseleave={() => {
-    $hoveredPlayer = undefined;
+    hoveredPlayer.set(undefined);
   }}>{player.name}</span
 >
 

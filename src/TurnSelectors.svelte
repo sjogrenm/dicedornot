@@ -5,7 +5,7 @@
   export let actionsByTurn: Action[][];
 </script>
 
-<div on:mouseleave={() => ($replayPreview = undefined)}>
+<div on:mouseleave={() => (replayPreview.set(undefined))}>
   {#each actionsByTurn as actions}
     <TurnSelector {actions} />
   {/each}

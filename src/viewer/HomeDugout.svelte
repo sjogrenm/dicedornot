@@ -3,7 +3,7 @@
   import TeamAids from "./TeamAids.svelte";
   import Weather from "./Weather.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import type { CrossFadeFn, Team } from "./types";
+  import type { Team } from "./types";
   import type { WEATHER } from "../constants";
 
   export let
