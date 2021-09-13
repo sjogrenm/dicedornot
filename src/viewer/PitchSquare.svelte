@@ -24,13 +24,13 @@
     id = `pitch-${row}-${column}`;
   }
 
-	afterUpdate(() => {
-		console.log(`Updated PitchSquare ${id}`);
-	});
+	// afterUpdate(() => {
+	// 	console.debug(`Updated PitchSquare ${id}`);
+	// });
 
-	onMount(() => {
-		console.log(`Mounted PitchSquare ${id}`);
-	});
+	// onMount(() => {
+	// 	console.debug(`Mounted PitchSquare ${id}`);
+	// });
 </script>
 
 <div
