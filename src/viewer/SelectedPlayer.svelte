@@ -88,7 +88,7 @@
     <div class="icon-frame">
       <FixedRatio>
         <div class="icon">
-          <Player {player} />
+          <Player {player} instant/>
         </div>
       </FixedRatio>
     </div>

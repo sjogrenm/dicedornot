@@ -4,7 +4,8 @@
   import type { PlayerNumber, Player, PlayerState } from "../replay/Internal.js";
   import {playerDefs, playerStates, transition} from "../stores.js";
 
-  export let player: PlayerNumber;
+  export let player: PlayerNumber,
+    instant = false;
   let
     playerDef: Player,
     playerState: PlayerState,
@@ -58,17 +59,17 @@
   }
 
   function inFn(node: Element, _: any) {
-    if (receive) {
-      return receive(node, { key: key });
-    } else {
+    if (instant) {
       return fade(node, { duration: 0 });
+    } else {
+      return receive(node, { key: key });
     }
   }
   function outFn(node: Element, _: any) {
-    if (send) {
-      return send(node, { key: key });
-    } else {
+    if (instant) {
       return fade(node, { duration: 0 });
+    } else {
+      return send(node, { key: key });
     }
   }
 </script>
