@@ -114,7 +114,7 @@ class Replay {
                 const side = convertSide(B.playerIdSide(playerNumber));
                 const team = this.teams[side];
                 const pitchPlayers = ensureKeyedList('PlayerState', step.BoardState.ListTeams.TeamState[side == 'home' ? 0 : 1].ListPitchPlayers);
-                const pitchPlayer = pitchPlayers.find(p => p.Id = merc.MercenaryId);
+                const pitchPlayer = pitchPlayers.find(p => p.Id == merc.MercenaryId);
                 assert(pitchPlayer != undefined);
                 const player: DeepWritable<I.Player> = convertPlayerDefinition(pitchPlayer);
                 team.players.set(player.id.number, player)
