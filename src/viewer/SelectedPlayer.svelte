@@ -14,13 +14,14 @@
   import he from "he";
   import type { PlayerNumber, Player as IPlayer, PlayerState } from "../replay/Internal";
   import { playerStates, playerDefs } from "../stores.js";
+  import type {DeepReadonly} from "ts-essentials";
 
   export let player: PlayerNumber;
   let playerState: PlayerState,
     playerData: IPlayer,
     name: string,
     color: string,
-    skills: SKILL[],
+    skills: DeepReadonly<SKILL[]>,
     cas: string | undefined;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {

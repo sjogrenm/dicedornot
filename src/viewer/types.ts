@@ -12,6 +12,7 @@ import type {
 } from "../constants.js";
 import type {crossfade} from 'svelte/transition';
 import type {Color} from 'chroma-js';
+import type { DeepReadonly } from "ts-essentials";
 
 export type CrossFadeFn = ReturnType<typeof crossfade>[number];
 
@@ -74,7 +75,7 @@ export interface PitchCellProps {
 }
 
 export type Pitch = Map<string, PitchCellProps>;
-export type PlayerDefinitions = Map<Internal.PlayerNumber, Internal.Player>;
+export type PlayerDefinitions = Map<Internal.PlayerNumber, DeepReadonly<Internal.Player>>;
 export type PlayerProperties = Map<Internal.PlayerNumber, PlayerProps>;
 
 export interface PlayerProps {

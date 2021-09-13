@@ -8,6 +8,7 @@
   import type * as BB2 from "./replay/BB2.js";
   import type * as Internal from "./replay/Internal.js";
   import {convertReplay} from "./replay/BB2toInternal.js";
+  import type {DeepReadonly, DeepWritable} from "ts-essentials";
 
   interface ParsedReplay {
     Replay: BB2.Replay,
@@ -47,7 +48,7 @@
     cacheKey: IDBValidKey,
   };
 
-  async function replayFromCache(key: IDBValidKey): Promise<Internal.Replay | undefined> {
+  async function replayFromCache(key: IDBValidKey): Promise<DeepReadonly<Internal.Replay> | undefined> {
     let cachedReplay = await get(key);
     if (!cachedReplay) {
       return undefined;
@@ -133,7 +134,7 @@
           replayKeys = await keys();
           loading = undefined;
       }
-      const allReplays: {key: IDBValidKey, replay: Internal.Replay}[] = [];
+      const allReplays: {key: IDBValidKey, replay: DeepReadonly<Internal.Replay>}[] = [];
       for (const key of replayKeys) {
         loading = `Loading ${key}`;
         const replay = await replayFromCache(key);
@@ -187,10 +188,10 @@
 
   async function parseReplay(replayFile: File, replayType: ReplayType, replayId: string, updateUrl: boolean) {
     loading = `Parsing ${replayFile.name}`;
-    let jsonReplayFile: Record<string, {Replay: BB2.Replay}> = await xmlToJson(replayFile);
+    let jsonReplayFile: Record<string, {Replay: DeepWritable<BB2.Replay>}> = await xmlToJson(replayFile);
     for (const [_, jsonReplayData] of Object.entries(jsonReplayFile)) {
       console.log("Preparing to process replay json...");
-      const cacheableReplay: ParsedReplay = {Replay: jsonReplayData.Replay, CACHE_VERSION};
+      const cacheableReplay: DeepWritable<ParsedReplay> = {Replay: jsonReplayData.Replay, CACHE_VERSION};
       cacheableReplay.Replay.filename = replayFile.name;
       let shareURL = new URL(window.location.href);
       shareURL.search = "";

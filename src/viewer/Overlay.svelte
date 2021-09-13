@@ -14,6 +14,7 @@
   import type { Props as OverlayBlockProps } from "./OverlayBlock.svelte";
   import chroma from "chroma-js";
   import type { Colors } from "./types.js";
+  import type { DeepReadonly } from "ts-essentials";
 
   import { team1Color, team1Gray, team0Color, team0Gray } from "../theme.js";
   import type {
@@ -133,13 +134,14 @@
           switch (action.ActionType) {
             case ACTION_TYPE.Blitz:
             case ACTION_TYPE.Block: {
-              let results: (BlockResults | BlitzResults)[] = ensureKeyedList(
-                "BoardActionResult",
-                action.Results as KeyedMList<
+              let results: DeepReadonly<(BlockResults | BlitzResults)[]> =
+                ensureKeyedList(
                   "BoardActionResult",
-                  BlockResults | BlitzResults
-                >
-              );
+                  action.Results as KeyedMList<
+                    "BoardActionResult",
+                    BlockResults | BlitzResults
+                  >
+                );
               for (const result of results) {
                 let last: OverlayProps = paths[paths.length - 1];
                 if (

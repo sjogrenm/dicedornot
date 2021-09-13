@@ -4,10 +4,7 @@ import type * as I from './Internal.js';
 import { cellEq } from './Internal.js';
 import he from 'he';
 import { ensureKeyedList, ensureList, translateStringNumberList } from '../replay-utils.js';
-import { all, first } from 'underscore';
-import { distance } from 'chroma-js';
-import type { replay } from '../stores.js';
-import type {DeepReadonly} from "ts-essentials";
+import type {DeepReadonly, DeepWritable} from "ts-essentials";
 
 function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
     if (v === undefined) {
@@ -18,13 +15,13 @@ function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
 
 class Replay {
     constructor(
-        public unhandledSteps: B.ReplayStep[],
+        public unhandledSteps: DeepReadonly<DeepReadonly<B.ReplayStep>>[],
         public teams: I.ByTeam<Team> = { home: new Team(), away: new Team() },
-        public stadium: I.Replay['stadium'] = {name: "N/A", type: ""},
+        public stadium: DeepWritable<I.Replay['stadium']> = {name: "N/A", type: ""},
         public drives: Drive[] = [],
         private foundUnhandledStep = false,
         public finalScore: I.ByTeam<number> = { home: 0, away: 0 },
-        public metadata: I.Replay['metadata'] = {datePlayed: new Date()},
+        public metadata: DeepWritable<I.Replay['metadata']> = {datePlayed: new Date()},
         public gameLength: number = 0,
         public fans: I.ByTeam<I.Roll> = { home: {dice: [], total: 0}, away: {dice: [], total: 0} },
         public initialWeather: WEATHER = WEATHER.Nice,
@@ -90,7 +87,7 @@ class Replay {
         }
     }
 
-    captureCheckpoint(boardState: B.BoardState) {
+    captureCheckpoint(boardState: DeepReadonly<B.BoardState>) {
         const checkpoint = {
             playerStates: new Map(),
             boardState,
@@ -103,13 +100,13 @@ class Replay {
         return checkpoint;
     }
 
-    handleGameFinishedStep(step: B.GameFinishedStep) {
+    handleGameFinishedStep(step: DeepReadonly<B.GameFinishedStep>) {
         this.finalScore.home = step.RulesEventGameFinished.MatchResult.Row.HomeScore || 0;
         this.finalScore.away = step.RulesEventGameFinished.MatchResult.Row.AwayScore || 0;
         this.metadata.datePlayed = new Date(step.RulesEventGameFinished.MatchResult.Row.Finished);
     }
 
-    handleAddInducementStep(step: B.AddInducementStep) {
+    handleAddInducementStep(step: DeepReadonly<B.AddInducementStep>) {
         if ('RulesEventAddMercenary' in step) {
             // We can pull mercenaries from board state.
             for (const merc of ensureList(step.RulesEventAddMercenary)) {
@@ -119,7 +116,7 @@ class Replay {
                 const pitchPlayers = ensureKeyedList('PlayerState', step.BoardState.ListTeams.TeamState[side == 'home' ? 0 : 1].ListPitchPlayers);
                 const pitchPlayer = pitchPlayers.find(p => p.Id = merc.MercenaryId);
                 assert(pitchPlayer != undefined);
-                const player: I.Player = convertPlayerDefinition(pitchPlayer);
+                const player: DeepWritable<I.Player> = convertPlayerDefinition(pitchPlayer);
                 team.players.set(player.id.number, player)
                 team.inducements.mercenaries.set(player.id.number, player);
             }
@@ -141,7 +138,7 @@ class Replay {
         }
     }
 
-    handleAddInducementSkillStep(step: B.AddInducementSkillStep) {
+    handleAddInducementSkillStep(step: DeepReadonly<B.AddInducementSkillStep>) {
         const player = step.RulesEventAddInducementSkill.MercenaryId;
         const side = convertSide(B.playerIdSide(player));
         const skill = step.RulesEventAddInducementSkill.SkillId;
@@ -155,7 +152,7 @@ class Replay {
         team.players.get(player)!.skills.push(skill);
     }
 
-    handleGameInfo(step: B.GameInfoStep) {
+    handleGameInfo(step: DeepReadonly<B.GameInfoStep>) {
         this.stadium.name = he.decode(step.GameInfos.NameStadium.toString());
         this.stadium.type = step.GameInfos.Stadium;
         this.stadium.enhancement = step.GameInfos.StructStadium;
@@ -176,7 +173,7 @@ class Replay {
         this.metadata.league = step.GameInfos.RowLeague.Name && he.decode(step.GameInfos.RowLeague.Name.toString());
     }
 
-    handleSetUpConfiguration(step: B.SetUpConfigurationStep) {
+    handleSetUpConfiguration(step: DeepReadonly<B.SetUpConfigurationStep>) {
         const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam || SIDE.home);
         const currentDrive = this.lastDrive();
         const currentSetup = currentDrive.setups[side];
@@ -190,7 +187,7 @@ class Replay {
         currentSetup.push(nextSetup);
     }
 
-    handleSetUpAction(step: B.SetUpActionStep) {
+    handleSetUpAction(step: DeepReadonly<B.SetUpActionStep>) {
         const fromCell = convertCell(step.RulesEventSetUpAction.PlayerPosition);
         const toCell = convertCell(step.RulesEventSetUpAction.NewPosition);
         const alsoMove = step.RulesEventSetUpAction.Substitute;
@@ -218,7 +215,7 @@ class Replay {
         }
     }
 
-    handleGameTurnStep(step: B.GameTurnStep) {
+    handleGameTurnStep(step: DeepReadonly<B.GameTurnStep>) {
         if (
             step.RulesEventKickOffChoice
         ) {
@@ -287,7 +284,7 @@ class Replay {
         }
     }
 
-    cantHandle(step: B.ReplayStep, reason?: string) {
+    cantHandle(step: DeepReadonly<B.ReplayStep>, reason?: string) {
         console.log("Couldn't handle step", { step, reason });
         this.unhandledSteps.unshift(step);
         this.foundUnhandledStep = true;
@@ -308,7 +305,7 @@ function assert(condition: any, msg?: string): asserts condition {
     }
 }
 
-function actionConverter(replay: Replay, step: B.GameTurnStep, action: B.RulesEventBoardAction): undefined | (() => void) {
+function actionConverter(replay: Replay, step: DeepReadonly<B.GameTurnStep>, action: DeepReadonly<B.RulesEventBoardAction>): undefined | (() => void) {
     if ('ActionType' in action) {
         switch (action.ActionType) {
             case ACTION_TYPE.FansNumber:
@@ -331,7 +328,7 @@ function actionConverter(replay: Replay, step: B.GameTurnStep, action: B.RulesEv
     }
 }
 
-function convertFansNumber(replay: Replay, action: B.FansAction): void {
+function convertFansNumber(replay: Replay, action: DeepReadonly<B.FansAction>): void {
     for (const fanRoll of ensureKeyedList("BoardActionResult", action.Results)) {
         const team = convertSide(fanRoll.CoachChoices.ConcernedTeam || 0);
         const dice = translateStringNumberList(fanRoll.CoachChoices.ListDices);
@@ -342,7 +339,7 @@ function convertFansNumber(replay: Replay, action: B.FansAction): void {
     }
 };
 
-function convertInitialWeather(replay: Replay, action: B.WeatherAction): void {
+function convertInitialWeather(replay: Replay, action: DeepReadonly<B.WeatherAction>): void {
     const result = ensureKeyedList("BoardActionResult", action.Results)[0];
     const dice = translateStringNumberList(result.CoachChoices.ListDices);
     replay.initialWeather = weatherTable(dice[0] + dice[1]);
@@ -431,7 +428,7 @@ function convertTakeDamage(replay: Replay, action: B.TakeDamageAction): void {
     }
 }
 
-function convertActivatePlayer(replay: Replay, step: B.GameTurnStep, action: B.ActivatePlayerAction) {
+function convertActivatePlayer(replay: Replay, step: DeepReadonly<B.GameTurnStep>, action: B.ActivatePlayerAction) {
     const drive = replay.lastDrive();
     let turn = last(drive.turns);
     const playerNumber = action.PlayerId || 0;
@@ -453,8 +450,8 @@ function convertActivatePlayer(replay: Replay, step: B.GameTurnStep, action: B.A
 
 class Team {
     constructor(
-        public players: Map<I.PlayerNumber, I.Player> = new Map(),
-        public inducements: I.Inducements = { mercenaries: new Map() },
+        public players: Map<I.PlayerNumber, DeepWritable<I.Player>> = new Map(),
+        public inducements: DeepWritable<I.Inducements> = { mercenaries: new Map() },
         public race: RACE_ID = RACE_ID.Human,
         public coach: string = "N/A",
         public name: string = "N/A",
@@ -516,8 +513,8 @@ export function convertCell(c: B.Cell): I.Cell {
     }
 }
 
-export function convertReplay(incoming: B.Replay): I.Replay {
-    const outgoing: Replay = new Replay(incoming.ReplayStep);
+export function convertReplay(incoming: DeepReadonly<B.Replay>): DeepReadonly<I.Replay> {
+    const outgoing: Replay = new Replay([...incoming.ReplayStep]);
     outgoing.metadata.filename = incoming.filename;
     outgoing.metadata.url = incoming.url;
     outgoing.processSteps();
@@ -531,7 +528,7 @@ function badResult(result: B.BaseResult) {
 }
 
 function badStep(step: never): never
-function badStep(step: B.ReplayStep) {
+function badStep(step: DeepReadonly<B.ReplayStep>) {
     console.error({ msg: 'Unhandled step', step });
 }
 
@@ -551,7 +548,7 @@ export function playerNumberToSide(n: I.PlayerNumber): I.Side {
     return n < 30 ? 'home' : 'away';
 }
 
-export function convertPlayerDefinition(p: B.PitchPlayer): I.Player {
+export function convertPlayerDefinition(p: B.PitchPlayer): DeepWritable<I.Player> {
     return {
         id: {
             number: p.Id,

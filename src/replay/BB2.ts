@@ -1,5 +1,6 @@
 
 import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER, PLAYER_TYPE, MODIFIER_TYPE } from "../constants.js";
+import type {DeepReadonly} from "ts-essentials";
 
 export enum Bool {
     false = 0,
@@ -11,8 +12,8 @@ export type Cell = {
     y?: number;
 } | "";
 
-export type MList<T> = T | T[];
-type UnMList<T> = T extends any[] ? T[number] : T;
+export type MList<T> = DeepReadonly<T> | DeepReadonly<T[]>;
+type UnMList<T> = T extends DeepReadonly<any[]> ? T[number] : T;
 export type KeyedMList<K extends string, T> = "" | { [key in K]: MList<T> };
 
 export interface Inducement {
@@ -121,11 +122,11 @@ export interface TeamState {
 }
 
 export interface SkillInfo {
-    SkillId: SKILL,
-    PlayerId: PlayerId,
+    readonly SkillId: SKILL,
+    readonly PlayerId: PlayerId,
 }
 
-export interface BoardState {
+export type BoardState = DeepReadonly<{
     CampaignSpecifics: {
         ListDangerousCells: "" | {}[],
         ListPoisonnedPlayers: "" | {}[],
@@ -143,7 +144,7 @@ export interface BoardState {
     Ball: { Cell: Cell, Destination: Cell, IsHeld?: 1 },
     KickOffTeam?: SIDE | -1,
     StadiumStructure?: string,
-};
+}>;
 
 export type PlayerId = number;
 
@@ -215,12 +216,12 @@ export interface GameInfos {
         TurnDuration?: number, //>2</TurnDuration>
     }
 }
-export interface Replay {
+export type Replay = DeepReadonly<{
     ClientVersion: string,
     filename?: string,
     url?: string,
     ReplayStep: ReplayStep[],
-}
+}>;
 
 export interface InducementPlayerData {
     Ma: number,

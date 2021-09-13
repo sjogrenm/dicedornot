@@ -3,6 +3,7 @@ import { linearReplay } from "./replay-utils.js";
 import type { RACE_ID } from "./constants.js";
 import type * as BB2 from "./replay/BB2.js";
 import type * as Internal from "./replay/Internal.js";
+import type {DeepReadonly} from "ts-essentials";
 
 interface TeamDetails {
   coachName: string,
@@ -26,7 +27,7 @@ export interface ProcessedReplay {
   version: number,
 }
 
-export function processReplay(replay: Internal.Replay): ProcessedReplay {
+export function processReplay(replay: DeepReadonly<Internal.Replay>): ProcessedReplay {
   //console.log("replay.processReplay");
   //console.log(data);
 

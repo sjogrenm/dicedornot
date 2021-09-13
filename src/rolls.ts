@@ -43,6 +43,7 @@ import { convertCell } from './replay/BB2toInternal.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
+import type {DeepReadonly} from "ts-essentials";
 
 export interface DataPoint {
   iteration: number,
@@ -257,7 +258,7 @@ class BoardState {
 interface ActionArgs {
   initialBoardState: BoardState,
   finalBoardState: BoardState,
-  skillsInEffect: BB2.SkillInfo[],
+  skillsInEffect: DeepReadonly<BB2.SkillInfo[]>,
   activePlayer: Player | undefined,
   ignore: boolean,
   actionType: ACTION_TYPE,
@@ -312,7 +313,7 @@ export class Action {
   resultType?: RESULT_TYPE;
   actionIndex?: number;
   actions?: Action[];
-  skillsInEffect: BB2.SkillInfo[];
+  skillsInEffect: readonly BB2.SkillInfo[];
   startIndex: number;
   subResultType?: SUB_RESULT_TYPE;
 
@@ -1141,14 +1142,14 @@ export class BlockRoll extends Roll {
     assert('resultPosition' in xml);
     let {result} = xml.resultPosition;
     // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
-    if (result.ResultType != RESULT_TYPE.FailTeamRR) {
+    if ('ResultType' in result && result.ResultType != RESULT_TYPE.FailTeamRR) {
       return true;
     }
-    if (result.SubResultType == SUB_RESULT_TYPE.Fend) {
+    if ('SubResultType' in result && result.SubResultType == SUB_RESULT_TYPE.Fend) {
       // Opponent picking whether to activate fend
       return true;
     }
-    if (result.SubResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
+    if ('SubResultType' in result && result.SubResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
       // Opponent picking whether to activate tackle
       return true;
     }
@@ -1624,7 +1625,7 @@ class ArmorRoll extends PlayerD6Roll {
 
   static argsFromXml(xml: ActionXML): ArmorRollArgs {
     assert('resultPosition' in xml);
-    let {result, action, resultIdx, step}= xml.resultPosition;
+    let {result, action, resultIdx, step} = xml.resultPosition;
     const args = super.argsFromXml(xml);
 
     let canPileOn = false, isPileOn = false, isFoul = false, foulingPlayer, pilingOnPlayer, damageBonusActive = false;
@@ -1641,7 +1642,7 @@ class ArmorRoll extends PlayerD6Roll {
       isPileOn = false;
     } else {
       var previousResult =
-        action.Results && ensureList(action.Results.BoardActionResult)[resultIdx - 1];
+        action.Results && ensureKeyedList("BoardActionResult", action.Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[resultIdx - 1];
       if (previousResult && 'RollType' in previousResult) {
         isPileOn = previousResult.RollType == 59;
         if (isPileOn) {
@@ -1843,7 +1844,7 @@ class DodgeRoll extends PlayerD6Roll {
       // pull them from the later roll
       let nextStep = xml.replay.unhandledSteps[stepIdx + 1];
       let nextActions = 'RulesEventBoardAction' in nextStep && nextStep.RulesEventBoardAction ? ensureList(nextStep.RulesEventBoardAction) : [];
-      let nextResult = ensureList(nextActions[0].Results && nextActions[0].Results.BoardActionResult)[0] as BB2.DodgeResult;
+      let nextResult = ensureKeyedList("BoardActionResult", nextActions[0].Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[0] as DeepReadonly<BB2.DodgeResult>;
       args.target = nextResult.Requirement || 0;
       args.modifier = (nextResult.ListModifiers == "" ? [] : ensureList(nextResult.ListModifiers.DiceModifier || []))
         .map((modifier) => modifier.Value || 0)

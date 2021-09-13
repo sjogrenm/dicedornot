@@ -58,6 +58,7 @@
     convertPlayerState,
   } from "../replay/BB2toInternal.js";
   import _ from "underscore";
+  import type { DeepReadonly } from "ts-essentials";
 
   export let playing = false;
 
@@ -873,21 +874,21 @@
     weather = position.replay.initialWeather;
   }
 
-  async function handleDriveStart(position: {
+  async function handleDriveStart(position: DeepReadonly<{
     type: "driveStart";
     driveIdx: number;
     drive: Internal.Drive;
-  }) {
+  }>) {
     resetToCheckpoint(position.drive.checkpoint);
     teams.home.score = position.drive.initialScore.home;
     teams.away.score = position.drive.initialScore.away;
   }
 
-  async function handleWakeupRoll(position: {
+  async function handleWakeupRoll(position: DeepReadonly<{
     type: "wakeupRoll";
     roll: Internal.WakeupRoll;
     wakeupSide: Internal.Side;
-  }) {
+  }>) {
     if (position.roll.roll[0] >= position.roll.target) {
       let player = position.roll.player;
       let dugout =
@@ -898,11 +899,11 @@
     }
   }
 
-  async function handleSetupAction(position: {
+  async function handleSetupAction(position: DeepReadonly<{
     type: "setupAction";
     setupSide: Internal.Side;
     action: Internal.SetupAction;
-  }) {
+  }>) {
     validateCheckpoint(position.action.checkpoint);
     for (let [player, cell] of position.action.movedPlayers) {
       let oldCell =

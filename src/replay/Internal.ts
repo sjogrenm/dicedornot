@@ -22,7 +22,7 @@ export interface ModifiedD6SumRoll {
     target: number,
 }
 
-export interface Replay {
+interface _Replay {
     teams: ByTeam<Team>,
     stadium: {
         name: string,
@@ -44,6 +44,8 @@ export interface Replay {
     coinFlipWinner: Side,
     initialKickingTeam: Side,
 }
+
+export type Replay = DeepReadonly<_Replay>;
 
 export interface Team {
     players: Map<PlayerNumber, Player>,
@@ -88,7 +90,7 @@ export interface Damage {
     raiseDead?: boolean,
 }
 
-export interface Player {
+export type Player = DeepReadonly<{
     id: PlayerId,
     skills: SKILL[],
     type: PLAYER_TYPE,
@@ -100,7 +102,7 @@ export interface Player {
         av: number,
     }
     casualties?: number[],
-}
+}>
 
 export interface PlayerState {
     pitchCell?: Cell,

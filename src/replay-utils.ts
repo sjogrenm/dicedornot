@@ -2,18 +2,19 @@ import type * as BB2 from './replay/BB2.js';
 import * as Internal from "./replay/Internal.js";
 import parser from 'fast-xml-parser';
 import he from 'he';
+import type {DeepReadonly} from "ts-essentials";
 
-export function ensureList<T>(objOrList: BB2.MList<T> | undefined): T[] {
+export function ensureList<T>(objOrList: BB2.MList<T> | undefined): DeepReadonly<T[]> {
   if (objOrList && objOrList instanceof Array) {
     return objOrList;
   } else if (objOrList) {
-    return [objOrList as T];
+    return [objOrList as DeepReadonly<T>];
   } else {
     return [];
   }
 }
 
-export function ensureKeyedList<K extends string, T>(key: K, obj: BB2.KeyedMList<K, T>): T[] {
+export function ensureKeyedList<K extends string, T>(key: K, obj: BB2.KeyedMList<K, T>): DeepReadonly<T[]> {
   if (obj == "") {
     return [];
   }
@@ -66,7 +67,7 @@ export function nextState(replayStep: BB2.ReplayStep, subStep: REPLAY_SUB_STEP) 
   return REPLAY_SUB_STEP.NextReplayStep;
 }
 
-export type ReplayPosition = GameOver | BB2ReplayPosition | InternalReplayPosition;
+export type ReplayPosition = DeepReadonly<GameOver | BB2ReplayPosition | InternalReplayPosition>;
 
 export type GameOver = { end: true }
 
@@ -173,7 +174,7 @@ export interface ReplayPreview {
   end: number | undefined,
 }
 
-export function linearReplay(replay: Internal.Replay & { _linearReplayCache?: ReplayPosition[] }): ReplayPosition[] {
+export function linearReplay(replay: DeepReadonly<Internal.Replay> & { _linearReplayCache?: ReplayPosition[] }): ReplayPosition[] {
   if (!replay._linearReplayCache) {
     replay._linearReplayCache = new Array(..._linearReplay(replay));
     console.log("Linear Replay Cache", { linear: replay._linearReplayCache });
@@ -224,7 +225,7 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
       };
     }
     if ('RulesEventBoardAction' in step) {
-      let actions: BB2.RulesEventBoardAction[] = ensureList(step.RulesEventBoardAction);
+      let actions: DeepReadonly<BB2.RulesEventBoardAction[]> = ensureList(step.RulesEventBoardAction);
       for (const [actionIdx, action] of actions.entries()) {
         if (!action.Results) {
           continue;
