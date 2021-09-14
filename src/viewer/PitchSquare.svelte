@@ -1,21 +1,21 @@
 <script lang="ts">
   import {afterUpdate, onMount} from "svelte";
-  import { selectedPlayer, hoveredPlayer } from "../stores.js";
+  import { selectedPlayer, hoveredPlayer, playerStates } from "../stores.js";
   import Ball from "./Ball.svelte";
   import Cell from "./Cell.svelte";
   import DiceResult from "./DiceResult.svelte";
   import Foul from "./Foul.svelte";
   import Player from "./Player.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import type { PitchCellProps } from "./types.js";
+  import type { BallProps, PitchCellProps } from "./types.js";
   export let
     row: number,
     column: number,
     homeLogo: string,
     awayLogo: string,
-    player: PitchCellProps["player"] = undefined,
+    player: number | undefined = undefined,
     cell: PitchCellProps["cell"] = undefined,
-    ball: PitchCellProps["ball"] = undefined,
+    ball: BallProps | undefined = undefined,
     dice: PitchCellProps["dice"] = undefined,
     foul: PitchCellProps["foul"] = false;
     let id: string;
@@ -25,7 +25,7 @@
   }
 
 	// afterUpdate(() => {
-	// 	console.debug(`Updated PitchSquare ${id}`);
+	// 	console.debug(`Updated PitchSquare ${id}`, player, cell);
 	// });
 
 	// onMount(() => {
@@ -65,7 +65,7 @@
     <Foul />
   {/if}
   {#if ball}
-    <Ball {...ball}/>
+    <Ball held={ball.held}/>
   {/if}
 </div>
 

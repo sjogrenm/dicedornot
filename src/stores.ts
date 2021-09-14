@@ -1,8 +1,8 @@
 import { writable, derived } from 'svelte/store';
 import type { ReplayPreview } from './replay-utils';
-import type {ProcessedReplay} from './replay.js';
-import type {PlayerDefinitions, PlayerProperties} from './viewer/types.js';
-import type {PlayerStates} from './replay/Internal.js';
+import type { ProcessedReplay } from './replay.js';
+import type { PlayerDefinitions, PlayerProperties } from './viewer/types.js';
+import type { PlayerStates } from './replay/Internal.js';
 import { sineInOut } from "svelte/easing";
 import { crossfade } from "svelte/transition";
 
@@ -18,25 +18,25 @@ if (stParam != undefined) {
 export const timing = writable<number>(500);
 export const transition = derived(timing, $timing => {
   let [send, receive] = crossfade({
-      duration: $timing * 0.8,
-      easing: sineInOut,
+    duration: $timing * 0.8,
+    easing: sineInOut,
 
-      fallback(node) {
-        const style = getComputedStyle(node);
-        const transform = style.transform === "none" ? "" : style.transform;
+    fallback(node) {
+      const style = getComputedStyle(node);
+      const transform = style.transform === "none" ? "" : style.transform;
 
-        return {
-          duration: $timing * 0.8,
-          easing: sineInOut,
-          css: (t) => `
+      return {
+        duration: $timing * 0.8,
+        easing: sineInOut,
+        css: (t) => `
             transform: ${transform} scale(${t});
             opacity: ${t}
           `,
-        };
-      },
-    });
-    return {send, receive};
+      };
+    },
   });
+  return { send, receive };
+});
 export const selectedPlayer = writable<number | undefined>(undefined);
 export const hoveredPlayer = writable<number | undefined>(undefined);
 export const replay = writable<ProcessedReplay | undefined>(undefined);

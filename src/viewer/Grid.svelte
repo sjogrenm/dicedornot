@@ -1,6 +1,11 @@
 <script lang="ts">
+  import {afterUpdate, onMount} from "svelte";
   import FixedRatio from "./FixedRatio.svelte";
   export let width: number, height: number;
+
+	// afterUpdate(() => {
+	// 	console.debug(`Updated Grid`);
+	// });
 </script>
 
 <FixedRatio {width} {height}>

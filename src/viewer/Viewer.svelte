@@ -6,6 +6,7 @@
     Preview,
     WakeConditions,
     Dugout,
+    BallProps,
   } from "./types.js";
   import { onMount, tick } from "svelte";
   import { Row, Col, ButtonToolbar, Button, Icon, Alert } from "sveltestrap";
@@ -57,8 +58,10 @@
     convertPlayerDefinition,
     convertPlayerState,
   } from "../replay/BB2toInternal.js";
+  import {cellEq} from "../replay/Internal.js";
   import _ from "underscore";
   import type { DeepReadonly } from "ts-essentials";
+import { entries } from "idb-keyval";
 
   export let playing = false;
 
@@ -66,6 +69,7 @@
     races: string[] = [],
     teams: Internal.ByTeam<Team> = { home: emptyTeam(), away: emptyTeam() },
     pitch: Map<string, PitchCellProps> = new Map(),
+    ball: BallProps,
     blitzerId: Internal.PlayerNumber,
     banner: string | undefined = undefined,
     weather = WEATHER.Nice,
@@ -157,6 +161,16 @@
     return () => console.log("destroyed");
   });
 
+  function playerPositions(playerStates) {
+    return Object.fromEntries(
+      Array.from(playerStates.entries()).filter(([id, state]) =>
+        (state.pitchCell != undefined)
+      ).map(([id, state]) =>
+        [`${state?.pitchCell?.x}-${state?.pitchCell?.y}`, id]
+      )
+    );
+  }
+
   async function resetFromBoardState(boardState: BB2.BoardState) {
     teams.home = processTeam(
       SIDE.home,
@@ -232,7 +246,7 @@
   }
 
   function offPitch(cell: Internal.Cell): boolean {
-    return cell.x == -1 && cell.y == -1
+    return cell.x == -1 && cell.y == -1;
   }
 
   function setPitchSquare(cell: Internal.Cell): PitchCellProps {
@@ -249,7 +263,6 @@
     return square;
   }
   function setPlayerState(id: Internal.PlayerNumber): Internal.PlayerState {
-    $playerStates = $playerStates;
     let state = $playerStates.get(id);
     if (!state) {
       state = {
@@ -262,6 +275,7 @@
       };
       $playerStates.set(id, state);
     }
+    $playerStates = new Map($playerStates.entries());
     return state;
   }
 
@@ -276,11 +290,6 @@
   }
 
   function setPlayerStates(boardState: BB2.BoardState) {
-    Array.from(pitch.values()).forEach((square) => {
-      if (square.player != undefined) {
-        delete square.player;
-      }
-    });
     $playerStates = new Map();
     $playerDefs = new Map();
     boardState.ListTeams.TeamState.map((teamState, side) => {
@@ -304,7 +313,6 @@
     let situation = p.Situation || SITUATION.Active;
     switch (situation) {
       case SITUATION.Active:
-        setPitchSquare(convertCell(p.Cell)).player = p.Id;
         break;
       default:
         (team == SIDE.home ? teams.home : teams.away).dugout[
@@ -312,6 +320,8 @@
         ].push(p.Id);
         break;
     }
+    $playerStates = new Map($playerStates.entries());
+    $playerDefs = $playerDefs;
   }
 
   function setBallPosition(boardState: BB2.BoardState) {
@@ -321,8 +331,9 @@
     });
 
     if (x != -1 && y != -1) {
-      setPitchSquare({ x, y }).ball = {
+      ball = {
         held: boardState.Ball.IsHeld == 1,
+        position: {x, y},
       };
     }
   }
@@ -514,16 +525,6 @@
     } else {
       // TODO: Game Over
     }
-    let playerIds = Array.from(pitch.values())
-      .map((cell: PitchCellProps) => cell.player)
-      .filter((number) => number != undefined);
-    if (playerIds.length != new Set(playerIds).size) {
-      console.error(
-        "Player numbers on the pitch are non-unique",
-        playerIds,
-        current
-      );
-    }
     if (updateUrl) {
       if (!skipping) {
         replayCurrent.set(current);
@@ -557,7 +558,7 @@
     }
     skipping = false;
     pitch = pitch;
-    $playerStates = $playerStates;
+    $playerStates = new Map($playerStates.entries());
     await step();
     if (updateUrl) {
       replayCurrent.set(current);
@@ -777,10 +778,9 @@
       square.dice = undefined;
       square.cell = undefined;
       square.foul = false;
-      if (square.player) {
-        setPlayerProps(square.player).moving = false;
-      }
     });
+    $playerProperties.forEach(props => props.moving = false);
+    $playerProperties = $playerProperties;
     pitch = pitch;
   }
 
@@ -806,43 +806,18 @@
 
   function validateCheckpoint(checkpoint: Internal.Checkpoint) {
     checkpoint.playerStates.forEach((state, id) => {
-      if (state.pitchCell) {
-        if (offPitch(state.pitchCell)) {
-          console.assert(
-            Array.from(pitch.values()).find(state => state.player == id) == undefined,
-            "Player unexpectedly on pitch",
-            {current, id, pitch, state}
-          )
-        } else {
-          let pitchSquare = setPitchSquare(state.pitchCell);
-          console.assert(
-            pitchSquare.player == id,
-            "Player in pitchSquare didn't match player in checkpoint",
-            {current, id, pitch, state}
-          );
-        }
-      }
       console.assert(
         _.isEqual($playerStates.get(id), state),
         "Player state didn't match checkpoint",
-        {current, id, playerStates: $playerStates, checkpointState: state}
+        { current, id, playerStates: $playerStates, checkpointState: state }
       );
     });
   }
 
   function resetToCheckpoint(checkpoint: Internal.Checkpoint) {
-    pitch.forEach((cell) => {
-      if (cell.player != undefined) {
-        delete cell.player;
-      }
-    });
-    teams.home.dugout = {cas: [], ko: [], reserve: []};
-    teams.away.dugout = {cas: [], ko: [], reserve: []};
+    teams.home.dugout = { cas: [], ko: [], reserve: [] };
+    teams.away.dugout = { cas: [], ko: [], reserve: [] };
     checkpoint.playerStates.forEach((state, id) => {
-      if (state.pitchCell) {
-        let pitchSquare = setPitchSquare(state.pitchCell);
-        pitchSquare.player = id;
-      }
       $playerStates.set(id, {
         ...state,
         usedSkills: [...state.usedSkills],
@@ -863,7 +838,7 @@
       }
     });
     teams = teams;
-    $playerStates = $playerStates;
+    $playerStates = new Map($playerStates.entries());
     pitch = pitch;
   }
 
@@ -874,21 +849,25 @@
     weather = position.replay.initialWeather;
   }
 
-  async function handleDriveStart(position: DeepReadonly<{
-    type: "driveStart";
-    driveIdx: number;
-    drive: Internal.Drive;
-  }>) {
+  async function handleDriveStart(
+    position: DeepReadonly<{
+      type: "driveStart";
+      driveIdx: number;
+      drive: Internal.Drive;
+    }>
+  ) {
     resetToCheckpoint(position.drive.checkpoint);
     teams.home.score = position.drive.initialScore.home;
     teams.away.score = position.drive.initialScore.away;
   }
 
-  async function handleWakeupRoll(position: DeepReadonly<{
-    type: "wakeupRoll";
-    roll: Internal.WakeupRoll;
-    wakeupSide: Internal.Side;
-  }>) {
+  async function handleWakeupRoll(
+    position: DeepReadonly<{
+      type: "wakeupRoll";
+      roll: Internal.WakeupRoll;
+      wakeupSide: Internal.Side;
+    }>
+  ) {
     if (position.roll.roll[0] >= position.roll.target) {
       let player = position.roll.player;
       let dugout =
@@ -899,22 +878,15 @@
     }
   }
 
-  async function handleSetupAction(position: DeepReadonly<{
-    type: "setupAction";
-    setupSide: Internal.Side;
-    action: Internal.SetupAction;
-  }>) {
+  async function handleSetupAction(
+    position: DeepReadonly<{
+      type: "setupAction";
+      setupSide: Internal.Side;
+      action: Internal.SetupAction;
+    }>
+  ) {
     validateCheckpoint(position.action.checkpoint);
     for (let [player, cell] of position.action.movedPlayers) {
-      let oldCell =
-        position.action.checkpoint.playerStates.get(player)?.pitchCell;
-      if (oldCell)  {
-        const oldSquare = setPitchSquare(oldCell);
-        if (oldSquare.player == player) {
-          delete oldSquare.player;
-        }
-      }
-      setPitchSquare(cell).player = player;
       const playerState = setPlayerState(player);
       playerState.pitchCell = cell;
       if (offPitch(cell)) {
@@ -922,9 +894,13 @@
         teams[playerNumberToSide(player)].dugout.reserve.push(player);
       } else {
         playerState.situation = SITUATION.Active;
-        const reserveIndex = teams[playerNumberToSide(player)].dugout.reserve.indexOf(player);
+        const reserveIndex =
+          teams[playerNumberToSide(player)].dugout.reserve.indexOf(player);
         if (reserveIndex > -1) {
-          teams[playerNumberToSide(player)].dugout.reserve.splice(reserveIndex, 1);
+          teams[playerNumberToSide(player)].dugout.reserve.splice(
+            reserveIndex,
+            1
+          );
         }
       }
     }
@@ -941,33 +917,29 @@
 
   function handleActivate(action: BB2.ActivatePlayerAction) {
     clearTemporaryState();
-    setPlayerState(action.PlayerId || 0).status = STATUS.standing;
+    const playerState = setPlayerState(action.PlayerId || 0)
+    playerState.status = STATUS.standing;
     pitch.forEach((square) => {
       if (square.cell) {
         square.cell.active = false;
       }
-      if (square.player) {
-        if (square.player == action.PlayerId) {
-          if (!square.cell) {
-            square.cell = {
-              active: false,
-              target: false,
-              pushbackChoice: false,
-              moved: false,
-            };
-          }
-          square.cell.active = true;
-        }
-      }
     });
+    if (playerState.pitchCell) {
+      const pitchSquare = setPitchSquare(playerState.pitchCell);
+      if (!pitchSquare.cell) {
+        pitchSquare.cell = {active: true, target: false, pushbackChoice: false, moved: false};
+      } else {
+        pitchSquare.cell.active = true;
+      }
+    }
     pitch = pitch;
   }
 
   function handleScatter(action: BB2.ScatterAction) {
-    setPitchSquare(convertCell(action.Order.CellFrom)).ball = undefined;
     let to = convertCell(action.Order.CellTo.Cell);
-    setPitchSquare(to).ball = {
+    ball = {
       held: false,
+      position: to,
     };
   }
 
@@ -984,9 +956,8 @@
       moved: false,
     }).active = true;
 
-    let to = convertCell(action.Order.CellTo.Cell);
-    let toSquare = setPitchSquare(to);
-    let toPlayer = toSquare.player;
+    const to = convertCell(action.Order.CellTo.Cell);
+    let [toPlayer, _] = Array.from($playerStates.entries()).find(([id, state]) => state.pitchCell && cellEq(state.pitchCell, to)) || [undefined, undefined];
 
     Object.values(pitch).forEach((square) => {
       square.dice = undefined;
@@ -1032,14 +1003,11 @@
           toPlayer = lastChainPush;
         }
 
-        if (targetSquare.player) {
-          lastChainPush = targetSquare.player;
-        } else {
-          lastChainPush = undefined;
-        }
+        [lastChainPush, _] = Array.from($playerStates.entries()).find(([id, state]) => state.pitchCell && cellEq(state.pitchCell, pushTarget)) || [undefined, undefined];
 
-        targetSquare.player = toPlayer;
-        toSquare.player = undefined;
+        if (toPlayer) {
+          setPlayerState(toPlayer).pitchCell = pushTarget;
+        }
       } else {
         ensureKeyedList("Cell", result.CoachChoices.ListCells)
           .map(convertCell)
@@ -1061,7 +1029,7 @@
               let team = playerNumberToSide(toPlayer);
               let dugout = teams[team].dugout;
               dugout.reserve.push(toPlayer);
-              toSquare.player = undefined;
+              setPlayerState(toPlayer).pitchCell = undefined;
             }
           });
       }
@@ -1069,15 +1037,10 @@
     if ("RollType" in result && result.RollType === ROLL.FollowUp) {
       //follow up
       if (result.IsOrderCompleted) {
-        const from = convertCell(action.Order.CellFrom);
         const target = convertCell(
           ensureKeyedList("Cell", result.CoachChoices.ListCells)[0]
         );
-        if (from.x != target.x || from.y != target.y) {
-          const fromSquare = setPitchSquare(from);
-          setPitchSquare(target).player = fromSquare.player;
-          fromSquare.player = undefined;
-        }
+        setPlayerState(action.PlayerId || 0).pitchCell = target;
       }
     }
   }
@@ -1090,7 +1053,7 @@
     if (result.ResultType !== 0) return;
 
     Object.values(pitch).forEach((cell) => (cell["ball"] = undefined));
-    setPitchSquare(convertCell(action.Order.CellTo.Cell)).ball = { held: true };
+    ball = { held: true, position: convertCell(action.Order.CellTo.Cell) };
   }
 
   async function handleTurnover(endTurn: BB2.RulesEventEndTurn) {
@@ -1121,8 +1084,9 @@
   }
 
   function handleKickoff(action: BB2.KickoffAction) {
-    setPitchSquare(convertCell(action.Order.CellTo.Cell)).ball = {
+    ball = {
       held: false,
+      position: convertCell(action.Order.CellTo.Cell),
     };
   }
 
@@ -1130,17 +1094,20 @@
     action: BB2.MoveAction | BB2.LeapAction,
     result: BB2.ActionResult<BB2.MoveAction | BB2.LeapAction>
   ) {
-    let playerState = setPlayerState(action.PlayerId || 0);
-    let playerDef = $playerDefs.get(action.PlayerId || 0)!;
-    let playerProps = setPlayerProps(action.PlayerId || 0)!;
-    let squareFrom = setPitchSquare(convertCell(action.Order.CellFrom));
-    let squareTo = setPitchSquare(convertCell(action.Order.CellTo.Cell));
+    const player = action.PlayerId || 0;
+    let playerState = setPlayerState(player);
+    let playerDef = $playerDefs.get(player)!;
+    let playerProps = setPlayerProps(player)!;
+    let cellFrom = convertCell(action.Order.CellFrom);
+    let cellTo = convertCell(action.Order.CellTo.Cell);
+    let squareFrom = setPitchSquare(cellFrom);
+    let squareTo = setPitchSquare(cellTo);
 
     playerState.status = STATUS.standing;
     playerProps.moving = true;
-    if (result.IsOrderCompleted && squareTo != squareFrom) {
-      squareFrom.player = undefined;
-      squareTo.player = action.PlayerId;
+    playerState.pitchCell = cellTo;
+    if (ball.held && cellEq(cellFrom, ball.position)) {
+      ball.position = cellTo;
     }
 
     squareFrom.cell = squareFrom.cell || {
@@ -1193,6 +1160,8 @@
       squareFrom.ball = undefined;
       squareTo.ball = ball;
     }
+
+    $playerStates = new Map($playerStates.entries());
   }
 
   function handleActivationTest(
@@ -1208,26 +1177,24 @@
       Bloodlust = 50,
 
     */
-    let square = setPitchSquare(convertCell(action.Order.CellTo.Cell));
+    let player = action.PlayerId || 0;
 
-    if (square.player) {
-      if (result.ResultType === RESULT_TYPE.Passed) {
-        //success
-        setPlayerProps(square.player).stupidity = undefined;
-      } else {
-        //failure
-        const STUPID_TYPES: Record<
-          BB2.ActivationTestResult["RollType"] | BB2.LonerResult["RollType"],
-          string
-        > = {
-          [ROLL.BoneHead]: "BoneHeaded",
-          [ROLL.ReallyStupid]: "Stupid",
-          [ROLL.TakeRoot]: "Rooted",
-          [ROLL.WildAnimal]: "WildAnimal",
-          [ROLL.Loner]: "Loner",
-        };
-        setPlayerProps(square.player).stupidity = STUPID_TYPES[result.RollType];
-      }
+    if (result.ResultType === RESULT_TYPE.Passed) {
+      //success
+      setPlayerProps(player).stupidity = undefined;
+    } else {
+      //failure
+      const STUPID_TYPES: Record<
+        BB2.ActivationTestResult["RollType"] | BB2.LonerResult["RollType"],
+        string
+      > = {
+        [ROLL.BoneHead]: "BoneHeaded",
+        [ROLL.ReallyStupid]: "Stupid",
+        [ROLL.TakeRoot]: "Rooted",
+        [ROLL.WildAnimal]: "WildAnimal",
+        [ROLL.Loner]: "Loner",
+      };
+      setPlayerProps(player).stupidity = STUPID_TYPES[result.RollType];
     }
   }
 
@@ -1277,19 +1244,17 @@
   ) {
     if (!result.IsOrderCompleted) return;
 
-    let playerState = setPlayerState(action.PlayerId || 0),
-      playerDef = $playerDefs.get(action.PlayerId || 0)!,
-      playerSquareIndex: string | undefined;
+    const player = action.PlayerId || 0,
+      playerState = setPlayerState(player),
+      playerDef = $playerDefs.get(player)!,
+      playerSquareIndex = playerState.pitchCell && `${playerState.pitchCell.x}-${playerState.pitchCell.y}`;
 
     Object.entries(pitch).forEach(([idx, square]) => {
       if (square.cell) {
         square.cell.target = false;
       }
-      if (square.player && square.player == action.PlayerId) {
-        pitch = pitch; // Force svelte to update
-        playerSquareIndex = idx;
-      }
     });
+    pitch = pitch;
 
     switch (result.RollType) {
       case 3: //armor
@@ -1311,12 +1276,8 @@
           //knocked out
           let team = playerDef.id.side;
           let dugout = teams[team].dugout;
-          let square = pitch.get(playerSquareIndex) || {};
-          let curPlayer = square.player;
-          if (curPlayer) {
-            dugout.ko.push(curPlayer);
-          }
-          square.player = undefined;
+          dugout.ko.push(player);
+          playerState.pitchCell = undefined;
         }
         break;
       case 8: //casualty
@@ -1330,11 +1291,8 @@
             pitch.set(playerSquareIndex, square);
             pitch = pitch;
           }
-          let curPlayer = square.player;
-          if (curPlayer) {
-            dugout.cas.push(curPlayer);
-          }
-          square.player = undefined;
+          dugout.cas.push(player);
+          playerState.pitchCell = undefined;
           square.blood = {
             blood: Math.floor(4 * Math.random() + 1),
           };
@@ -1420,13 +1378,13 @@
     <div class="pitch-scroll">
       <FixedRatio width={1335} height={1061}>
         <div class="pitch">
-          <HomeDugout team={teams.home} {weather}/>
+          <HomeDugout team={teams.home} {weather} />
           {#if $selectedPlayer || $hoveredPlayer}
             <div class="selected" class:enlarged={!!$hoveredPlayer}>
               <SelectedPlayer player={$hoveredPlayer || $selectedPlayer || 0} />
             </div>
           {/if}
-          <Pitch {pitch} {teams} />
+          <Pitch {pitch} {teams} playerPositions={playerPositions($playerStates)} {ball} />
           <AwayDugout team={teams.away} />
         </div>
         {#if banner}

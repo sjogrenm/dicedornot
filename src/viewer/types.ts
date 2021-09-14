@@ -51,6 +51,7 @@ export interface Team {
 
 export interface BallProps {
     held: boolean;
+    position: Internal.Cell;
 }
 
 export interface CellProps {
@@ -68,7 +69,6 @@ export interface BloodProps {
 export interface PitchCellProps {
     cell?: CellProps;
     dice?: number[];
-    player?: Internal.PlayerNumber;
     ball?: BallProps;
     foul?: boolean;
     blood?: BloodProps;
