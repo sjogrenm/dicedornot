@@ -1,6 +1,6 @@
 <script lang="ts">
   import {afterUpdate, onMount} from "svelte";
-  import { selectedPlayer, hoveredPlayer, playerStates } from "../stores.js";
+  import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import Ball from "./Ball.svelte";
   import Cell from "./Cell.svelte";
   import DiceResult from "./DiceResult.svelte";

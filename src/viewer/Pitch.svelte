@@ -5,10 +5,9 @@
   import PitchSquare from "./PitchSquare.svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Overlay from "./Overlay.svelte";
-  import { replayPreview, playerStates } from "../stores.js";
+  import { replayPreview } from "../stores.js";
   import type { Team, Pitch, BallProps } from "./types.js";
   import type * as Internal from "../replay/Internal.js";
-  import {cellEq} from "../replay/Internal.js";
   export let teams: Internal.ByTeam<Team>,
     pitch: Pitch,
     playerPositions: Record<string, number>,
@@ -19,7 +18,6 @@
   $: {
     homeLogo = teams.home.logo;
     awayLogo = teams.away.logo;
-    // console.debug($playerStates, playerPositions);
   }
 
 	// afterUpdate(() => {

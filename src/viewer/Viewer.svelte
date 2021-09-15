@@ -61,7 +61,6 @@
   import {cellEq} from "../replay/Internal.js";
   import _ from "underscore";
   import type { DeepReadonly } from "ts-essentials";
-import { entries } from "idb-keyval";
 
   export let playing = false;
 
@@ -161,9 +160,9 @@ import { entries } from "idb-keyval";
     return () => console.log("destroyed");
   });
 
-  function playerPositions(playerStates) {
+  function playerPositions(playerStates: Internal.PlayerStates) {
     return Object.fromEntries(
-      Array.from(playerStates.entries()).filter(([id, state]) =>
+      Array.from(playerStates.entries()).filter(([_, state]) =>
         (state.pitchCell != undefined)
       ).map(([id, state]) =>
         [`${state?.pitchCell?.x}-${state?.pitchCell?.y}`, id]
@@ -957,7 +956,7 @@ import { entries } from "idb-keyval";
     }).active = true;
 
     const to = convertCell(action.Order.CellTo.Cell);
-    let [toPlayer, _] = Array.from($playerStates.entries()).find(([id, state]) => state.pitchCell && cellEq(state.pitchCell, to)) || [undefined, undefined];
+    let [toPlayer, _] = Array.from($playerStates.entries()).find(([_, state]) => state.pitchCell && cellEq(state.pitchCell, to)) || [undefined, undefined];
 
     Object.values(pitch).forEach((square) => {
       square.dice = undefined;
@@ -998,12 +997,12 @@ import { entries } from "idb-keyval";
         let pushTarget = convertCell(
           ensureKeyedList("Cell", result.CoachChoices.ListCells)[0]
         );
-        let targetSquare = setPitchSquare(pushTarget);
         if (lastChainPush) {
           toPlayer = lastChainPush;
         }
 
-        [lastChainPush, _] = Array.from($playerStates.entries()).find(([id, state]) => state.pitchCell && cellEq(state.pitchCell, pushTarget)) || [undefined, undefined];
+        [lastChainPush, _] = Array.from($playerStates.entries())
+          .find(([_, state]) => state.pitchCell && cellEq(state.pitchCell, pushTarget)) || [undefined, undefined];
 
         if (toPlayer) {
           setPlayerState(toPlayer).pitchCell = pushTarget;
@@ -1249,7 +1248,7 @@ import { entries } from "idb-keyval";
       playerDef = $playerDefs.get(player)!,
       playerSquareIndex = playerState.pitchCell && `${playerState.pitchCell.x}-${playerState.pitchCell.y}`;
 
-    Object.entries(pitch).forEach(([idx, square]) => {
+    Object.entries(pitch).forEach(([_, square]) => {
       if (square.cell) {
         square.cell.target = false;
       }
