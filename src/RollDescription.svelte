@@ -23,7 +23,11 @@
     {#if action instanceof BlockRoll}
       {action.actionName}: <PlayerPill player={action.activePlayer} />
       <Dice dice={action.dice.map(face => BLOCK_DIE[face])} uphill={action.isRedDice} separator="/" />
-      <PlayerPill player={action.defender} />
+      {#if action.defender}
+        <PlayerPill player={action.defender} />
+      {:else}
+        unknown defender
+      {/if}
     {:else if action instanceof SetupAction}
       Set Up
     {:else if action instanceof MoveAction}
