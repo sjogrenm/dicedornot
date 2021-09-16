@@ -2,7 +2,7 @@
   import { fade } from "svelte/transition";
   import { getPlayerSprite, SITUATION, STATUS } from "../constants.js";
   import type { PlayerNumber, Player, PlayerState } from "../replay/Internal.js";
-  import {playerDefs, playerStates, transition} from "../stores.js";
+  import {playerDefs, playerProperties, playerStates, transition} from "../stores.js";
 
   export let player: PlayerNumber,
     instant = false;
@@ -36,6 +36,7 @@
       blitzer: false,
       situation: SITUATION.Active,
     };
+    ({moving, blitz, stupidity} = $playerProperties.get(player) || {});
     ({ model, race } = getPlayerSprite(playerDef.id.number, playerDef.type));
     _done = done === undefined ? (!playerState.canAct) : done;
 

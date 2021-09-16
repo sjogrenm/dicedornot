@@ -81,8 +81,6 @@ export type PlayerProperties = Map<Internal.PlayerNumber, PlayerProps>;
 export interface PlayerProps {
     blitz?: boolean;
     moving?: boolean;
-    prone?: boolean;
-    stunned?: boolean;
     stupidity?: string;
 }
 
