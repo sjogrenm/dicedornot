@@ -274,7 +274,6 @@
         placePlayer(teamState, p, side)
       );
     });
-    console.log(playerStates, playerDefs);
     for (const team in [0, 1]) {
       let blitzer = boardState.ListTeams.TeamState[team].BlitzerId;
       if (blitzer >= 0) {

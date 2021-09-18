@@ -23,7 +23,6 @@
       }
       return groups;
     }, []);
-    console.log(actions, actionsByTurn);
   }
 </script>
 <div>

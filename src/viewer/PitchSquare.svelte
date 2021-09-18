@@ -26,7 +26,6 @@
 
   $: {
     id = `pitch-${row}-${column}`;
-    console.log(id, playerDef, playerState, playerProps);
   }
 
 	// afterUpdate(() => {
