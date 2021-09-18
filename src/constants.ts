@@ -1377,6 +1377,7 @@ export const STAR_NAMES: Record<string, string> = {
   PLAYER_NAMES_CHAMPION_NAIN: "Grim Ironjaw",
   PLAYER_NAMES_CHAMPION_FLINT_FALLBACK: "Flint Churnblade",
   PLAYER_NAMES_CHAMPION_ELFE_SYLVAIN: "Jordel Freshbreeze",
+  PLAYER_NAMES_CHAMPION_HTHARK_FALLBACK: "H'Thark the Unstoppable",
 }
 
 export enum SIDE {
