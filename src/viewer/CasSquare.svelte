@@ -1,37 +1,24 @@
+<svelte:options immutable/>
 <script lang="ts">
   import Player from "./Player.svelte";
-  import { selectedPlayer, hoveredPlayer, playerDefs, playerStates } from "../stores.js";
-  import { SITUATION, Casualties, SIDE } from "../constants.js";
-  import type { Dugout } from "./types";
-  import type { Player as IPlayer, PlayerState } from "../replay/Internal";
+  import { selectedPlayer, hoveredPlayer } from "../stores.js";
+  import { SITUATION, Casualties } from "../constants.js";
+  import type { Dugout, PlayerProps } from "./types";
+  import type { Player as IPlayer, PlayerState, Side } from "../replay/Internal";
   export let
-    team: SIDE,
-    dugout: Dugout,
+    team: Side,
     row: number,
     column: number,
-    width: number,
-    height: number,
-    casType: keyof Dugout;
-  let player: IPlayer | undefined = undefined,
+    casType: keyof Dugout,
+    playerDef: IPlayer | undefined = undefined,
     playerState: PlayerState | undefined = undefined,
-    players,
+    playerProps: PlayerProps | undefined = undefined;
+  let
     id: string,
     cas: string | undefined = undefined;
 
   $: {
-    id = `${team == SIDE.away ? "away" : "home"}-${casType}-${row}-${column}`;
-    if (dugout) {
-      if (casType == "ko") {
-        players = dugout["cas"].slice(width * height).concat(dugout[casType]);
-      } else if (casType == "reserve") {
-        players = dugout["ko"].slice(width * height).concat(dugout[casType]);
-      } else {
-        players = dugout[casType];
-      }
-      let playerNumber = players[column * height + row];
-      player = $playerDefs.get(playerNumber);
-      playerState = $playerStates.get(playerNumber);
-    }
+    id = `${team}-${casType}-${row}-${column}`;
 
     if (playerState && (playerState.situation>= SITUATION.Casualty)) {
       if (playerState.situation === SITUATION.Casualty) {
@@ -53,17 +40,17 @@
   class="cas-square"
   {id}
   on:click={() => {
-    selectedPlayer.set(player && player.id.number);
+    selectedPlayer.set(playerDef && playerDef.id.number);
   }}
   on:mouseover={() => {
-    hoveredPlayer.set(player && player.id.number);
+    hoveredPlayer.set(playerDef && playerDef.id.number);
   }}
   on:mouseleave={() => {
     hoveredPlayer.set(undefined);
   }}
 >
-  {#if player}
-    <Player player={player.id.number} />
+  {#if playerDef && playerState && playerProps}
+    <Player {playerDef} {playerState} {playerProps} />
     {#if cas}
       <img class="cas" src={`/images/skills/${cas}.png`} alt={cas} />
     {/if}

@@ -1,19 +1,24 @@
 <script lang="ts">
-  import HomeBench from "./HomeBench.svelte";
+  import Bench from "./Bench.svelte";
   import TeamAids from "./TeamAids.svelte";
   import Weather from "./Weather.svelte";
   import TeamLogo from "./TeamLogo.svelte";
   import type { Team } from "./types";
   import type { WEATHER } from "../constants";
+  import type { PlayerDefinitions, PlayerProperties } from "./types.js";
+  import type {PlayerStates} from "../replay/Internal.js";
 
   export let
     team: Team,
-    weather: WEATHER;
+    weather: WEATHER,
+    playerDefs: PlayerDefinitions,
+    playerStates: PlayerStates,
+    playerProperties: PlayerProperties;
 </script>
 
 <div class="dugout">
   {#if team}
-    <HomeBench dugout={team.dugout} />
+    <Bench dugout={team.dugout} side="home" {playerDefs} {playerStates} {playerProperties} />
     <div class="logo">
       <TeamLogo logo={team.logo} />
     </div>

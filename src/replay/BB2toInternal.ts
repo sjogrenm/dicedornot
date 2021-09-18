@@ -27,7 +27,7 @@ class Replay {
         public initialWeather: WEATHER = WEATHER.Nice,
         public coinFlipWinner: I.Side = "home",
         public initialKickingTeam: I.Side = "home",
-        public checkpoint: I.Checkpoint = {playerStates: new Map()},
+        public checkpoint: I.Checkpoint = {playerStates: {}},
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
         this.gameLength = Math.max(16, ...this.unhandledSteps.flatMap(step => {
@@ -87,17 +87,15 @@ class Replay {
         }
     }
 
-    captureCheckpoint(boardState: DeepReadonly<B.BoardState>) {
-        const checkpoint = {
-            playerStates: new Map(),
+    captureCheckpoint(boardState: DeepReadonly<B.BoardState>): I.Checkpoint {
+        return {
+            playerStates: Object.fromEntries(boardState.ListTeams.TeamState.flatMap(team =>
+                ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
+                    [player.Id, convertPlayerState(team, player)]
+                )
+            )),
             boardState,
         };
-        for (const team of boardState.ListTeams.TeamState) {
-            for (const player of ensureKeyedList("PlayerState", team.ListPitchPlayers)) {
-                checkpoint.playerStates.set(player.Id, convertPlayerState(team, player));
-            }
-        }
-        return checkpoint;
     }
 
     handleGameFinishedStep(step: DeepReadonly<B.GameFinishedStep>) {
@@ -180,9 +178,11 @@ class Replay {
 
         const nextSetup = {
             checkpoint: this.checkpoint,
-            movedPlayers: new Map(step.RulesEventSetUpConfiguration.ListPlayersPositions.PlayerPosition.map(pos => {
-                return [pos.PlayerId || 0, convertCell(pos.Position)];
-            }))
+            movedPlayers: Object.fromEntries(
+                step.RulesEventSetUpConfiguration.ListPlayersPositions.PlayerPosition.map(pos => {
+                    return [pos.PlayerId || 0, convertCell(pos.Position)];
+                })
+            )
         }
         currentSetup.push(nextSetup);
     }
@@ -194,18 +194,16 @@ class Replay {
         const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam || SIDE.home);
         const currentDrive = this.lastDrive();
         const currentSetup = currentDrive.setups[side];
-        const players: DeepReadonly<Map<I.PlayerNumber, I.PlayerState>> = this.checkpoint.playerStates;
+        const players: DeepReadonly<Record<I.PlayerNumber, I.PlayerState>> = this.checkpoint.playerStates;
 
-        const movedPlayer = [...players.entries()]
+        const movedPlayer = Object.entries(players)
             .find(([_, state]) => state.pitchCell && cellEq(fromCell, state.pitchCell));
 
         console.assert(movedPlayer != undefined, "Couldn't find moved player", step, this);
         if (movedPlayer != undefined) {
-            const movedPlayers = new Map([
-                [movedPlayer[0], toCell]
-            ]);
+            const movedPlayers = {[movedPlayer[0]]: toCell};
             if (alsoMove) {
-                movedPlayers.set(alsoMove, fromCell);
+                movedPlayers[alsoMove] = fromCell;
             }
             const nextSetup = {
                 checkpoint: this.checkpoint,

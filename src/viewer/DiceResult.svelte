@@ -1,5 +1,6 @@
+<svelte:options immutable/>
 <script lang="ts">
-  export let dice: number[];
+  export let dice: readonly number[];
 
   const blockDice = [
     "attacker-down",

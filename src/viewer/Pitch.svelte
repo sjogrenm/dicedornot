@@ -6,11 +6,15 @@
   import FixedRatio from "./FixedRatio.svelte";
   import Overlay from "./Overlay.svelte";
   import { replayPreview } from "../stores.js";
-  import type { Team, Pitch, BallProps } from "./types.js";
+  import type { Team, Pitch, BallProps, PlayerDefinitions, PlayerProperties } from "./types.js";
   import type * as Internal from "../replay/Internal.js";
+  import {cellString} from "../replay/Internal.js";
   export let teams: Internal.ByTeam<Team>,
     pitch: Pitch,
     playerPositions: Record<string, number>,
+    playerDefinitions: PlayerDefinitions,
+    playerProperties: PlayerProperties,
+    playerStates: Internal.PlayerStates,
     ball: BallProps;
 
   let homeLogo: string, awayLogo: string;
@@ -18,6 +22,7 @@
   $: {
     homeLogo = teams.home.logo;
     awayLogo = teams.away.logo;
+    console.log(playerPositions);
   }
 
 	// afterUpdate(() => {
@@ -32,9 +37,11 @@
       {awayLogo}
       {row}
       {column}
-      {...(pitch.get(`${column}-${row}`) || {})}
-      player={playerPositions[`${column}-${row}`]}
-      ball={ball && ball.position.x == column && ball.position.y == row ? ball : undefined}
+      {...(pitch[cellString({x: column, y: row})] || {})}
+      playerDef={playerDefinitions[playerPositions[cellString({x: column, y: row})]]}
+      playerState={playerStates[playerPositions[cellString({x: column, y: row})]]}
+      playerProps={playerProperties[playerPositions[cellString({x: column, y: row})]]}
+      ball={ball?.position?.x == column && ball?.position?.y == row ? ball : undefined}
     />
   </Grid>
   {#if $replayPreview}

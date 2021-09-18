@@ -1,3 +1,4 @@
+<svelte:options immutable/>
 <script lang="ts">
   import {afterUpdate, onMount} from "svelte";
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
@@ -7,21 +8,25 @@
   import Foul from "./Foul.svelte";
   import Player from "./Player.svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import type { BallProps, PitchCellProps } from "./types.js";
+  import type { BallProps, PitchSquareProps, PlayerProps } from "./types.js";
+  import type { Player as IPlayer, PlayerState } from "../replay/Internal";
   export let
     row: number,
     column: number,
     homeLogo: string,
     awayLogo: string,
-    player: number | undefined = undefined,
-    cell: PitchCellProps["cell"] = undefined,
+    playerDef: IPlayer | undefined = undefined,
+    playerState: PlayerState | undefined = undefined,
+    playerProps: PlayerProps | undefined = undefined,
+    cell: PitchSquareProps["cell"] = undefined,
     ball: BallProps | undefined = undefined,
-    dice: PitchCellProps["dice"] = undefined,
-    foul: PitchCellProps["foul"] = false;
+    dice: PitchSquareProps["dice"] = undefined,
+    foul: PitchSquareProps["foul"] = false;
     let id: string;
 
   $: {
     id = `pitch-${row}-${column}`;
+    console.log(id, playerDef, playerState, playerProps);
   }
 
 	// afterUpdate(() => {
@@ -37,10 +42,10 @@
   class="pitch-square"
   {id}
   on:click={() => {
-    selectedPlayer.set(player);
+    selectedPlayer.set(playerDef?.id.number);
   }}
   on:mouseover={() => {
-    hoveredPlayer.set(player);
+    hoveredPlayer.set(playerDef?.id.number);
   }}
   on:mouseleave={() => {
     hoveredPlayer.set(undefined);
@@ -55,8 +60,8 @@
   {#if cell}
     <Cell {...cell} {row} {column} />
   {/if}
-  {#if player}
-    <Player {player}/>
+  {#if playerDef && playerState}
+    <Player {playerDef} {playerState} {playerProps} />
   {/if}
   {#if dice}
     <DiceResult {dice} />

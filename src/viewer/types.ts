@@ -49,40 +49,39 @@ export interface Team {
       },
 }
 
-export interface BallProps {
+export type BallProps = DeepReadonly<{
     held: boolean;
-    position: Internal.Cell;
-}
+    position?: Internal.Cell;
+}>;
 
-export interface CellProps {
-    active: boolean;
-    target: boolean;
-    pushbackChoice: boolean;
-    moved: boolean;
+export type CellProps = DeepReadonly<{
+    active?: boolean;
+    target?: boolean;
+    pushbackChoice?: boolean;
+    moved?: boolean;
     plus?: number;
-}
+}>;
 
-export interface BloodProps {
+export type BloodProps = DeepReadonly<{
     blood: number;
-}
+}>;
 
-export interface PitchCellProps {
+export type PitchSquareProps = DeepReadonly<{
     cell?: CellProps;
     dice?: number[];
-    ball?: BallProps;
     foul?: boolean;
     blood?: BloodProps;
-}
+}>;
 
-export type Pitch = Map<string, PitchCellProps>;
-export type PlayerDefinitions = Map<Internal.PlayerNumber, DeepReadonly<Internal.Player>>;
-export type PlayerProperties = Map<Internal.PlayerNumber, PlayerProps>;
+export type Pitch = Record<string, PitchSquareProps>;
+export type PlayerDefinitions = Record<Internal.PlayerNumber, Internal.Player>;
+export type PlayerProperties = Record<Internal.PlayerNumber, PlayerProps>;
 
-export interface PlayerProps {
+export type PlayerProps = DeepReadonly<{
     blitz?: boolean;
     moving?: boolean;
     stupidity?: string;
-}
+}>;
 
 export interface WakeConditions {
     replayPreview: ReplayPreview | undefined,
@@ -93,7 +92,7 @@ export interface WakeConditions {
 
 export interface Preview {
     teams: Internal.ByTeam<Team>,
-    pitch: Map<string, PitchCellProps>,
+    pitch: Pitch,
     playerStates: Internal.PlayerStates,
     playerProperties: PlayerProperties,
     playing: boolean,

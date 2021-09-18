@@ -1,10 +1,15 @@
 <script lang="ts">
-  import AwayBench from "./AwayBench.svelte";
+  import Bench from "./Bench.svelte";
   import TeamAids from "./TeamAids.svelte";
   import TeamLogo from "./TeamLogo.svelte";
   import type { Team} from "./types";
+  import type { PlayerDefinitions, PlayerProperties } from "./types.js";
+  import type {PlayerStates} from "../replay/Internal.js";
 
-  export let team: Team;
+  export let team: Team,
+    playerDefs: PlayerDefinitions,
+    playerStates: PlayerStates,
+    playerProperties: PlayerProperties;
 </script>
 
 <div class="dugout">
@@ -15,7 +20,7 @@
   <div class="logo">
     <TeamLogo logo={team.logo} />
   </div>
-  <AwayBench dugout={team.dugout} />
+  <Bench dugout={team.dugout} side="away" {playerDefs} {playerStates} {playerProperties}/>
 </div>
 
 <style>

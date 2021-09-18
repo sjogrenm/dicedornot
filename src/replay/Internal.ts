@@ -8,12 +8,16 @@ export type ByTeam<T> = {
 };
 
 export interface Cell {
-    x: number,
-    y: number,
+    readonly x: number,
+    readonly y: number,
 }
 
 export function cellEq(a: Cell, b: Cell) {
     return a.x == b.x && a.y == b.y;
+}
+
+export function cellString(cell: Cell) {
+    return `${cell.x}-${cell.y}`;
 }
 
 export interface ModifiedD6SumRoll {
@@ -104,7 +108,7 @@ export type Player = DeepReadonly<{
     casualties?: number[],
 }>
 
-export interface PlayerState {
+export type PlayerState = DeepReadonly<{
     pitchCell?: Cell,
     usedSkills: SKILL[],
     canAct: boolean,
@@ -113,10 +117,10 @@ export interface PlayerState {
     blitzer: boolean,
     situation: SITUATION,
     casualties?: number[],
-}
+}>;
 
-export type PlayerPositions = Map<PlayerNumber, Cell>;
-export type PlayerStates = Map<PlayerNumber, PlayerState>;
+export type PlayerPositions = Record<PlayerNumber, Cell>;
+export type PlayerStates = Record<PlayerNumber, PlayerState>;
 export interface Checkpoint {
     playerStates: DeepReadonly<PlayerStates>,
     boardState?: any

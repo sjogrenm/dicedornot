@@ -9,42 +9,33 @@
     Casualties,
     STAR_NAMES,
     SKILL,
-    STATUS,
   } from "../constants.js";
   import he from "he";
-  import type { PlayerNumber, Player as IPlayer, PlayerState } from "../replay/Internal";
-  import { playerStates, playerDefs } from "../stores.js";
+  import type { Player as IPlayer, PlayerState } from "../replay/Internal";
+  import type { PlayerProps } from "./types.js";
   import type {DeepReadonly} from "ts-essentials";
 
-  export let player: PlayerNumber;
-  let playerState: PlayerState,
-    playerData: IPlayer,
-    name: string,
+  export let 
+    playerDef: IPlayer | undefined = undefined,
+    playerState: PlayerState | undefined = undefined,
+    playerProps: PlayerProps | undefined = undefined;
+  let name: string | undefined,
     color: string,
     skills: DeepReadonly<SKILL[]>,
     cas: string | undefined;
   const colorRE = /\[colour='([0-9a-f]{8})'\]/i;
   $: {
-    playerState = $playerStates.get(player) || {
-      usedSkills: [],
-      canAct: true,
-      status: STATUS.standing,
-      disabled: false,
-      blitzer: false,
-      situation: SITUATION.Active,
-    };
-    playerData = $playerDefs.get(player)!;
-    name = he.decode(playerData.name.replace(colorRE, ""));
-    name = STAR_NAMES[name] || name;
-    let colorMatch = playerData.name.match(colorRE);
+    name = playerDef && he.decode(playerDef.name.replace(colorRE, ""));
+    name = name && STAR_NAMES[name] || name;
+    let colorMatch = playerDef?.name.match(colorRE);
     color = colorMatch ? `#${colorMatch[1].slice(2, 8)}` : "var(--gray-0)";
-    skills = playerData.skills;
+    skills = playerDef?.skills || [];
 
-    if ((playerState.situation) >= SITUATION.Casualty) {
-      if (playerState.situation === SITUATION.Casualty) {
+    if ((playerState?.situation || SITUATION.Active) >= SITUATION.Casualty) {
+      if (playerState?.situation === SITUATION.Casualty) {
         cas =
           Casualties[
-            Math.max(...(playerData.casualties || []), ...(playerState.casualties || [])) -
+            Math.max(...(playerDef?.casualties || []), ...(playerState?.casualties || [])) -
               1
           ]?.icon;
       } else {
@@ -56,7 +47,7 @@
   }
 </script>
 
-{#if player}
+{#if playerDef && playerProps && playerState}
   <div class="player-card">
     <svg
       width="100%"
@@ -70,25 +61,25 @@
       <text class="name" x="18" y="36" style={`fill: ${color}`}>{name}</text>
       <text class="stat mv" x="18" y="75" text-anchor="middle">MV</text>
       <text class="stat mv value" x="18" y="109" text-anchor="middle"
-        >{playerData.stats.ma}</text
+        >{playerDef.stats.ma}</text
       >
       <text class="stat st" x="18" y="140" text-anchor="middle">ST</text>
       <text class="stat st value" x="18" y="174" text-anchor="middle"
-        >{playerData.stats.st}</text
+        >{playerDef.stats.st}</text
       >
       <text class="stat ag" x="18" y="204" text-anchor="middle">AG</text>
       <text class="stat ag value" x="18" y="238" text-anchor="middle"
-        >{playerData.stats.ag}</text
+        >{playerDef.stats.ag}</text
       >
       <text class="stat av" x="18" y="273" text-anchor="middle">AV</text>
       <text class="stat av value" x="18" y="304" text-anchor="middle"
-        >{playerData.stats.av}</text
+        >{playerDef.stats.av}</text
       >
     </svg>
     <div class="icon-frame">
       <FixedRatio>
         <div class="icon">
-          <Player {player} instant/>
+          <Player {playerDef} {playerState} {playerProps} instant/>
         </div>
       </FixedRatio>
     </div>

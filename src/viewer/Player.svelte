@@ -1,14 +1,16 @@
+<svelte:options immutable/>
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import { getPlayerSprite, SITUATION, STATUS } from "../constants.js";
-  import type { PlayerNumber, Player, PlayerState } from "../replay/Internal.js";
-  import {playerDefs, playerProperties, playerStates, transition} from "../stores.js";
+  import { getPlayerSprite, STATUS } from "../constants.js";
+  import type { Player, PlayerState } from "../replay/Internal.js";
+  import {transition} from "../stores.js";
+import type { PlayerProps } from "./types.js";
 
-  export let player: PlayerNumber,
+  export let playerDef: Player,
+    playerState: PlayerState,
+    playerProps: PlayerProps | undefined,
     instant = false;
   let
-    playerDef: Player,
-    playerState: PlayerState,
     done: boolean | undefined = undefined,
     moving: boolean | undefined = undefined,
     prone: boolean | undefined = undefined,
@@ -27,16 +29,7 @@
   $: send = $transition.send;
   $: receive = $transition.receive;
   $: {
-    playerDef = $playerDefs.get(player)!;
-    playerState = $playerStates.get(player) || {
-      usedSkills: [],
-      canAct: true,
-      status: STATUS.standing,
-      disabled: false,
-      blitzer: false,
-      situation: SITUATION.Active,
-    };
-    ({moving, blitz, stupidity} = $playerProperties.get(player) || {});
+    ({moving, blitz, stupidity} = playerProps || {});
     ({ model, race } = getPlayerSprite(playerDef.id.number, playerDef.type));
     _done = done === undefined ? (!playerState.canAct) : done;
 

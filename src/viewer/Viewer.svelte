@@ -1,8 +1,7 @@
 <script lang="ts">
   import type {
     Team,
-    PitchCellProps,
-    PlayerProps,
+    PitchSquareProps,
     Preview,
     WakeConditions,
     Dugout,
@@ -45,9 +44,6 @@
     selectedPlayer,
     hoveredPlayer,
     replayPreview,
-    playerStates,
-    playerDefs,
-    playerProperties,
   } from "../stores.js";
   import he from "he";
   import type * as BB2 from "../replay/BB2.js";
@@ -58,16 +54,19 @@
     convertPlayerDefinition,
     convertPlayerState,
   } from "../replay/BB2toInternal.js";
-  import {cellEq} from "../replay/Internal.js";
+  import { cellEq, cellString } from "../replay/Internal.js";
   import _ from "underscore";
   import type { DeepReadonly } from "ts-essentials";
+  import type { PlayerDefinitions, PlayerProperties } from "./types.js";
+  import type * as T from "./types.js";
+  import type { PlayerStates } from "../replay/Internal.js";
 
   export let playing = false;
 
   let lastChainPush: BB2.PlayerId | undefined,
     races: string[] = [],
     teams: Internal.ByTeam<Team> = { home: emptyTeam(), away: emptyTeam() },
-    pitch: Map<string, PitchCellProps> = new Map(),
+    pitch: T.Pitch = {},
     ball: BallProps,
     blitzerId: Internal.PlayerNumber,
     banner: string | undefined = undefined,
@@ -78,7 +77,10 @@
     shouldWake: WakeConditions | undefined,
     abort = new AbortController(),
     current: number = 0,
-    positions: ReplayPosition[] = [];
+    positions: ReplayPosition[] = [],
+    playerStates: PlayerStates = {},
+    playerDefs: PlayerDefinitions = {},
+    playerProperties: PlayerProperties = {};
 
   function emptyTeam(): Team {
     return {
@@ -160,13 +162,15 @@
     return () => console.log("destroyed");
   });
 
-  function playerPositions(playerStates: Internal.PlayerStates) {
-    return Object.fromEntries(
-      Array.from(playerStates.entries()).filter(([_, state]) =>
-        (state.pitchCell != undefined)
-      ).map(([id, state]) =>
-        [`${state?.pitchCell?.x}-${state?.pitchCell?.y}`, id]
-      )
+  function playerPositions(playerStates: Internal.PlayerStates): Record<string, Internal.PlayerNumber> {
+    return _.mapObject(
+      _.invert(
+        _.mapObject(
+          playerStates,
+          state => state.pitchCell ? cellString(state.pitchCell) : undefined
+        )
+      ),
+      sid => parseInt(sid)
     );
   }
 
@@ -248,67 +252,45 @@
     return cell.x == -1 && cell.y == -1;
   }
 
-  function setPitchSquare(cell: Internal.Cell): PitchCellProps {
+  function getPitchSquare(cell: Internal.Cell): PitchSquareProps {
     if (offPitch(cell)) {
       return {};
     }
-    pitch = pitch;
-    let key = `${cell.x}-${cell.y}`;
-    let square = pitch.get(key);
-    if (!square) {
-      square = {};
-      pitch.set(key, square);
-    }
-    return square;
+    let key = cellString(cell);
+    return pitch[key] || {};
   }
-  function setPlayerState(id: Internal.PlayerNumber): Internal.PlayerState {
-    let state = $playerStates.get(id);
-    if (!state) {
-      state = {
-        usedSkills: [],
-        canAct: true,
-        status: STATUS.standing,
-        disabled: false,
-        blitzer: false,
-        situation: SITUATION.Active,
-      };
-      $playerStates.set(id, state);
+  function setPitchSquare(cell: Internal.Cell, props: PitchSquareProps): PitchSquareProps {
+    if (offPitch(cell)) {
+      return {};
     }
-    $playerStates = new Map($playerStates.entries());
-    return state;
-  }
-
-  function setPlayerProps(id: Internal.PlayerNumber): PlayerProps {
-    $playerProperties = $playerProperties;
-    let props = $playerProperties.get(id);
-    if (!props) {
-      props = {};
-      $playerProperties.set(id, props);
-    }
+    let key = cellString(cell);
+    pitch[key] = props;
     return props;
   }
 
   function setPlayerStates(boardState: BB2.BoardState) {
-    $playerStates = new Map();
-    $playerDefs = new Map();
-    boardState.ListTeams.TeamState.map((teamState, side) => {
-      ensureKeyedList("PlayerState", teamState.ListPitchPlayers).map((p) =>
+    boardState.ListTeams.TeamState.forEach((teamState, side) => {
+      ensureKeyedList("PlayerState", teamState.ListPitchPlayers).forEach((p) =>
         placePlayer(teamState, p, side)
       );
     });
-    if (boardState.ListTeams.TeamState[0].BlitzerId >= 0) {
-      setPlayerState(boardState.ListTeams.TeamState[0].BlitzerId).blitzer =
-        true;
-    }
-    if (boardState.ListTeams.TeamState[1].BlitzerId >= 0) {
-      setPlayerState(boardState.ListTeams.TeamState[1].BlitzerId).blitzer =
-        true;
+    console.log(playerStates, playerDefs);
+    for (const team in [0, 1]) {
+      let blitzer = boardState.ListTeams.TeamState[team].BlitzerId;
+      if (blitzer >= 0) {
+        playerStates[blitzer] = {...playerStates[blitzer], blitzer: true}
+      }
     }
   }
 
   function placePlayer(t: BB2.TeamState, p: BB2.PitchPlayer, team: SIDE) {
-    $playerDefs.set(p.Id, convertPlayerDefinition(p));
-    $playerStates.set(p.Id, convertPlayerState(t, p));
+    if (!playerDefs[p.Id]) {
+      playerDefs[p.Id] = convertPlayerDefinition(p);
+    }
+    const newState = convertPlayerState(t, p);
+    if (!_.isEqual(playerStates[p.Id], newState)) {
+      playerStates[p.Id] = newState;
+    }
     let situation = p.Situation || SITUATION.Active;
     switch (situation) {
       case SITUATION.Active:
@@ -319,20 +301,17 @@
         ].push(p.Id);
         break;
     }
-    $playerStates = new Map($playerStates.entries());
-    $playerDefs = $playerDefs;
   }
 
   function setBallPosition(boardState: BB2.BoardState) {
-    let { x, y } = convertCell(boardState.Ball.Cell);
-    Object.values(pitch).forEach((square) => {
-      delete square.ball;
-    });
+    let cell = convertCell(boardState.Ball.Cell);
 
-    if (x != -1 && y != -1) {
+    if (offPitch(cell)) {
+      ball = {held: false, position: undefined};
+    } else {
       ball = {
         held: boardState.Ball.IsHeld == 1,
-        position: {x, y},
+        position: cell,
       };
     }
   }
@@ -556,8 +535,6 @@
       await stepReplay(updateUrl);
     }
     skipping = false;
-    pitch = pitch;
-    $playerStates = new Map($playerStates.entries());
     await step();
     if (updateUrl) {
       replayCurrent.set(current);
@@ -569,7 +546,7 @@
       try {
         if (underPreview && !$replayPreview) {
           ({ teams, pitch, playing, current } = underPreview);
-          $playerStates = underPreview.playerStates;
+          playerStates = underPreview.playerStates;
           previewing = undefined;
           underPreview = undefined;
         } else if (
@@ -579,24 +556,24 @@
         ) {
           previewing = $replayPreview;
           teams = { home: emptyTeam(), away: emptyTeam() };
-          pitch = new Map();
-          $playerStates = new Map();
+          pitch = {};
+          playerStates = {};
           jumpToPosition($replayPreview.start, false);
           // resetFromBoardState($replay.fullReplay.unhandledSteps[$replayPreview.start.step - 1].BoardState, true);
         } else if (!underPreview && $replayPreview) {
           underPreview = {
             teams,
             pitch,
-            playerStates: $playerStates,
-            playerProperties: $playerProperties,
+            playerStates,
+            playerProperties,
             playing,
             current,
           };
           playing = false;
           previewing = $replayPreview;
           teams = { home: emptyTeam(), away: emptyTeam() };
-          pitch = new Map();
-          $playerStates = new Map();
+          pitch = {};
+          playerStates = {};
           jumpToPosition($replayPreview.start, false);
         }
         if (
@@ -607,8 +584,8 @@
           underPreview = {
             teams,
             pitch,
-            playerStates: $playerStates,
-            playerProperties: $playerProperties,
+            playerStates,
+            playerProperties,
             playing,
             current,
           };
@@ -773,14 +750,20 @@
   }
 
   function clearTemporaryState() {
-    pitch.forEach((square) => {
-      square.dice = undefined;
-      square.cell = undefined;
-      square.foul = false;
-    });
-    $playerProperties.forEach(props => props.moving = false);
-    $playerProperties = $playerProperties;
-    pitch = pitch;
+    pitch = Object.fromEntries(Object.entries(pitch).map(([id, square]) => {
+      if (square.dice || square.cell || square.foul) {
+        return [id, {...square, dice: undefined, cell: undefined, foul: undefined}]
+      } else {
+        return [id, square];
+      };
+    }));
+    playerProperties = Object.fromEntries(Object.entries(playerProperties).map(([id, props]) => {
+      if (props.moving) {
+        return [id, {...props, moving: false}];
+      } else {
+        return [id, props];
+      }
+    }));
   }
 
   function handleGameMetadata(replay: Internal.Replay) {
@@ -790,25 +773,25 @@
       for (const [playerNumber, player] of replay.teams[
         side
       ].players.entries()) {
-        $playerDefs.set(playerNumber, player);
+        playerDefs[playerNumber] = player;
       }
     }
 
-    races = Array.from($playerDefs.values())
+    races = Array.from(Object.values(playerDefs))
       .map((player) => {
         const { race } = getPlayerSprite(player.id.number, player.type);
         return race;
       })
       .filter((v, i, a) => a.indexOf(v) === i);
-    $playerDefs = $playerDefs;
+    playerDefs = playerDefs;
   }
 
   function validateCheckpoint(checkpoint: Internal.Checkpoint) {
-    checkpoint.playerStates.forEach((state, id) => {
+    Object.entries(checkpoint.playerStates).forEach((state, id) => {
       console.assert(
-        _.isEqual($playerStates.get(id), state),
+        _.isEqual(playerStates[id], state),
         "Player state didn't match checkpoint",
-        { current, id, playerStates: $playerStates, checkpointState: state }
+        { current, id, playerStates, checkpointState: state }
       );
     });
   }
@@ -816,12 +799,13 @@
   function resetToCheckpoint(checkpoint: Internal.Checkpoint) {
     teams.home.dugout = { cas: [], ko: [], reserve: [] };
     teams.away.dugout = { cas: [], ko: [], reserve: [] };
-    checkpoint.playerStates.forEach((state, id) => {
-      $playerStates.set(id, {
+    Object.entries(checkpoint.playerStates).forEach(([sid, state]) => {
+      let id = parseInt(sid);
+      playerStates[id] = {
         ...state,
         usedSkills: [...state.usedSkills],
         casualties: state.casualties ? [...state.casualties] : undefined,
-      });
+      };
       const side = playerNumberToSide(id);
       switch (state.situation) {
         case SITUATION.Casualty:
@@ -836,9 +820,6 @@
           break;
       }
     });
-    teams = teams;
-    $playerStates = new Map($playerStates.entries());
-    pitch = pitch;
   }
 
   async function handleGameStart(position: {
@@ -885,14 +866,14 @@
     }>
   ) {
     validateCheckpoint(position.action.checkpoint);
-    for (let [player, cell] of position.action.movedPlayers) {
-      const playerState = setPlayerState(player);
-      playerState.pitchCell = cell;
+    for (let [sid, cell] of Object.entries(position.action.movedPlayers)) {
+      let player = parseInt(sid);
+      let situation;
       if (offPitch(cell)) {
-        playerState.situation = SITUATION.Reserves;
+        situation = SITUATION.Reserves;
         teams[playerNumberToSide(player)].dugout.reserve.push(player);
       } else {
-        playerState.situation = SITUATION.Active;
+        situation = SITUATION.Active;
         const reserveIndex =
           teams[playerNumberToSide(player)].dugout.reserve.indexOf(player);
         if (reserveIndex > -1) {
@@ -902,6 +883,7 @@
           );
         }
       }
+      playerStates[player] = {...playerStates[player], pitchCell: cell, situation};
     }
     await step();
   }
@@ -916,22 +898,31 @@
 
   function handleActivate(action: BB2.ActivatePlayerAction) {
     clearTemporaryState();
-    const playerState = setPlayerState(action.PlayerId || 0)
-    playerState.status = STATUS.standing;
-    pitch.forEach((square) => {
-      if (square.cell) {
-        square.cell.active = false;
-      }
-    });
-    if (playerState.pitchCell) {
-      const pitchSquare = setPitchSquare(playerState.pitchCell);
-      if (!pitchSquare.cell) {
-        pitchSquare.cell = {active: true, target: false, pushbackChoice: false, moved: false};
+    const player = action.PlayerId || 0
+    const playerState = playerStates[player];
+    playerStates[player] = {...playerState, status: STATUS.standing};
+    pitch = Object.fromEntries(Object.entries(pitch).map(([idx, square]) => {
+      if (square.cell && square.cell.active) {
+        return [idx, {...square, cell: {...square.cell, active: false}}];
       } else {
-        pitchSquare.cell.active = true;
+        return [idx, square];
       }
+    }));
+    if (playerState.pitchCell) {
+      const pitchSquare = getPitchSquare(playerState.pitchCell);
+      let cell;
+      if (!pitchSquare.cell) {
+        cell = {
+          active: true,
+          target: false,
+          pushbackChoice: false,
+          moved: false,
+        };
+      } else {
+        cell = {...pitchSquare.cell, active: true};
+      }
+      setPitchSquare(playerState.pitchCell, {...pitchSquare, cell: cell});
     }
-    pitch = pitch;
   }
 
   function handleScatter(action: BB2.ScatterAction) {
@@ -947,50 +938,43 @@
     result: BB2.ActionResult<BB2.BlockAction | BB2.BlitzAction>
   ) {
     let from = convertCell(action.Order.CellFrom);
-    let fromSquare = setPitchSquare(from);
-    (fromSquare.cell = fromSquare.cell || {
-      active: false,
-      target: false,
-      pushbackChoice: false,
-      moved: false,
-    }).active = true;
+    let fromSquare = getPitchSquare(from);
+    setPitchSquare(from, {...fromSquare, cell: {...fromSquare.cell || {}, active: true}});
 
     const to = convertCell(action.Order.CellTo.Cell);
-    let [toPlayer, _] = Array.from($playerStates.entries()).find(([_, state]) => state.pitchCell && cellEq(state.pitchCell, to)) || [undefined, undefined];
+    let [sToPlayer, _state] = Object.entries(playerStates).find(
+      ([_id, state]) => state.pitchCell && cellEq(state.pitchCell, to)
+    ) || [undefined, undefined];
+    let toPlayer = sToPlayer && parseInt(sToPlayer);
 
-    Object.values(pitch).forEach((square) => {
-      square.dice = undefined;
-    });
+    pitch = _.mapObject(pitch, (square) => ({
+      ...square, dice: undefined
+    }));
 
     if ("RollType" in result && result.RollType === ROLL.Block) {
-      let target = setPitchSquare(convertCell(action.Order.CellTo.Cell));
-      if (!target.cell) {
-        target.cell = {
-          active: false,
-          target: false,
-          pushbackChoice: false,
-          moved: false,
-        };
-      }
-      target.cell.target = true;
+      const targetCell = convertCell(action.Order.CellTo.Cell);
+      let target = getPitchSquare(targetCell);
 
+      let dice;
       if (result.IsOrderCompleted) {
-        target["dice"] = [
+        dice = [
           translateStringNumberList(result.CoachChoices.ListDices)[0],
         ];
       } else {
-        let dice = translateStringNumberList(result.CoachChoices.ListDices);
-        target.dice = dice.slice(0, dice.length / 2);
+        dice = translateStringNumberList(result.CoachChoices.ListDices);
+        dice = dice.slice(0, dice.length / 2);
       }
+      setPitchSquare(targetCell, {...target, cell: {...target.cell || {}, target: true}, dice});
       await step(2);
     }
     if ("RollType" in result && result.RollType === ROLL.Push) {
       //pushback
       if (result.IsOrderCompleted) {
-        Object.values(pitch).forEach((square) => {
+        pitch = _.mapObject(pitch, (square) => {
           if (square.cell) {
-            square.cell.pushbackChoice = false;
-            square.cell.target = false;
+            return {...square, cell: {...square.cell, pushbackChoice: false, target: false}};
+          } else {
+            return square;
           }
         });
 
@@ -1001,24 +985,20 @@
           toPlayer = lastChainPush;
         }
 
-        [lastChainPush, _] = Array.from($playerStates.entries())
-          .find(([_, state]) => state.pitchCell && cellEq(state.pitchCell, pushTarget)) || [undefined, undefined];
+        const [sLastChainPush, _state] = Object.entries(playerStates).find(
+          ([_id, state]) => state.pitchCell && cellEq(state.pitchCell, pushTarget)
+        ) || [undefined, undefined];
+        lastChainPush = sLastChainPush != undefined ? parseInt(sLastChainPush) : undefined;
 
         if (toPlayer) {
-          setPlayerState(toPlayer).pitchCell = pushTarget;
+          playerStates[toPlayer] = {...playerStates[toPlayer], pitchCell:  pushTarget};
         }
       } else {
         ensureKeyedList("Cell", result.CoachChoices.ListCells)
           .map(convertCell)
           .forEach((cell) => {
-            let square = setPitchSquare(cell);
-            square.cell = square.cell || {
-              active: false,
-              target: false,
-              pushbackChoice: false,
-              moved: false,
-            };
-            square.cell.pushbackChoice = true;
+            let square = getPitchSquare(cell);
+            setPitchSquare(cell, {...square, cell: {...square.cell || {}, pushbackChoice: true}});
 
             if (
               toPlayer &&
@@ -1028,7 +1008,7 @@
               let team = playerNumberToSide(toPlayer);
               let dugout = teams[team].dugout;
               dugout.reserve.push(toPlayer);
-              setPlayerState(toPlayer).pitchCell = undefined;
+              playerStates[toPlayer] = {...playerStates[toPlayer], pitchCell: undefined};
             }
           });
       }
@@ -1039,7 +1019,7 @@
         const target = convertCell(
           ensureKeyedList("Cell", result.CoachChoices.ListCells)[0]
         );
-        setPlayerState(action.PlayerId || 0).pitchCell = target;
+        playerStates[action.PlayerId || 0] = {...playerStates[action.PlayerId || 0], pitchCell: target};
       }
     }
   }
@@ -1051,7 +1031,6 @@
     if (!result.IsOrderCompleted) return;
     if (result.ResultType !== 0) return;
 
-    Object.values(pitch).forEach((cell) => (cell["ball"] = undefined));
     ball = { held: true, position: convertCell(action.Order.CellTo.Cell) };
   }
 
@@ -1066,20 +1045,19 @@
   }
 
   async function handleFoul(action: BB2.FoulAction) {
-    const targetSquare = setPitchSquare(convertCell(action.Order.CellTo.Cell));
-
-    targetSquare.foul = true;
+    const targetCell = convertCell(action.Order.CellTo.Cell);
+    const targetSquare = getPitchSquare(targetCell);
+    setPitchSquare(targetCell, {...targetSquare, foul: true});
     await step();
   }
   function handleStunWake(action: BB2.StunWakeAction) {
-    setPlayerState(action.PlayerId || 0).status = STATUS.prone;
+    playerStates[action.PlayerId || 0] = {...playerStates[action.PlayerId || 0], status: STATUS.prone};
   }
 
   function handleHandoff(action: BB2.HandoffAction) {
-    let from = setPitchSquare(convertCell(action.Order.CellFrom));
-    let to = setPitchSquare(convertCell(action.Order.CellTo.Cell));
-    to.ball = from.ball;
-    delete from.ball;
+    if (ball) {
+      ball = {...ball, position: convertCell(action.Order.CellTo.Cell)};
+    }
   }
 
   function handleKickoff(action: BB2.KickoffAction) {
@@ -1094,38 +1072,43 @@
     result: BB2.ActionResult<BB2.MoveAction | BB2.LeapAction>
   ) {
     const player = action.PlayerId || 0;
-    let playerState = setPlayerState(player);
-    let playerDef = $playerDefs.get(player)!;
-    let playerProps = setPlayerProps(player)!;
+    let playerState = playerStates[player];
+    let playerDef = playerDefs[player];
+    let playerProps = playerProperties[player];
     let cellFrom = convertCell(action.Order.CellFrom);
     let cellTo = convertCell(action.Order.CellTo.Cell);
-    let squareFrom = setPitchSquare(cellFrom);
-    let squareTo = setPitchSquare(cellTo);
+    let squareFrom = getPitchSquare(cellFrom);
+    let squareTo = getPitchSquare(cellTo);
 
-    playerState.status = STATUS.standing;
-    playerProps.moving = true;
-    playerState.pitchCell = cellTo;
-    if (ball.held && cellEq(cellFrom, ball.position)) {
-      ball.position = cellTo;
+    playerStates[player] = {
+      ...playerState,
+      status: STATUS.standing,
+      pitchCell: cellTo,
+    };
+    playerProperties[player] = {
+      ...playerProps,
+      moving: true,
+    }
+    if (ball?.held && ball.position && cellEq(cellFrom, ball.position)) {
+      ball = {...ball, position: cellTo};
     }
 
-    squareFrom.cell = squareFrom.cell || {
-      active: false,
-      target: false,
-      pushbackChoice: false,
-      moved: false,
-    };
-    squareFrom.cell.moved = true;
-    squareFrom.cell.active = false;
-
-    if (result.IsOrderCompleted) {
-      squareTo.cell = squareTo.cell || {
+    squareFrom = setPitchSquare(cellFrom, {
+      ...squareFrom,
+      cell: {
+        ...squareFrom.cell || {},
+        moved: true,
         active: false,
-        target: false,
-        pushbackChoice: false,
-        moved: false,
-      };
-      squareTo.cell.active = true;
+      }
+    });
+    if (result.IsOrderCompleted) {
+      setPitchSquare(cellTo, {
+        ...squareTo,
+        cell: {
+          ...squareTo.cell || {},
+          active: true,
+        }
+      });
     }
 
     if (
@@ -1134,12 +1117,6 @@
       [ROLL.Dodge, ROLL.GFI, ROLL.Leap].includes(result.RollType)
     ) {
       //Dodge, GFI, Leap
-      squareTo.cell = squareTo.cell || {
-        active: false,
-        target: false,
-        pushbackChoice: false,
-        moved: false,
-      };
       let modifier =
         (
           (result.ListModifiers &&
@@ -1148,19 +1125,22 @@
         )
           .map((modifier) => modifier.Value || 0)
           .reduce((a, b) => a + b, 0) || 0;
-      squareTo.cell.plus = (result.Requirement || 0) - modifier;
+
+      squareTo = setPitchSquare(cellTo, {
+        ...squareTo,
+        cell: {
+          ...squareTo.cell || {},
+          plus: (result.Requirement || 0) - modifier
+        }
+      });
     }
 
     if (playerDef.id.number == blitzerId) {
-      playerState.blitzer = true;
+      playerStates[player] = {...playerState, blitzer: true};
     }
-    if (squareFrom.ball) {
-      let ball = squareFrom.ball;
-      squareFrom.ball = undefined;
-      squareTo.ball = ball;
+    if (ball?.position && cellEq(ball.position, cellFrom)) {
+      ball = {...ball, position: cellFrom};
     }
-
-    $playerStates = new Map($playerStates.entries());
   }
 
   function handleActivationTest(
@@ -1180,7 +1160,7 @@
 
     if (result.ResultType === RESULT_TYPE.Passed) {
       //success
-      setPlayerProps(player).stupidity = undefined;
+      playerProperties[player] = {...playerProperties[player], stupidity: undefined};
     } else {
       //failure
       const STUPID_TYPES: Record<
@@ -1193,7 +1173,7 @@
         [ROLL.WildAnimal]: "WildAnimal",
         [ROLL.Loner]: "Loner",
       };
-      setPlayerProps(player).stupidity = STUPID_TYPES[result.RollType];
+      playerProperties[player] = {...playerProperties[player], stupidity: STUPID_TYPES[result.RollType]};
     }
   }
 
@@ -1205,20 +1185,14 @@
       return;
     }
 
-    let from = setPitchSquare(convertCell(action.Order.CellFrom));
-    if (from.ball) {
-      from.ball.held = false;
-    }
+    ball = {...ball, held: false}
     await step(0.5);
 
     if (result.ResultType === RESULT_TYPE.Passed) {
       //success
-      let target = setPitchSquare(
-        convertCell(ensureList(action.Order.CellTo.Cell)[0])
-      );
-      if (from.ball) {
-        target.ball = from.ball;
-        from.ball = undefined;
+      ball = {
+        ...ball,
+        position: convertCell(ensureList(action.Order.CellTo.Cell)[0])
       }
       await step();
     }
@@ -1228,13 +1202,9 @@
     _action: BB2.PickupAction,
     result: BB2.ActionResult<BB2.PickupAction>
   ) {
-    if (result.IsOrderCompleted && result.ResultType === RESULT_TYPE.Passed)
-      Object.values(pitch).forEach((square) => {
-        if (square["ball"]) {
-          //successful pickup
-          square["ball"]["held"] = true;
-        }
-      });
+    if (result.IsOrderCompleted && result.ResultType === RESULT_TYPE.Passed) {
+      ball = {...ball, held: true};
+    }
   }
 
   function handleTakeDamage(
@@ -1244,39 +1214,40 @@
     if (!result.IsOrderCompleted) return;
 
     const player = action.PlayerId || 0,
-      playerState = setPlayerState(player),
-      playerDef = $playerDefs.get(player)!,
-      playerSquareIndex = playerState.pitchCell && `${playerState.pitchCell.x}-${playerState.pitchCell.y}`;
+      playerState = playerStates[player],
+      playerDef = playerDefs[player],
+      playerSquareIndex =
+        playerState.pitchCell &&
+        `${playerState.pitchCell.x}-${playerState.pitchCell.y}`;
 
-    Object.entries(pitch).forEach(([_, square]) => {
-      if (square.cell) {
-        square.cell.target = false;
+    pitch = _.mapObject(pitch, square => {
+      if (square.cell?.target) {
+        return {...square, cell: {...square.cell, target: false}};
+      } else {
+        return square;
       }
     });
-    pitch = pitch;
 
     switch (result.RollType) {
       case 3: //armor
         if (result.ResultType === 1) {
           // armor failed
           //knocked down
-          if (playerState) {
-            playerState.status = STATUS.prone;
-          }
+          playerStates[player] = {...playerState, status: STATUS.prone};
         }
         break;
       case 4: //injury
         if (result.SubResultType === 2) {
           //stunned
           if (playerState) {
-            playerState.status = STATUS.stunned;
+            playerStates[player] = {...playerState, status: STATUS.stunned};
           }
         } else if (result.SubResultType === 3 && playerSquareIndex) {
           //knocked out
           let team = playerDef.id.side;
           let dugout = teams[team].dugout;
           dugout.ko.push(player);
-          playerState.pitchCell = undefined;
+          playerStates[player] = {...playerState, pitchCell: undefined};
         }
         break;
       case 8: //casualty
@@ -1284,17 +1255,17 @@
         let team = playerDef.id.side;
         let dugout = teams[team].dugout;
         if (playerSquareIndex) {
-          let square = pitch.get(playerSquareIndex);
-          if (!square) {
-            square = {};
-            pitch.set(playerSquareIndex, square);
-            pitch = pitch;
-          }
           dugout.cas.push(player);
-          playerState.pitchCell = undefined;
-          square.blood = {
-            blood: Math.floor(4 * Math.random() + 1),
-          };
+          const cell = playerState.pitchCell;
+          playerStates[player] = {...playerState, pitchCell: undefined};
+          if (cell) {
+            setPitchSquare(cell, {
+              ...getPitchSquare(cell),
+              blood: {
+                blood: Math.floor(4 * Math.random() + 1),
+              },
+            });
+          }
         }
         break;
       case 25: //regeneration
@@ -1377,14 +1348,26 @@
     <div class="pitch-scroll">
       <FixedRatio width={1335} height={1061}>
         <div class="pitch">
-          <HomeDugout team={teams.home} {weather} />
+          <HomeDugout team={teams.home} {weather} {playerDefs} {playerStates} {playerProperties} />
           {#if $selectedPlayer || $hoveredPlayer}
             <div class="selected" class:enlarged={!!$hoveredPlayer}>
-              <SelectedPlayer player={$hoveredPlayer || $selectedPlayer || 0} />
+              <SelectedPlayer
+                playerDef={playerDefs[$hoveredPlayer || $selectedPlayer || 0]}
+                playerState={playerStates[$hoveredPlayer || $selectedPlayer || 0]}
+                playerProps={playerProperties[$hoveredPlayer || $selectedPlayer || 0]}
+              />
             </div>
           {/if}
-          <Pitch {pitch} {teams} playerPositions={playerPositions($playerStates)} {ball} />
-          <AwayDugout team={teams.away} />
+          <Pitch
+            {pitch}
+            {teams}
+            playerPositions={playerPositions(playerStates)}
+            playerDefinitions={playerDefs}
+            {playerProperties}
+            {playerStates}
+            {ball}
+          />
+          <AwayDugout team={teams.away} {playerDefs} {playerStates} {playerProperties} />
         </div>
         {#if banner}
           <Banner {banner} />

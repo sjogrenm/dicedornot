@@ -1,8 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import type { ReplayPreview } from './replay-utils';
 import type { ProcessedReplay } from './replay.js';
-import type { PlayerDefinitions, PlayerProperties } from './viewer/types.js';
-import type { PlayerStates } from './replay/Internal.js';
 import { sineInOut } from "svelte/easing";
 import { crossfade } from "svelte/transition";
 
@@ -45,6 +43,3 @@ export const replayTarget = writable<number | undefined>(target);
 export const replayPreview = writable<ReplayPreview | undefined>(undefined);
 export const error = writable<Error | string | undefined>(undefined);
 export const showResultsAnalysis = writable<boolean>(false);
-export const playerStates = writable<PlayerStates>(new Map());
-export const playerDefs = writable<PlayerDefinitions>(new Map());
-export const playerProperties = writable<PlayerProperties>(new Map());

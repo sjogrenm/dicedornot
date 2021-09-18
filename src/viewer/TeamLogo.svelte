@@ -1,3 +1,5 @@
+<svelte:options immutable/>
+
 <script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
 

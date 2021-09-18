@@ -1,3 +1,5 @@
+<svelte:options immutable/>
+
 <script lang="ts">
   import { transition } from "../stores.js";
 

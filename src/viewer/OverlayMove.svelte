@@ -44,8 +44,10 @@
     if (path.length == 1) {
       path = [{x: path[0].x, y: path[0].y + 0.3}];
       if (_rolls.length > 0) {
-        _rolls[0].pt.x += 0.3;
-        _rolls[0].pt.x += 0.3;
+        _rolls[0].pt = {
+          x: _rolls[0].pt.x + 0.3,
+          y: _rolls[0].pt.y + 0.3
+        }
       }
     } else {
       let newStart = mixCells(path[0], path[1], 0.25);

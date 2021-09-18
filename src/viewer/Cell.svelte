@@ -1,3 +1,5 @@
+<svelte:options immutable/>
+
 <script lang="ts">
   import { fade } from "svelte/transition";
   export let plus: number | undefined = undefined,
