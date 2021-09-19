@@ -1,3 +1,5 @@
+<svelte:options immutable/>
+
 <script lang="ts">
   import FixedRatio from "./FixedRatio.svelte";
   import FlexGrid from "./FlexGrid.svelte";
@@ -47,7 +49,7 @@
   }
 </script>
 
-{#if playerDef && playerProps && playerState}
+{#if playerDef && playerState}
   <div class="player-card">
     <svg
       width="100%"
