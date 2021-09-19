@@ -55,16 +55,19 @@ class Replay {
 
     processSteps() {
         this.processUnorderedSteps();
-        while (!this.foundUnhandledStep && this.unhandledSteps.length > 0) {
-            const step = this.unhandledSteps.shift()!;
+        for (let stepIdx = 0; stepIdx <= this.unhandledSteps.length; stepIdx++) {
+            if (this.foundUnhandledStep) {
+                return;
+            }
+            const step = this.unhandledSteps[stepIdx];
             if ('RulesEventGameFinished' in step || 'GameInfos' in step) {
                 // Handled as an unordered replay step
             } else if ('RulesEventAddInducementSkill' in step) {
-                this.handleAddInducementSkillStep(step);
+                this.handleAddInducementSkillStep(stepIdx, step);
             } else if ('RulesEventSetUpAction' in step) {
-                this.handleSetUpAction(step);
+                this.handleSetUpAction(stepIdx, step);
             } else if ('RulesEventSetUpConfiguration' in step) {
-                this.handleSetUpConfiguration(step);
+                this.handleSetUpConfiguration(stepIdx, step);
             } else if ('RulesEventSetGeneratedPersonnalities' in step) {
                 // don't need to handle this
             } else if (
@@ -73,13 +76,13 @@ class Replay {
                 'RulesEventAddInducement' in step ||
                 'RulesEventInducementsInfos' in step
             ) {
-                this.handleAddInducementStep(step);
+                this.handleAddInducementStep(stepIdx, step);
             } else if (
                 'BoardState' in step
             ) {
-                this.handleGameTurnStep(step);
+                this.handleGameTurnStep(stepIdx, step);
             } else {
-                badStep(step);
+                badStep(stepIdx, step);
             }
             if ('BoardState' in step) {
                 this.checkpoint = this.captureCheckpoint(step.BoardState);
@@ -104,7 +107,7 @@ class Replay {
         this.metadata.datePlayed = new Date(step.RulesEventGameFinished.MatchResult.Row.Finished);
     }
 
-    handleAddInducementStep(step: DeepReadonly<B.AddInducementStep>) {
+    handleAddInducementStep(stepIdx: number, step: DeepReadonly<B.AddInducementStep>) {
         if ('RulesEventAddMercenary' in step) {
             // We can pull mercenaries from board state.
             for (const merc of ensureList(step.RulesEventAddMercenary)) {
@@ -136,7 +139,7 @@ class Replay {
         }
     }
 
-    handleAddInducementSkillStep(step: DeepReadonly<B.AddInducementSkillStep>) {
+    handleAddInducementSkillStep(stepIdx: number, step: DeepReadonly<B.AddInducementSkillStep>) {
         const player = step.RulesEventAddInducementSkill.MercenaryId;
         const side = convertSide(B.playerIdSide(player));
         const skill = step.RulesEventAddInducementSkill.SkillId;
@@ -171,7 +174,7 @@ class Replay {
         this.metadata.league = step.GameInfos.RowLeague.Name && he.decode(step.GameInfos.RowLeague.Name.toString());
     }
 
-    handleSetUpConfiguration(step: DeepReadonly<B.SetUpConfigurationStep>) {
+    handleSetUpConfiguration(stepIdx: number, step: DeepReadonly<B.SetUpConfigurationStep>) {
         const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam || SIDE.home);
         const currentDrive = this.lastDrive();
         const currentSetup = currentDrive.setups[side];
@@ -187,7 +190,7 @@ class Replay {
         currentSetup.push(nextSetup);
     }
 
-    handleSetUpAction(step: DeepReadonly<B.SetUpActionStep>) {
+    handleSetUpAction(stepIdx: number, step: DeepReadonly<B.SetUpActionStep>) {
         const fromCell = convertCell(step.RulesEventSetUpAction.PlayerPosition);
         const toCell = convertCell(step.RulesEventSetUpAction.NewPosition);
         const alsoMove = step.RulesEventSetUpAction.Substitute;
@@ -213,7 +216,7 @@ class Replay {
         }
     }
 
-    handleGameTurnStep(step: DeepReadonly<B.GameTurnStep>) {
+    handleGameTurnStep(stepIdx:number, step: DeepReadonly<B.GameTurnStep>) {
         if (
             step.RulesEventKickOffChoice
         ) {
@@ -223,19 +226,19 @@ class Replay {
         if (
             step.RulesEventForcedDices
         ) {
-            this.cantHandle(step, "Can't handle RulesEventForcedDices");
+            this.cantHandle(stepIdx, step, "Can't handle RulesEventForcedDices");
             return;
         }
         if (
             step.RulesEventCoachChoice
         ) {
-            this.cantHandle(step, "Can't handle RulesEventCoachChoice");
+            this.cantHandle(stepIdx, step, "Can't handle RulesEventCoachChoice");
             return;
         }
         if (
             step.RulesEventSpecialAction
         ) {
-            this.cantHandle(step, "Can't handle RulesEventSpecialAction");
+            this.cantHandle(stepIdx, step, "Can't handle RulesEventSpecialAction");
             return;
         }
         if (
@@ -250,7 +253,7 @@ class Replay {
         if (
             step.RulesEventLoadGame
         ) {
-            this.cantHandle(step, "Can't handle RulesEventLoadGame");
+            this.cantHandle(stepIdx, step, "Can't handle RulesEventLoadGame");
             return;
         }
         if (step.RulesEventWaitingRequest) {
@@ -275,16 +278,16 @@ class Replay {
             const actions = ensureList(step.RulesEventBoardAction);
             const converters = actions.map(action => actionConverter(this, step, action));
             if (converters.some(converter => converter == undefined)) {
-                this.cantHandle(step, "Not all action types can be converted");
+                this.cantHandle(stepIdx, step, "Not all action types can be converted");
                 return
             }
             converters.forEach(converter => converter!());
         }
     }
 
-    cantHandle(step: DeepReadonly<B.ReplayStep>, reason?: string) {
-        console.log("Couldn't handle step", { step, reason });
-        this.unhandledSteps.unshift(step);
+    cantHandle(stepIdx: number, step: DeepReadonly<B.ReplayStep>, reason?: string) {
+        console.log("Couldn't handle step", { stepIdx, step, reason });
+        this.unhandledSteps = this.unhandledSteps.slice(stepIdx);
         this.foundUnhandledStep = true;
     }
 
@@ -525,9 +528,9 @@ function badResult(result: B.BaseResult) {
     console.error({ msg: 'Unhandled result', result });
 }
 
-function badStep(step: never): never
-function badStep(step: DeepReadonly<B.ReplayStep>) {
-    console.error({ msg: 'Unhandled step', step });
+function badStep(stepIdx: number, step: never): never
+function badStep(stepIdx: number, step: DeepReadonly<B.ReplayStep>) {
+    console.error({ msg: `Unhandled step ${stepIdx}`, step });
 }
 
 function last<T>(xs: T[]): T | undefined {

@@ -605,7 +605,7 @@
         } else {
           await sleep(1000);
         }
-      } catch (err) {
+      } catch (err: any) {
         playing = false;
         error.set(err);
         console.error(err);
