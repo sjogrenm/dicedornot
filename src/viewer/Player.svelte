@@ -1,53 +1,52 @@
 <svelte:options immutable/>
 <script lang="ts">
   import { fade } from "svelte/transition";
-  import { getPlayerSprite, STATUS } from "../constants.js";
+  import { getPlayerSprite, STATUS, SKILL } from "../constants.js";
   import type { Player, PlayerState } from "../replay/Internal.js";
   import {transition} from "../stores.js";
 import type { PlayerProps } from "./types.js";
 
   export let playerDef: Player,
-    playerState: PlayerState,
+    playerState: PlayerState | undefined,
     playerProps: PlayerProps | undefined,
     instant = false;
   let
-    done: boolean | undefined = undefined,
     moving: boolean | undefined = undefined,
-    prone: boolean | undefined = undefined,
-    stunned: boolean | undefined = undefined,
     blitz: boolean | undefined = undefined,
     stupidity: string | undefined = undefined,
+    canAct: boolean = true,
+    status: STATUS = STATUS.standing,
+    disabled: boolean = false,
+    usedSkills: readonly SKILL[] = [],
     race: string,
     model: string,
     classes: string,
-    key: string,
-    _done: boolean,
-    _prone: boolean,
-    _stunned: boolean,
-    _stupidity: string;
+    key: string;
 
   $: send = $transition.send;
   $: receive = $transition.receive;
   $: {
     ({moving, blitz, stupidity} = playerProps || {});
+    ({canAct, status, disabled, usedSkills} = playerState || {
+      canAct: true,
+      status: STATUS.standing,
+      disabled: false,
+      usedSkills: [],
+    });
     ({ model, race } = getPlayerSprite(playerDef.id.number, playerDef.type));
-    _done = done === undefined ? (!playerState.canAct) : done;
 
     classes = [race, model, playerDef.id.side, "sprite", "crisp", "player"].join(" ");
     key = `player_${playerDef.id.number}`;
-    _prone = prone === undefined ? playerState.status === STATUS.prone : prone;
-    _stunned = stunned === undefined ? playerState.status === STATUS.stunned : stunned;
-    if (stupidity === undefined && playerState.disabled) {
-      let usedSkills = playerState.usedSkills;
+    if (disabled) {
       if (usedSkills.indexOf(20) > -1) {
         //take root
-        _stupidity = "Rooted";
+        stupidity = "Rooted";
       } else if (usedSkills.indexOf(31) > -1) {
         //bonehead
-        _stupidity = "BoneHeaded";
+        stupidity = "BoneHeaded";
       } else if (usedSkills.indexOf(51) > -1) {
         //really stupid
-        _stupidity = "Stupid";
+        stupidity = "Stupid";
       }
     }
   }
@@ -70,16 +69,16 @@ import type { PlayerProps } from "./types.js";
 
 <div
   class={classes}
-  class:done={_done}
+  class:done={!canAct}
   class:moving
-  class:stunned={_stunned}
-  class:prone={_prone}
+  class:stunned={status === STATUS.stunned}
+  class:prone={status === STATUS.prone}
   class:blitz
   in:inFn
   out:outFn
 >
-  {#if _stupidity}
-    <div class={_stupidity} />
+  {#if stupidity}
+    <div class={stupidity} />
   {/if}
 </div>
 

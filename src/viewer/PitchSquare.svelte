@@ -59,7 +59,7 @@
   {#if cell}
     <Cell {...cell} {row} {column} />
   {/if}
-  {#if playerDef && playerState}
+  {#if playerDef}
     <Player {playerDef} {playerState} {playerProps} />
   {/if}
   {#if dice}

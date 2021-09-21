@@ -6,32 +6,27 @@
   export let
     team: Side,
     casType: keyof Dugout,
-    dugout: Dugout,
     playerDefs: PlayerDefinitions,
     playerStates: PlayerStates,
-    playerProperties: PlayerProperties;
+    playerProperties: PlayerProperties,
+    playerPositions: Record<string, number>;
   let width = 4,
     height = 2;
 
-  function playerInSquare(row: number, column: number) {
-    if (dugout) {
-      let players;
-      if (casType == "ko") {
-        players = dugout["cas"].slice(width * height).concat(dugout[casType]);
-      } else if (casType == "reserve") {
-        players = dugout["ko"].slice(width * height).concat(dugout[casType]);
+  $: squares = Object.fromEntries([...Array(width).keys()].flatMap(column => {
+    return [...Array(height).keys()].map(row => {
+      let playerNumber = column * height + row;
+      const player = playerPositions[`${team}-${casType}-${playerNumber}`];
+      if (player) {
+        const playerDef = playerDefs[player];
+        const playerState = playerStates[player];
+        const playerProps = playerProperties[player];
+        return [`${row}-${column}`, {playerDef, playerState, playerProps}];
       } else {
-        players = dugout[casType];
+        return [`${row}-${column}`, {}];
       }
-      let playerNumber = players[column * height + row];
-      const playerDef = playerDefs[playerNumber];
-      const playerState = playerStates[playerNumber];
-      const playerProps = playerProperties[playerNumber];
-      return {playerDef, playerState, playerProps};
-    } else {
-      return {}
-    }
-  }
+    })
+  }));
 </script>
 
 <div class={`bench ${casType}`}>
@@ -41,7 +36,7 @@
       {casType}
       {row}
       {column}
-      {...playerInSquare(row, column)}
+      {...squares[`${row}-${column}`]}
     />
   </Grid>
 </div>

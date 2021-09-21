@@ -49,7 +49,7 @@
   }
 </script>
 
-{#if playerDef && playerState}
+{#if playerDef}
   <div class="player-card">
     <svg
       width="100%"

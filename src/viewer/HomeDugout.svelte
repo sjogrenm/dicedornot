@@ -13,12 +13,13 @@
     weather: WEATHER,
     playerDefs: PlayerDefinitions,
     playerStates: PlayerStates,
-    playerProperties: PlayerProperties;
+    playerProperties: PlayerProperties,
+    playerPositions: Record<string, number>;
 </script>
 
 <div class="dugout">
   {#if team}
-    <Bench dugout={team.dugout} side="home" {playerDefs} {playerStates} {playerProperties} />
+    <Bench side="home" {playerDefs} {playerStates} {playerProperties} {playerPositions}/>
     <div class="logo">
       <TeamLogo logo={team.logo} />
     </div>

@@ -9,7 +9,8 @@
   export let team: Team,
     playerDefs: PlayerDefinitions,
     playerStates: PlayerStates,
-    playerProperties: PlayerProperties;
+    playerProperties: PlayerProperties,
+    playerPositions: Record<string, number>;
 </script>
 
 <div class="dugout">
@@ -20,7 +21,7 @@
   <div class="logo">
     <TeamLogo logo={team.logo} />
   </div>
-  <Bench dugout={team.dugout} side="away" {playerDefs} {playerStates} {playerProperties}/>
+  <Bench side="away" {playerDefs} {playerStates} {playerProperties} {playerPositions}/>
 </div>
 
 <style>

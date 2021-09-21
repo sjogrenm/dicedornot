@@ -22,7 +22,6 @@
   $: {
     homeLogo = teams.home.logo;
     awayLogo = teams.away.logo;
-    console.log(playerPositions);
   }
 
 	// afterUpdate(() => {

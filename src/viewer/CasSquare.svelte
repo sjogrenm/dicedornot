@@ -19,7 +19,6 @@
 
   $: {
     id = `${team}-${casType}-${row}-${column}`;
-
     if (playerState && (playerState.situation>= SITUATION.Casualty)) {
       if (playerState.situation === SITUATION.Casualty) {
         cas =
@@ -49,7 +48,7 @@
     hoveredPlayer.set(undefined);
   }}
 >
-  {#if playerDef && playerState && playerProps}
+  {#if playerDef}
     <Player {playerDef} {playerState} {playerProps} />
     {#if cas}
       <img class="cas" src={`/images/skills/${cas}.png`} alt={cas} />

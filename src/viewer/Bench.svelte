@@ -2,10 +2,10 @@
   import CasBox from "./CasBox.svelte";
   import type { Dugout, PlayerDefinitions, PlayerProperties } from "./types.js";
   import type {PlayerStates, Side} from "../replay/Internal.js";
-  export let dugout: Dugout,
-    playerDefs: PlayerDefinitions,
+  export let playerDefs: PlayerDefinitions,
     playerStates: PlayerStates,
     playerProperties: PlayerProperties,
+    playerPositions: Record<string, number>,
     side: Side;
   const casTypes: (keyof Dugout)[] = ["cas", "ko", "reserve"];
 </script>
@@ -15,10 +15,10 @@
   <CasBox
     team={side}
     {casType}
-    {dugout}
     {playerDefs}
     {playerStates}
     {playerProperties}
+    {playerPositions}
   />
   {/each}
 </div>

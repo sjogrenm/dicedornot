@@ -80,16 +80,12 @@
     positions: ReplayPosition[] = [],
     playerStates: PlayerStates = {},
     playerDefs: PlayerDefinitions = {},
-    playerProperties: PlayerProperties = {};
+    playerProperties: PlayerProperties = {},
+    playerPositions = {};
 
   function emptyTeam(): Team {
     return {
       logo: "",
-      dugout: {
-        cas: [],
-        ko: [],
-        reserve: [],
-      },
       score: 0,
       name: "",
       turn: 1,
@@ -148,6 +144,7 @@
     }
     positions = $replay ? linearReplay($replay!.fullReplay) : [];
   }
+  $: playerPositions = calcPlayerPositions(playerStates);
 
   onMount(() => {
     let url = new URL(window.location.href);
@@ -162,16 +159,37 @@
     return () => console.log("destroyed");
   });
 
-  function playerPositions(playerStates: Internal.PlayerStates): Record<string, Internal.PlayerNumber> {
-    return _.mapObject(
-      _.invert(
-        _.mapObject(
-          playerStates,
-          state => state.pitchCell ? cellString(state.pitchCell) : undefined
-        )
-      ),
-      sid => parseInt(sid)
-    );
+  function calcPlayerPositions(playerStates: Internal.PlayerStates): Record<string, Internal.PlayerNumber> {
+    const positions: Record<string, Internal.PlayerNumber> = {};
+    const boxCounts: Record<Internal.Side, Record<keyof Dugout, number>> = {
+      home: {
+        cas: 0,
+        ko: 0,
+        reserve: 0,
+      },
+      away: {
+        cas: 0,
+        ko: 0,
+        reserve: 0,
+      }
+    };
+    const sitBoxes: Record<Exclude<SITUATION, SITUATION.Active>, keyof Dugout> = {
+      [SITUATION.Casualty]: 'cas',
+      [SITUATION.SentOff]: 'cas',
+      [SITUATION.KO]: 'ko',
+      [SITUATION.Reserves]: 'reserve',
+    };
+    Object.entries(playerStates).forEach(([sid, player]) => {
+      if (player.pitchCell && !offPitch(player.pitchCell)) {
+        positions[cellString(player.pitchCell)] = parseInt(sid);
+      } else if (player.situation != SITUATION.Active) {
+        const box = sitBoxes[player.situation];
+        const side = playerNumberToSide(parseInt(sid));
+        const count = boxCounts[side][box]++;
+        positions[`${side}-${box}-${count}`] = parseInt(sid);
+      }
+    })
+    return positions;
   }
 
   async function resetFromBoardState(boardState: BB2.BoardState) {
@@ -217,11 +235,6 @@
     );
     return {
       logo: team.Data.Logo.toLowerCase(),
-      dugout: {
-        cas: [],
-        ko: [],
-        reserve: [],
-      },
       score: team.Touchdown || 0,
       name: he.decode(team.Data.Name.toString()),
       turn: team.GameTurn || 1,
@@ -289,16 +302,6 @@
     const newState = convertPlayerState(t, p);
     if (!_.isEqual(playerStates[p.Id], newState)) {
       playerStates[p.Id] = newState;
-    }
-    let situation = p.Situation || SITUATION.Active;
-    switch (situation) {
-      case SITUATION.Active:
-        break;
-      default:
-        (team == SIDE.home ? teams.home : teams.away).dugout[
-          DUGOUT_POSITIONS[situation]
-        ].push(p.Id);
-        break;
     }
   }
 
@@ -796,8 +799,6 @@
   }
 
   function resetToCheckpoint(checkpoint: Internal.Checkpoint) {
-    teams.home.dugout = { cas: [], ko: [], reserve: [] };
-    teams.away.dugout = { cas: [], ko: [], reserve: [] };
     Object.entries(checkpoint.playerStates).forEach(([sid, state]) => {
       let id = parseInt(sid);
       playerStates[id] = {
@@ -805,19 +806,6 @@
         usedSkills: [...state.usedSkills],
         casualties: state.casualties ? [...state.casualties] : undefined,
       };
-      const side = playerNumberToSide(id);
-      switch (state.situation) {
-        case SITUATION.Casualty:
-        case SITUATION.SentOff:
-          teams[side].dugout.cas.push(id);
-          break;
-        case SITUATION.KO:
-          teams[side].dugout.ko.push(id);
-          break;
-        case SITUATION.Reserves:
-          teams[side].dugout.reserve.push(id);
-          break;
-      }
     });
   }
 
@@ -848,11 +836,8 @@
     }>
   ) {
     if (position.roll.roll[0] >= position.roll.target) {
-      let player = position.roll.player;
-      let dugout =
-        position.wakeupSide == "home" ? teams.home.dugout : teams.away.dugout;
-      dugout.ko = dugout.ko.filter((koPlayer) => koPlayer != player.number);
-      dugout.reserve.push(player.number);
+      let player = position.roll.player.number;
+      playerStates[player] = {...playerStates[player], situation: SITUATION.Active};
       await step();
     }
   }
@@ -867,21 +852,7 @@
     validateCheckpoint(position.action.checkpoint);
     for (let [sid, cell] of Object.entries(position.action.movedPlayers)) {
       let player = parseInt(sid);
-      let situation;
-      if (offPitch(cell)) {
-        situation = SITUATION.Reserves;
-        teams[playerNumberToSide(player)].dugout.reserve.push(player);
-      } else {
-        situation = SITUATION.Active;
-        const reserveIndex =
-          teams[playerNumberToSide(player)].dugout.reserve.indexOf(player);
-        if (reserveIndex > -1) {
-          teams[playerNumberToSide(player)].dugout.reserve.splice(
-            reserveIndex,
-            1
-          );
-        }
-      }
+      let situation = offPitch(cell) ? SITUATION.Reserves : SITUATION.Active;
       playerStates[player] = {...playerStates[player], pitchCell: cell, situation};
     }
     await step();
@@ -1004,9 +975,6 @@
               (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14)
             ) {
               //surf
-              let team = playerNumberToSide(toPlayer);
-              let dugout = teams[team].dugout;
-              dugout.reserve.push(toPlayer);
               playerStates[toPlayer] = {...playerStates[toPlayer], pitchCell: undefined};
             }
           });
@@ -1243,20 +1211,16 @@
           }
         } else if (result.SubResultType === 3 && playerSquareIndex) {
           //knocked out
-          let team = playerDef.id.side;
-          let dugout = teams[team].dugout;
-          dugout.ko.push(player);
-          playerStates[player] = {...playerState, pitchCell: undefined};
+          playerStates[player] = {...playerState, pitchCell: undefined, situation: SITUATION.KO};
         }
         break;
       case 8: //casualty
         //knocked out
         let team = playerDef.id.side;
-        let dugout = teams[team].dugout;
         if (playerSquareIndex) {
-          dugout.cas.push(player);
+          playerStates[player] = {...playerState, pitchCell: undefined, situation: SITUATION.Casualty};
+
           const cell = playerState.pitchCell;
-          playerStates[player] = {...playerState, pitchCell: undefined};
           if (cell) {
             setPitchSquare(cell, {
               ...getPitchSquare(cell),
@@ -1347,7 +1311,7 @@
     <div class="pitch-scroll">
       <FixedRatio width={1335} height={1061}>
         <div class="pitch">
-          <HomeDugout team={teams.home} {weather} {playerDefs} {playerStates} {playerProperties} />
+          <HomeDugout team={teams.home} {weather} {playerDefs} {playerStates} {playerProperties} {playerPositions} />
           {#if $selectedPlayer || $hoveredPlayer}
             <div class="selected" class:enlarged={!!$hoveredPlayer}>
               <SelectedPlayer
@@ -1360,13 +1324,13 @@
           <Pitch
             {pitch}
             {teams}
-            playerPositions={playerPositions(playerStates)}
+            {playerPositions}
             playerDefinitions={playerDefs}
             {playerProperties}
             {playerStates}
             {ball}
           />
-          <AwayDugout team={teams.away} {playerDefs} {playerStates} {playerProperties} />
+          <AwayDugout team={teams.away} {playerDefs} {playerStates} {playerProperties} {playerPositions} />
         </div>
         {#if banner}
           <Banner {banner} />

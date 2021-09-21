@@ -17,14 +17,13 @@ import type { DeepReadonly } from "ts-essentials";
 export type CrossFadeFn = ReturnType<typeof crossfade>[number];
 
 export interface Dugout {
-    cas: Internal.PlayerNumber[],
-    ko: Internal.PlayerNumber[],
-    reserve: Internal.PlayerNumber[],
+    cas: readonly Internal.PlayerNumber[],
+    ko: readonly Internal.PlayerNumber[],
+    reserve: readonly Internal.PlayerNumber[],
 }
 
 export interface Team {
     logo: string,
-    dugout: Dugout,
     score: number,
     name: string,
     turn: number,
