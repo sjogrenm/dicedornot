@@ -69,7 +69,7 @@
     <Foul />
   {/if}
   {#if ball}
-    <Ball held={ball.held}/>
+    <Ball held={'heldBy' in ball}/>
   {/if}
 </div>
 

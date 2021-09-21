@@ -60,6 +60,8 @@
   import type { PlayerDefinitions, PlayerProperties } from "./types.js";
   import type * as T from "./types.js";
   import type { PlayerStates } from "../replay/Internal.js";
+import { action_destroyer } from "svelte/internal";
+import { Action } from "../rolls.js";
 
   export let playing = false;
 
@@ -67,7 +69,7 @@
     races: string[] = [],
     teams: Internal.ByTeam<Team> = { home: emptyTeam(), away: emptyTeam() },
     pitch: T.Pitch = {},
-    ball: BallProps,
+    ball: BallProps | undefined,
     blitzerId: Internal.PlayerNumber,
     banner: string | undefined = undefined,
     weather = WEATHER.Nice,
@@ -309,12 +311,19 @@
     let cell = convertCell(boardState.Ball.Cell);
 
     if (offPitch(cell)) {
-      ball = {held: false, position: undefined};
+      ball = undefined;
+    } else if (boardState.Ball.IsHeld == 1) {
+      const holdingPlayer = Object.entries(playerStates).find(([_, player]) => player.pitchCell && cellEq(player.pitchCell, cell));
+      if (holdingPlayer) {
+        ball = {
+          heldBy: parseInt(holdingPlayer[0])
+        };
+      } else {
+        console.error("Unable to find player for held ball");
+        ball = undefined;
+      }
     } else {
-      ball = {
-        held: boardState.Ball.IsHeld == 1,
-        position: cell,
-      };
+      ball = {position: cell}
     }
   }
 
@@ -898,7 +907,6 @@
   function handleScatter(action: BB2.ScatterAction) {
     let to = convertCell(action.Order.CellTo.Cell);
     ball = {
-      held: false,
       position: to,
     };
   }
@@ -998,7 +1006,11 @@
     if (!result.IsOrderCompleted) return;
     if (result.ResultType !== 0) return;
 
-    ball = { held: true, position: convertCell(action.Order.CellTo.Cell) };
+    if (action.PlayerId) {
+      ball = { heldBy: action.PlayerId };
+    } else {
+      ball = { position: convertCell(action.Order.CellTo.Cell) };
+    }
   }
 
   async function handleTurnover(endTurn: BB2.RulesEventEndTurn) {
@@ -1029,7 +1041,6 @@
 
   function handleKickoff(action: BB2.KickoffAction) {
     ball = {
-      held: false,
       position: convertCell(action.Order.CellTo.Cell),
     };
   }
@@ -1055,9 +1066,6 @@
     playerProperties[player] = {
       ...playerProps,
       moving: true,
-    }
-    if (ball?.held && ball.position && cellEq(cellFrom, ball.position)) {
-      ball = {...ball, position: cellTo};
     }
 
     squareFrom = setPitchSquare(cellFrom, {
@@ -1105,9 +1113,6 @@
     if (playerDef.id.number == blitzerId) {
       playerStates[player] = {...playerState, blitzer: true};
     }
-    if (ball?.position && cellEq(ball.position, cellFrom)) {
-      ball = {...ball, position: cellFrom};
-    }
   }
 
   function handleActivationTest(
@@ -1152,7 +1157,14 @@
       return;
     }
 
-    ball = {...ball, held: false}
+    if (ball && 'heldBy' in ball) {
+      const position = playerStates[ball.heldBy].pitchCell;
+      if (position) {
+        ball = { position };
+      } else {
+        ball = undefined;
+      }
+    }
     await step(0.5);
 
     if (result.ResultType === RESULT_TYPE.Passed) {
@@ -1166,11 +1178,13 @@
   }
 
   function handlePickup(
-    _action: BB2.PickupAction,
+    action: BB2.PickupAction,
     result: BB2.ActionResult<BB2.PickupAction>
   ) {
     if (result.IsOrderCompleted && result.ResultType === RESULT_TYPE.Passed) {
-      ball = {...ball, held: true};
+      if (action.PlayerId) {
+        ball = {heldBy: action.PlayerId};
+      }
     }
   }
 

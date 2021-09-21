@@ -1,21 +1,27 @@
 <script lang="ts">
-  import {afterUpdate, onMount} from "svelte";
+  import { afterUpdate, onMount } from "svelte";
 
   import Grid from "./Grid.svelte";
   import PitchSquare from "./PitchSquare.svelte";
   import FixedRatio from "./FixedRatio.svelte";
   import Overlay from "./Overlay.svelte";
   import { replayPreview } from "../stores.js";
-  import type { Team, Pitch, BallProps, PlayerDefinitions, PlayerProperties } from "./types.js";
+  import type {
+    Team,
+    Pitch,
+    BallProps,
+    PlayerDefinitions,
+    PlayerProperties,
+  } from "./types.js";
   import type * as Internal from "../replay/Internal.js";
-  import {cellString} from "../replay/Internal.js";
+  import { cellString, cellEq } from "../replay/Internal.js";
   export let teams: Internal.ByTeam<Team>,
     pitch: Pitch,
     playerPositions: Record<string, number>,
     playerDefinitions: PlayerDefinitions,
     playerProperties: PlayerProperties,
     playerStates: Internal.PlayerStates,
-    ball: BallProps;
+    ball: BallProps | undefined;
 
   let homeLogo: string, awayLogo: string;
 
@@ -24,9 +30,9 @@
     awayLogo = teams.away.logo;
   }
 
-	// afterUpdate(() => {
-	// 	console.debug(`Updated Pitch ${JSON.stringify(playerPositions)}`);
-	// });
+  // afterUpdate(() => {
+  // 	console.debug(`Updated Pitch ${JSON.stringify(playerPositions)}`);
+  // });
 </script>
 
 <div class="pitch">
@@ -36,11 +42,22 @@
       {awayLogo}
       {row}
       {column}
-      {...(pitch[cellString({x: column, y: row})] || {})}
-      playerDef={playerDefinitions[playerPositions[cellString({x: column, y: row})]]}
-      playerState={playerStates[playerPositions[cellString({x: column, y: row})]]}
-      playerProps={playerProperties[playerPositions[cellString({x: column, y: row})]]}
-      ball={ball?.position?.x == column && ball?.position?.y == row ? ball : undefined}
+      {...pitch[cellString({ x: column, y: row })] || {}}
+      playerDef={playerDefinitions[
+        playerPositions[cellString({ x: column, y: row })]
+      ]}
+      playerState={playerStates[
+        playerPositions[cellString({ x: column, y: row })]
+      ]}
+      playerProps={playerProperties[
+        playerPositions[cellString({ x: column, y: row })]
+      ]}
+      ball={ball &&
+      ("heldBy" in ball
+        ? ball.heldBy == playerPositions[cellString({ x: column, y: row })]
+        : cellEq(ball.position, { x: column, y: row }))
+        ? ball
+        : undefined}
     />
   </Grid>
   {#if $replayPreview}

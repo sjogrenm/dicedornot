@@ -49,9 +49,17 @@ export interface Team {
 }
 
 export type BallProps = DeepReadonly<{
-    held: boolean;
-    position?: Internal.Cell;
+    heldBy: Internal.PlayerNumber;
+} | {
+    position: Internal.Cell;
 }>;
+
+export function ballPosition(ball: BallProps, playerStates: Internal.PlayerStates): Internal.Cell | undefined {
+    if ('position' in ball) {
+        return ball.position;
+    }
+    return playerStates[ball.heldBy]?.pitchCell;
+}
 
 export type CellProps = DeepReadonly<{
     active?: boolean;
