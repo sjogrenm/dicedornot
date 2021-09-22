@@ -7,7 +7,7 @@
     playerProperties: PlayerProperties,
     playerPositions: Record<string, number>,
     side: Side;
-  const casTypes: (keyof Dugout)[] = ["cas", "ko", "reserve"];
+  const casTypes: (keyof Dugout)[] = side == 'home' ? ["cas", "ko", "reserve"] : ["reserve", "ko", "cas"];
 </script>
 
 <div class="bench {side}">
