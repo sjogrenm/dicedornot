@@ -1,10 +1,14 @@
-import { RACE_ID, SIDE, ACTION_TYPE, weatherTable, WEATHER, ROLL, getPlayerType, STATUS, SITUATION } from '../constants.js';
+import {
+    RACE_ID, SIDE, ACTION_TYPE, weatherTable,
+    WEATHER, ROLL, getPlayerType, STATUS, SITUATION, KICKOFF_RESULT
+} from '../constants.js';
 import * as B from './BB2.js';
-import type * as I from './Internal.js';
+import * as I from './Internal.js';
 import { cellEq } from './Internal.js';
+import parser from 'fast-xml-parser';
 import he from 'he';
 import { ensureKeyedList, ensureList, translateStringNumberList } from '../replay-utils.js';
-import type {DeepReadonly, DeepWritable} from "ts-essentials";
+import type { DeepReadonly, DeepWritable } from "ts-essentials";
 
 function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
     if (v === undefined) {
@@ -17,17 +21,17 @@ class Replay {
     constructor(
         public unhandledSteps: DeepReadonly<DeepReadonly<B.ReplayStep>>[],
         public teams: I.ByTeam<Team> = { home: new Team(), away: new Team() },
-        public stadium: DeepWritable<I.Replay['stadium']> = {name: "N/A", type: ""},
+        public stadium: DeepWritable<I.Replay['stadium']> = { name: "N/A", type: "" },
         public drives: Drive[] = [],
         private foundUnhandledStep = false,
         public finalScore: I.ByTeam<number> = { home: 0, away: 0 },
-        public metadata: DeepWritable<I.Replay['metadata']> = {datePlayed: new Date()},
+        public metadata: DeepWritable<I.Replay['metadata']> = { datePlayed: new Date() },
         public gameLength: number = 0,
-        public fans: I.ByTeam<I.Roll> = { home: {dice: [], total: 0}, away: {dice: [], total: 0} },
+        public fame: I.ByTeam<I.Roll> = { home: [], away: [] },
         public initialWeather: WEATHER = WEATHER.Nice,
         public coinFlipWinner: I.Side = "home",
         public initialKickingTeam: I.Side = "home",
-        public checkpoint: I.Checkpoint = {playerStates: {}},
+        public checkpoint: I.Checkpoint = { playerStates: {} },
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
         this.gameLength = Math.max(16, ...this.unhandledSteps.flatMap(step => {
@@ -148,7 +152,7 @@ class Replay {
         if (merc) {
             merc.skills.push(skill);
         } else {
-            console.warn("Unable to find merc to add skills to", {step, replay: this, team});
+            console.warn("Unable to find merc to add skills to", { step, replay: this, team });
         }
         team.players.get(player)!.skills.push(skill);
     }
@@ -158,7 +162,7 @@ class Replay {
         this.stadium.type = step.GameInfos.Stadium;
         this.stadium.enhancement = step.GameInfos.StructStadium;
 
-        for (const side of ['home', 'away'] as I.Side[]) {
+        for (const side of I.sides as I.Side[]) {
             this.teams[side].coach = he.decode(ensureList(step.GameInfos.CoachesInfos.CoachInfos)[SIDE[side]].UserId.toString());
 
             const bb2Team = step.BoardState.ListTeams.TeamState[SIDE[side]];
@@ -204,7 +208,7 @@ class Replay {
 
         console.assert(movedPlayer != undefined, "Couldn't find moved player", step, this);
         if (movedPlayer != undefined) {
-            const movedPlayers = {[movedPlayer[0]]: toCell};
+            const movedPlayers = { [movedPlayer[0]]: toCell };
             if (alsoMove) {
                 movedPlayers[alsoMove] = fromCell;
             }
@@ -216,7 +220,7 @@ class Replay {
         }
     }
 
-    handleGameTurnStep(stepIdx:number, step: DeepReadonly<B.GameTurnStep>) {
+    handleGameTurnStep(stepIdx: number, step: DeepReadonly<B.GameTurnStep>) {
         if (
             step.RulesEventKickOffChoice
         ) {
@@ -232,7 +236,25 @@ class Replay {
         if (
             step.RulesEventCoachChoice
         ) {
-            this.cantHandle(stepIdx, step, "Can't handle RulesEventCoachChoice");
+            if (step.RulesEventBoardAction &&
+                'ActionType' in step.RulesEventBoardAction &&
+                step.RulesEventBoardAction.ActionType == ACTION_TYPE.KickoffScatter &&
+                'Results' in step.RulesEventBoardAction) {
+                const results = ensureKeyedList("BoardActionResult", step.RulesEventBoardAction.Results);
+                if (results[0] && results[0].RollType == ROLL.TouchBack) {
+                    const kickingTeam = playerNumberToSide(step.RulesEventBoardAction.PlayerId || 0);
+                    const receivingPlayers = ensureKeyedList(
+                        "PlayerState",
+                        step.BoardState.ListTeams.TeamState[kickingTeam == "home" ? 1 : 0].ListPitchPlayers
+                    );
+                    const receivingPlayer = receivingPlayers[step.RulesEventCoachChoice.IndexChosen];
+                    this.lastDrive().kickoff.touchbackTo = receivingPlayer.Id;
+                } else {
+                    this.cantHandle(stepIdx, step, "Can't handle non-touchback scatter RulesEventCoachChoice");
+                }
+            } else {
+                this.cantHandle(stepIdx, step, "Can't handle non-Kickoff RulesEventCoachChoice");
+            }
             return;
         }
         if (
@@ -247,6 +269,7 @@ class Replay {
             const drive = this.lastDrive();
             drive.kickoff.event = {
                 dice: [step.RulesEventKickOffEventCancelled.EventCancelled],
+                total: step.RulesEventKickOffEventCancelled.EventCancelled as KICKOFF_RESULT,
                 cancelled: true,
             };
         }
@@ -268,10 +291,40 @@ class Replay {
             }
         }
         if (step.RulesEventKickOffTable) {
-            let drive = this.lastDrive();
-            drive.kickoff.event = {
-                dice: translateStringNumberList(step.RulesEventKickOffTable.ListDice),
-                cancelled: false,
+            const drive = this.lastDrive();
+            const dice = translateStringNumberList(step.RulesEventKickOffTable.ListDice);
+            const total = dice.reduce((l, r) => l + r, 0) as KICKOFF_RESULT;
+            switch (total) {
+                case KICKOFF_RESULT.Blitz:
+                    drive.kickoff.event = {
+                        dice,
+                        total,
+                        cancelled: false,
+                        activations: [],
+                    }
+                    break;
+                case KICKOFF_RESULT.BrilliantCoaching:
+                    const messages = ensureKeyedList('StringMessage', step.RulesEventKickOffTable.EventResults);
+                    const messageData = parser.parse(he.decode(messages[0].MessageData), {
+                        ignoreAttributes: true,
+                    }) as B.KickoffEventMessageData;
+                    drive.kickoff.event = {
+                        dice,
+                        total,
+                        cancelled: false,
+                        coaching: {home: [], away: []},
+                        rerolls: {home: 0, away: 0},
+                    }
+                case KICKOFF_RESULT.ChangingWeather:
+                case KICKOFF_RESULT.CheeringFans:
+                case KICKOFF_RESULT.GetTheRef:
+                case KICKOFF_RESULT.HighKick:
+                case KICKOFF_RESULT.PerfectDefence:
+                case KICKOFF_RESULT.PitchInvasion:
+                case KICKOFF_RESULT.QuickSnap:
+                case KICKOFF_RESULT.Riot:
+                case KICKOFF_RESULT.ThrowARock:
+                    break
             }
         }
         if (step.RulesEventBoardAction) {
@@ -333,10 +386,7 @@ function convertFansNumber(replay: Replay, action: DeepReadonly<B.FansAction>): 
     for (const fanRoll of ensureKeyedList("BoardActionResult", action.Results)) {
         const team = convertSide(fanRoll.CoachChoices.ConcernedTeam || 0);
         const dice = translateStringNumberList(fanRoll.CoachChoices.ListDices);
-        replay.fans[team] = {
-            dice,
-            total: dice[0] + dice[1],
-        };
+        replay.fame[team] = dice;
     }
 };
 
@@ -348,6 +398,7 @@ function convertInitialWeather(replay: Replay, action: DeepReadonly<B.WeatherAct
 
 function convertKickoffTarget(replay: Replay, action: B.KickoffAction): void {
     const drive = replay.lastDrive();
+    drive.kickoff.checkpoint = replay.checkpoint;
     drive.kickoff.target = convertCell(action.Order.CellTo.Cell);
 }
 
@@ -423,8 +474,8 @@ function convertTakeDamage(replay: Replay, action: B.TakeDamageAction): void {
 
     if (drive.turns) {
     } else { // Damage from a rocks during kickoff
-        if (drive.kickoff.rockDamage == undefined) {
-            drive.kickoff.rockDamage = [];
+        if (drive.kickoff.event.total == KICKOFF_RESULT.ThrowARock && !drive.kickoff.event.cancelled) {
+            drive.kickoff.event.damage.push(damage);
         }
     }
 }
@@ -444,7 +495,7 @@ function convertActivatePlayer(replay: Replay, step: DeepReadonly<B.GameTurnStep
         drive.turns.push(turn);
     }
     turn.activations.push(new Activation(
-        {side: playerSide, number: playerNumber}, 
+        { side: playerSide, number: playerNumber },
         replay.checkpoint
     ));
 }
@@ -464,12 +515,13 @@ class Drive {
     constructor(
         public checkpoint: I.Checkpoint,
         public kickingTeam: I.Side,
-        public wakeups: I.KickoffOrder<I.WakeupRoll[]> = {home: [], away: []},
-        public setups: I.KickoffOrder<I.SetupAction[]> = {home: [], away: []},
+        public wakeups: I.KickoffOrder<I.WakeupRoll[]> = { home: [], away: [] },
+        public setups: I.KickoffOrder<I.SetupAction[]> = { home: [], away: [] },
         public kickoff: I.Drive['kickoff'] = {
-            event: {dice: [], cancelled: false},
-            target: {x: -1, y: -1},
+            event: { dice: [], total: KICKOFF_RESULT.ChangingWeather, cancelled: true },
+            target: { x: -1, y: -1 },
             scatters: [],
+            checkpoint: { playerStates: [] },
         },
         public turns: Turn[] = [],
         public initialScore: I.ByTeam<number> = { home: 0, away: 0 },
@@ -486,7 +538,7 @@ class Turn {
         public activations: Activation[] = [],
         public startWizard?: I.WizardRoll,
         public endWizard?: I.WizardRoll,
-    ) {}
+    ) { }
 }
 
 class Activation {
@@ -496,11 +548,11 @@ class Activation {
         public test?: I.ActivationTest,
         public action: I.Action = {
             actionType: ACTION_TYPE.Move,
-            player: {number: 0, side: "home"},
+            player: { number: 0, side: "home" },
             path: [],
         },
         public actionSteps: I.ActionStep[] = [],
-    ) {}
+    ) { }
 }
 
 export function convertCell(c: B.Cell): I.Cell {

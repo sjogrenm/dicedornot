@@ -1,6 +1,6 @@
 
 import type * as BB2 from "../replay/BB2.js";
-import type * as Internal from "../replay/Internal.js";
+import * as Internal from "../replay/Internal.js";
 import type {
     ReplayPosition,
     ReplayPreview,
@@ -13,6 +13,7 @@ import type {
 import type {crossfade} from 'svelte/transition';
 import type {Color} from 'chroma-js';
 import type { DeepReadonly } from "ts-essentials";
+import { any } from "underscore";
 
 export type CrossFadeFn = ReturnType<typeof crossfade>[number];
 
@@ -52,13 +53,33 @@ export type BallProps = DeepReadonly<{
     heldBy: Internal.PlayerNumber;
 } | {
     position: Internal.Cell;
+} | {
+    futurePositions: Internal.Cell[];
 }>;
 
 export function ballPosition(ball: BallProps, playerStates: Internal.PlayerStates): Internal.Cell | undefined {
     if ('position' in ball) {
         return ball.position;
+    } else if ('futurePositions' in ball) {
+        return undefined;
+    } else {
+        return playerStates[ball.heldBy]?.pitchCell;
     }
-    return playerStates[ball.heldBy]?.pitchCell;
+}
+
+export function ballInSquare(ball: BallProps, playerStates: Internal.PlayerStates, cell: Internal.Cell) {
+    if ('position' in ball) {
+        return Internal.cellEq(ball.position, cell);
+    } else if ('futurePositions' in ball) {
+        return any(ball.futurePositions.map(position => Internal.cellEq(position, cell)));
+    } else {
+        const heldInCell = playerStates[ball.heldBy]?.pitchCell;
+        if (heldInCell) {
+            return Internal.cellEq(heldInCell, cell);
+        } else {
+            return false;
+        }
+    }
 }
 
 export type CellProps = DeepReadonly<{

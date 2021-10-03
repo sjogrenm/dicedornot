@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { afterUpdate, onMount } from "svelte";
-
   import Grid from "./Grid.svelte";
   import PitchSquare from "./PitchSquare.svelte";
   import FixedRatio from "./FixedRatio.svelte";
@@ -11,10 +9,13 @@
     Pitch,
     BallProps,
     PlayerDefinitions,
-    PlayerProperties,
+    PlayerProperties, 
+  } from "./types.js";
+  import {
+    ballInSquare
   } from "./types.js";
   import type * as Internal from "../replay/Internal.js";
-  import { cellString, cellEq } from "../replay/Internal.js";
+  import { cellString } from "../replay/Internal.js";
   export let teams: Internal.ByTeam<Team>,
     pitch: Pitch,
     playerPositions: Record<string, number>,
@@ -52,12 +53,7 @@
       playerProps={playerProperties[
         playerPositions[cellString({ x: column, y: row })]
       ]}
-      ball={ball &&
-      ("heldBy" in ball
-        ? ball.heldBy == playerPositions[cellString({ x: column, y: row })]
-        : cellEq(ball.position, { x: column, y: row }))
-        ? ball
-        : undefined}
+      ball={ball && ballInSquare(ball, playerStates, {x: column, y: row}) ? ball : undefined}
     />
   </Grid>
   {#if $replayPreview}

@@ -2,7 +2,7 @@ import type * as BB2 from './replay/BB2.js';
 import * as Internal from "./replay/Internal.js";
 import parser from 'fast-xml-parser';
 import he from 'he';
-import type {DeepReadonly} from "ts-essentials";
+import type { DeepReadonly } from "ts-essentials";
 
 export function ensureList<T>(objOrList: BB2.MList<T> | undefined): DeepReadonly<T[]> {
   if (objOrList && objOrList instanceof Array) {
@@ -69,9 +69,10 @@ export function nextState(replayStep: BB2.ReplayStep, subStep: REPLAY_SUB_STEP) 
 
 export type ReplayPosition = DeepReadonly<GameOver | BB2ReplayPosition | InternalReplayPosition>;
 
-export type GameOver = { end: true }
+export type GameOver = { type: 'gameOver', end: true }
 
 export type BB2BoardActionResultPosition = {
+  type: 'bb2.actionResult',
   stepIdx: number,
   step: BB2.GameTurnStep,
   subStep: REPLAY_SUB_STEP.BoardAction,
@@ -81,6 +82,7 @@ export type BB2BoardActionResultPosition = {
   result: BB2.ActionResult<BB2.RulesEventBoardAction>
 };
 export type BB2BoardStatePosition = {
+  type: 'bb2.boardState',
   stepIdx: number,
   step: BB2.GameTurnStep,
   subStep: REPLAY_SUB_STEP.BoardState,
@@ -88,6 +90,7 @@ export type BB2BoardStatePosition = {
 };
 
 export type BB2EndTurnPosition = {
+  type: 'bb2.endTurn',
   stepIdx: number,
   step: BB2.GameTurnStep,
   subStep: REPLAY_SUB_STEP.EndTurn,
@@ -95,6 +98,7 @@ export type BB2EndTurnPosition = {
 };
 
 export type BB2KickoffPosition = {
+  type: 'bb2.kickoff',
   stepIdx: number,
   step: BB2.GameTurnStep,
   subStep: REPLAY_SUB_STEP.Kickoff,
@@ -102,6 +106,7 @@ export type BB2KickoffPosition = {
 };
 
 export type BB2KickoffMessagePosition = {
+  type: 'bb2.kickoffMessage',
   stepIdx: number,
   step: BB2.GameTurnStep,
   subStep: REPLAY_SUB_STEP.Kickoff,
@@ -110,6 +115,7 @@ export type BB2KickoffMessagePosition = {
 };
 
 export type BB2SetupPosition = {
+  type: 'bb2.setup',
   stepIdx: number,
   step: BB2.SetUpActionStep,
   subStep: REPLAY_SUB_STEP.SetupAction,
@@ -142,6 +148,26 @@ export type InternalReplayPosition =
     setupSide: Internal.Side,
     actionIdx: number,
     action: Internal.SetupAction,
+    checkpoint: Internal.Checkpoint,
+  } | {
+    type: 'kickoffTarget',
+    driveIdx: number,
+    checkpoint: Internal.Checkpoint,
+    target: Internal.Drive['kickoff']['target']
+  } | {
+    type: 'kickoffScatter',
+    driveIdx: number,
+    scatters: Internal.Drive['kickoff']['scatters']
+  } | {
+    type: 'kickoffEvent',
+    driveIdx: number,
+    event: Internal.Drive['kickoff']['event']
+  } | {
+    type: 'kickoffLanding',
+    driveIdx: number,
+    touchbackTo: Internal.Drive['kickoff']['touchbackTo'],
+    catch: Internal.Drive['kickoff']['catch'],
+    bounce: Internal.Drive['kickoff']['bounce']
   } | {
     type: 'wizardRoll',
     driveIdx: number,
@@ -151,7 +177,7 @@ export type InternalReplayPosition =
   } | {
     type: 'actionStep',
     driveIdx: number,
-    turnIdx: number,
+    turnIdx: number | 'setup',
     activationIdx: number,
     actionStepIdx: number,
     actionStep: Internal.ActionStep,
@@ -193,9 +219,24 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
     }
     for (const setupSide of [drive.kickingTeam, Internal.other(drive.kickingTeam)]) {
       for (const [actionIdx, action] of drive.setups[setupSide].entries()) {
-        yield { type: 'setupAction', driveIdx, setupSide, actionIdx, action };
+        yield { type: 'setupAction', driveIdx, setupSide, actionIdx, action, checkpoint: action.checkpoint };
       }
     }
+    yield { type: 'kickoffTarget', driveIdx, target: drive.kickoff.target, checkpoint: drive.kickoff.checkpoint };
+    yield { type: 'kickoffScatter', driveIdx, scatters: drive.kickoff.scatters };
+    yield { type: 'kickoffEvent', driveIdx, event: drive.kickoff.event };
+    if ('activations' in drive.kickoff.event) {
+      for (const [activationIdx, activation] of drive.kickoff.event.activations.entries()) {
+        for (const [actionStepIdx, actionStep] of activation.actionSteps.entries()) {
+          yield { type: 'actionStep', driveIdx, turnIdx: 'setup', activationIdx, actionStepIdx, actionStep }
+        }
+      }
+    } else if ('setupActions' in drive.kickoff.event) {
+      for (const [actionIdx, action] of drive.kickoff.event.setupActions.entries()) {
+        yield { type: 'setupAction', driveIdx, setupSide: drive.kickoff.event.setupSide, actionIdx, action, checkpoint: action.checkpoint };
+      }
+    }
+    yield { type: 'kickoffLanding', driveIdx, touchbackTo: drive.kickoff.touchbackTo, catch: drive.kickoff.catch, bounce: drive.kickoff.bounce };
     for (const [turnIdx, turn] of drive.turns.entries()) {
       if (turn.startWizard) {
         yield { type: 'wizardRoll', driveIdx, turnIdx, wizard: 'start', roll: turn.startWizard };
@@ -212,16 +253,16 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
   }
   for (const [stepIdx, step] of replay.unhandledSteps.entries()) {
     if ('RulesEventSetUpAction' in step) {
-      yield { stepIdx, subStep: REPLAY_SUB_STEP.SetupAction, step, setup: step.RulesEventSetUpAction };
+      yield { type: 'bb2.setup', stepIdx, subStep: REPLAY_SUB_STEP.SetupAction, step, setup: step.RulesEventSetUpAction };
     }
     if ('RulesEventKickOffTable' in step && step.RulesEventKickOffTable) {
-      yield { stepIdx, subStep: REPLAY_SUB_STEP.Kickoff, step, kickoff: step.RulesEventKickOffTable };
+      yield { type: 'bb2.kickoff', stepIdx, subStep: REPLAY_SUB_STEP.Kickoff, step, kickoff: step.RulesEventKickOffTable };
 
       for (const msg of ensureKeyedList('StringMessage', step.RulesEventKickOffTable.EventResults)) {
         let messageData = parser.parse(he.decode(msg.MessageData), {
           ignoreAttributes: true,
         }) as BB2.KickoffEventMessageData;
-        yield { stepIdx, subStep: REPLAY_SUB_STEP.Kickoff, step, kickoff: step.RulesEventKickOffTable, kickoffMessage: messageData };
+        yield { type: 'bb2.kickoffMessage', stepIdx, subStep: REPLAY_SUB_STEP.Kickoff, step, kickoff: step.RulesEventKickOffTable, kickoffMessage: messageData };
       };
     }
     if ('RulesEventBoardAction' in step) {
@@ -234,16 +275,16 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
           // @ts-ignore
           let results: BB2.ActionResult<typeof action>[] = ensureKeyedList('BoardActionResult', action.Results);
           for (const [resultIdx, result] of results.entries()) {
-            yield { stepIdx, subStep: REPLAY_SUB_STEP.BoardAction, step, actionIdx, action, resultIdx, result };
+            yield { type: 'bb2.actionResult', stepIdx, subStep: REPLAY_SUB_STEP.BoardAction, step, actionIdx, action, resultIdx, result };
           }
         }
       }
     }
     if ('RulesEventEndTurn' in step && step.RulesEventEndTurn) {
-      yield { stepIdx, subStep: REPLAY_SUB_STEP.EndTurn, step, endTurn: step.RulesEventEndTurn };
+      yield { type: 'bb2.endTurn', stepIdx, subStep: REPLAY_SUB_STEP.EndTurn, step, endTurn: step.RulesEventEndTurn };
     }
     if ('BoardState' in step) {
-      yield { stepIdx, subStep: REPLAY_SUB_STEP.BoardState, step, boardState: step.BoardState };
+      yield { type: 'bb2.boardState', stepIdx, subStep: REPLAY_SUB_STEP.BoardState, step, boardState: step.BoardState };
     }
   }
 }

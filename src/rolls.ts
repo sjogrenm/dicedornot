@@ -114,6 +114,12 @@ enum POINT {
   simulated = 'simulated',
 }
 
+
+function unhandledReplayPosition(position: never): never;
+function unhandledReplayPosition(position: ReplayPosition) {
+  console.error(`Unhandled replay position ${JSON.stringify(position)}`);
+}
+
 export class Player {
   team: Team;
   playerState: BB2.PitchPlayer;
@@ -397,26 +403,25 @@ export class Action {
   }
 
   static fromReplayPosition(replay: Internal.Replay, initialBoard: BB2.BoardState, positionIdx: number, position: ReplayPosition): (Action | UnknownAction | undefined) {
-    if ('setup' in position) {
-      return new SetupAction(SetupAction.argsFromXml({
-        replay,
-        initialBoard,
-        positionIdx,
-        setupPosition: position,
-      }));
-    }
-
-    if ('kickoff' in position) {
-      return Roll.fromKickoffEvent(replay, initialBoard, positionIdx, position);
-    }
-
-    if ('result' in position) {
-      let action = Action.fromBoardActionResult(replay, initialBoard, positionIdx, position);
-      if (action) {
-        return action;
+    switch (position.type) {
+      case 'bb2.setup': {
+        return new SetupAction(SetupAction.argsFromXml({
+          replay,
+          initialBoard,
+          positionIdx,
+          setupPosition: position,
+        }));
       }
-    }
-    
+      case 'bb2.kickoff': {
+        return Roll.fromKickoffEvent(replay, initialBoard, positionIdx, position);
+      }
+      case 'bb2.actionResult': {
+        let action = Action.fromBoardActionResult(replay, initialBoard, positionIdx, position);
+        if (action) {
+          return action;
+        }
+      }
+    } 
     return undefined;
   }
 
@@ -991,7 +996,10 @@ export class Roll extends Action {
         eventClass.argsFromXml({
           initialBoard,
           positionIdx,
-          kickoffPosition: position,
+          kickoffPosition: {
+            ...position,
+            type: 'bb2.kickoff',
+          },
           messageData: position.kickoffMessage,
           gameLength: replay.gameLength,
         })

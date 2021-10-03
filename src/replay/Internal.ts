@@ -1,4 +1,4 @@
-import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL, PLAYER_TYPE, WEATHER, STATUS, SITUATION, MODIFIER_TYPE} from '../constants.js';
+import type {ACTION_TYPE, RACE_ID, BLOCK, SKILL, ROLL, PLAYER_TYPE, WEATHER, STATUS, SITUATION, MODIFIER_TYPE, KICKOFF_RESULT} from '../constants.js';
 import type * as BB2 from './BB2.js';
 import type {DeepReadonly} from "ts-essentials";
 
@@ -26,7 +26,7 @@ export interface ModifiedD6SumRoll {
     target: number,
 }
 
-interface _Replay {
+export type Replay = DeepReadonly<{
     teams: ByTeam<Team>,
     stadium: {
         name: string,
@@ -43,14 +43,11 @@ interface _Replay {
         league?: string,
         datePlayed: Date,
     }
-    fans: ByTeam<Roll>,
+    fame: ByTeam<Roll>,
     initialWeather: WEATHER,
     coinFlipWinner: Side,
     initialKickingTeam: Side,
-}
-
-export type Replay = DeepReadonly<_Replay>;
-
+}>
 export interface Team {
     players: Map<PlayerNumber, Player>,
     inducements: Inducements,
@@ -65,6 +62,7 @@ export interface Inducements {
 }
 
 export type Side = "home" | "away";
+export const sides: readonly Side[] = ["home", "away"];
 export function other(side: Side): Side {
     return side == "home" ? "away" : "home";
 }
@@ -128,8 +126,50 @@ export interface Checkpoint {
 
 export type KickoffEvent = {
     dice: number[],
-    cancelled: boolean,
-};
+    total: KICKOFF_RESULT,
+    cancelled: true,
+} | ({
+    dice: number[],
+    cancelled: false,
+} & ({
+    total: KICKOFF_RESULT.GetTheRef,
+} | {
+    total: KICKOFF_RESULT.Riot,
+    riotRoll: number,
+    turnModifier: -1 | 1,
+} | {
+    total: KICKOFF_RESULT.PerfectDefence,
+    setupActions: SetupAction[],
+    setupSide: Side,
+} | {
+    total: KICKOFF_RESULT.HighKick,
+    receivingPlayer: PlayerNumber,
+} | {
+    total: KICKOFF_RESULT.CheeringFans,
+    fans: ByTeam<Roll>,
+    rerolls: ByTeam<0 | 1>,
+} | {
+    total: KICKOFF_RESULT.ChangingWeather,
+    weather: WEATHER,
+} | {
+    total: KICKOFF_RESULT.BrilliantCoaching,
+    coaching: ByTeam<Roll>,
+    rerolls: ByTeam<0 | 1>,
+} | {
+    total: KICKOFF_RESULT.QuickSnap,
+    setupActions: SetupAction[],
+    setupSide: Side,
+} | {
+    total: KICKOFF_RESULT.Blitz,
+    activations: Activation[],
+} | {
+    total: KICKOFF_RESULT.ThrowARock,
+    damage: Damage[],
+} | {
+    total: KICKOFF_RESULT.PitchInvasion,
+    stunRolls: Record<PlayerNumber, Roll>
+}));
+
 export type SetupAction = {
     checkpoint: Checkpoint,
     movedPlayers: PlayerPositions,
@@ -137,11 +177,7 @@ export type SetupAction = {
 export type CatchRoll = any;
 export type PassRoll = any;
 export type FoulRoll = any;
-export interface TakeDamageRoll {
-    player: PlayerId;
-    dice: number[];
-};
-
+export type ScatterRoll = any;
 export interface Drive {
     checkpoint: Checkpoint,
     initialScore: ByTeam<number>,
@@ -149,10 +185,13 @@ export interface Drive {
     wakeups: KickoffOrder<WakeupRoll[]>,
     setups: KickoffOrder<SetupAction[]>,
     kickoff: {
+        checkpoint: Checkpoint,
         event: KickoffEvent,
         target: Cell,
         scatters: Cell[],
-        rockDamage?: TakeDamageRoll[],
+        touchbackTo?: PlayerNumber,
+        catch?: CatchRoll,
+        bounce?: ScatterRoll,
     },
     turns: Turn[],
     touchdownScorer?: Player,
@@ -277,9 +316,10 @@ export interface Reroll<R> {
     rerollSource: "team" | SKILL
 }
 
-export interface Roll {
-    dice: number[],
-    total: number,
+export type Roll = number[];
+
+export function total(roll: Roll) {
+    return roll.reduce((l, r) => l + r, 0);
 }
 
 export interface DiceModifier {

@@ -7,6 +7,7 @@
     target = false,
     pushbackChoice = false,
     moved = false,
+    kickoffTarget = false,
     row: number,
     column: number;
   import { timing, transition } from "../stores.js";
@@ -20,13 +21,16 @@
     let targetClass = target ? "target" : undefined;
     let pushbackChoiceClass = pushbackChoice ? "pushback-choice" : undefined;
     let movedClass = moved ? "moved" : undefined;
+    let kickoffTargetClass = kickoffTarget ? "kickoffTarget" : undefined;
     cellClass =
       activeClass ||
       targetClass ||
       pushbackChoiceClass ||
       plusClass ||
       movedClass ||
+      kickoffTargetClass ||
       "";
+    console.log({column, row, cellClass});
   }
 </script>
 
@@ -65,6 +69,10 @@
   .active {
     --spX: 100;
     --spY: 150;
+  }
+  .kickoffTarget {
+    --spX: 100;
+    --spY: 50;
   }
   .moved {
     --spX: 100;

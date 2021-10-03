@@ -179,7 +179,7 @@
         }
         replay.set(processReplay(jsonReplayData));
         loading = undefined;
-      } catch (err) {
+      } catch (err: any) {
         loading = undefined;
         error.set(err);
         console.error(err);
@@ -206,7 +206,7 @@
       try {
         replay.set(processReplay(convertReplay(cacheableReplay.Replay)));
         loading = undefined;
-      } catch (err) {
+      } catch (err: any) {
         loading = undefined;
         error.set(err);
         console.error(err);

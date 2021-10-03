@@ -23,6 +23,7 @@
     SIDE,
     weatherTable,
     STATUS,
+KICKOFF_RESULT,
   } from "../constants.js";
   import FixedRatio from "./FixedRatio.svelte";
   import Banner from "./Banner.svelte";
@@ -47,7 +48,7 @@
   } from "../stores.js";
   import he from "he";
   import type * as BB2 from "../replay/BB2.js";
-  import type * as Internal from "../replay/Internal.js";
+  import * as Internal from "../replay/Internal.js";
   import {
     convertCell,
     playerNumberToSide,
@@ -60,8 +61,6 @@
   import type { PlayerDefinitions, PlayerProperties } from "./types.js";
   import type * as T from "./types.js";
   import type { PlayerStates } from "../replay/Internal.js";
-import { action_destroyer } from "svelte/internal";
-import { Action } from "../rolls.js";
 
   export let playing = false;
 
@@ -113,16 +112,6 @@ import { Action } from "../rolls.js";
     };
   }
 
-  const DUGOUT_POSITIONS: Record<
-    Exclude<SITUATION, SITUATION.Active>,
-    keyof Dugout
-  > = {
-    [SITUATION.Reserves]: "reserve",
-    [SITUATION.KO]: "ko",
-    [SITUATION.Casualty]: "cas",
-    [SITUATION.SentOff]: "cas",
-  };
-
   $: {
     if (!shouldWake) {
       shouldWake = {
@@ -161,7 +150,9 @@ import { Action } from "../rolls.js";
     return () => console.log("destroyed");
   });
 
-  function calcPlayerPositions(playerStates: Internal.PlayerStates): Record<string, Internal.PlayerNumber> {
+  function calcPlayerPositions(
+    playerStates: Internal.PlayerStates
+  ): Record<string, Internal.PlayerNumber> {
     const positions: Record<string, Internal.PlayerNumber> = {};
     const boxCounts: Record<Internal.Side, Record<keyof Dugout, number>> = {
       home: {
@@ -173,13 +164,16 @@ import { Action } from "../rolls.js";
         cas: 0,
         ko: 0,
         reserve: 0,
-      }
+      },
     };
-    const sitBoxes: Record<Exclude<SITUATION, SITUATION.Active>, keyof Dugout> = {
-      [SITUATION.Casualty]: 'cas',
-      [SITUATION.SentOff]: 'cas',
-      [SITUATION.KO]: 'ko',
-      [SITUATION.Reserves]: 'reserve',
+    const sitBoxes: Record<
+      Exclude<SITUATION, SITUATION.Active>,
+      keyof Dugout
+    > = {
+      [SITUATION.Casualty]: "cas",
+      [SITUATION.SentOff]: "cas",
+      [SITUATION.KO]: "ko",
+      [SITUATION.Reserves]: "reserve",
     };
     Object.entries(playerStates).forEach(([sid, player]) => {
       if (player.pitchCell && !offPitch(player.pitchCell)) {
@@ -190,7 +184,7 @@ import { Action } from "../rolls.js";
         const count = boxCounts[side][box]++;
         positions[`${side}-${box}-${count}`] = parseInt(sid);
       }
-    })
+    });
     return positions;
   }
 
@@ -274,7 +268,10 @@ import { Action } from "../rolls.js";
     let key = cellString(cell);
     return pitch[key] || {};
   }
-  function setPitchSquare(cell: Internal.Cell, props: PitchSquareProps): PitchSquareProps {
+  function setPitchSquare(
+    cell: Internal.Cell,
+    props: PitchSquareProps
+  ): PitchSquareProps {
     if (offPitch(cell)) {
       return {};
     }
@@ -284,20 +281,20 @@ import { Action } from "../rolls.js";
   }
 
   function setPlayerStates(boardState: BB2.BoardState) {
-    boardState.ListTeams.TeamState.forEach((teamState, side) => {
+    boardState.ListTeams.TeamState.forEach((teamState) => {
       ensureKeyedList("PlayerState", teamState.ListPitchPlayers).forEach((p) =>
-        placePlayer(teamState, p, side)
+        placePlayer(teamState, p)
       );
     });
     for (const team in [0, 1]) {
       let blitzer = boardState.ListTeams.TeamState[team].BlitzerId;
       if (blitzer >= 0) {
-        playerStates[blitzer] = {...playerStates[blitzer], blitzer: true}
+        playerStates[blitzer] = { ...playerStates[blitzer], blitzer: true };
       }
     }
   }
 
-  function placePlayer(t: BB2.TeamState, p: BB2.PitchPlayer, team: SIDE) {
+  function placePlayer(t: BB2.TeamState, p: BB2.PitchPlayer) {
     if (!playerDefs[p.Id]) {
       playerDefs[p.Id] = convertPlayerDefinition(p);
     }
@@ -313,17 +310,19 @@ import { Action } from "../rolls.js";
     if (offPitch(cell)) {
       ball = undefined;
     } else if (boardState.Ball.IsHeld == 1) {
-      const holdingPlayer = Object.entries(playerStates).find(([_, player]) => player.pitchCell && cellEq(player.pitchCell, cell));
+      const holdingPlayer = Object.entries(playerStates).find(
+        ([_, player]) => player.pitchCell && cellEq(player.pitchCell, cell)
+      );
       if (holdingPlayer) {
         ball = {
-          heldBy: parseInt(holdingPlayer[0])
+          heldBy: parseInt(holdingPlayer[0]),
         };
       } else {
         console.error("Unable to find player for held ball");
         ball = undefined;
       }
     } else {
-      ball = {position: cell}
+      ball = { position: cell };
     }
   }
 
@@ -498,6 +497,18 @@ import { Action } from "../rolls.js";
         case "setupAction":
           await handleSetupAction(currentPosition);
           break;
+        case "kickoffTarget":
+          await handleKickoffTarget(currentPosition);
+          break;
+        case "kickoffScatter":
+          await handleKickoffScatter(currentPosition);
+          break;
+        case "kickoffEvent":
+          await handleKickoffEvent(currentPosition);
+          break;
+        case "kickoffLanding":
+          await handleKickoffLanding(currentPosition);
+          break;
         case "wizardRoll":
           throw {
             msg: "Haven't implemented wizardRoll handling",
@@ -508,11 +519,11 @@ import { Action } from "../rolls.js";
             msg: "Haven't implemented actionStep handling",
             currentPosition,
           };
+        case "gameOver":
+          break;
         default:
           unhandledReplayPosition(currentPosition);
       }
-    } else {
-      // TODO: Game Over
     }
     if (updateUrl) {
       if (!skipping) {
@@ -526,6 +537,7 @@ import { Action } from "../rolls.js";
   }
 
   async function jumpToPosition(position: number, updateUrl = true) {
+    console.log("Jumping to position", {position})
     clearTemporaryState();
     // Walk back through the replay to find the most recent step with
     // the board state
@@ -537,7 +549,7 @@ import { Action } from "../rolls.js";
       ) {
         break;
       }
-      if ("driveIdx" in currentPosition) {
+      if ("checkpoint" in currentPosition) {
         break;
       }
     }
@@ -761,20 +773,27 @@ import { Action } from "../rolls.js";
   }
 
   function clearTemporaryState() {
-    pitch = Object.fromEntries(Object.entries(pitch).map(([id, square]) => {
-      if (square.dice || square.cell || square.foul) {
-        return [id, {...square, dice: undefined, cell: undefined, foul: undefined}]
-      } else {
-        return [id, square];
-      };
-    }));
-    playerProperties = Object.fromEntries(Object.entries(playerProperties).map(([id, props]) => {
-      if (props.moving) {
-        return [id, {...props, moving: false}];
-      } else {
-        return [id, props];
-      }
-    }));
+    pitch = Object.fromEntries(
+      Object.entries(pitch).map(([id, square]) => {
+        if (square.dice || square.cell || square.foul) {
+          return [
+            id,
+            { ...square, dice: undefined, cell: undefined, foul: undefined },
+          ];
+        } else {
+          return [id, square];
+        }
+      })
+    );
+    playerProperties = Object.fromEntries(
+      Object.entries(playerProperties).map(([id, props]) => {
+        if (props.moving) {
+          return [id, { ...props, moving: false }];
+        } else {
+          return [id, props];
+        }
+      })
+    );
   }
 
   function handleGameMetadata(replay: Internal.Replay) {
@@ -798,13 +817,25 @@ import { Action } from "../rolls.js";
   }
 
   function validateCheckpoint(checkpoint: Internal.Checkpoint) {
-    Object.entries(checkpoint.playerStates).forEach((state, id) => {
-      console.assert(
-        _.isEqual(playerStates[id], state),
-        "Player state didn't match checkpoint",
-        { current, id, playerStates, checkpointState: state }
-      );
+    console.assert(checkpoint, "Expected checkpoint");
+    if (!checkpoint) {
+      return;
+    }
+    let reset = false;
+    Object.entries(checkpoint.playerStates).forEach(([sid, state]) => {
+      const id = parseInt(sid);
+      const matches = _.isEqual(playerStates[id], state);
+      console.assert(matches, "Player state didn't match checkpoint", {
+        current,
+        id,
+        playerStates,
+        checkpointState: state,
+      });
+      reset = reset || !matches;
     });
+    if (reset) {
+      resetToCheckpoint(checkpoint);
+    }
   }
 
   function resetToCheckpoint(checkpoint: Internal.Checkpoint) {
@@ -846,7 +877,10 @@ import { Action } from "../rolls.js";
   ) {
     if (position.roll.roll[0] >= position.roll.target) {
       let player = position.roll.player.number;
-      playerStates[player] = {...playerStates[player], situation: SITUATION.Active};
+      playerStates[player] = {
+        ...playerStates[player],
+        situation: SITUATION.Active,
+      };
       await step();
     }
   }
@@ -856,13 +890,109 @@ import { Action } from "../rolls.js";
       type: "setupAction";
       setupSide: Internal.Side;
       action: Internal.SetupAction;
+      checkpoint: Internal.Checkpoint;
     }>
   ) {
-    validateCheckpoint(position.action.checkpoint);
+    validateCheckpoint(position.checkpoint);
     for (let [sid, cell] of Object.entries(position.action.movedPlayers)) {
       let player = parseInt(sid);
       let situation = offPitch(cell) ? SITUATION.Reserves : SITUATION.Active;
-      playerStates[player] = {...playerStates[player], pitchCell: cell, situation};
+      playerStates[player] = {
+        ...playerStates[player],
+        pitchCell: cell,
+        situation,
+      };
+    }
+    await step();
+  }
+
+  async function handleKickoffTarget(
+    position: DeepReadonly<{
+      type: "kickoffTarget";
+      checkpoint: Internal.Checkpoint;
+      target: Internal.Drive["kickoff"]["target"];
+    }>
+  ) {
+    validateCheckpoint(position.checkpoint);
+
+    ball = {futurePositions: [position.target]};
+    await step();
+  }
+
+  async function handleKickoffScatter(
+    position: DeepReadonly<{
+      type: "kickoffScatter";
+      scatters: Internal.Drive["kickoff"]["scatters"];
+    }>
+  ) {
+    for (const scatter of position.scatters) {
+      ball = {futurePositions: [scatter]};
+      await step();
+    }
+  }
+
+  async function handleKickoffEvent(
+    position: DeepReadonly<{
+      type: "kickoffEvent";
+      event: Internal.KickoffEvent;
+    }>
+  ) {
+    if (position.event.cancelled) {
+      return;
+    }
+    switch (position.event.total) {
+      case KICKOFF_RESULT.PerfectDefence:
+      case KICKOFF_RESULT.Blitz:
+      case KICKOFF_RESULT.QuickSnap:
+        // No visible effect
+        break;
+      case KICKOFF_RESULT.BrilliantCoaching:
+      case KICKOFF_RESULT.CheeringFans:
+        for (const side of Internal.sides) {
+          teams[side].rerolls = {
+            available: teams[side].rerolls.available + position.event.rerolls[side],
+            total: teams[side].rerolls.total + position.event.rerolls[side],
+          };
+        }
+        break;
+      case KICKOFF_RESULT.ChangingWeather:
+        weather = position.event.weather;
+        break;
+      case KICKOFF_RESULT.GetTheRef:
+        for (const side of Internal.sides) {
+          teams[side].inducements.bribes = {
+            available: teams[side].inducements.bribes.available + 1,
+            total: teams[side].inducements.bribes.total + 1,
+          };
+        }
+        break;
+      case KICKOFF_RESULT.HighKick:
+        if (ball && 'futurePositions' in ball) {
+          playerStates[position.event.receivingPlayer] = {
+            ...playerStates[position.event.receivingPlayer],
+            pitchCell: ball.futurePositions[0],
+          }
+        } else {
+          console.warn("Unexpected High Kick with no ball defined");
+        }
+      case KICKOFF_RESULT.Riot:
+      case KICKOFF_RESULT.PitchInvasion:
+      case KICKOFF_RESULT.ThrowARock:
+        // TODO: Finish
+        break;
+    }
+  }
+
+  async function handleKickoffLanding(
+    position: DeepReadonly<{
+      type: "kickoffLanding";
+      touchbackTo?: Internal.Drive["kickoff"]["touchbackTo"]
+      catch?: Internal.Drive["kickoff"]["catch"]
+      bounce?: Internal.Drive["kickoff"]["bounce"];
+    }>
+  ) {
+    if (position.touchbackTo) {
+      ball = {heldBy: position.touchbackTo};
     }
     await step();
   }
@@ -877,16 +1007,18 @@ import { Action } from "../rolls.js";
 
   function handleActivate(action: BB2.ActivatePlayerAction) {
     clearTemporaryState();
-    const player = action.PlayerId || 0
+    const player = action.PlayerId || 0;
     const playerState = playerStates[player];
-    playerStates[player] = {...playerState, status: STATUS.standing};
-    pitch = Object.fromEntries(Object.entries(pitch).map(([idx, square]) => {
-      if (square.cell && square.cell.active) {
-        return [idx, {...square, cell: {...square.cell, active: false}}];
-      } else {
-        return [idx, square];
-      }
-    }));
+    playerStates[player] = { ...playerState, status: STATUS.standing };
+    pitch = Object.fromEntries(
+      Object.entries(pitch).map(([idx, square]) => {
+        if (square.cell && square.cell.active) {
+          return [idx, { ...square, cell: { ...square.cell, active: false } }];
+        } else {
+          return [idx, square];
+        }
+      })
+    );
     if (playerState.pitchCell) {
       const pitchSquare = getPitchSquare(playerState.pitchCell);
       let cell;
@@ -898,9 +1030,9 @@ import { Action } from "../rolls.js";
           moved: false,
         };
       } else {
-        cell = {...pitchSquare.cell, active: true};
+        cell = { ...pitchSquare.cell, active: true };
       }
-      setPitchSquare(playerState.pitchCell, {...pitchSquare, cell: cell});
+      setPitchSquare(playerState.pitchCell, { ...pitchSquare, cell: cell });
     }
   }
 
@@ -917,7 +1049,10 @@ import { Action } from "../rolls.js";
   ) {
     let from = convertCell(action.Order.CellFrom);
     let fromSquare = getPitchSquare(from);
-    setPitchSquare(from, {...fromSquare, cell: {...fromSquare.cell || {}, active: true}});
+    setPitchSquare(from, {
+      ...fromSquare,
+      cell: { ...(fromSquare.cell || {}), active: true },
+    });
 
     const to = convertCell(action.Order.CellTo.Cell);
     let [sToPlayer, _state] = Object.entries(playerStates).find(
@@ -926,7 +1061,8 @@ import { Action } from "../rolls.js";
     let toPlayer = sToPlayer && parseInt(sToPlayer);
 
     pitch = _.mapObject(pitch, (square) => ({
-      ...square, dice: undefined
+      ...square,
+      dice: undefined,
     }));
 
     if ("RollType" in result && result.RollType === ROLL.Block) {
@@ -935,14 +1071,16 @@ import { Action } from "../rolls.js";
 
       let dice;
       if (result.IsOrderCompleted) {
-        dice = [
-          translateStringNumberList(result.CoachChoices.ListDices)[0],
-        ];
+        dice = [translateStringNumberList(result.CoachChoices.ListDices)[0]];
       } else {
         dice = translateStringNumberList(result.CoachChoices.ListDices);
         dice = dice.slice(0, dice.length / 2);
       }
-      setPitchSquare(targetCell, {...target, cell: {...target.cell || {}, target: true}, dice});
+      setPitchSquare(targetCell, {
+        ...target,
+        cell: { ...(target.cell || {}), target: true },
+        dice,
+      });
       await step(2);
     }
     if ("RollType" in result && result.RollType === ROLL.Push) {
@@ -950,7 +1088,10 @@ import { Action } from "../rolls.js";
       if (result.IsOrderCompleted) {
         pitch = _.mapObject(pitch, (square) => {
           if (square.cell) {
-            return {...square, cell: {...square.cell, pushbackChoice: false, target: false}};
+            return {
+              ...square,
+              cell: { ...square.cell, pushbackChoice: false, target: false },
+            };
           } else {
             return square;
           }
@@ -964,26 +1105,37 @@ import { Action } from "../rolls.js";
         }
 
         const [sLastChainPush, _state] = Object.entries(playerStates).find(
-          ([_id, state]) => state.pitchCell && cellEq(state.pitchCell, pushTarget)
+          ([_id, state]) =>
+            state.pitchCell && cellEq(state.pitchCell, pushTarget)
         ) || [undefined, undefined];
-        lastChainPush = sLastChainPush != undefined ? parseInt(sLastChainPush) : undefined;
+        lastChainPush =
+          sLastChainPush != undefined ? parseInt(sLastChainPush) : undefined;
 
         if (toPlayer) {
-          playerStates[toPlayer] = {...playerStates[toPlayer], pitchCell:  pushTarget};
+          playerStates[toPlayer] = {
+            ...playerStates[toPlayer],
+            pitchCell: pushTarget,
+          };
         }
       } else {
         ensureKeyedList("Cell", result.CoachChoices.ListCells)
           .map(convertCell)
           .forEach((cell) => {
             let square = getPitchSquare(cell);
-            setPitchSquare(cell, {...square, cell: {...square.cell || {}, pushbackChoice: true}});
+            setPitchSquare(cell, {
+              ...square,
+              cell: { ...(square.cell || {}), pushbackChoice: true },
+            });
 
             if (
               toPlayer &&
               (cell.x < 0 || cell.x > 25 || cell.y < 0 || cell.y > 14)
             ) {
               //surf
-              playerStates[toPlayer] = {...playerStates[toPlayer], pitchCell: undefined};
+              playerStates[toPlayer] = {
+                ...playerStates[toPlayer],
+                pitchCell: undefined,
+              };
             }
           });
       }
@@ -994,7 +1146,10 @@ import { Action } from "../rolls.js";
         const target = convertCell(
           ensureKeyedList("Cell", result.CoachChoices.ListCells)[0]
         );
-        playerStates[action.PlayerId || 0] = {...playerStates[action.PlayerId || 0], pitchCell: target};
+        playerStates[action.PlayerId || 0] = {
+          ...playerStates[action.PlayerId || 0],
+          pitchCell: target,
+        };
       }
     }
   }
@@ -1026,16 +1181,19 @@ import { Action } from "../rolls.js";
   async function handleFoul(action: BB2.FoulAction) {
     const targetCell = convertCell(action.Order.CellTo.Cell);
     const targetSquare = getPitchSquare(targetCell);
-    setPitchSquare(targetCell, {...targetSquare, foul: true});
+    setPitchSquare(targetCell, { ...targetSquare, foul: true });
     await step();
   }
   function handleStunWake(action: BB2.StunWakeAction) {
-    playerStates[action.PlayerId || 0] = {...playerStates[action.PlayerId || 0], status: STATUS.prone};
+    playerStates[action.PlayerId || 0] = {
+      ...playerStates[action.PlayerId || 0],
+      status: STATUS.prone,
+    };
   }
 
   function handleHandoff(action: BB2.HandoffAction) {
     if (ball) {
-      ball = {...ball, position: convertCell(action.Order.CellTo.Cell)};
+      ball = { ...ball, position: convertCell(action.Order.CellTo.Cell) };
     }
   }
 
@@ -1066,23 +1224,23 @@ import { Action } from "../rolls.js";
     playerProperties[player] = {
       ...playerProps,
       moving: true,
-    }
+    };
 
     squareFrom = setPitchSquare(cellFrom, {
       ...squareFrom,
       cell: {
-        ...squareFrom.cell || {},
+        ...(squareFrom.cell || {}),
         moved: true,
         active: false,
-      }
+      },
     });
     if (result.IsOrderCompleted) {
       setPitchSquare(cellTo, {
         ...squareTo,
         cell: {
-          ...squareTo.cell || {},
+          ...(squareTo.cell || {}),
           active: true,
-        }
+        },
       });
     }
 
@@ -1104,14 +1262,14 @@ import { Action } from "../rolls.js";
       squareTo = setPitchSquare(cellTo, {
         ...squareTo,
         cell: {
-          ...squareTo.cell || {},
-          plus: (result.Requirement || 0) - modifier
-        }
+          ...(squareTo.cell || {}),
+          plus: (result.Requirement || 0) - modifier,
+        },
       });
     }
 
     if (playerDef.id.number == blitzerId) {
-      playerStates[player] = {...playerState, blitzer: true};
+      playerStates[player] = { ...playerState, blitzer: true };
     }
   }
 
@@ -1132,7 +1290,10 @@ import { Action } from "../rolls.js";
 
     if (result.ResultType === RESULT_TYPE.Passed) {
       //success
-      playerProperties[player] = {...playerProperties[player], stupidity: undefined};
+      playerProperties[player] = {
+        ...playerProperties[player],
+        stupidity: undefined,
+      };
     } else {
       //failure
       const STUPID_TYPES: Record<
@@ -1145,7 +1306,10 @@ import { Action } from "../rolls.js";
         [ROLL.WildAnimal]: "WildAnimal",
         [ROLL.Loner]: "Loner",
       };
-      playerProperties[player] = {...playerProperties[player], stupidity: STUPID_TYPES[result.RollType]};
+      playerProperties[player] = {
+        ...playerProperties[player],
+        stupidity: STUPID_TYPES[result.RollType],
+      };
     }
   }
 
@@ -1157,7 +1321,7 @@ import { Action } from "../rolls.js";
       return;
     }
 
-    if (ball && 'heldBy' in ball) {
+    if (ball && "heldBy" in ball) {
       const position = playerStates[ball.heldBy].pitchCell;
       if (position) {
         ball = { position };
@@ -1171,8 +1335,8 @@ import { Action } from "../rolls.js";
       //success
       ball = {
         ...ball,
-        position: convertCell(ensureList(action.Order.CellTo.Cell)[0])
-      }
+        position: convertCell(ensureList(action.Order.CellTo.Cell)[0]),
+      };
       await step();
     }
   }
@@ -1183,7 +1347,7 @@ import { Action } from "../rolls.js";
   ) {
     if (result.IsOrderCompleted && result.ResultType === RESULT_TYPE.Passed) {
       if (action.PlayerId) {
-        ball = {heldBy: action.PlayerId};
+        ball = { heldBy: action.PlayerId };
       }
     }
   }
@@ -1196,14 +1360,13 @@ import { Action } from "../rolls.js";
 
     const player = action.PlayerId || 0,
       playerState = playerStates[player],
-      playerDef = playerDefs[player],
       playerSquareIndex =
         playerState.pitchCell &&
         `${playerState.pitchCell.x}-${playerState.pitchCell.y}`;
 
-    pitch = _.mapObject(pitch, square => {
+    pitch = _.mapObject(pitch, (square) => {
       if (square.cell?.target) {
-        return {...square, cell: {...square.cell, target: false}};
+        return { ...square, cell: { ...square.cell, target: false } };
       } else {
         return square;
       }
@@ -1214,25 +1377,32 @@ import { Action } from "../rolls.js";
         if (result.ResultType === 1) {
           // armor failed
           //knocked down
-          playerStates[player] = {...playerState, status: STATUS.prone};
+          playerStates[player] = { ...playerState, status: STATUS.prone };
         }
         break;
       case 4: //injury
         if (result.SubResultType === 2) {
           //stunned
           if (playerState) {
-            playerStates[player] = {...playerState, status: STATUS.stunned};
+            playerStates[player] = { ...playerState, status: STATUS.stunned };
           }
         } else if (result.SubResultType === 3 && playerSquareIndex) {
           //knocked out
-          playerStates[player] = {...playerState, pitchCell: undefined, situation: SITUATION.KO};
+          playerStates[player] = {
+            ...playerState,
+            pitchCell: undefined,
+            situation: SITUATION.KO,
+          };
         }
         break;
       case 8: //casualty
         //knocked out
-        let team = playerDef.id.side;
         if (playerSquareIndex) {
-          playerStates[player] = {...playerState, pitchCell: undefined, situation: SITUATION.Casualty};
+          playerStates[player] = {
+            ...playerState,
+            pitchCell: undefined,
+            situation: SITUATION.Casualty,
+          };
 
           const cell = playerState.pitchCell;
           if (cell) {
@@ -1325,13 +1495,24 @@ import { Action } from "../rolls.js";
     <div class="pitch-scroll">
       <FixedRatio width={1335} height={1061}>
         <div class="pitch">
-          <HomeDugout team={teams.home} {weather} {playerDefs} {playerStates} {playerProperties} {playerPositions} />
+          <HomeDugout
+            team={teams.home}
+            {weather}
+            {playerDefs}
+            {playerStates}
+            {playerProperties}
+            {playerPositions}
+          />
           {#if $selectedPlayer || $hoveredPlayer}
             <div class="selected" class:enlarged={!!$hoveredPlayer}>
               <SelectedPlayer
                 playerDef={playerDefs[$hoveredPlayer || $selectedPlayer || 0]}
-                playerState={playerStates[$hoveredPlayer || $selectedPlayer || 0]}
-                playerProps={playerProperties[$hoveredPlayer || $selectedPlayer || 0]}
+                playerState={playerStates[
+                  $hoveredPlayer || $selectedPlayer || 0
+                ]}
+                playerProps={playerProperties[
+                  $hoveredPlayer || $selectedPlayer || 0
+                ]}
               />
             </div>
           {/if}
@@ -1344,7 +1525,13 @@ import { Action } from "../rolls.js";
             {playerStates}
             {ball}
           />
-          <AwayDugout team={teams.away} {playerDefs} {playerStates} {playerProperties} {playerPositions} />
+          <AwayDugout
+            team={teams.away}
+            {playerDefs}
+            {playerStates}
+            {playerProperties}
+            {playerPositions}
+          />
         </div>
         {#if banner}
           <Banner {banner} />

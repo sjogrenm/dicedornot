@@ -416,9 +416,17 @@ export interface RulesEventKickOffTable {
     ListDice: string,
 }
 
-export type KickoffEventMessageData = | PitchInvasionMessage
+export type KickoffEventMessageData = | PitchInvasionMessage | KickoffClashMessage
 export interface PitchInvasionMessage {
     RulesEventPlayerInvaded: RulesEventPlayerInvaded,
+}
+export interface KickoffClashMessage {
+    WinningTeam: SIDE,
+    Player2: number,
+    Player1: number,
+    GuestTeamResult: number,
+    HomeTeamResult: number,
+    Event: number,
 }
 
 export interface RulesEventPlayerInvaded {

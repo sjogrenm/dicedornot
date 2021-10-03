@@ -1,6 +1,5 @@
 <svelte:options immutable/>
 <script lang="ts">
-  import {afterUpdate, onMount} from "svelte";
   import { selectedPlayer, hoveredPlayer } from "../stores.js";
   import Ball from "./Ball.svelte";
   import Cell from "./Cell.svelte";
@@ -22,10 +21,14 @@
     ball: BallProps | undefined = undefined,
     dice: PitchSquareProps["dice"] = undefined,
     foul: PitchSquareProps["foul"] = false;
-    let id: string;
+    let id: string, kickoffTarget: boolean | undefined = false;
 
   $: {
     id = `pitch-${row}-${column}`;
+    kickoffTarget = ball && ('futurePositions' in ball);
+    if (ball) {
+      console.log(ball, kickoffTarget);
+    }
   }
 
 	// afterUpdate(() => {
@@ -56,8 +59,8 @@
   {#if column == 25 && row == 7 && awayLogo}
     <TeamLogo logo={awayLogo.toLowerCase()} />
   {/if}
-  {#if cell}
-    <Cell {...cell} {row} {column} />
+  {#if cell || kickoffTarget}
+    <Cell {...cell} {row} {column} {kickoffTarget}/>
   {/if}
   {#if playerDef}
     <Player {playerDef} {playerState} {playerProps} />
@@ -68,7 +71,7 @@
   {#if foul}
     <Foul />
   {/if}
-  {#if ball}
+  {#if ball && !('futurePositions' in ball)}
     <Ball held={'heldBy' in ball}/>
   {/if}
 </div>
