@@ -33,7 +33,6 @@ export type Replay = DeepReadonly<{
         type: string,
         enhancement?: string,
     },
-    gameLength: number,
     drives: Drive[],
     unhandledSteps: BB2.ReplayStep[],
     finalScore: ByTeam<number>,

@@ -34,16 +34,6 @@ class Replay {
         public checkpoint: I.Checkpoint = { playerStates: {} },
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
-        this.gameLength = Math.max(16, ...this.unhandledSteps.flatMap(step => {
-            if (!('BoardState' in step)) {
-                return [];
-            } else {
-                return [
-                    step.BoardState.ListTeams.TeamState[0].GameTurn || 0,
-                    step.BoardState.ListTeams.TeamState[1].GameTurn || 0
-                ];
-            }
-        }));
     }
 
     processUnorderedSteps() {

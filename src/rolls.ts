@@ -271,7 +271,6 @@ interface ActionArgs {
   resultType?: RESULT_TYPE,
   subResultType: SUB_RESULT_TYPE | undefined,
   startIndex: number,
-  gameLength: number,
   rolls?: Action[],
 }
 
@@ -312,7 +311,6 @@ export class Action {
   dependentActions: (Action | Roll)[];
   endIndex: number | undefined = undefined;
   finalBoardState: BoardState;
-  gameLength: number;
   ignore: boolean;
   initialBoardState: BoardState;
   onTeamValues: Record<number, Distribution>;
@@ -346,7 +344,6 @@ export class Action {
     this.resultType = attrs.resultType;
     this.subResultType = attrs.subResultType;
     this.startIndex = attrs.startIndex;
-    this.gameLength = attrs.gameLength;
     this.actions = attrs.rolls;
 
     this.onTeamValues = {};
@@ -394,7 +391,6 @@ export class Action {
       resultType: 'ResultType' in result ? result.ResultType : undefined,
       subResultType: 'SubResultType' in result ? result.SubResultType : undefined,
       startIndex: xml.positionIdx,
-      gameLength: xml.replay.gameLength,
     };
   }
 
@@ -663,7 +659,7 @@ export class Action {
       if (this.turn || 0 <= 16) {
         return 16 - team.turn;
       } else {
-        return Math.min(24, this.gameLength || 16) - team.turn;
+        return 24 - team.turn;
       }
     });
     return halfTurns[0] + halfTurns[1];
@@ -680,7 +676,7 @@ export class Action {
       } else if (this.turn || 0 <= 16) {
         return 16 - team.turn;
       } else {
-        return Math.min(24, this.gameLength || 16) - team.turn;
+        return 24 - team.turn;
       }
     });
     return halfTurns[0] + halfTurns[1] + 1;
@@ -725,7 +721,6 @@ export class Action {
         subResultType: SUB_RESULT_TYPE.ArmorNoBreak,
         startIndex: this.startIndex,
         isReroll: false,
-        gameLength: this.gameLength,
         rolls: this.actions,
       }))
     );
@@ -2666,7 +2661,6 @@ interface KickoffEventRollXML {
   positionIdx: number,
   kickoffPosition: BB2KickoffPosition,
   messageData: BB2.KickoffEventMessageData,
-  gameLength: number,
 }
 // Cheating on types here because KickoffEvent wants a bunch of ModifiedD6SumRoll stuff
 // @ts-ignore
@@ -2708,7 +2702,6 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
       resultType: RESULT_TYPE.Passed,
       subResultType: undefined,
       isReroll: false,
-      gameLength: xml.gameLength,
     };
   }
 }
@@ -2778,7 +2771,6 @@ export class SetupAction extends NoValueAction {
       finalBoardState: new BoardState(BoardState.argsFromXml(xml.setupPosition.step.BoardState)),
       ignore: this.ignore(xml),
       startIndex: xml.positionIdx,
-      gameLength: xml.replay.gameLength,
       skillsInEffect: [],
       activePlayer: undefined,
       resultType: RESULT_TYPE.Passed,
