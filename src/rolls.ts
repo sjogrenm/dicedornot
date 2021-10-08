@@ -989,7 +989,6 @@ export class Roll extends Action {
             type: 'bb2.kickoff',
           },
           messageData: position.kickoffMessage,
-          gameLength: replay.gameLength,
         })
       );
     }
@@ -1738,7 +1737,6 @@ class ArmorRoll extends PlayerD6Roll {
         subResultType: SUB_RESULT_TYPE.CASResult,
         startIndex: this.startIndex,
         isReroll: false,
-        gameLength: this.gameLength,
         rolls: this.actions,
       })).get(key));
     return result!;
@@ -2509,7 +2507,6 @@ export class KickoffRoll extends Roll {
       resultType: RESULT_TYPE.Passed,
       subResultType: undefined,
       isReroll: false,
-      gameLength: xml.replay.gameLength,
     };
   }
   get description() {
