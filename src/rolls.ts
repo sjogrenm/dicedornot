@@ -2776,14 +2776,10 @@ class FollowUpChoice extends NoValueAction {
 class FoulPenaltyRoll extends NoValueAction { }
 
 export class UnknownAction {
-  name: string;
-  xml: any;
   ignore: boolean;
   actions?: (Action | UnknownAction)[];
 
-  constructor(name: string, xml: any) {
-    this.name = name;
-    this.xml = xml;
+  constructor(public name: string, public xml: any) {
     this.ignore = true;
   }
 }
