@@ -266,7 +266,6 @@ interface ActionArgs {
   finalBoardState: BoardState,
   skillsInEffect: DeepReadonly<BB2.SkillInfo[]>,
   activePlayer: Player | undefined,
-  ignore: boolean,
   actionType: ACTION_TYPE,
   resultType?: RESULT_TYPE,
   subResultType: SUB_RESULT_TYPE | undefined,
@@ -311,7 +310,6 @@ export class Action {
   dependentActions: (Action | Roll)[];
   endIndex: number | undefined = undefined;
   finalBoardState: BoardState;
-  ignore: boolean;
   initialBoardState: BoardState;
   onTeamValues: Record<number, Distribution>;
   resultType?: RESULT_TYPE;
@@ -339,7 +337,6 @@ export class Action {
     this.finalBoardState = attrs.finalBoardState;
     this.skillsInEffect = attrs.skillsInEffect;
     this.activePlayer = attrs.activePlayer;
-    this.ignore = attrs.ignore;
     this.actionType = attrs.actionType;
     this.resultType = attrs.resultType;
     this.subResultType = attrs.subResultType;
@@ -386,7 +383,6 @@ export class Action {
       skillsInEffect,
       finalBoardState,
       activePlayer: activePlayerId !== undefined ? initialBoardState.playerById(activePlayerId) || undefined : undefined,
-      ignore: this.ignore(xml),
       actionType: 'ActionType' in action ? action.ActionType : ACTION_TYPE.Move,
       resultType: 'ResultType' in result ? result.ResultType : undefined,
       subResultType: 'SubResultType' in result ? result.SubResultType : undefined,
@@ -394,7 +390,7 @@ export class Action {
     };
   }
 
-  static ignore(xml: ActionXML) {
+  get ignore() {
     return false;
   }
 
@@ -939,19 +935,16 @@ export class Roll extends Action {
     throw 'simulateDice must be defined by subclass';
   }
 
-  static ignore(xml: ActionXML) {
-    assert('resultPosition' in xml);
-    let {result} = xml.resultPosition;
-    assert('RollType' in result);
-    if ('RollStatus' in result && result.RollStatus == ROLL_STATUS.RerollNotTaken) {
+  get ignore() {
+    if (this.rollStatus == ROLL_STATUS.RerollNotTaken) {
       return true; // Didn't take an offered reroll, so ignore this roll in favor of the previous one
     }
 
-    if (!('ListDices' in result.CoachChoices)) {
+    if (this.dice.length == 0) {
       return true;
     }
 
-    return super.ignore(xml);
+    return super.ignore;
   }
 
   static dice(listDices: BB2.Dices): number[] {
@@ -1150,23 +1143,21 @@ export class BlockRoll extends Roll {
       }${defenderSkills} - ${this.dice.join(this.diceSeparator)}${uphill}`;
   }
 
-  static ignore(xml: ActionXML) {
-    assert('resultPosition' in xml);
-    let {result} = xml.resultPosition;
+  get ignore() {
     // Block dice have dice repeated for the coaches selection, resulttype is missing for the second one
-    if ('ResultType' in result && result.ResultType != RESULT_TYPE.FailTeamRR) {
+    if (this.resultType != RESULT_TYPE.FailTeamRR) {
       return true;
     }
-    if ('SubResultType' in result && result.SubResultType == SUB_RESULT_TYPE.Fend) {
+    if (this.subResultType == SUB_RESULT_TYPE.Fend) {
       // Opponent picking whether to activate fend
       return true;
     }
-    if ('SubResultType' in result && result.SubResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
+    if (this.subResultType == SUB_RESULT_TYPE.ChoiceUseDodgeTackle) {
       // Opponent picking whether to activate tackle
       return true;
     }
 
-    return super.ignore(xml);
+    return super.ignore;
   }
 
   dieValue(result: BLOCK, expected: boolean): Distribution {
@@ -2408,7 +2399,7 @@ export class MoveAction extends Action {
   get dependentConditions(): DependentCondition[] { return [sameTeamMove]; }
   get handledSkills(): SKILL[] { return [SKILL.JumpUp] };
 
-  static ignore() {
+  get ignore() {
     return false;
   }
 
@@ -2456,7 +2447,7 @@ export class MoveAction extends Action {
 }
 
 class NoValueAction extends Action {
-  static ignore(xml: ActionXML) {
+  get ignore() {
     return true;
   }
   value() {
@@ -2749,7 +2740,7 @@ export class SetupAction extends NoValueAction {
   get actionName() { return "Setup"; }
   get dependentConditions(): DependentCondition[] { return [setup]; }
   get hideDependents() { return true; }
-  static ignore(xml: ActionXML) {
+  get ignore() {
     return false;
   }
 
@@ -2769,7 +2760,6 @@ export class SetupAction extends NoValueAction {
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
       finalBoardState: new BoardState(BoardState.argsFromXml(xml.setupPosition.step.BoardState)),
-      ignore: this.ignore(xml),
       startIndex: xml.positionIdx,
       skillsInEffect: [],
       activePlayer: undefined,
