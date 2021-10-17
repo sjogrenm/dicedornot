@@ -651,14 +651,16 @@ export class Action {
     if (!this.teams) {
       return 32;
     }
-    var halfTurns = this.teams.map((team) => {
-      if (this.turn || 0 <= 16) {
+    var halfTurnsByTeam = this.teams.map((team) => {
+      if ((this.turn || 0) <= 16) {
         return 16 - team.turn;
       } else {
         return 24 - team.turn;
       }
     });
-    return halfTurns[0] + halfTurns[1];
+    const halfTurns = halfTurnsByTeam[0] + halfTurnsByTeam[1];
+    console.assert(halfTurns >= 0);
+    return halfTurns;
   }
 
   get halfTurnsInHalf(): number {
@@ -666,16 +668,18 @@ export class Action {
       return 16;
     }
     // Return the number of half-turns left in the game
-    var halfTurns = this.teams.map((team) => {
-      if (this.turn || 0 <= 8) {
+    var halfTurnsByTeam = this.teams.map((team) => {
+      if ((this.turn || 0) <= 8) {
         return 8 - team.turn;
-      } else if (this.turn || 0 <= 16) {
+      } else if ((this.turn || 0) <= 16) {
         return 16 - team.turn;
       } else {
         return 24 - team.turn;
       }
     });
-    return halfTurns[0] + halfTurns[1] + 1;
+    const halfTurns = halfTurnsByTeam[0] + halfTurnsByTeam[1] + 1;
+    console.assert(halfTurns >= 0);
+    return halfTurns;
   }
 
   stunTurns(player: Player) {
