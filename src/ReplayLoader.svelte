@@ -137,9 +137,9 @@
       const allReplays: {key: IDBValidKey, replay: DeepReadonly<Internal.Replay>}[] = [];
       for (const key of replayKeys) {
         loading = `Loading ${key}`;
-        const replay = await replayFromCache(key);
-        if (replay) {
-          allReplays.push({key, replay});
+        const nextReplay = await replayFromCache(key);
+        if (nextReplay) {
+          allReplays.push({key, replay: nextReplay});
         }
       }
       loading = undefined;

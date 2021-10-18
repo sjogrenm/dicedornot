@@ -30,12 +30,15 @@ KICKOFF_RESULT,
   import type { ReplayPosition, ReplayPreview } from "../replay-utils.js";
   import { linearReplay } from "../replay-utils.js";
   import {
+    period,
+  } from "../replay-utils.js";
+  import {
     translateStringNumberList,
     ensureList,
     REPLAY_SUB_STEP,
-    period,
     ensureKeyedList,
-  } from "../replay-utils.js";
+  } from "../replay/BB2.js";
+  
   import {
     replay,
     replayCurrent,

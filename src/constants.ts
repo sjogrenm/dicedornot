@@ -381,6 +381,9 @@ export enum ACTION_TYPE {
   BombThrowDestination = 55, // Pick the throw destination after a Bomb Catch(Intercept?)
   HailMaryBomb = 56,
   Turnover = 58,
+
+  // Synthetic Action Types
+  SetupAction = 1000,
 };
 
 export enum KICKOFF_RESULT {

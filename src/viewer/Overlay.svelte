@@ -1,10 +1,7 @@
 <script lang="ts">
   import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
-  import {
-    ensureKeyedList,
-    linearReplay,
-    translateStringNumberList,
-  } from "../replay-utils.js";
+  import { linearReplay } from "../replay-utils.js";
+  import { ensureKeyedList, translateStringNumberList } from "../replay/BB2.js";
   import { replayPreview, replay } from "../stores.js";
   import type { Cell } from "../replay/Internal.js";
   import { convertCell } from "../replay/BB2toInternal.js";

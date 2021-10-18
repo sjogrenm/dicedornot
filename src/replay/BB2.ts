@@ -1,6 +1,6 @@
 
 import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER, PLAYER_TYPE, MODIFIER_TYPE } from "../constants.js";
-import type {DeepReadonly} from "ts-essentials";
+import type { DeepReadonly } from "ts-essentials";
 
 export enum Bool {
     false = 0,
@@ -15,6 +15,39 @@ export type Cell = {
 export type MList<T> = DeepReadonly<T> | DeepReadonly<T[]>;
 type UnMList<T> = T extends DeepReadonly<any[]> ? T[number] : T;
 export type KeyedMList<K extends string, T> = "" | { [key in K]: MList<T> };
+
+
+export function ensureList<T>(objOrList: MList<T> | undefined): DeepReadonly<T[]> {
+    if (objOrList && objOrList instanceof Array) {
+        return objOrList;
+    } else if (objOrList) {
+        return [objOrList as DeepReadonly<T>];
+    } else {
+        return [];
+    }
+}
+
+export function ensureKeyedList<K extends string, T>(key: K, obj: KeyedMList<K, T>): DeepReadonly<T[]> {
+    if (obj == "") {
+        return [];
+    }
+    let v: MList<T> = obj[key];
+    return ensureList(v);
+}
+
+export function translateStringNumberList(str: string | number | undefined): number[] {
+    if (str === undefined || str === null) return [];
+    str = str.toString();
+
+    var stripped = str.replace(/[()]/g, '');
+    var textList = stripped.split(",");
+
+    var numberList = [];
+    for (var i = 0; i < textList.length; i++) {
+        numberList.push(parseInt(textList[i]));
+    }
+    return numberList;
+}
 
 export interface Inducement {
     InducementSave: MList<{
@@ -839,3 +872,76 @@ export interface RulesEventEndTurn {
 export function playerIdSide(id: PlayerId): SIDE {
     return id < 21 ? SIDE.home : SIDE.away;
 }
+
+
+
+export enum REPLAY_SUB_STEP {
+    SetupAction = 1,
+    Kickoff = 2,
+    BoardAction = 3,
+    EndTurn = 4,
+    BoardState = 5,
+    NextReplayStep = 6,
+}
+
+export const REPLAY_KEY: Record<Exclude<REPLAY_SUB_STEP, REPLAY_SUB_STEP.NextReplayStep>, string> = {
+    [REPLAY_SUB_STEP.SetupAction]: 'RulesEventSetUpAction',
+    [REPLAY_SUB_STEP.Kickoff]: 'RulesEventKickOffTable',
+    [REPLAY_SUB_STEP.BoardAction]: 'RulesEventBoardAction',
+    [REPLAY_SUB_STEP.EndTurn]: 'RulesEventEndTurn',
+    [REPLAY_SUB_STEP.BoardState]: 'BoardState',
+}
+
+export type BoardActionResultPosition = {
+    type: 'bb2.actionResult',
+    stepIdx: number,
+    step: GameTurnStep,
+    subStep: REPLAY_SUB_STEP.BoardAction,
+    actionIdx: number,
+    action: RulesEventBoardAction,
+    resultIdx: number,
+    result: ActionResult<RulesEventBoardAction>
+};
+export type BoardStatePosition = {
+    type: 'bb2.boardState',
+    stepIdx: number,
+    step: GameTurnStep,
+    subStep: REPLAY_SUB_STEP.BoardState,
+    boardState: BoardState,
+};
+
+export type EndTurnPosition = {
+    type: 'bb2.endTurn',
+    stepIdx: number,
+    step: GameTurnStep,
+    subStep: REPLAY_SUB_STEP.EndTurn,
+    endTurn: RulesEventEndTurn,
+};
+
+export type KickoffPosition = {
+    type: 'bb2.kickoff',
+    stepIdx: number,
+    step: GameTurnStep,
+    subStep: REPLAY_SUB_STEP.Kickoff,
+    kickoff: RulesEventKickOffTable,
+};
+
+export type KickoffMessagePosition = {
+    type: 'bb2.kickoffMessage',
+    stepIdx: number,
+    step: GameTurnStep,
+    subStep: REPLAY_SUB_STEP.Kickoff,
+    kickoff: RulesEventKickOffTable,
+    kickoffMessage: KickoffEventMessageData,
+};
+
+export type SetupPosition = {
+    type: 'bb2.setup',
+    stepIdx: number,
+    step: SetUpActionStep,
+    subStep: REPLAY_SUB_STEP.SetupAction,
+    setup: RulesEventSetUpAction,
+};
+
+export type ReplayPosition =
+    BoardActionResultPosition | BoardStatePosition | EndTurnPosition | KickoffPosition | KickoffMessagePosition | SetupPosition;

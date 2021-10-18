@@ -7,7 +7,6 @@ import * as I from './Internal.js';
 import { cellEq } from './Internal.js';
 import parser from 'fast-xml-parser';
 import he from 'he';
-import { ensureKeyedList, ensureList, translateStringNumberList } from '../replay-utils.js';
 import type { DeepReadonly, DeepWritable } from "ts-essentials";
 
 function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
@@ -26,7 +25,6 @@ class Replay {
         private foundUnhandledStep = false,
         public finalScore: I.ByTeam<number> = { home: 0, away: 0 },
         public metadata: DeepWritable<I.Replay['metadata']> = { datePlayed: new Date() },
-        public gameLength: number = 0,
         public fame: I.ByTeam<I.Roll> = { home: [], away: [] },
         public initialWeather: WEATHER = WEATHER.Nice,
         public coinFlipWinner: I.Side = "home",
@@ -87,7 +85,7 @@ class Replay {
     captureCheckpoint(boardState: DeepReadonly<B.BoardState>): I.Checkpoint {
         return {
             playerStates: Object.fromEntries(boardState.ListTeams.TeamState.flatMap(team =>
-                ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
+                B.ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
                     [player.Id, convertPlayerState(team, player)]
                 )
             )),
@@ -104,11 +102,11 @@ class Replay {
     handleAddInducementStep(stepIdx: number, step: DeepReadonly<B.AddInducementStep>) {
         if ('RulesEventAddMercenary' in step) {
             // We can pull mercenaries from board state.
-            for (const merc of ensureList(step.RulesEventAddMercenary)) {
+            for (const merc of B.ensureList(step.RulesEventAddMercenary)) {
                 const playerNumber = merc.MercenaryId;
                 const side = convertSide(B.playerIdSide(playerNumber));
                 const team = this.teams[side];
-                const pitchPlayers = ensureKeyedList('PlayerState', step.BoardState.ListTeams.TeamState[side == 'home' ? 0 : 1].ListPitchPlayers);
+                const pitchPlayers = B.ensureKeyedList('PlayerState', step.BoardState.ListTeams.TeamState[side == 'home' ? 0 : 1].ListPitchPlayers);
                 const pitchPlayer = pitchPlayers.find(p => p.Id == merc.MercenaryId);
                 assert(pitchPlayer != undefined);
                 const player: DeepWritable<I.Player> = convertPlayerDefinition(pitchPlayer);
@@ -153,7 +151,7 @@ class Replay {
         this.stadium.enhancement = step.GameInfos.StructStadium;
 
         for (const side of I.sides as I.Side[]) {
-            this.teams[side].coach = he.decode(ensureList(step.GameInfos.CoachesInfos.CoachInfos)[SIDE[side]].UserId.toString());
+            this.teams[side].coach = he.decode(B.ensureList(step.GameInfos.CoachesInfos.CoachInfos)[SIDE[side]].UserId.toString());
 
             const bb2Team = step.BoardState.ListTeams.TeamState[SIDE[side]];
             this.teams[side].race = bb2Team.Data.IdRace;
@@ -161,7 +159,7 @@ class Replay {
             this.teams[side].logo = bb2Team.Data.Logo;
 
             this.teams[side].players = new Map(
-                ensureKeyedList("PlayerState", bb2Team.ListPitchPlayers).map(p => [p.Id, convertPlayerDefinition(p)])
+                B.ensureKeyedList("PlayerState", bb2Team.ListPitchPlayers).map(p => [p.Id, convertPlayerDefinition(p)])
             );
         }
 
@@ -230,10 +228,10 @@ class Replay {
                 'ActionType' in step.RulesEventBoardAction &&
                 step.RulesEventBoardAction.ActionType == ACTION_TYPE.KickoffScatter &&
                 'Results' in step.RulesEventBoardAction) {
-                const results = ensureKeyedList("BoardActionResult", step.RulesEventBoardAction.Results);
+                const results = B.ensureKeyedList("BoardActionResult", step.RulesEventBoardAction.Results);
                 if (results[0] && results[0].RollType == ROLL.TouchBack) {
                     const kickingTeam = playerNumberToSide(step.RulesEventBoardAction.PlayerId || 0);
-                    const receivingPlayers = ensureKeyedList(
+                    const receivingPlayers = B.ensureKeyedList(
                         "PlayerState",
                         step.BoardState.ListTeams.TeamState[kickingTeam == "home" ? 1 : 0].ListPitchPlayers
                     );
@@ -282,7 +280,7 @@ class Replay {
         }
         if (step.RulesEventKickOffTable) {
             const drive = this.lastDrive();
-            const dice = translateStringNumberList(step.RulesEventKickOffTable.ListDice);
+            const dice = B.translateStringNumberList(step.RulesEventKickOffTable.ListDice);
             const total = dice.reduce((l, r) => l + r, 0) as KICKOFF_RESULT;
             switch (total) {
                 case KICKOFF_RESULT.Blitz:
@@ -294,7 +292,7 @@ class Replay {
                     }
                     break;
                 case KICKOFF_RESULT.BrilliantCoaching:
-                    const messages = ensureKeyedList('StringMessage', step.RulesEventKickOffTable.EventResults);
+                    const messages = B.ensureKeyedList('StringMessage', step.RulesEventKickOffTable.EventResults);
                     const messageData = parser.parse(he.decode(messages[0].MessageData), {
                         ignoreAttributes: true,
                     }) as B.KickoffEventMessageData;
@@ -318,7 +316,7 @@ class Replay {
             }
         }
         if (step.RulesEventBoardAction) {
-            const actions = ensureList(step.RulesEventBoardAction);
+            const actions = B.ensureList(step.RulesEventBoardAction);
             const converters = actions.map(action => actionConverter(this, step, action));
             if (converters.some(converter => converter == undefined)) {
                 this.cantHandle(stepIdx, step, "Not all action types can be converted");
@@ -373,16 +371,16 @@ function actionConverter(replay: Replay, step: DeepReadonly<B.GameTurnStep>, act
 }
 
 function convertFansNumber(replay: Replay, action: DeepReadonly<B.FansAction>): void {
-    for (const fanRoll of ensureKeyedList("BoardActionResult", action.Results)) {
+    for (const fanRoll of B.ensureKeyedList("BoardActionResult", action.Results)) {
         const team = convertSide(fanRoll.CoachChoices.ConcernedTeam || 0);
-        const dice = translateStringNumberList(fanRoll.CoachChoices.ListDices);
+        const dice = B.translateStringNumberList(fanRoll.CoachChoices.ListDices);
         replay.fame[team] = dice;
     }
 };
 
 function convertInitialWeather(replay: Replay, action: DeepReadonly<B.WeatherAction>): void {
-    const result = ensureKeyedList("BoardActionResult", action.Results)[0];
-    const dice = translateStringNumberList(result.CoachChoices.ListDices);
+    const result = B.ensureKeyedList("BoardActionResult", action.Results)[0];
+    const dice = B.translateStringNumberList(result.CoachChoices.ListDices);
     replay.initialWeather = weatherTable(dice[0] + dice[1]);
 }
 
@@ -397,7 +395,7 @@ function convertKickoffScatter(replay: Replay, action: B.ScatterAction): void {
     if (drive.kickoff.scatters == undefined) {
         drive.kickoff.scatters = [];
     }
-    for (const result of ensureKeyedList("BoardActionResult", action.Results)) {
+    for (const result of B.ensureKeyedList("BoardActionResult", action.Results)) {
         switch (result.RollType) {
             case ROLL.KickoffScatter:
                 drive.kickoff.scatters.push(convertCell(action.Order.CellTo.Cell));
@@ -425,7 +423,7 @@ function convertTakeDamage(replay: Replay, action: B.TakeDamageAction): void {
             number: action.PlayerId || 0,
         },
     };
-    for (const result of ensureKeyedList("BoardActionResult", action.Results)) {
+    for (const result of B.ensureKeyedList("BoardActionResult", action.Results)) {
         switch (result.RollType) {
             case ROLL.Injury:
                 damage.injury = convertDiceRollResult(result);
@@ -597,7 +595,7 @@ export function convertPlayerDefinition(p: B.PitchPlayer): DeepWritable<I.Player
             number: p.Id,
             side: playerNumberToSide(p.Id),
         },
-        skills: translateStringNumberList(p.Data.ListSkills),
+        skills: B.translateStringNumberList(p.Data.ListSkills),
         type: getPlayerType(p.Data.IdPlayerTypes),
         name: he.decode(p.Data.Name.toString()),
         stats: {
@@ -611,13 +609,13 @@ export function convertPlayerDefinition(p: B.PitchPlayer): DeepWritable<I.Player
 
 export function convertPlayerState(t: B.TeamState, p: B.PitchPlayer): I.PlayerState {
     return {
-        usedSkills: translateStringNumberList(p.ListUsedSkills),
+        usedSkills: B.translateStringNumberList(p.ListUsedSkills),
         canAct: p.CanAct == 1,
         status: p.Status || STATUS.standing,
         disabled: p.Disabled == 1,
         blitzer: t.BlitzerId == p.Id,
         situation: p.Situation || SITUATION.Active,
-        casualties: translateStringNumberList(p.ListCasualties),
+        casualties: B.translateStringNumberList(p.ListCasualties),
         pitchCell: convertCell(p.Cell)
     };
 }
@@ -641,8 +639,8 @@ function convertDiceModifier(modifier: B.DiceModifier): I.DiceModifier {
 
 function convertDiceRollResult<R>(result: B.DiceRollResult<R, B.Skills, B.Cells>): I.DiceRoll {
     const roll: I.DiceRoll = {
-        dice: translateStringNumberList(result.CoachChoices.ListDices),
-        modifiers: ensureKeyedList("DiceModifier", result.ListModifiers).map(modifier => convertDiceModifier(modifier))
+        dice: B.translateStringNumberList(result.CoachChoices.ListDices),
+        modifiers: B.ensureKeyedList("DiceModifier", result.ListModifiers).map(modifier => convertDiceModifier(modifier))
     };
     if ('Requirement' in result) {
         roll.target = result.Requirement;

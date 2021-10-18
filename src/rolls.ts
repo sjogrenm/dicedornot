@@ -19,15 +19,8 @@ import {
   SIDE,
   PlayerTV
 } from './constants.js';
-import {
-  translateStringNumberList,
-  ensureList,
-  ensureKeyedList,
+import type {
   ReplayPosition,
-  BB2KickoffPosition,
-  BB2SetupPosition,
-  BB2BoardActionResultPosition,
-  BB2KickoffMessagePosition,
 } from './replay-utils.js';
 import {
   SingleValue,
@@ -37,7 +30,7 @@ import {
   MaxDistribution,
   Distribution
 } from './distribution.js';
-import type * as BB2 from './replay/BB2.js';
+import * as BB2 from './replay/BB2.js';
 import type * as Internal from './replay/Internal.js';
 import { convertCell } from './replay/BB2toInternal.js';
 import _ from 'underscore';
@@ -143,7 +136,7 @@ export class Player {
     this.playerState = playerState;
     this.canAct =
       playerState.CanAct == 1 && this.situation === SITUATION.Active;
-    this.skills = translateStringNumberList(playerState.Data.ListSkills) || [];
+    this.skills = BB2.translateStringNumberList(playerState.Data.ListSkills) || [];
     this.isBallCarrier = manhattan(convertCell(boardState.Ball.Cell), this.cell) == 0 && boardState.Ball.IsHeld == 1;
   }
 
@@ -187,7 +180,7 @@ class Team {
   blitzerId: number;
 
   constructor(teamState: BB2.TeamState, boardState: BB2.BoardState) {
-    this.players = ensureKeyedList('PlayerState', teamState.ListPitchPlayers).map(
+    this.players = BB2.ensureKeyedList('PlayerState', teamState.ListPitchPlayers).map(
       (playerState) => new Player(this, playerState, boardState)
     );
     this.name = he.decode(teamState.Data.Name.toString());
@@ -261,44 +254,28 @@ class BoardState {
   }
 }
 
-interface ActionArgs {
-  initialBoardState: BoardState,
-  finalBoardState: BoardState,
-  skillsInEffect: DeepReadonly<BB2.SkillInfo[]>,
-  activePlayer: Player | undefined,
-  actionType: ACTION_TYPE,
-  resultType?: RESULT_TYPE,
-  subResultType: SUB_RESULT_TYPE | undefined,
-  startIndex: number,
-  rolls?: Action[],
-}
-
 type ActionXML = {
   replay: Internal.Replay,
   initialBoard: BB2.BoardState,
   positionIdx: number,
-  resultPosition: BB2BoardActionResultPosition
+  resultPosition: BB2.BoardActionResultPosition
 } | {
   replay: Internal.Replay,
   initialBoard: BB2.BoardState,
   positionIdx: number,
-  kickoffPosition: BB2KickoffPosition,
+  kickoffPosition: BB2.KickoffPosition,
 } | {
   replay: Internal.Replay,
   initialBoard: BB2.BoardState,
   positionIdx: number,
-  setupPosition: BB2SetupPosition,
+  setupPosition: BB2.SetupPosition,
 };
 
-interface RollArgs extends ActionArgs {
+type RollArgs = ConstructorParameters<typeof Action>[0] & {
   rollStatus?: ROLL_STATUS,
   rollType: ROLL,
   dice: number[],
   isReroll: boolean,
-}
-
-interface PlayerRoll {
-  activePlayer: Player,
 }
 
 export class Action {
@@ -332,10 +309,20 @@ export class Action {
     return this.unhandledSkills;
   }
 
-  constructor(attrs: ActionArgs) {
+  constructor(attrs: {
+    initialBoardState: BoardState,
+    finalBoardState: BoardState,
+    skillsInEffect?: DeepReadonly<BB2.SkillInfo[]>,
+    activePlayer?: Player,
+    actionType: ACTION_TYPE,
+    resultType?: RESULT_TYPE,
+    subResultType?: SUB_RESULT_TYPE,
+    startIndex: number,
+    rolls?: Action[],
+  }) {
     this.initialBoardState = attrs.initialBoardState;
     this.finalBoardState = attrs.finalBoardState;
-    this.skillsInEffect = attrs.skillsInEffect;
+    this.skillsInEffect = attrs.skillsInEffect || [];
     this.activePlayer = attrs.activePlayer;
     this.actionType = attrs.actionType;
     this.resultType = attrs.resultType;
@@ -363,7 +350,7 @@ export class Action {
     );
   }
 
-  static argsFromXml(xml: ActionXML): ActionArgs {
+  static argsFromXml(xml: ActionXML): ConstructorParameters<typeof Action>[0] {
     assert('resultPosition' in xml);
     let {result} = xml.resultPosition;
     let action = xml.resultPosition.action;
@@ -373,7 +360,7 @@ export class Action {
     const finalBoardState = 'BoardState' in step ? new BoardState(BoardState.argsFromXml(step.BoardState)) : initialBoardState;
     const activePlayerId = 'PlayerId' in action ? action.PlayerId : undefined;
 
-    const skillsInEffect = 'CoachChoices' in result ? ensureKeyedList(
+    const skillsInEffect = 'CoachChoices' in result ? BB2.ensureKeyedList(
       'SkillInfo',
       result.CoachChoices.ListSkills
     ) : [];
@@ -384,8 +371,8 @@ export class Action {
       finalBoardState,
       activePlayer: activePlayerId !== undefined ? initialBoardState.playerById(activePlayerId) || undefined : undefined,
       actionType: 'ActionType' in action ? action.ActionType : ACTION_TYPE.Move,
-      resultType: 'ResultType' in result ? result.ResultType : undefined,
-      subResultType: 'SubResultType' in result ? result.SubResultType : undefined,
+      resultType: result.ResultType,
+      subResultType: result.SubResultType,
       startIndex: xml.positionIdx,
     };
   }
@@ -397,12 +384,12 @@ export class Action {
   static fromReplayPosition(replay: Internal.Replay, initialBoard: BB2.BoardState, positionIdx: number, position: ReplayPosition): (Action | UnknownAction | undefined) {
     switch (position.type) {
       case 'bb2.setup': {
-        return new SetupAction(SetupAction.argsFromXml({
+        return SetupAction.fromBB2({
           replay,
           initialBoard,
           positionIdx,
           setupPosition: position,
-        }));
+        });
       }
       case 'bb2.kickoff': {
         return Roll.fromKickoffEvent(replay, initialBoard, positionIdx, position);
@@ -412,7 +399,11 @@ export class Action {
         if (action) {
           return action;
         }
+        break;
       }
+      // case 'setupAction': {
+      //   return SetupAction.fromInternal(position)
+      // }
     } 
     return undefined;
   }
@@ -421,7 +412,7 @@ export class Action {
     replay: Internal.Replay,
     initialBoard: BB2.BoardState,
     positionIdx: number,
-    position: BB2BoardActionResultPosition,
+    position: BB2.BoardActionResultPosition,
   ): Action | UnknownAction | undefined {
     let boardActionResult = position.result;
     let action = position.action;
@@ -951,14 +942,14 @@ export class Roll extends Action {
   }
 
   static dice(listDices: BB2.Dices): number[] {
-    return translateStringNumberList(listDices);
+    return BB2.translateStringNumberList(listDices);
   }
 
   static fromKickoffEvent(
     replay: Internal.Replay,
     initialBoard: BB2.BoardState,
     positionIdx: number,
-    position: BB2KickoffPosition,
+    position: BB2.KickoffPosition,
   ): (Action | UnknownAction | undefined) {
     return new KickoffRoll(
       KickoffRoll.argsFromXml({
@@ -974,9 +965,9 @@ export class Roll extends Action {
     replay: Internal.Replay,
     initialBoard: BB2.BoardState,
     positionIdx: number,
-    position: BB2KickoffMessagePosition,
+    position: BB2.KickoffMessagePosition,
   ) {
-    let dice = translateStringNumberList(position.kickoff.ListDice);
+    let dice = BB2.translateStringNumberList(position.kickoff.ListDice);
     let diceSum: KICKOFF_RESULT = dice[0] + dice[1];
     let rollClass = KICKOFF_RESULT_TYPES[diceSum];
     if (typeof rollClass === 'string') {
@@ -1114,7 +1105,7 @@ export class BlockRoll extends Roll {
       isRedDice = (result.Requirement || 0) < 0;
     }
     let defender = (args.initialBoardState.playerAtPosition(
-      convertCell(ensureKeyedList('Cell', xml.resultPosition.action.Order.CellTo)[0])
+      convertCell(BB2.ensureKeyedList('Cell', xml.resultPosition.action.Order.CellTo)[0])
     ));
     return {
       ...args,
@@ -1388,7 +1379,7 @@ export class ModifiedD6SumRoll extends Roll {
       activePlayer: superArgs.activePlayer!,
       modifier: (
         'ListModifiers' in result ?
-          ensureKeyedList("DiceModifier", result.ListModifiers) : []
+          BB2.ensureKeyedList("DiceModifier", result.ListModifiers) : []
       ).map((value: BB2.DiceModifier) => (value.Value || 0))
         .reduce((a, b) => a + b, 0) || 0,
       target: ('Requirement' in result && result.Requirement) || 0,
@@ -1653,11 +1644,11 @@ class ArmorRoll extends PlayerD6Roll {
       isPileOn = false;
     } else {
       var previousResult =
-        action.Results && ensureKeyedList("BoardActionResult", action.Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[resultIdx - 1];
+        action.Results && BB2.ensureKeyedList("BoardActionResult", action.Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[resultIdx - 1];
       if (previousResult && 'RollType' in previousResult) {
         isPileOn = previousResult.RollType == 59;
         if (isPileOn) {
-          var previousSkills = ensureKeyedList("SkillInfo", previousResult.CoachChoices.ListSkills);
+          var previousSkills = BB2.ensureKeyedList("SkillInfo", previousResult.CoachChoices.ListSkills);
           pilingOnPlayer = args.finalBoardState.playerById(
             previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
               .PlayerId
@@ -1667,7 +1658,7 @@ class ArmorRoll extends PlayerD6Roll {
     }
     isFoul = 'ActionType' in action && action.ActionType == ACTION_TYPE.Foul;
     if (isFoul) {
-      let firstAction = ensureList(step.RulesEventBoardAction)[0];
+      let firstAction = BB2.ensureList(step.RulesEventBoardAction)[0];
       assert('PlayerId' in firstAction);
       foulingPlayer = args.finalBoardState.playerById(firstAction.PlayerId || 0)!;
       damageBonusActive = foulingPlayer.skills.includes(SKILL.DirtyPlayer);
@@ -1852,17 +1843,17 @@ class DodgeRoll extends PlayerD6Roll {
       // A dodge that fails in tackle and prompts for a team reroll doesn't have the requirement attached, so
       // pull them from the later roll
       let nextStep = xml.replay.unhandledSteps[stepIdx + 1];
-      let nextActions = 'RulesEventBoardAction' in nextStep && nextStep.RulesEventBoardAction ? ensureList(nextStep.RulesEventBoardAction) : [];
-      let nextResult = ensureKeyedList("BoardActionResult", nextActions[0].Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[0] as DeepReadonly<BB2.DodgeResult>;
+      let nextActions = 'RulesEventBoardAction' in nextStep && nextStep.RulesEventBoardAction ? BB2.ensureList(nextStep.RulesEventBoardAction) : [];
+      let nextResult = BB2.ensureKeyedList("BoardActionResult", nextActions[0].Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[0] as DeepReadonly<BB2.DodgeResult>;
       args.target = nextResult.Requirement || 0;
-      args.modifier = (nextResult.ListModifiers == "" ? [] : ensureList(nextResult.ListModifiers.DiceModifier || []))
+      args.modifier = (nextResult.ListModifiers == "" ? [] : BB2.ensureList(nextResult.ListModifiers.DiceModifier || []))
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
     }
     return {
       ...args,
       cellFrom: convertCell(action.Order.CellFrom),
-      cellTo: convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0])
+      cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0])
     }
   }
   failValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
@@ -1906,7 +1897,7 @@ class LeapRoll extends PlayerD6Roll {
     return {
       ...super.argsFromXml(xml),
       cellFrom: convertCell(action.Order.CellFrom),
-      cellTo: convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0]),
+      cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
   }
   failValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
@@ -1999,7 +1990,7 @@ class GFIRoll extends PlayerD6Roll {
     return {
       ...super.argsFromXml(xml),
       cellFrom: convertCell(action.Order.CellFrom),
-      cellTo: convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0]),
+      cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
   }
 
@@ -2066,7 +2057,7 @@ class LightningBoltRoll extends PlayerD6Roll {
     assert('resultPosition' in xml);
     let {result, action} = xml.resultPosition;
     const args = super.argsFromXml(xml);
-    args.activePlayer = args.initialBoardState.playerAtPosition(convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0]))!;
+    args.activePlayer = args.initialBoardState.playerAtPosition(convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]))!;
     return args;
   }
   passValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
@@ -2137,11 +2128,11 @@ export class InjuryRoll extends Roll {
       isPileOn = false;
     } else {
       var previousResult =
-        ensureKeyedList("BoardActionResult", action.Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[resultIdx - 1];
+        BB2.ensureKeyedList("BoardActionResult", action.Results as BB2.KeyedMList<"BoardActionResult", BB2.ActionResult<BB2.RulesEventBoardAction>>)[resultIdx - 1];
       if ('RollType' in previousResult) {
         if (previousResult.RollType == ROLL.PileOnInjuryRoll) {
           isPileOn = true;
-          var previousSkills = ensureKeyedList(
+          var previousSkills = BB2.ensureKeyedList(
             "SkillInfo",
             previousResult.CoachChoices.ListSkills
           );
@@ -2155,13 +2146,13 @@ export class InjuryRoll extends Roll {
 
     isFoul = 'ActionType' in action && action.ActionType == ACTION_TYPE.Foul;
     if (isFoul) {
-      let actions = 'RulesEventBoardAction' in step ? ensureList(step.RulesEventBoardAction) : [];
+      let actions = 'RulesEventBoardAction' in step ? BB2.ensureList(step.RulesEventBoardAction) : [];
       let foulAction = actions[0] as BB2.FoulAction;
       foulingPlayer = args.finalBoardState.playerById(foulAction.PlayerId!);
     }
 
     modifier =
-      ensureKeyedList("DiceModifier", result.ListModifiers)
+      BB2.ensureKeyedList("DiceModifier", result.ListModifiers)
         .map((modifier) => modifier.Value || 0)
         .reduce((a, b) => a + b, 0) || 0;
 
@@ -2385,7 +2376,7 @@ class RegenerationRoll extends PlayerD6Roll {
   }
 }
 
-interface MoveActionArgs extends ActionArgs {
+type MoveActionArgs = ConstructorParameters<typeof Action>[0] & {
   cellFrom: Internal.Cell,
   cellTo: Internal.Cell,
   activePlayer: Player,
@@ -2418,7 +2409,7 @@ export class MoveAction extends Action {
       ...args,
       activePlayer: args.activePlayer!,
       cellFrom: convertCell(action.Order.CellFrom),
-      cellTo: convertCell(ensureKeyedList('Cell', action.Order.CellTo)[0]),
+      cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
   }
   get description() {
@@ -2492,7 +2483,7 @@ export class KickoffRoll extends Roll {
     assert('kickoffPosition' in xml);
     let {step, stepIdx, kickoff} = xml.kickoffPosition;
     assert('BoardState' in step);
-    let dice = translateStringNumberList(kickoff.ListDice);
+    let dice = BB2.translateStringNumberList(kickoff.ListDice);
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
       finalBoardState: new BoardState(BoardState.argsFromXml(step.BoardState)),
@@ -2506,7 +2497,6 @@ export class KickoffRoll extends Roll {
       rollType: ROLL.KickoffEvent,
       actionType: ACTION_TYPE.KickoffTarget,
       resultType: RESULT_TYPE.Passed,
-      subResultType: undefined,
       isReroll: false,
     };
   }
@@ -2648,7 +2638,7 @@ interface KickoffEventRollArgs extends ModifiedD6SumRollArgs {
 interface KickoffEventRollXML {
   initialBoard: BB2.BoardState,
   positionIdx: number,
-  kickoffPosition: BB2KickoffPosition,
+  kickoffPosition: BB2.KickoffPosition,
   messageData: BB2.KickoffEventMessageData,
 }
 // Cheating on types here because KickoffEvent wants a bunch of ModifiedD6SumRoll stuff
@@ -2688,7 +2678,6 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
       activePlayer: undefined,
       dice: [],
       resultType: RESULT_TYPE.Passed,
-      subResultType: undefined,
       isReroll: false,
     };
   }
@@ -2700,7 +2689,9 @@ export class PitchInvasionRoll extends KickoffEventRoll {
   activePlayer: Player;
 
   get actionName() { return "Pitch Invasion"; }
-  constructor(args: KickoffEventRollArgs) {
+  constructor(args: ConstructorParameters<typeof KickoffEventRoll>[0] & {
+    messageData: BB2.PitchInvasionMessage,
+  }) {
     super(args);
     this.messageData = args.messageData;
     this.activePlayer = this.finalBoardState.playerById(this.messageData.RulesEventPlayerInvaded.PlayerId)!;
@@ -2752,17 +2743,22 @@ export class SetupAction extends NoValueAction {
   get shortDescription() {
     return this.description;
   }
-  static argsFromXml(xml: ActionXML): ActionArgs {
+
+  // static fromInternal(position: Internal.SetupActionPosition) {
+  //   return new this({
+  //     initialBoardState: position.checkpoint.boardState
+  //   });
+  // }
+  static fromBB2(xml: ActionXML) {
+    return new this(this.argsFromXml(xml));
+  }
+  static argsFromXml(xml: ActionXML): ConstructorParameters<typeof SetupAction>[0] {
     assert('setupPosition' in xml);
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
       finalBoardState: new BoardState(BoardState.argsFromXml(xml.setupPosition.step.BoardState)),
       startIndex: xml.positionIdx,
-      skillsInEffect: [],
-      activePlayer: undefined,
-      resultType: RESULT_TYPE.Passed,
-      subResultType: undefined,
-      actionType: ACTION_TYPE.Move,
+      actionType: ACTION_TYPE.SetupAction,
     };
   }
 }
