@@ -1,5 +1,5 @@
 
-import { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER, PLAYER_TYPE, MODIFIER_TYPE } from "../constants.js";
+import type { ACTION_TYPE, RESULT_TYPE, ROLL, SUB_RESULT_TYPE, SIDE, ROLL_STATUS, RESULT_REQUEST_TYPE, ACTION_REQUEST_TYPE, RACE_ID, SITUATION, WAITING_REQUEST_TYPE, SKILL, WEATHER, PLAYER_TYPE, MODIFIER_TYPE } from "../constants.js";
 import type { DeepReadonly } from "ts-essentials";
 
 export enum Bool {
@@ -868,12 +868,6 @@ export interface RulesEventEndTurn {
     NextTurnType?: 1 | 2,
     NextPhase?: 6
 }
-
-export function playerIdSide(id: PlayerId): SIDE {
-    return id < 21 ? SIDE.home : SIDE.away;
-}
-
-
 
 export enum REPLAY_SUB_STEP {
     SetupAction = 1,

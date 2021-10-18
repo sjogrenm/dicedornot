@@ -1,15 +1,15 @@
 <script lang="ts">
   import { Row, Col } from "sveltestrap";
-  import { SIDE } from "./constants";
+  import type * as Internal from "./replay/Internal.js";
   import { replay } from "./stores";
 
   export let homeTeam: string, awayTeam: string;
   interface Value {
-    team: SIDE,
+    team: Internal.Side,
     netValue: number
   }
 
-  type Values = Record<SIDE, number>;
+  type Values = Record<Internal.Side, number>;
 
   let cumNetValues: { actuals: Values; simulated: Record<number, Values> },
     actuals,
@@ -36,9 +36,9 @@
   }
 
   $: {
-    cumNetValues = { actuals: {[SIDE.home]: 0, [SIDE.away]: 0}, simulated: {} };
+    cumNetValues = { actuals: {home: 0, away: 0}, simulated: {} };
     actuals = $replay!.actions.map((action) => ({
-      team: action.activeTeam ? action.activeTeam.id : SIDE.home,
+      team: action.activeTeam ? action.activeTeam.id : 'home',
       netValue: action.valueWithDependents.singularValue - action.expectedValue,
     }));
     cumNetValues.actuals = accumulateNetValue(actuals);
@@ -46,7 +46,7 @@
   }
 
   function accumulateNetValue(values: Value[]) {
-    let dest: Values = {[SIDE.home]: 0, [SIDE.away]: 0};
+    let dest: Values = {home: 0, away: 0};
     values.forEach((dataPoint) => {
       dest[dataPoint.team] = (dest[dataPoint.team] || 0) + dataPoint.netValue;
     });
@@ -126,7 +126,7 @@
       for (var x = 0; x < 50; x++) {
         iteration++;
         let newValues = $replay!.actions.map((action) => ({
-          team: action.activeTeam ? action.activeTeam.id : SIDE.home,
+          team: action.activeTeam ? action.activeTeam.id : 'home',
           netValue: action.possibleOutcomes.sample() - action.expectedValue,
         }));
         cumNetValues.simulated[iteration] = accumulateNetValue(newValues);
@@ -134,12 +134,12 @@
       let oldHome = homePercentile,
         oldAway = awayPercentile;
       homePercentile = percentRank(
-        Object.values(cumNetValues.simulated).map((cum) => cum[0]),
-        cumNetValues.actuals[0]
+        Object.values(cumNetValues.simulated).map((cum) => cum.home),
+        cumNetValues.actuals.home
       );
       awayPercentile = percentRank(
-        Object.values(cumNetValues.simulated).map((cum) => cum[1]),
-        cumNetValues.actuals[1]
+        Object.values(cumNetValues.simulated).map((cum) => cum.away),
+        cumNetValues.actuals.away
       );
       console.log("Simulation iteration complete", {
         totalGames: c * 50,
@@ -191,10 +191,10 @@
     text-align: center;
   }
   .home {
-    color: var(--team0-color-8);
+    color: var(--home-color-8);
   }
 
   .away {
-    color: var(--team1-color-8);
+    color: var(--away-color-8);
   }
 </style>

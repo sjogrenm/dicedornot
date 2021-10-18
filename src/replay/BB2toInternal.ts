@@ -104,7 +104,7 @@ class Replay {
             // We can pull mercenaries from board state.
             for (const merc of B.ensureList(step.RulesEventAddMercenary)) {
                 const playerNumber = merc.MercenaryId;
-                const side = convertSide(B.playerIdSide(playerNumber));
+                const side = playerNumberToSide(playerNumber);
                 const team = this.teams[side];
                 const pitchPlayers = B.ensureKeyedList('PlayerState', step.BoardState.ListTeams.TeamState[side == 'home' ? 0 : 1].ListPitchPlayers);
                 const pitchPlayer = pitchPlayers.find(p => p.Id == merc.MercenaryId);
@@ -133,7 +133,7 @@ class Replay {
 
     handleAddInducementSkillStep(stepIdx: number, step: DeepReadonly<B.AddInducementSkillStep>) {
         const player = step.RulesEventAddInducementSkill.MercenaryId;
-        const side = convertSide(B.playerIdSide(player));
+        const side = playerNumberToSide(player);
         const skill = step.RulesEventAddInducementSkill.SkillId;
         const team = this.teams[side];
         const merc = team.inducements.mercenaries.get(player);

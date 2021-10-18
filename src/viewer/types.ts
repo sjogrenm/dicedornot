@@ -1,15 +1,9 @@
 
-import type * as BB2 from "../replay/BB2.js";
 import * as Internal from "../replay/Internal.js";
 import type {
-    ReplayPosition,
     ReplayPreview,
 } from "../replay-utils.js";
 import type { ProcessedReplay } from '../replay.js';
-import type {
-    SIDE,
-    SITUATION,
-} from "../constants.js";
 import type {crossfade} from 'svelte/transition';
 import type {Color} from 'chroma-js';
 import type { DeepReadonly } from "ts-essentials";

@@ -121,11 +121,11 @@
   }
 
   .home {
-    color: var(--team0-color-8);
+    color: var(--home-color-8);
   }
 
   .away {
-    color: var(--team1-color-8);
+    color: var(--away-color-8);
   }
 
   .coach {

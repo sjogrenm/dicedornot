@@ -32,7 +32,7 @@ import {
 } from './distribution.js';
 import * as BB2 from './replay/BB2.js';
 import type * as Internal from './replay/Internal.js';
-import { convertCell } from './replay/BB2toInternal.js';
+import { convertCell, convertSide, playerNumberToSide } from './replay/BB2toInternal.js';
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
@@ -41,9 +41,9 @@ import type {DeepReadonly} from "ts-essentials";
 export interface DataPoint {
   iteration: number,
   turn: number,
-  activeTeamId: SIDE | undefined,
+  activeTeamId: Internal.Side | undefined,
   activeTeamName: string | undefined,
-  teamId: SIDE | undefined,
+  teamId: Internal.Side | undefined,
   teamName: string | undefined,
   outcomeValue: number,
   type: POINT,
@@ -88,7 +88,7 @@ function manhattan(a: Internal.Cell, b: Internal.Cell): number {
 
 function ballPositionValue(team: Team, cell: Internal.Cell): SingleValue {
   var distToGoal;
-  if (team.id == 0) {
+  if (team.id == 'home') {
     distToGoal = 25 - (cell.x);
   } else {
     distToGoal = (cell.x);
@@ -173,7 +173,7 @@ export class Player {
 class Team {
   players: Player[];
   name: string;
-  id: SIDE;
+  id: Internal.Side;
   turn: number;
   fame: number
   teamState: BB2.TeamState;
@@ -184,7 +184,7 @@ class Team {
       (playerState) => new Player(this, playerState, boardState)
     );
     this.name = he.decode(teamState.Data.Name.toString());
-    this.id = teamState.Data.TeamId || SIDE.home;
+    this.id = convertSide(teamState.Data.TeamId || SIDE.home);
     this.turn = teamState.GameTurn || 1;
     this.fame = teamState.Fame || 0;
     this.teamState = teamState;
@@ -207,44 +207,46 @@ interface BoardStateArgs {
 
 class BoardState {
   ballCell: Internal.Cell;
-  teams: Team[];
+  teams: Internal.ByTeam<Team>;
   activeTeam: Team;
   turn: number;
 
-  constructor({ teams, activeTeamId, ballCell }: BoardStateArgs) {
+  constructor({teams, activeTeam, ballCell}:
+    { teams: Internal.ByTeam<Team>, activeTeam: Internal.Side, ballCell: Internal.Cell }
+  ) {
     this.teams = teams;
-    this.activeTeam =
-      teams.filter((team) => team.id == activeTeamId)[0] || teams[0];
+    this.activeTeam = teams[activeTeam];
     this.turn = (this.activeTeam && this.activeTeam.turn) || 0;
     this.ballCell = ballCell || { x: 0, y: 0 };
   }
-  static argsFromXml(boardState: BB2.BoardState) {
-    let teams = boardState.ListTeams.TeamState.map(
-      (teamState) => new Team(teamState, boardState)
-    );
-    let activeTeamId = boardState.ActiveTeam || 0;
+
+  static argsFromXml(boardState: BB2.BoardState): ConstructorParameters<typeof BoardState>[0] {
+    let teams = {
+      home: new Team(boardState.ListTeams.TeamState[0], boardState),
+      away: new Team(boardState.ListTeams.TeamState[1], boardState),
+    };
+    let activeTeam = convertSide(boardState.ActiveTeam || 0);
     let args = {
       teams,
-      activeTeamId,
+      activeTeam,
       ballCell: convertCell(boardState.Ball.Cell),
     }
     return args;
   }
 
   playerById(playerId: BB2.PlayerId): Player | undefined {
-    for (var team of this.teams) {
-      for (var player of team.players) {
-        if (player.id === playerId) {
-          return player;
-        }
+    const side = playerNumberToSide(playerId);
+    for (var player of this.teams[side].players) {
+      if (player.id === playerId) {
+        return player;
       }
     }
     return undefined;
   }
 
   playerAtPosition(cell: Internal.Cell): Player | undefined {
-    for (var team of this.teams) {
-      for (var player of team.players) {
+    for (var team of (['home', 'away'] as Internal.Side[])) {
+      for (var player of this.teams[team].players) {
         if ((player.cell.x) === (cell.x) && (player.cell.y) === (cell.y)) {
           return player;
         }
@@ -486,7 +488,7 @@ export class Action {
     return this.finalBoardState?.activeTeam;
   }
 
-  get teams(): Team[] | undefined {
+  get teams(): Internal.ByTeam<Team> | undefined {
     return this.finalBoardState?.teams;
   }
 
@@ -642,7 +644,7 @@ export class Action {
     if (!this.teams) {
       return 32;
     }
-    var halfTurnsByTeam = this.teams.map((team) => {
+    var halfTurnsByTeam = [this.teams.home, this.teams.away].map((team) => {
       if ((this.turn || 0) <= 16) {
         return 16 - team.turn;
       } else {
@@ -659,7 +661,7 @@ export class Action {
       return 16;
     }
     // Return the number of half-turns left in the game
-    var halfTurnsByTeam = this.teams.map((team) => {
+    var halfTurnsByTeam = [this.teams.home, this.teams.away].map((team) => {
       if ((this.turn || 0) <= 8) {
         return 8 - team.turn;
       } else if ((this.turn || 0) <= 16) {
@@ -2459,16 +2461,14 @@ function isKickoffRoll(roll: Action, dependent: Action) {
   return dependent instanceof KickoffEventRoll;
 }
 
-interface KickoffRollArgs extends RollArgs {
-  diceSum: KICKOFF_RESULT,
-  kickoffTeam: SIDE,
-}
-
 export class KickoffRoll extends Roll {
-  kickoffTeam: SIDE;
+  kickoffTeam: Internal.Side;
   diceSum: KICKOFF_RESULT;
 
-  constructor(args: KickoffRollArgs) {
+  constructor(args: RollArgs & {
+    diceSum: KICKOFF_RESULT,
+    kickoffTeam: Internal.Side,
+  }) {
     super(args);
     this.kickoffTeam = args.kickoffTeam;
     this.diceSum = args.diceSum;
@@ -2479,7 +2479,7 @@ export class KickoffRoll extends Roll {
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml: ActionXML): KickoffRollArgs {
+  static argsFromXml(xml: ActionXML): ConstructorParameters<typeof KickoffRoll>[0] {
     assert('kickoffPosition' in xml);
     let {step, stepIdx, kickoff} = xml.kickoffPosition;
     assert('BoardState' in step);
@@ -2490,7 +2490,7 @@ export class KickoffRoll extends Roll {
       dice,
       diceSum: dice[0] + dice[1],
       startIndex: xml.positionIdx,
-      kickoffTeam: step.BoardState.KickOffTeam || 0,
+      kickoffTeam: convertSide(step.BoardState.KickOffTeam || 0),
       skillsInEffect: [],
       rollStatus: ROLL_STATUS.NoStatus,
       activePlayer: undefined,
@@ -2630,11 +2630,6 @@ export class KickoffRoll extends Roll {
   }
 }
 
-interface KickoffEventRollArgs extends ModifiedD6SumRollArgs {
-  kickoffTeam: SIDE,
-  messageData: BB2.KickoffEventMessageData,
-}
-
 interface KickoffEventRollXML {
   initialBoard: BB2.BoardState,
   positionIdx: number,
@@ -2644,10 +2639,13 @@ interface KickoffEventRollXML {
 // Cheating on types here because KickoffEvent wants a bunch of ModifiedD6SumRoll stuff
 // @ts-ignore
 class KickoffEventRoll extends ModifiedD6SumRoll {
-  kickoffTeam: SIDE;
+  kickoffTeam: Internal.Side;
   messageData: any;
 
-  constructor(args: KickoffEventRollArgs) {
+  constructor(args: ModifiedD6SumRollArgs & {
+    kickoffTeam: Internal.Side,
+    messageData: BB2.KickoffEventMessageData,
+  }) {
     super(args);
     this.kickoffTeam = args.kickoffTeam;
     this.messageData = args.messageData;
@@ -2656,12 +2654,10 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml: KickoffEventRollXML): KickoffEventRollArgs {
-    let finalBoardState = undefined;
-    let kickoffTeam = SIDE.home;
-    let  {step} = xml.kickoffPosition;
-    finalBoardState = new BoardState(BoardState.argsFromXml(step.BoardState));
-    kickoffTeam = step.BoardState.KickOffTeam || SIDE.home;
+  static argsFromXml(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
+    const {step} = xml.kickoffPosition;
+    const finalBoardState = new BoardState(BoardState.argsFromXml(step.BoardState));
+    const kickoffTeam = convertSide(step.BoardState.KickOffTeam || SIDE.home);
 
     return {
       initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
@@ -2698,7 +2694,7 @@ export class PitchInvasionRoll extends KickoffEventRoll {
     this.dice = [this.messageData.RulesEventPlayerInvaded.Die];
     this.stunned = this.messageData.RulesEventPlayerInvaded.Stunned == 1;
     let playerTeam = this.activePlayer.team;
-    let opposingTeam = this.finalBoardState.teams.filter(team => team.id != playerTeam.id)[0];
+    let opposingTeam = this.finalBoardState.teams[this.activePlayer.team.id == 'home' ? 'away' : 'home'];
     this.target = 6;
     this.modifier = opposingTeam.fame;
   }

@@ -4,7 +4,7 @@ export const valueSpec = {
   height: 'container',
   config: {
     range: {
-      category: ['#db0000', '#5252ff'],
+      category: ['#5252ff', '#db0000'],
     }
   },
   title: "Net Value vs Net Expected Value",
@@ -141,7 +141,7 @@ export const expectedValueSpec = {
   height: 'container',
   config: {
     range: {
-      category: ['#db0000', '#5252ff'],
+      category: ['#5252ff', '#db0000'],
     }
   },
   title: "Net Expected Value",
@@ -236,7 +236,7 @@ export const valueDistributionSpec = {
   height: 'container',
   config: {
     range: {
-      category: ['#db0000', '#5252ff'],
+      category: ['#5252ff', '#db0000'],
     }
   },
   title: "Outcome Value Distribution",
@@ -361,7 +361,7 @@ export const improbabilitySpec = {
   height: 'container',
   config: {
     range: {
-      category: ['#db0000', '#5252ff'],
+      category: ['#5252ff', '#db0000'],
     }
   },
   title: "Net Improbability",

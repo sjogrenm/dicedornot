@@ -4,7 +4,7 @@
   import { ensureKeyedList, translateStringNumberList } from "../replay/BB2.js";
   import { replayPreview, replay } from "../stores.js";
   import type { Cell } from "../replay/Internal.js";
-  import { convertCell } from "../replay/BB2toInternal.js";
+  import { convertCell, playerNumberToSide } from "../replay/BB2toInternal.js";
   import OverlayMove from "./OverlayMove.svelte";
   import type { Props as OverlayMoveProps } from "./OverlayMove.svelte";
   import OverlayBlock from "./OverlayBlock.svelte";
@@ -12,8 +12,9 @@
   import chroma from "chroma-js";
   import type { Colors } from "./types.js";
   import type { DeepReadonly } from "ts-essentials";
+  import type * as Internal from "../replay/Internal.js";
 
-  import { team1Color, team1Gray, team0Color, team0Gray } from "../theme.js";
+  import { awayTeamColor, awayTeamGray, homeTeamColor, homeTeamGray } from "../theme.js";
   import type {
     BlitzResults,
     BlockResults,
@@ -25,12 +26,12 @@
   type OverlayProps =
     | {
         type: "move";
-        team: SIDE;
+        team: Internal.Side;
         props: OverlayMoveProps;
       }
     | {
         type: "block";
-        team: SIDE;
+        team: Internal.Side;
         props: OverlayBlockProps;
       };
 
@@ -44,18 +45,18 @@
     return a.x == b.x && a.y == b.y;
   }
 
-  function colors(team: SIDE, index: number, maxIndex: number): Colors {
+  function colors(team: Internal.Side, index: number, maxIndex: number): Colors {
     let colorScale, textScale, oppColorScale, oppTextScale;
-    if (team == SIDE.home) {
-      colorScale = team0Color;
-      textScale = team0Gray;
-      oppColorScale = team1Color;
-      oppTextScale = team1Color;
+    if (team == 'home') {
+      colorScale = homeTeamColor;
+      textScale = homeTeamGray;
+      oppColorScale = awayTeamColor;
+      oppTextScale = awayTeamColor;
     } else {
-      colorScale = team1Color;
-      textScale = team1Gray;
-      oppColorScale = team0Color;
-      oppTextScale = team0Color;
+      colorScale = awayTeamColor;
+      textScale = awayTeamGray;
+      oppColorScale = homeTeamColor;
+      oppTextScale = homeTeamColor;
     }
     let color = colorScale((maxIndex - index) / maxIndex);
     let lightText = textScale(0).brighten();
@@ -106,8 +107,7 @@
               return `${requirement - modifier}+`;
             })
             .join(" ");
-          let team =
-            action.PlayerId && action.PlayerId < 30 ? SIDE.home : SIDE.away;
+          let team = playerNumberToSide(action.PlayerId || 0);
           let lastPath = paths[paths.length - 1];
           if (lastPath && lastPath.type === "move") {
             let lastCell = lastPath.props.path[lastPath.props.path.length - 1];
@@ -148,7 +148,7 @@
                 ) {
                   let from = convertCell(action.Order.CellFrom);
                   let to = convertCell(action.Order.CellTo.Cell);
-                  let team = action.PlayerId || 0 < 30 ? SIDE.home : SIDE.away;
+                  let team = playerNumberToSide(action.PlayerId || 0);
                   let modifier =
                     ensureKeyedList("DiceModifier", result.ListModifiers)
                       .map((modifier) => modifier.Value || 0)

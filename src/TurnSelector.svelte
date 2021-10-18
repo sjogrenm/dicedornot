@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { SIDE } from "./constants.js";
+  import type * as Internal from "./replay/Internal.js";
 
   import type { Action } from "./rolls.js";
 
   export let actions: Action[];
   import { replayCurrent, replayTarget, replayPreview } from "./stores.js";
   let turn: number,
-    teamId: SIDE | undefined,
+    teamId: Internal.Side | undefined,
     teamName: string | undefined,
     current: boolean,
     startIndex: number,
@@ -45,36 +45,36 @@
     padding: 0;
   }
 
-  .team-0 {
-    background-color: var(--team0-color-1);
-    border-color: var(--team0-color-3);
-    color: var(--team0-gray-7);
+  .team-home {
+    background-color: var(--home-color-1);
+    border-color: var(--home-color-3);
+    color: var(--home-gray-7);
   }
-  .team-1 {
-    background-color: var(--team1-color-1);
-    border-color: var(--team1-color-3);
-    color: var(--team1-gray-7);
+  .team-away {
+    background-color: var(--away-color-1);
+    border-color: var(--away-color-3);
+    color: var(--away-gray-7);
   }
-  .team-0:hover {
-    background-color: var(--team0-color-3);
-    border-color: var(--team0-color-7);
-    color: var(--team0-gray-9);
+  .team-home:hover {
+    background-color: var(--home-color-3);
+    border-color: var(--home-color-7);
+    color: var(--home-gray-9);
   }
-  .team-1:hover {
-    background-color: var(--team1-color-3);
-    border-color: var(--team1-color-7);
-    color: var(--team1-gray-9);
+  .team-away:hover {
+    background-color: var(--away-color-3);
+    border-color: var(--away-color-7);
+    color: var(--away-gray-9);
   }
-  .team-0.current {
-    color: var(--team0-gray-9);
-    text-shadow: -0.06ex 0 var(--team0-gray-9), 0.06ex 0 var(--team0-gray-9);
-    border-color: var(--team0-color-9);
-    background-color: var(--team0-color-5);
+  .team-home.current {
+    color: var(--home-gray-9);
+    text-shadow: -0.06ex 0 var(--home-gray-9), 0.06ex 0 var(--home-gray-9);
+    border-color: var(--home-color-9);
+    background-color: var(--home-color-5);
   }
-  .team-1.current {
-    color: var(--team0-gray-9);
-    text-shadow: -0.06ex 0 var(--team1-gray-9), 0.06ex 0 var(--team1-gray-9);
-    border-color: var(--team1-color-9);
-    background-color: var(--team1-color-5);
+  .team-away.current {
+    color: var(--home-gray-9);
+    text-shadow: -0.06ex 0 var(--away-gray-9), 0.06ex 0 var(--away-gray-9);
+    border-color: var(--away-color-9);
+    background-color: var(--away-color-5);
   }
 </style>

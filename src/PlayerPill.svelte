@@ -18,13 +18,13 @@
 >
 
 <style>
-  .pill-team-1 {
-    background-color: var(--team1-color-2);
-    color: var(--team1-gray-9);
+  .pill-team-away {
+    background-color: var(--away-color-2);
+    color: var(--away-gray-9);
   }
-  .pill-team-0 {
-    background-color: var(--team0-color-2);
-    color: var(--team0-gray-9);
+  .pill-team-home {
+    background-color: var(--home-color-2);
+    color: var(--home-gray-9);
   }
   .badge-pill {
     font-size: 85%;
