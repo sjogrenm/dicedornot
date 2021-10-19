@@ -494,15 +494,15 @@ export class Action {
   }
 
   get activeTeam(): Team | undefined {
-    return this.finalBoardState?.activeTeam;
+    return this.finalBoardState.activeTeam;
   }
 
-  get teams(): Internal.ByTeam<Team> | undefined {
-    return this.finalBoardState?.teams;
+  get teams(): Internal.ByTeam<Team> {
+    return this.finalBoardState.teams;
   }
 
   get turn() {
-    return this.finalBoardState?.turn;
+    return this.finalBoardState.turn;
   }
 
   get jointDescription() {
