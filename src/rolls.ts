@@ -36,7 +36,7 @@ import { convertCell, convertSide, playerNumberToSide } from './replay/BB2toInte
 import _ from 'underscore';
 import parser from 'fast-xml-parser';
 import he from 'he';
-import type {DeepReadonly} from "ts-essentials";
+import type { DeepReadonly } from "ts-essentials";
 
 export interface DataPoint {
   iteration: number,
@@ -171,24 +171,33 @@ export class Player {
 }
 
 class Team {
-  players: Player[];
-  name: string;
-  id: Internal.Side;
-  turn: number;
-  fame: number
-  teamState: BB2.TeamState;
-  blitzerId: number;
+  public players: Player[];
 
-  constructor(teamState: BB2.TeamState, boardState: BB2.BoardState) {
-    this.players = BB2.ensureKeyedList('PlayerState', teamState.ListPitchPlayers).map(
-      (playerState) => new Player(this, playerState, boardState)
+  constructor(
+    public name: string,
+    public id: Internal.Side,
+    public turn: number,
+    public fame: number,
+    public blitzerId: number,
+    public babes: number,
+  ) {
+    this.players = [];
+  }
+
+  static fromBB2(teamState: BB2.TeamState, boardState: BB2.BoardState) {
+    const side = convertSide(teamState.Data.TeamId || SIDE.home);
+    const team = new Team(
+      he.decode(teamState.Data.Name.toString()),
+      side,
+      teamState.GameTurn || 1,
+      teamState.Fame || 0,
+      teamState.BlitzerId,
+      teamState.Babes || 0
     );
-    this.name = he.decode(teamState.Data.Name.toString());
-    this.id = convertSide(teamState.Data.TeamId || SIDE.home);
-    this.turn = teamState.GameTurn || 1;
-    this.fame = teamState.Fame || 0;
-    this.teamState = teamState;
-    this.blitzerId = teamState.BlitzerId;
+    team.players = BB2.ensureKeyedList('PlayerState', teamState.ListPitchPlayers).map(
+      (playerState) => new Player(team, playerState, boardState)
+    );
+    return team;
   }
 
   get shortName() {
@@ -211,7 +220,7 @@ class BoardState {
   activeTeam: Team;
   turn: number;
 
-  constructor({teams, activeTeam, ballCell}:
+  constructor({ teams, activeTeam, ballCell }:
     { teams: Internal.ByTeam<Team>, activeTeam: Internal.Side, ballCell: Internal.Cell }
   ) {
     this.teams = teams;
@@ -222,8 +231,8 @@ class BoardState {
 
   static argsFromXml(boardState: BB2.BoardState): ConstructorParameters<typeof BoardState>[0] {
     let teams = {
-      home: new Team(boardState.ListTeams.TeamState[0], boardState),
-      away: new Team(boardState.ListTeams.TeamState[1], boardState),
+      home: Team.fromBB2(boardState.ListTeams.TeamState[0], boardState),
+      away: Team.fromBB2(boardState.ListTeams.TeamState[1], boardState),
     };
     let activeTeam = convertSide(boardState.ActiveTeam || 0);
     let args = {
@@ -354,7 +363,7 @@ export class Action {
 
   static argsFromXml(xml: ActionXML): ConstructorParameters<typeof Action>[0] {
     assert('resultPosition' in xml);
-    let {result} = xml.resultPosition;
+    let { result } = xml.resultPosition;
     let action = xml.resultPosition.action;
     let step = xml.resultPosition.step;
 
@@ -406,7 +415,7 @@ export class Action {
       // case 'setupAction': {
       //   return SetupAction.fromInternal(position)
       // }
-    } 
+    }
     return undefined;
   }
 
@@ -754,7 +763,7 @@ export class Action {
       this.onTeamValue(player)
     let turnsInGame = this.halfTurnsInGame;
     let turnsInHalf = this.halfTurnsInHalf;
-    let wakeUpChance = (3 + (player.team.teamState.Babes || 0)) / 6;
+    let wakeUpChance = (3 + player.team.babes) / 6;
     let wakeUpTurns = wakeUpChance * turnsInHalf + (1 - wakeUpChance) * turnsInGame;
     let stunTurns = this.stunTurns(player);
     let turns = wakeUpTurns - stunTurns;
@@ -867,7 +876,7 @@ export class Roll extends Action {
 
   static argsFromXml(xml: ActionXML): RollArgs {
     assert('resultPosition' in xml);
-    let {result} = xml.resultPosition;
+    let { result } = xml.resultPosition;
     if (!('RollType' in result)) {
       throw new Error("Unable to create a Roll from an action with no RollType");
     }
@@ -1100,7 +1109,7 @@ export class BlockRoll extends Roll {
 
   static argsFromXml(xml: ActionXML): BlockRollArgs {
     assert('resultPosition' in xml);
-    let {result} = xml.resultPosition;
+    let { result } = xml.resultPosition;
     let args = super.argsFromXml(xml);
     let isRedDice = false;
     if ('Requirement' in result) {
@@ -1374,7 +1383,7 @@ export class ModifiedD6SumRoll extends Roll {
 
   static argsFromXml(xml: ActionXML): ModifiedD6SumRollArgs {
     assert('resultPosition' in xml);
-    let {result} = xml.resultPosition;
+    let { result } = xml.resultPosition;
     let superArgs = super.argsFromXml(xml);
     return {
       ...superArgs,
@@ -1629,7 +1638,7 @@ class ArmorRoll extends PlayerD6Roll {
 
   static argsFromXml(xml: ActionXML): ArmorRollArgs {
     assert('resultPosition' in xml);
-    let {result, action, resultIdx, step} = xml.resultPosition;
+    let { result, action, resultIdx, step } = xml.resultPosition;
     const args = super.argsFromXml(xml);
 
     let canPileOn = false, isPileOn = false, isFoul = false, foulingPlayer, pilingOnPlayer, damageBonusActive = false;
@@ -1833,7 +1842,7 @@ class DodgeRoll extends PlayerD6Roll {
 
   static argsFromXml(xml: ActionXML): MoveRollArgs {
     assert('resultPosition' in xml);
-    let {result, stepIdx, action} = xml.resultPosition;
+    let { result, stepIdx, action } = xml.resultPosition;
     let args = super.argsFromXml(xml);
     if (
       'SubResultType' in result &&
@@ -1895,7 +1904,7 @@ class LeapRoll extends PlayerD6Roll {
   }
   static argsFromXml(xml: ActionXML): MoveRollArgs {
     assert('resultPosition' in xml);
-    let {result, action} = xml.resultPosition;
+    let { result, action } = xml.resultPosition;
     return {
       ...super.argsFromXml(xml),
       cellFrom: convertCell(action.Order.CellFrom),
@@ -1988,7 +1997,7 @@ class GFIRoll extends PlayerD6Roll {
   }
   static argsFromXml(xml: ActionXML): MoveRollArgs {
     assert('resultPosition' in xml);
-    let {result, action} = xml.resultPosition;
+    let { result, action } = xml.resultPosition;
     return {
       ...super.argsFromXml(xml),
       cellFrom: convertCell(action.Order.CellFrom),
@@ -2057,7 +2066,7 @@ class LightningBoltRoll extends PlayerD6Roll {
   get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
   static argsFromXml(xml: ActionXML): ModifiedD6SumRollArgs {
     assert('resultPosition' in xml);
-    let {result, action} = xml.resultPosition;
+    let { result, action } = xml.resultPosition;
     const args = super.argsFromXml(xml);
     args.activePlayer = args.initialBoardState.playerAtPosition(convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]))!;
     return args;
@@ -2111,7 +2120,7 @@ export class InjuryRoll extends Roll {
 
   static argsFromXml(xml: ActionXML): InjuryRollArgs {
     assert('resultPosition' in xml);
-    let {result, resultIdx, action, step} = xml.resultPosition;
+    let { result, resultIdx, action, step } = xml.resultPosition;
     assert('RollType' in result);
     assert(result.RollType == ROLL.Injury || result.RollType == ROLL.PileOnInjuryRoll);
 
@@ -2317,7 +2326,7 @@ export class CasualtyRoll extends Roll {
   }
   static argsFromXml(xml: ActionXML): CasualtyRollArgs {
     assert('resultPosition' in xml);
-    let {result, action} = xml.resultPosition;
+    let { result, action } = xml.resultPosition;
     let args = super.argsFromXml(xml);
     return {
       ...args,
@@ -2333,7 +2342,7 @@ export class CasualtyRoll extends Roll {
       return "Badly Hurt";
     } else if (dice[0] < 50) {
       return "Miss Next Game";
-    } else if (dice[0]<= 52) {
+    } else if (dice[0] <= 52) {
       return "Niggling Injury";
     } else if (dice[0] <= 54) {
       return "-MA";
@@ -2405,7 +2414,7 @@ export class MoveAction extends Action {
 
   static argsFromXml(xml: ActionXML): MoveActionArgs {
     assert('resultPosition' in xml);
-    let {result, action} = xml.resultPosition;
+    let { result, action } = xml.resultPosition;
     let args = super.argsFromXml(xml);
     return {
       ...args,
@@ -2481,7 +2490,7 @@ export class KickoffRoll extends Roll {
   }
   static argsFromXml(xml: ActionXML): ConstructorParameters<typeof KickoffRoll>[0] {
     assert('kickoffPosition' in xml);
-    let {step, stepIdx, kickoff} = xml.kickoffPosition;
+    let { step, stepIdx, kickoff } = xml.kickoffPosition;
     assert('BoardState' in step);
     let dice = BB2.translateStringNumberList(kickoff.ListDice);
     return {
@@ -2655,7 +2664,7 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
   static argsFromXml(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
-    const {step} = xml.kickoffPosition;
+    const { step } = xml.kickoffPosition;
     const finalBoardState = new BoardState(BoardState.argsFromXml(step.BoardState));
     const kickoffTeam = convertSide(step.BoardState.KickOffTeam || SIDE.home);
 
