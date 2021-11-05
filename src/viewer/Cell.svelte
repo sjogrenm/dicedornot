@@ -30,7 +30,6 @@
       movedClass ||
       kickoffTargetClass ||
       "";
-    console.log({column, row, cellClass});
   }
 </script>
 

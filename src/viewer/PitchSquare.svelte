@@ -26,9 +26,6 @@
   $: {
     id = `pitch-${row}-${column}`;
     kickoffTarget = ball && ('futurePositions' in ball);
-    if (ball) {
-      console.log(ball, kickoffTarget);
-    }
   }
 
 	// afterUpdate(() => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ACTION_TYPE, ROLL, SIDE } from "../constants.js";
+  import { ACTION_TYPE, ROLL } from "../constants.js";
   import { linearReplay } from "../replay-utils.js";
   import { ensureKeyedList, translateStringNumberList } from "../replay/BB2.js";
   import { replayPreview, replay } from "../stores.js";

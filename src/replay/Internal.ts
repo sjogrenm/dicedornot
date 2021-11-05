@@ -119,8 +119,7 @@ export type PlayerState = DeepReadonly<{
 export type PlayerPositions = Record<PlayerNumber, Cell>;
 export type PlayerStates = Record<PlayerNumber, PlayerState>;
 export interface Checkpoint {
-    playerStates: DeepReadonly<PlayerStates>,
-    boardState?: any
+    playerStates: DeepReadonly<PlayerStates>
 }
 
 export type KickoffEvent = {

@@ -89,7 +89,6 @@ class Replay {
                     [player.Id, convertPlayerState(team, player)]
                 )
             )),
-            boardState,
         };
     }
 
