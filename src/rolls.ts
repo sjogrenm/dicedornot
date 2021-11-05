@@ -114,30 +114,44 @@ function unhandledReplayPosition(position: ReplayPosition) {
 }
 
 export class Player {
-  team: Team;
-  playerState: BB2.PitchPlayer;
-  name: string;
-  id: number;
-  playerType: PLAYER_TYPE;
-  cell: Internal.Cell;
-  situation?: SITUATION;
-  canAct: boolean;
-  skills: SKILL[];
-  isBallCarrier: boolean;
+  constructor(
+    public readonly team: Team,
+    public readonly name: string,
+    public readonly id: number,
+    public readonly playerType: PLAYER_TYPE,
+    public readonly cell: Internal.Cell,
+    public readonly situation: SITUATION | undefined,
+    public readonly canAct: boolean,
+    public readonly skills: SKILL[],
+    public readonly isBallCarrier: boolean,
+    public readonly stats: {
+      readonly ma: number,
+      readonly st: number,
+      readonly ag: number,
+      readonly av: number,
+    },
+  ) {
+  }
 
-  constructor(team: Team, playerState: BB2.PitchPlayer, boardState: BB2.BoardState) {
-    this.team = team;
-    this.id = playerState.Id;
-    this.playerType = getPlayerType(playerState.Data.IdPlayerTypes);
-    this.name = he.decode(playerState.Data.Name.toString().replace(/\[colour='[0-9a-f]{8}'\]/i, '').toString());
-    this.name = STAR_NAMES[this.name] || this.name;
-    this.cell = convertCell(playerState.Cell);
-    this.situation = playerState.Situation;
-    this.playerState = playerState;
-    this.canAct =
-      playerState.CanAct == 1 && this.situation === SITUATION.Active;
-    this.skills = BB2.translateStringNumberList(playerState.Data.ListSkills) || [];
-    this.isBallCarrier = manhattan(convertCell(boardState.Ball.Cell), this.cell) == 0 && boardState.Ball.IsHeld == 1;
+  static fromBB2(team: Team, playerState: BB2.PitchPlayer, boardState: BB2.BoardState) {
+    const cell = convertCell(playerState.Cell);
+    const name = he.decode(playerState.Data.Name.toString().replace(/\[colour='[0-9a-f]{8}'\]/i, '').toString())
+    return new Player(
+      team,
+      STAR_NAMES[name] || name,
+      playerState.Id,
+      getPlayerType(playerState.Data.IdPlayerTypes),
+      cell,
+      playerState.Situation,
+      playerState.CanAct == 1 && playerState.Situation === SITUATION.Active,
+      BB2.translateStringNumberList(playerState.Data.ListSkills) || [],
+      manhattan(convertCell(boardState.Ball.Cell), cell) == 0 && boardState.Ball.IsHeld == 1,
+      {
+        ma: playerState.Data.Ma,
+        av: playerState.Data.Av,
+        st: playerState.Data.St,
+        ag: playerState.Data.Ag,
+      });
   }
 
   get skillNames() {
@@ -184,9 +198,9 @@ class Team {
     this.players = [];
   }
 
-  static fromBB2(teamState: BB2.TeamState, boardState: BB2.BoardState) {
+  static fromBB2(teamState: BB2.TeamState, boardState: BB2.BoardState): Team {
     const side = convertSide(teamState.Data.TeamId || SIDE.home);
-    const team = new Team(
+    const team = new this(
       he.decode(teamState.Data.Name.toString()),
       side,
       teamState.GameTurn || 1,
@@ -195,7 +209,7 @@ class Team {
       teamState.Babes || 0
     );
     team.players = BB2.ensureKeyedList('PlayerState', teamState.ListPitchPlayers).map(
-      (playerState) => new Player(team, playerState, boardState)
+      (playerState) => Player.fromBB2(team, playerState, boardState)
     );
     return team;
   }
@@ -229,7 +243,21 @@ class BoardState {
     this.ballCell = ballCell || { x: 0, y: 0 };
   }
 
-  static argsFromXml(boardState: BB2.BoardState): ConstructorParameters<typeof BoardState>[0] {
+  static fromInternal(teams: Internal.ByTeam<Internal.Team>, checkpoint: Internal.Checkpoint): BoardState {
+    let _teams = {
+      home: Team.fromInternal(teams.home, checkpoint.playerStates),
+      away: Team.fromInternal(teams.away, checkpoint.playerStates),
+    };
+    let activeTeam = convertSide(boardState.ActiveTeam || 0);
+    let args = {
+      teams,
+      activeTeam,
+      ballCell: convertCell(checkpoint.boardState.Ball.Cell),
+    }
+    return new this(args);
+  }
+
+  static fromBB2(boardState: BB2.BoardState): BoardState {
     let teams = {
       home: Team.fromBB2(boardState.ListTeams.TeamState[0], boardState),
       away: Team.fromBB2(boardState.ListTeams.TeamState[1], boardState),
@@ -240,7 +268,7 @@ class BoardState {
       activeTeam,
       ballCell: convertCell(boardState.Ball.Cell),
     }
-    return args;
+    return new this(args);
   }
 
   playerById(playerId: BB2.PlayerId): Player | undefined {
@@ -367,8 +395,8 @@ export class Action {
     let action = xml.resultPosition.action;
     let step = xml.resultPosition.step;
 
-    const initialBoardState = new BoardState(BoardState.argsFromXml(xml.initialBoard));
-    const finalBoardState = 'BoardState' in step ? new BoardState(BoardState.argsFromXml(step.BoardState)) : initialBoardState;
+    const initialBoardState = BoardState.fromBB2(xml.initialBoard);
+    const finalBoardState = 'BoardState' in step ? BoardState.fromBB2(step.BoardState) : initialBoardState;
     const activePlayerId = 'PlayerId' in action ? action.PlayerId : undefined;
 
     const skillsInEffect = 'CoachChoices' in result ? BB2.ensureKeyedList(
@@ -1713,7 +1741,7 @@ class ArmorRoll extends PlayerD6Roll {
   }
 
   get computedTarget() {
-    return this.activePlayer.playerState.Data.Av + 1;
+    return this.activePlayer.stats.av + 1;
   }
 
   get computedModifier() {
@@ -2494,8 +2522,8 @@ export class KickoffRoll extends Roll {
     assert('BoardState' in step);
     let dice = BB2.translateStringNumberList(kickoff.ListDice);
     return {
-      initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
-      finalBoardState: new BoardState(BoardState.argsFromXml(step.BoardState)),
+      initialBoardState: BoardState.fromBB2(xml.initialBoard),
+      finalBoardState: BoardState.fromBB2(step.BoardState),
       dice,
       diceSum: dice[0] + dice[1],
       startIndex: xml.positionIdx,
@@ -2665,11 +2693,11 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
   }
   static argsFromXml(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
     const { step } = xml.kickoffPosition;
-    const finalBoardState = new BoardState(BoardState.argsFromXml(step.BoardState));
+    const finalBoardState = BoardState.fromBB2(step.BoardState);
     const kickoffTeam = convertSide(step.BoardState.KickOffTeam || SIDE.home);
 
     return {
-      initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
+      initialBoardState: BoardState.fromBB2(xml.initialBoard),
       finalBoardState,
       startIndex: xml.positionIdx,
       messageData: xml.messageData,
@@ -2760,8 +2788,8 @@ export class SetupAction extends NoValueAction {
   static argsFromXml(xml: ActionXML): ConstructorParameters<typeof SetupAction>[0] {
     assert('setupPosition' in xml);
     return {
-      initialBoardState: new BoardState(BoardState.argsFromXml(xml.initialBoard)),
-      finalBoardState: new BoardState(BoardState.argsFromXml(xml.setupPosition.step.BoardState)),
+      initialBoardState: BoardState.fromBB2(xml.initialBoard),
+      finalBoardState: BoardState.fromBB2(xml.setupPosition.step.BoardState),
       startIndex: xml.positionIdx,
       actionType: ACTION_TYPE.SetupAction,
     };
