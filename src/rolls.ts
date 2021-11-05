@@ -389,7 +389,7 @@ export class Action {
     );
   }
 
-  static argsFromXml(xml: ActionXML): ConstructorParameters<typeof Action>[0] {
+  static argsFromBB2(xml: ActionXML): ConstructorParameters<typeof Action>[0] {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
     let action = xml.resultPosition.action;
@@ -458,7 +458,7 @@ export class Action {
     if (boardActionResult && !('RollType' in boardActionResult)) {
       if (!('ActionType' in action)) {
         return new MoveAction(
-          MoveAction.argsFromXml({
+          MoveAction.argsFromBB2({
             replay,
             initialBoard,
             positionIdx,
@@ -479,7 +479,7 @@ export class Action {
       return new UnknownAction(rollClass, position.step);
     } else {
       return new rollClass(
-        rollClass.argsFromXml({
+        rollClass.argsFromBB2({
           replay,
           initialBoard,
           positionIdx,
@@ -902,7 +902,7 @@ export class Roll extends Action {
     this.isReroll = attrs.isReroll;
   }
 
-  static argsFromXml(xml: ActionXML): RollArgs {
+  static argsFromBB2(xml: ActionXML): RollArgs {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
     if (!('RollType' in result)) {
@@ -915,7 +915,7 @@ export class Roll extends Action {
       dice = [];
     }
     return {
-      ...super.argsFromXml(xml),
+      ...super.argsFromBB2(xml),
       dice,
       rollStatus: 'RollStatus' in result ? result.RollStatus : undefined,
       rollType: result.RollType,
@@ -991,7 +991,7 @@ export class Roll extends Action {
     position: BB2.KickoffPosition,
   ): (Action | UnknownAction | undefined) {
     return new KickoffRoll(
-      KickoffRoll.argsFromXml({
+      KickoffRoll.argsFromBB2({
         replay,
         initialBoard,
         positionIdx,
@@ -1014,7 +1014,7 @@ export class Roll extends Action {
     } else if (position.kickoff.EventResults) {
       let eventClass: typeof KickoffEventRoll = rollClass;
       return new eventClass(
-        eventClass.argsFromXml({
+        eventClass.argsFromBB2({
           initialBoard,
           positionIdx,
           kickoffPosition: {
@@ -1135,10 +1135,10 @@ export class BlockRoll extends Roll {
     )
   }
 
-  static argsFromXml(xml: ActionXML): BlockRollArgs {
+  static argsFromBB2(xml: ActionXML): BlockRollArgs {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
-    let args = super.argsFromXml(xml);
+    let args = super.argsFromBB2(xml);
     let isRedDice = false;
     if ('Requirement' in result) {
       isRedDice = (result.Requirement || 0) < 0;
@@ -1409,10 +1409,10 @@ export class ModifiedD6SumRoll extends Roll {
     );
   }
 
-  static argsFromXml(xml: ActionXML): ModifiedD6SumRollArgs {
+  static argsFromBB2(xml: ActionXML): ModifiedD6SumRollArgs {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
-    let superArgs = super.argsFromXml(xml);
+    let superArgs = super.argsFromBB2(xml);
     return {
       ...superArgs,
       activePlayer: superArgs.activePlayer!,
@@ -1664,10 +1664,10 @@ class ArmorRoll extends PlayerD6Roll {
     this.injuryRollCache = new Map();
   }
 
-  static argsFromXml(xml: ActionXML): ArmorRollArgs {
+  static argsFromBB2(xml: ActionXML): ArmorRollArgs {
     assert('resultPosition' in xml);
     let { result, action, resultIdx, step } = xml.resultPosition;
-    const args = super.argsFromXml(xml);
+    const args = super.argsFromBB2(xml);
 
     let canPileOn = false, isPileOn = false, isFoul = false, foulingPlayer, pilingOnPlayer, damageBonusActive = false;
 
@@ -1868,10 +1868,10 @@ class DodgeRoll extends PlayerD6Roll {
     this.cellFrom = args.cellFrom;
   }
 
-  static argsFromXml(xml: ActionXML): MoveRollArgs {
+  static argsFromBB2(xml: ActionXML): MoveRollArgs {
     assert('resultPosition' in xml);
     let { result, stepIdx, action } = xml.resultPosition;
-    let args = super.argsFromXml(xml);
+    let args = super.argsFromBB2(xml);
     if (
       'SubResultType' in result &&
       result.SubResultType && ([
@@ -1930,11 +1930,11 @@ class LeapRoll extends PlayerD6Roll {
     this.cellFrom = args.cellFrom;
     this.cellTo = args.cellTo;
   }
-  static argsFromXml(xml: ActionXML): MoveRollArgs {
+  static argsFromBB2(xml: ActionXML): MoveRollArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
     return {
-      ...super.argsFromXml(xml),
+      ...super.argsFromBB2(xml),
       cellFrom: convertCell(action.Order.CellFrom),
       cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
@@ -2023,11 +2023,11 @@ class GFIRoll extends PlayerD6Roll {
     this.cellFrom = args.cellFrom;
     this.cellTo = args.cellTo;
   }
-  static argsFromXml(xml: ActionXML): MoveRollArgs {
+  static argsFromBB2(xml: ActionXML): MoveRollArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
     return {
-      ...super.argsFromXml(xml),
+      ...super.argsFromBB2(xml),
       cellFrom: convertCell(action.Order.CellFrom),
       cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
@@ -2092,10 +2092,10 @@ class FireballRoll extends PlayerD6Roll {
 class LightningBoltRoll extends PlayerD6Roll {
   get actionName() { return "Lightning Bolt"; }
   get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
-  static argsFromXml(xml: ActionXML): ModifiedD6SumRollArgs {
+  static argsFromBB2(xml: ActionXML): ModifiedD6SumRollArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
-    const args = super.argsFromXml(xml);
+    const args = super.argsFromBB2(xml);
     args.activePlayer = args.initialBoardState.playerAtPosition(convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]))!;
     return args;
   }
@@ -2146,13 +2146,13 @@ export class InjuryRoll extends Roll {
   get diceSeparator() { return '+'; }
   get dependentConditions(): DependentCondition[] { return [reroll]; }
 
-  static argsFromXml(xml: ActionXML): InjuryRollArgs {
+  static argsFromBB2(xml: ActionXML): InjuryRollArgs {
     assert('resultPosition' in xml);
     let { result, resultIdx, action, step } = xml.resultPosition;
     assert('RollType' in result);
     assert(result.RollType == ROLL.Injury || result.RollType == ROLL.PileOnInjuryRoll);
 
-    const args = super.argsFromXml(xml);
+    const args = super.argsFromBB2(xml);
     let canPileOn = false, isPileOn = false, pilingOnPlayer, isFoul = false, foulingPlayer, modifier = 0;
 
     if (args.rollType == ROLL.PileOnInjuryRoll) {
@@ -2352,10 +2352,10 @@ export class CasualtyRoll extends Roll {
     this.isFoul = args.isFoul;
     this.activePlayer = args.activePlayer;
   }
-  static argsFromXml(xml: ActionXML): CasualtyRollArgs {
+  static argsFromBB2(xml: ActionXML): CasualtyRollArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
-    let args = super.argsFromXml(xml);
+    let args = super.argsFromBB2(xml);
     return {
       ...args,
       // Casualty dice are also doubled up, and also both rolls appear when an apoc is used (so the last one is the valid one)
@@ -2440,10 +2440,10 @@ export class MoveAction extends Action {
     this.cellTo = attrs.cellTo;
   };
 
-  static argsFromXml(xml: ActionXML): MoveActionArgs {
+  static argsFromBB2(xml: ActionXML): MoveActionArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
-    let args = super.argsFromXml(xml);
+    let args = super.argsFromBB2(xml);
     return {
       ...args,
       activePlayer: args.activePlayer!,
@@ -2516,7 +2516,7 @@ export class KickoffRoll extends Roll {
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml: ActionXML): ConstructorParameters<typeof KickoffRoll>[0] {
+  static argsFromBB2(xml: ActionXML): ConstructorParameters<typeof KickoffRoll>[0] {
     assert('kickoffPosition' in xml);
     let { step, stepIdx, kickoff } = xml.kickoffPosition;
     assert('BoardState' in step);
@@ -2691,7 +2691,7 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
   get activeTeam() {
     return this.finalBoardState.teams[this.kickoffTeam];
   }
-  static argsFromXml(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
+  static argsFromBB2(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
     const { step } = xml.kickoffPosition;
     const finalBoardState = BoardState.fromBB2(step.BoardState);
     const kickoffTeam = convertSide(step.BoardState.KickOffTeam || SIDE.home);
@@ -2783,9 +2783,9 @@ export class SetupAction extends NoValueAction {
   //   });
   // }
   static fromBB2(xml: ActionXML) {
-    return new this(this.argsFromXml(xml));
+    return new this(this.argsFromBB2(xml));
   }
-  static argsFromXml(xml: ActionXML): ConstructorParameters<typeof SetupAction>[0] {
+  static argsFromBB2(xml: ActionXML): ConstructorParameters<typeof SetupAction>[0] {
     assert('setupPosition' in xml);
     return {
       initialBoardState: BoardState.fromBB2(xml.initialBoard),
