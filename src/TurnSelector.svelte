@@ -14,8 +14,8 @@
 
   $: {
     turn = actions[0].turn;
-    teamId = actions[0].activeTeam?.id;
-    teamName = actions[0].activeTeam?.name;
+    teamId = actions[0].gameState.activeTeam;
+    teamName = actions[0].gameState.teams[teamId].name;
     startIndex = actions[0].startIndex;
     endIndex = actions[actions.length - 1].endIndex;
     current = startIndex <= $replayCurrent && (endIndex == undefined || $replayCurrent < endIndex);

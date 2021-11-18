@@ -30,16 +30,16 @@
         <Col xs="auto">
           <img
             class="race-logo"
-            src={`/images/races/${replay.teams.home.race}.png`}
-            alt={RACE_NAMES[replay.teams.home.race] ||
-              `Unknown: ${replay.teams.home.race}`}
-            title={RACE_NAMES[replay.teams.home.race] ||
-              `Unknown: ${replay.teams.home.race}`}
+            src={`/images/races/${replay.gameDefinition.teams.home.race}.png`}
+            alt={RACE_NAMES[replay.gameDefinition.teams.home.race] ||
+              `Unknown: ${replay.gameDefinition.teams.home.race}`}
+            title={RACE_NAMES[replay.gameDefinition.teams.home.race] ||
+              `Unknown: ${replay.gameDefinition.teams.home.race}`}
           />
         </Col>
         <Col xs="auto">
-          <div class="team">{replay.teams.home.name}</div>
-          <div class="coach">{replay.teams.home.coach}</div>
+          <div class="team">{replay.gameDefinition.teams.home.name}</div>
+          <div class="coach">{replay.gameDefinition.teams.home.coach}</div>
         </Col>
       </Row>
     </div>
@@ -55,17 +55,17 @@
     <div class="team-name away">
       <Row class="align-items-center justify-content-center">
         <Col xs="auto" class="order-12 order-lg-1">
-          <div class="team">{replay.teams.away.name}</div>
-          <div class="coach">{replay.teams.away.coach}</div>
+          <div class="team">{replay.gameDefinition.teams.away.name}</div>
+          <div class="coach">{replay.gameDefinition.teams.away.coach}</div>
         </Col>
         <Col xs="auto" class="order-1 order-lg-12">
           <img
             class="race-logo"
-            src={`/images/races/${replay.teams.away.race}.png`}
-            alt={RACE_NAMES[replay.teams.away.race] ||
-              `Unknown: ${replay.teams.away.race}`}
-            title={RACE_NAMES[replay.teams.away.race] ||
-              `Unknown: ${replay.teams.away.race}`}
+            src={`/images/races/${replay.gameDefinition.teams.away.race}.png`}
+            alt={RACE_NAMES[replay.gameDefinition.teams.away.race] ||
+              `Unknown: ${replay.gameDefinition.teams.away.race}`}
+            title={RACE_NAMES[replay.gameDefinition.teams.away.race] ||
+              `Unknown: ${replay.gameDefinition.teams.away.race}`}
           />
         </Col>
       </Row>
@@ -79,9 +79,9 @@
 
   <Col xs="auto">
     Stadium:
-    <span>{replay.stadium.name}</span>
-    {#if replay.stadium.enhancement}
-      <span>[{replay.stadium.enhancement}]</span>
+    <span>{replay.gameDefinition.stadium.name}</span>
+    {#if replay.gameDefinition.stadium.enhancement}
+      <span>[{replay.gameDefinition.stadium.enhancement}]</span>
     {/if}
   </Col>
 

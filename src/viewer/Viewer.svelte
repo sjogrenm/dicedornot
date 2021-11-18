@@ -552,7 +552,7 @@ KICKOFF_RESULT,
       ) {
         break;
       }
-      if ("checkpoint" in currentPosition) {
+      if ("gameState" in currentPosition) {
         break;
       }
     }
@@ -801,9 +801,9 @@ KICKOFF_RESULT,
 
   function handleGameMetadata(replay: Internal.Replay) {
     for (const side of ["home", "away"] as Internal.Side[]) {
-      teams[side].logo = replay.teams[side].logo;
-      teams[side].name = replay.teams[side].name;
-      for (const [playerNumber, player] of replay.teams[
+      teams[side].logo = replay.gameDefinition.teams[side].logo;
+      teams[side].name = replay.gameDefinition.teams[side].name;
+      for (const [playerNumber, player] of replay.gameDefinition.teams[
         side
       ].players.entries()) {
         playerDefs[playerNumber] = player;
@@ -819,30 +819,30 @@ KICKOFF_RESULT,
     playerDefs = playerDefs;
   }
 
-  function validateCheckpoint(checkpoint: Internal.Checkpoint) {
-    console.assert(checkpoint, "Expected checkpoint");
-    if (!checkpoint) {
+  function validateCheckpoint(gameState: Internal.GameState) {
+    console.assert(gameState, "Expected gameState");
+    if (!gameState) {
       return;
     }
     let reset = false;
-    Object.entries(checkpoint.playerStates).forEach(([sid, state]) => {
+    Object.entries(gameState.players).forEach(([sid, state]) => {
       const id = parseInt(sid);
       const matches = _.isEqual(playerStates[id], state);
-      console.assert(matches, "Player state didn't match checkpoint", {
+      console.assert(matches, "Player state didn't match gameState", {
         current,
         id,
         playerStates,
-        checkpointState: state,
+        gameStateState: state,
       });
       reset = reset || !matches;
     });
     if (reset) {
-      resetToCheckpoint(checkpoint);
+      resetToCheckpoint(gameState);
     }
   }
 
-  function resetToCheckpoint(checkpoint: Internal.Checkpoint) {
-    Object.entries(checkpoint.playerStates).forEach(([sid, state]) => {
+  function resetToCheckpoint(gameState: Internal.GameState) {
+    Object.entries(gameState.players).forEach(([sid, state]) => {
       let id = parseInt(sid);
       playerStates[id] = {
         ...state,
@@ -866,7 +866,7 @@ KICKOFF_RESULT,
       drive: Internal.Drive;
     }>
   ) {
-    resetToCheckpoint(position.drive.checkpoint);
+    resetToCheckpoint(position.drive.gameState);
     teams.home.score = position.drive.initialScore.home;
     teams.away.score = position.drive.initialScore.away;
   }
@@ -893,10 +893,10 @@ KICKOFF_RESULT,
       type: "setupAction";
       setupSide: Internal.Side;
       action: Internal.SetupAction;
-      checkpoint: Internal.Checkpoint;
+      gameState: Internal.GameState;
     }>
   ) {
-    validateCheckpoint(position.checkpoint);
+    validateCheckpoint(position.gameState);
     for (let [sid, cell] of Object.entries(position.action.movedPlayers)) {
       let player = parseInt(sid);
       let situation = offPitch(cell) ? SITUATION.Reserves : SITUATION.Active;
@@ -912,11 +912,11 @@ KICKOFF_RESULT,
   async function handleKickoffTarget(
     position: DeepReadonly<{
       type: "kickoffTarget";
-      checkpoint: Internal.Checkpoint;
+      gameState: Internal.GameState;
       target: Internal.Drive["kickoff"]["target"];
     }>
   ) {
-    validateCheckpoint(position.checkpoint);
+    validateCheckpoint(position.gameState);
 
     ball = {futurePositions: [position.target]};
     await step();

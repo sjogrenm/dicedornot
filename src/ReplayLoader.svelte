@@ -146,11 +146,11 @@
       console.log(allReplays);
       replayMetadata = allReplays.map(({key: cacheKey, replay: replayJSON}) => {
         return {
-          homeCoach: replayJSON.teams.home.coach,
-          homeTeam: replayJSON.teams.home.name,
+          homeCoach: replayJSON.gameDefinition.teams.home.coach,
+          homeTeam: replayJSON.gameDefinition.teams.home.name,
           homeScore: replayJSON.finalScore.home,
-          awayCoach: replayJSON.teams.away.coach,
-          awayTeam: replayJSON.teams.away.name,
+          awayCoach: replayJSON.gameDefinition.teams.away.coach,
+          awayTeam: replayJSON.gameDefinition.teams.away.name,
           awayScore: replayJSON.finalScore.away,
           date: replayJSON.metadata.datePlayed,
           cacheKey,

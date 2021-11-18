@@ -38,7 +38,7 @@
   $: {
     cumNetValues = { actuals: {home: 0, away: 0}, simulated: {} };
     actuals = $replay!.actions.map((action) => ({
-      team: action.activeTeam ? action.activeTeam.id : 'home',
+      team: action.gameState.activeTeam,
       netValue: action.valueWithDependents.singularValue - action.expectedValue,
     }));
     cumNetValues.actuals = accumulateNetValue(actuals);
@@ -126,7 +126,7 @@
       for (var x = 0; x < 50; x++) {
         iteration++;
         let newValues = $replay!.actions.map((action) => ({
-          team: action.activeTeam ? action.activeTeam.id : 'home',
+          team: action.gameState.activeTeam,
           netValue: action.possibleOutcomes.sample() - action.expectedValue,
         }));
         cumNetValues.simulated[iteration] = accumulateNetValue(newValues);

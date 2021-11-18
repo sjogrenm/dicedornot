@@ -32,8 +32,8 @@ export function processReplay(replay: DeepReadonly<Internal.Replay>): ProcessedR
   //console.log(data);
 
   console.log("Extracted game details...", {
-    teams: replay.teams,
-    stadium: replay.stadium,
+    teams: replay.gameDefinition.teams,
+    stadium: replay.gameDefinition.stadium,
     metadata: replay.metadata
   });
 
@@ -45,16 +45,14 @@ export function processReplay(replay: DeepReadonly<Internal.Replay>): ProcessedR
     if (initialBoardState === null && 'boardState' in position) {
       initialBoardState = position.boardState;
     }
-    if (initialBoardState) {
-      let action = Action.fromReplayPosition(
-        replay,
-        initialBoardState,
-        positionIdx,
-        position
-      );
-      if (action) {
-        actions.push(action);
-      }
+    let action = Action.fromReplayPosition(
+      replay,
+      initialBoardState,
+      positionIdx,
+      position
+    );
+    if (action) {
+      actions.push(action);
     }
     if ('boardState' in position) {
       initialBoardState = position.boardState;

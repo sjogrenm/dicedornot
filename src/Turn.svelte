@@ -8,7 +8,7 @@
 <div class="list-group" id="turn" on:mouseleave={() => (replayPreview.set(undefined))}>
   {#each actions as action (action.actionIndex)}
     <div
-      class={`list-group-item list-group-item-action team-${action.activeTeam?.id || 'home'}`}
+      class={`list-group-item list-group-item-action team-${action.gameState.activeTeam || 'home'}`}
       class:active={selectedAction == action.actionIndex}
       on:mouseover={() => (replayPreview.set({start: action.startIndex, end: action.endIndex}))}
     >

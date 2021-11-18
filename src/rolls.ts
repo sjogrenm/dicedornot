@@ -34,7 +34,6 @@ import * as BB2 from './replay/BB2.js';
 import type * as Internal from './replay/Internal.js';
 import { convertCell, convertSide, playerNumberToSide } from './replay/BB2toInternal.js';
 import _ from 'underscore';
-import parser from 'fast-xml-parser';
 import he from 'he';
 import type { DeepReadonly } from "ts-essentials";
 
@@ -124,6 +123,7 @@ export class Player {
     public readonly canAct: boolean,
     public readonly skills: SKILL[],
     public readonly isBallCarrier: boolean,
+    public readonly isBlizter: boolean,
     public readonly stats: {
       readonly ma: number,
       readonly st: number,
@@ -133,7 +133,7 @@ export class Player {
   ) {
   }
 
-  static fromBB2(team: Team, playerState: BB2.PitchPlayer, boardState: BB2.BoardState) {
+  static fromBB2(team: Team, playerState: BB2.PitchPlayer, initialBoard: BB2.BoardState, finalBoard: BB2.BoardState) {
     const cell = convertCell(playerState.Cell);
     const name = he.decode(playerState.Data.Name.toString().replace(/\[colour='[0-9a-f]{8}'\]/i, '').toString())
     return new Player(
@@ -145,7 +145,8 @@ export class Player {
       playerState.Situation,
       playerState.CanAct == 1 && playerState.Situation === SITUATION.Active,
       BB2.translateStringNumberList(playerState.Data.ListSkills) || [],
-      manhattan(convertCell(boardState.Ball.Cell), cell) == 0 && boardState.Ball.IsHeld == 1,
+      manhattan(convertCell(initialBoard.Ball.Cell), cell) == 0 && initialBoard.Ball.IsHeld == 1,
+      finalBoard.ListTeams.TeamState[team.id == 'home' ? 0 : 1].BlitzerId == playerState.Id,
       {
         ma: playerState.Data.Ma,
         av: playerState.Data.Av,
@@ -190,26 +191,37 @@ class Team {
   constructor(
     public name: string,
     public id: Internal.Side,
-    public turn: number,
     public fame: number,
-    public blitzerId: number,
     public babes: number,
+    public turn: number,
+    public blitzerId?: number,
   ) {
     this.players = [];
   }
 
-  static fromBB2(teamState: BB2.TeamState, boardState: BB2.BoardState): Team {
+  static fromInternal(team: Internal.Team, teamState: Internal.TeamState, playerStates: Internal.PlayerStates): Team {
+    return new this(
+      team.name,
+      team.id,
+      teamState.fame || 0,
+      teamState.babes || 0,
+      teamState.turn,
+      Object.values(playerStates).find(player => player.blitzer && player.id.side == team.id)?.id.number,
+    )
+  }
+
+  static fromBB2(teamState: BB2.TeamState, initialBoard: BB2.BoardState, finalBoard: BB2.BoardState): Team {
     const side = convertSide(teamState.Data.TeamId || SIDE.home);
     const team = new this(
       he.decode(teamState.Data.Name.toString()),
       side,
-      teamState.GameTurn || 1,
       teamState.Fame || 0,
-      teamState.BlitzerId,
-      teamState.Babes || 0
+      teamState.Babes || 0,
+      teamState.GameTurn || 0,
+      teamState.BlitzerId
     );
     team.players = BB2.ensureKeyedList('PlayerState', teamState.ListPitchPlayers).map(
-      (playerState) => Player.fromBB2(team, playerState, boardState)
+      (playerState) => Player.fromBB2(team, playerState, initialBoard, finalBoard)
     );
     return team;
   }
@@ -228,45 +240,52 @@ interface BoardStateArgs {
   ballCell: "" | Internal.Cell
 }
 
-class BoardState {
+class GameState {
   ballCell: Internal.Cell;
   teams: Internal.ByTeam<Team>;
-  activeTeam: Team;
+  activeTeam: Internal.Side;
   turn: number;
 
   constructor({ teams, activeTeam, ballCell }:
     { teams: Internal.ByTeam<Team>, activeTeam: Internal.Side, ballCell: Internal.Cell }
   ) {
     this.teams = teams;
-    this.activeTeam = teams[activeTeam];
-    this.turn = (this.activeTeam && this.activeTeam.turn) || 0;
+    this.activeTeam = activeTeam;
+    this.turn = this.teams[this.activeTeam].turn;
     this.ballCell = ballCell || { x: 0, y: 0 };
   }
 
-  static fromInternal(teams: Internal.ByTeam<Internal.Team>, checkpoint: Internal.Checkpoint): BoardState {
-    let _teams = {
-      home: Team.fromInternal(teams.home, checkpoint.playerStates),
-      away: Team.fromInternal(teams.away, checkpoint.playerStates),
+  static fromInternal(gameState: Internal.GameState, gameDefinition: Internal.GameDefinition): GameState {
+    const teams = {
+      home: Team.fromInternal(gameDefinition.teams.home, gameState.teams.home, gameState.players),
+      away: Team.fromInternal(gameDefinition.teams.away, gameState.teams.away, gameState.players),
     };
-    let activeTeam = convertSide(boardState.ActiveTeam || 0);
-    let args = {
+    let ballCell: Internal.Cell;
+    if ('heldBy' in gameState.ball) {
+      const team = teams[gameState.ball.heldBy.side];
+      const player = team.players[gameState.ball.heldBy.number];
+      ballCell = player.cell;
+    } else {
+      ballCell = gameState.ball.pitchCell;
+    }
+    const args = {
       teams,
-      activeTeam,
-      ballCell: convertCell(checkpoint.boardState.Ball.Cell),
+      activeTeam: gameState.activeTeam,
+      ballCell,
     }
     return new this(args);
   }
 
-  static fromBB2(boardState: BB2.BoardState): BoardState {
+  static fromBB2(initialBoardState: BB2.BoardState, finalBoardState: BB2.BoardState): GameState {
     let teams = {
-      home: Team.fromBB2(boardState.ListTeams.TeamState[0], boardState),
-      away: Team.fromBB2(boardState.ListTeams.TeamState[1], boardState),
+      home: Team.fromBB2(initialBoardState.ListTeams.TeamState[0], initialBoardState, finalBoardState),
+      away: Team.fromBB2(initialBoardState.ListTeams.TeamState[1], initialBoardState, finalBoardState),
     };
-    let activeTeam = convertSide(boardState.ActiveTeam || 0);
+    let activeTeam = convertSide(finalBoardState.ActiveTeam || 0);
     let args = {
       teams,
       activeTeam,
-      ballCell: convertCell(boardState.Ball.Cell),
+      ballCell: convertCell(initialBoardState.Ball.Cell),
     }
     return new this(args);
   }
@@ -325,8 +344,6 @@ export class Action {
   dependent?: { action: Action, index: number };
   dependentActions: (Action | Roll)[];
   endIndex: number | undefined = undefined;
-  finalBoardState: BoardState;
-  initialBoardState: BoardState;
   onTeamValues: Record<number, Distribution>;
   resultType?: RESULT_TYPE;
   actionIndex?: number;
@@ -334,6 +351,7 @@ export class Action {
   skillsInEffect: readonly BB2.SkillInfo[];
   startIndex: number;
   subResultType?: SUB_RESULT_TYPE;
+  gameState: GameState;
 
   get actionName() { return `Unnamed Action ${this.constructor.name}`; }
   get handledSkills(): SKILL[] { return []; }
@@ -349,8 +367,6 @@ export class Action {
   }
 
   constructor(attrs: {
-    initialBoardState: BoardState,
-    finalBoardState: BoardState,
     skillsInEffect?: DeepReadonly<BB2.SkillInfo[]>,
     activePlayer?: Player,
     actionType: ACTION_TYPE,
@@ -358,9 +374,8 @@ export class Action {
     subResultType?: SUB_RESULT_TYPE,
     startIndex: number,
     rolls?: Action[],
+    gameState: GameState,
   }) {
-    this.initialBoardState = attrs.initialBoardState;
-    this.finalBoardState = attrs.finalBoardState;
     this.skillsInEffect = attrs.skillsInEffect || [];
     this.activePlayer = attrs.activePlayer;
     this.actionType = attrs.actionType;
@@ -368,6 +383,7 @@ export class Action {
     this.subResultType = attrs.subResultType;
     this.startIndex = attrs.startIndex;
     this.actions = attrs.rolls;
+    this.gameState = attrs.gameState;
 
     this.onTeamValues = {};
     this.armorRollCache = {};
@@ -389,14 +405,20 @@ export class Action {
     );
   }
 
-  static argsFromBB2(xml: ActionXML): ConstructorParameters<typeof Action>[0] {
+  static fromBB2(xml: ActionXML): Action {
+    return new this(this.actionArgsFromBB2(xml));
+  }
+
+  static actionArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof Action>[0] {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
     let action = xml.resultPosition.action;
     let step = xml.resultPosition.step;
 
-    const initialBoardState = BoardState.fromBB2(xml.initialBoard);
-    const finalBoardState = 'BoardState' in step ? BoardState.fromBB2(step.BoardState) : initialBoardState;
+    const gameState = GameState.fromBB2(
+      xml.initialBoard,
+      'BoardState' in step ? step.BoardState : xml.initialBoard
+    );
     const activePlayerId = 'PlayerId' in action ? action.PlayerId : undefined;
 
     const skillsInEffect = 'CoachChoices' in result ? BB2.ensureKeyedList(
@@ -405,10 +427,9 @@ export class Action {
     ) : [];
 
     return {
-      initialBoardState,
+      gameState,
       skillsInEffect,
-      finalBoardState,
-      activePlayer: activePlayerId !== undefined ? initialBoardState.playerById(activePlayerId) || undefined : undefined,
+      activePlayer: activePlayerId !== undefined ? gameState.playerById(activePlayerId) || undefined : undefined,
       actionType: 'ActionType' in action ? action.ActionType : ACTION_TYPE.Move,
       resultType: result.ResultType,
       subResultType: result.SubResultType,
@@ -420,29 +441,38 @@ export class Action {
     return false;
   }
 
-  static fromReplayPosition(replay: Internal.Replay, initialBoard: BB2.BoardState, positionIdx: number, position: ReplayPosition): (Action | UnknownAction | undefined) {
+  static fromReplayPosition(replay: Internal.Replay, initialBoard?: BB2.BoardState, positionIdx: number, position: ReplayPosition): (Action | UnknownAction | undefined) {
     switch (position.type) {
       case 'bb2.setup': {
-        return SetupAction.fromBB2({
-          replay,
-          initialBoard,
-          positionIdx,
-          setupPosition: position,
-        });
-      }
-      case 'bb2.kickoff': {
-        return Roll.fromKickoffEvent(replay, initialBoard, positionIdx, position);
-      }
-      case 'bb2.actionResult': {
-        let action = Action.fromBoardActionResult(replay, initialBoard, positionIdx, position);
-        if (action) {
-          return action;
+        if (initialBoard) {
+          return SetupAction.fromBB2({
+            replay,
+            initialBoard,
+            positionIdx,
+            setupPosition: position,
+          });
         }
         break;
       }
-      // case 'setupAction': {
-      //   return SetupAction.fromInternal(position)
-      // }
+      case 'bb2.kickoff': {
+        if (initialBoard) {
+          return Roll.fromKickoffEvent(replay, initialBoard, positionIdx, position);
+        }
+        break;
+      }
+      case 'bb2.actionResult': {
+        if (initialBoard) {
+          let action = Action.fromBoardActionResult(replay, initialBoard, positionIdx, position);
+          if (action) {
+            return action;
+          }
+        }
+        break;
+      }
+      case 'setupAction': {
+        const action = SetupAction.fromInternal(replay.gameDefinition, position, positionIdx);
+        return action;
+      }
     }
     return undefined;
   }
@@ -457,14 +487,12 @@ export class Action {
     let action = position.action;
     if (boardActionResult && !('RollType' in boardActionResult)) {
       if (!('ActionType' in action)) {
-        return new MoveAction(
-          MoveAction.argsFromBB2({
-            replay,
-            initialBoard,
-            positionIdx,
-            resultPosition: position,
-          })
-        );
+        return MoveAction.fromBB2({
+          replay,
+          initialBoard,
+          positionIdx,
+          resultPosition: position,
+        });
       } else {
         return undefined;
       }
@@ -478,14 +506,12 @@ export class Action {
     } else if (typeof rollClass === "string") {
       return new UnknownAction(rollClass, position.step);
     } else {
-      return new rollClass(
-        rollClass.argsFromBB2({
-          replay,
-          initialBoard,
-          positionIdx,
-          resultPosition: position,
-        })
-      );
+      return rollClass.fromBB2({
+        replay,
+        initialBoard,
+        positionIdx,
+        resultPosition: position,
+      });
     }
   }
 
@@ -521,16 +547,8 @@ export class Action {
     return 0;
   }
 
-  get activeTeam(): Team | undefined {
-    return this.finalBoardState.activeTeam;
-  }
-
-  get teams(): Internal.ByTeam<Team> {
-    return this.finalBoardState.teams;
-  }
-
   get turn() {
-    return this.finalBoardState.turn;
+    return this.gameState.turn;
   }
 
   get jointDescription() {
@@ -628,14 +646,14 @@ export class Action {
     return {
       iteration: iteration,
       turn: this.turn,
-      activeTeamId: this.activeTeam?.id,
-      activeTeamName: this.activeTeam?.name,
+      activeTeamId: this.gameState.activeTeam,
+      activeTeamName: this.gameState.teams[this.gameState.activeTeam].name,
       teamId: this.activePlayer
         ? this.activePlayer.team.id
-        : this.activeTeam?.id,
+        : this.gameState.activeTeam,
       teamName: this.activePlayer
         ? this.activePlayer.team.name
-        : this.activeTeam?.name,
+        : this.gameState.teams[this.gameState.activeTeam].name,
       outcomeValue,
       type,
       expectedValue: this.expectedValue,
@@ -645,11 +663,11 @@ export class Action {
   }
 
   onActiveTeam(player: Player) {
-    return player.team.id === this.activeTeam?.id;
+    return player.team.id === this.gameState.activeTeam;
   }
 
   playerValue(player: Player) {
-    let ballCell = this.initialBoardState?.ballCell;
+    let ballCell = this.gameState.ballCell;
     if (!ballCell || (ballCell.x) < 0 || (ballCell.y) < 0) {
       return this.rawPlayerValue(player);
     }
@@ -678,10 +696,10 @@ export class Action {
 
   get halfTurnsInGame() {
     // Return the number of half-turns left in the game
-    if (!this.teams) {
+    if (!this.gameState) {
       return 32;
     }
-    var halfTurnsByTeam = [this.teams.home, this.teams.away].map((team) => {
+    var halfTurnsByTeam = [this.gameState.teams.home, this.gameState.teams.away].map((team) => {
       if ((this.turn || 0) <= 16) {
         return 16 - team.turn;
       } else {
@@ -694,11 +712,11 @@ export class Action {
   }
 
   get halfTurnsInHalf(): number {
-    if (!this.teams) {
+    if (!this.gameState) {
       return 16;
     }
     // Return the number of half-turns left in the game
-    var halfTurnsByTeam = [this.teams.home, this.teams.away].map((team) => {
+    var halfTurnsByTeam = [this.gameState.teams.home, this.gameState.teams.away].map((team) => {
       if ((this.turn || 0) <= 8) {
         return 8 - team.turn;
       } else if ((this.turn || 0) <= 16) {
@@ -732,8 +750,7 @@ export class Action {
     return (
       this.armorRollCache[key] ||
       (this.armorRollCache[key] = new ArmorRoll({
-        initialBoardState: this.initialBoardState,
-        finalBoardState: this.finalBoardState,
+        gameState: this.gameState,
         activePlayer: player,
         modifier: damageBonusActive ? 1 : 0,
         damageBonusActive,
@@ -838,7 +855,7 @@ export class Action {
   }
 
   get unactivatedPlayers(): Player[] {
-    let unactivatedPlayers = this.activeTeam ? this.activeTeam.players.filter((player) => player.canAct) : [];
+    let unactivatedPlayers = this.gameState.activeTeam ? this.gameState.teams[this.gameState.activeTeam].players.filter((player) => player.canAct) : [];
     Object.defineProperty(this, 'unactivatedPlayers', {
       value: unactivatedPlayers
     });
@@ -902,7 +919,10 @@ export class Roll extends Action {
     this.isReroll = attrs.isReroll;
   }
 
-  static argsFromBB2(xml: ActionXML): RollArgs {
+  static fromBB2(xml: ActionXML): Roll {
+    return new this(this.rollArgsFromBB2(xml));
+  }
+  static rollArgsFromBB2(xml: ActionXML): RollArgs {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
     if (!('RollType' in result)) {
@@ -915,7 +935,7 @@ export class Roll extends Action {
       dice = [];
     }
     return {
-      ...super.argsFromBB2(xml),
+      ...super.actionArgsFromBB2(xml),
       dice,
       rollStatus: 'RollStatus' in result ? result.RollStatus : undefined,
       rollType: result.RollType,
@@ -990,14 +1010,12 @@ export class Roll extends Action {
     positionIdx: number,
     position: BB2.KickoffPosition,
   ): (Action | UnknownAction | undefined) {
-    return new KickoffRoll(
-      KickoffRoll.argsFromBB2({
-        replay,
-        initialBoard,
-        positionIdx,
-        kickoffPosition: position,
-      })
-    );
+    return KickoffRoll.fromBB2({
+      replay,
+      initialBoard,
+      positionIdx,
+      kickoffPosition: position,
+    });
   }
 
   static fromKickoffEventMessage(
@@ -1013,17 +1031,15 @@ export class Roll extends Action {
       return new UnknownAction(rollClass, position.step);
     } else if (position.kickoff.EventResults) {
       let eventClass: typeof KickoffEventRoll = rollClass;
-      return new eventClass(
-        eventClass.argsFromBB2({
-          initialBoard,
-          positionIdx,
-          kickoffPosition: {
-            ...position,
-            type: 'bb2.kickoff',
-          },
-          messageData: position.kickoffMessage,
-        })
-      );
+      return eventClass.fromBB2({
+        initialBoard,
+        positionIdx,
+        kickoffPosition: {
+          ...position,
+          type: 'bb2.kickoff',
+        },
+        messageData: position.kickoffMessage,
+      });
     }
   }
 }
@@ -1070,7 +1086,7 @@ function reroll(roll: Action | Roll, dependent: Action | Roll) {
 
 function sameTeamMove(roll: Action, dependent: Action) {
   return (
-    dependent instanceof MoveAction && roll.activeTeam?.id == dependent.activeTeam?.id
+    dependent instanceof MoveAction && roll.gameState.activeTeam == dependent.gameState.activeTeam
   )
 }
 
@@ -1135,15 +1151,19 @@ export class BlockRoll extends Roll {
     )
   }
 
-  static argsFromBB2(xml: ActionXML): BlockRollArgs {
+  static fromBB2(xml: ActionXML): BlockRoll {
+    return new this(this.blockArgsFromBB2(xml));
+  }
+
+  static blockArgsFromBB2(xml: ActionXML): BlockRollArgs {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
-    let args = super.argsFromBB2(xml);
+    let args = super.rollArgsFromBB2(xml);
     let isRedDice = false;
     if ('Requirement' in result) {
       isRedDice = (result.Requirement || 0) < 0;
     }
-    let defender = (args.initialBoardState.playerAtPosition(
+    let defender = (args.gameState.playerAtPosition(
       convertCell(BB2.ensureKeyedList('Cell', xml.resultPosition.action.Order.CellTo)[0])
     ));
     return {
@@ -1153,7 +1173,7 @@ export class BlockRoll extends Roll {
       isRedDice,
       attacker: args.activePlayer,
       defender,
-      isBlitz: args.activePlayer != undefined && args.activePlayer.team.blitzerId == args.activePlayer.id,
+      isBlitz: args.activePlayer != undefined && args.activePlayer.isBlizter,
     }
   }
 
@@ -1409,10 +1429,14 @@ export class ModifiedD6SumRoll extends Roll {
     );
   }
 
-  static argsFromBB2(xml: ActionXML): ModifiedD6SumRollArgs {
+  static fromBB2(xml: ActionXML): ModifiedD6SumRoll {
+    return new this(this.d6RollArgsFromBB2(xml));
+  }
+
+  static d6RollArgsFromBB2(xml: ActionXML): ModifiedD6SumRollArgs {
     assert('resultPosition' in xml);
     let { result } = xml.resultPosition;
-    let superArgs = super.argsFromBB2(xml);
+    let superArgs = super.rollArgsFromBB2(xml);
     return {
       ...superArgs,
       activePlayer: superArgs.activePlayer!,
@@ -1631,15 +1655,6 @@ class FoulAppearanceRoll extends PlayerD6Roll {
   }
 }
 
-interface ArmorRollArgs extends ModifiedD6SumRollArgs {
-  foulingPlayer?: Player,
-  pilingOnPlayer?: Player,
-  canPileOn: boolean,
-  isFoul: boolean,
-  isPileOn: boolean,
-  damageBonusActive: boolean,
-}
-
 class ArmorRoll extends PlayerD6Roll {
   foulingPlayer?: Player;
   pilingOnPlayer?: Player;
@@ -1653,7 +1668,14 @@ class ArmorRoll extends PlayerD6Roll {
   get handledSkills(): SKILL[] { return [SKILL.Claw, SKILL.MightyBlow, SKILL.DirtyPlayer, SKILL.PilingOn] };
   get dependentConditions(): DependentCondition[] { return [foulDamage]; }
 
-  constructor(attrs: ArmorRollArgs) {
+  constructor(attrs: ConstructorParameters<typeof PlayerD6Roll>[0] & {
+    foulingPlayer?: Player,
+    pilingOnPlayer?: Player,
+    canPileOn: boolean,
+    isFoul: boolean,
+    isPileOn: boolean,
+    damageBonusActive: boolean,
+  }) {
     super(attrs);
     this.canPileOn = attrs.canPileOn;
     this.isFoul = attrs.isFoul;
@@ -1664,10 +1686,14 @@ class ArmorRoll extends PlayerD6Roll {
     this.injuryRollCache = new Map();
   }
 
-  static argsFromBB2(xml: ActionXML): ArmorRollArgs {
+  static fromBB2(xml: ActionXML): ArmorRoll {
+    return new this(this.armorArgsFromBB2(xml));
+  }
+
+  static armorArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof ArmorRoll>[0] {
     assert('resultPosition' in xml);
     let { result, action, resultIdx, step } = xml.resultPosition;
-    const args = super.argsFromBB2(xml);
+    const args = super.d6RollArgsFromBB2(xml);
 
     let canPileOn = false, isPileOn = false, isFoul = false, foulingPlayer, pilingOnPlayer, damageBonusActive = false;
 
@@ -1688,7 +1714,7 @@ class ArmorRoll extends PlayerD6Roll {
         isPileOn = previousResult.RollType == 59;
         if (isPileOn) {
           var previousSkills = BB2.ensureKeyedList("SkillInfo", previousResult.CoachChoices.ListSkills);
-          pilingOnPlayer = args.finalBoardState.playerById(
+          pilingOnPlayer = args.gameState.playerById(
             previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
               .PlayerId
           );
@@ -1699,7 +1725,7 @@ class ArmorRoll extends PlayerD6Roll {
     if (isFoul) {
       let firstAction = BB2.ensureList(step.RulesEventBoardAction)[0];
       assert('PlayerId' in firstAction);
-      foulingPlayer = args.finalBoardState.playerById(firstAction.PlayerId || 0)!;
+      foulingPlayer = args.gameState.playerById(firstAction.PlayerId || 0)!;
       damageBonusActive = foulingPlayer.skills.includes(SKILL.DirtyPlayer);
     }
     assert(isPileOn === (pilingOnPlayer != undefined));
@@ -1752,8 +1778,7 @@ class ArmorRoll extends PlayerD6Roll {
     let key = `${damageBonusAvailable}-${canPileOn}-${isFoul}`;
     let result = this.injuryRollCache.get(key) ||
       (this.injuryRollCache.set(key, new InjuryRoll({
-        initialBoardState: this.initialBoardState,
-        finalBoardState: this.finalBoardState,
+        gameState: this.gameState,
         activePlayer: this.activePlayer,
         modifier: damageBonusAvailable ? 1 : 0,
         skillsInEffect: [],
@@ -1862,16 +1887,23 @@ class DodgeRoll extends PlayerD6Roll {
   get rerollCancelSkill() { return SKILL.Tackle; }
   get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
 
-  constructor(args: MoveRollArgs) {
+  constructor(args: ConstructorParameters<typeof PlayerD6Roll>[0] & {
+    cellTo: Internal.Cell,
+    cellFrom: Internal.Cell
+  }) {
     super(args);
     this.cellTo = args.cellTo;
     this.cellFrom = args.cellFrom;
   }
 
-  static argsFromBB2(xml: ActionXML): MoveRollArgs {
+  static fromBB2(xml: ActionXML): DodgeRoll {
+    return new this(this.moveArgsFromBB2(xml));
+  }
+
+  static moveArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof DodgeRoll>[0] {
     assert('resultPosition' in xml);
     let { result, stepIdx, action } = xml.resultPosition;
-    let args = super.argsFromBB2(xml);
+    let args = super.d6RollArgsFromBB2(xml);
     if (
       'SubResultType' in result &&
       result.SubResultType && ([
@@ -1925,16 +1957,22 @@ class LeapRoll extends PlayerD6Roll {
   get actionName() { return "Leap"; }
   get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
 
-  constructor(args: MoveRollArgs) {
+  constructor(args: ConstructorParameters<typeof PlayerD6Roll>[0] & {
+    cellFrom: Internal.Cell,
+    cellTo: Internal.Cell
+  }) {
     super(args);
     this.cellFrom = args.cellFrom;
     this.cellTo = args.cellTo;
   }
-  static argsFromBB2(xml: ActionXML): MoveRollArgs {
+  static fromBB2(xml: ActionXML): LeapRoll {
+    return new this(this.leapArgsFromBB2(xml));
+  }
+  static leapArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof LeapRoll>[0] {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
     return {
-      ...super.argsFromBB2(xml),
+      ...super.d6RollArgsFromBB2(xml),
       cellFrom: convertCell(action.Order.CellFrom),
       cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
@@ -1994,7 +2032,7 @@ class WakeUpRoll extends PlayerD6Roll {
   get actionName() { return "Wake Up"; }
   constructor(attrs: ModifiedD6SumRollArgs) {
     super(attrs);
-    this.finalBoardState.activeTeam = this.activePlayer?.team;
+    this.gameState.activeTeam = this.activePlayer?.team.id;
   }
   passValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
     const playerValue =
@@ -2018,16 +2056,23 @@ class GFIRoll extends PlayerD6Roll {
   get rerollSkill(): undefined | SKILL { return SKILL.SureFeet; }
   get dependentConditions(): DependentCondition[] { return [nonFoulDamage, reroll, samePlayerMove]; }
 
-  constructor(args: MoveRollArgs) {
+  constructor(args: ConstructorParameters<typeof PlayerD6Roll>[0] & {
+    cellTo: Internal.Cell,
+    cellFrom: Internal.Cell
+  }) {
     super(args);
     this.cellFrom = args.cellFrom;
     this.cellTo = args.cellTo;
   }
-  static argsFromBB2(xml: ActionXML): MoveRollArgs {
+
+  static fromBB2(xml: ActionXML): GFIRoll {
+    return new this(this.gfiArgsFromBB2(xml));
+  }
+  static gfiArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof GFIRoll>[0] {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
     return {
-      ...super.argsFromBB2(xml),
+      ...super.d6RollArgsFromBB2(xml),
       cellFrom: convertCell(action.Order.CellFrom),
       cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
@@ -2092,11 +2137,14 @@ class FireballRoll extends PlayerD6Roll {
 class LightningBoltRoll extends PlayerD6Roll {
   get actionName() { return "Lightning Bolt"; }
   get dependentConditions(): DependentCondition[] { return [reroll, samePlayerMove, nonFoulDamage]; }
-  static argsFromBB2(xml: ActionXML): ModifiedD6SumRollArgs {
+  static fromBB2(xml: ActionXML): LightningBoltRoll {
+    return new this(this.lightningBoltArgsFromBB2(xml));
+  }
+  static lightningBoltArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof LightningBoltRoll>[0] {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
-    const args = super.argsFromBB2(xml);
-    args.activePlayer = args.initialBoardState.playerAtPosition(convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]))!;
+    const args = super.d6RollArgsFromBB2(xml);
+    args.activePlayer = args.gameState.playerAtPosition(convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]))!;
     return args;
   }
   passValue(expected: boolean, rollTotal: number, modifiedTarget: number) {
@@ -2146,13 +2194,17 @@ export class InjuryRoll extends Roll {
   get diceSeparator() { return '+'; }
   get dependentConditions(): DependentCondition[] { return [reroll]; }
 
-  static argsFromBB2(xml: ActionXML): InjuryRollArgs {
+  static fromBB2(xml: ActionXML): InjuryRoll {
+    return new this(this.injuryArgsFromBB2(xml));
+  }
+
+  static injuryArgsFromBB2(xml: ActionXML): InjuryRollArgs {
     assert('resultPosition' in xml);
     let { result, resultIdx, action, step } = xml.resultPosition;
     assert('RollType' in result);
     assert(result.RollType == ROLL.Injury || result.RollType == ROLL.PileOnInjuryRoll);
 
-    const args = super.argsFromBB2(xml);
+    const args = super.rollArgsFromBB2(xml);
     let canPileOn = false, isPileOn = false, pilingOnPlayer, isFoul = false, foulingPlayer, modifier = 0;
 
     if (args.rollType == ROLL.PileOnInjuryRoll) {
@@ -2175,7 +2227,7 @@ export class InjuryRoll extends Roll {
             "SkillInfo",
             previousResult.CoachChoices.ListSkills
           );
-          pilingOnPlayer = args.finalBoardState.playerById(
+          pilingOnPlayer = args.gameState.playerById(
             previousSkills.filter((skill) => skill.SkillId == SKILL.PilingOn)[0]
               .PlayerId
           );
@@ -2187,7 +2239,7 @@ export class InjuryRoll extends Roll {
     if (isFoul) {
       let actions = 'RulesEventBoardAction' in step ? BB2.ensureList(step.RulesEventBoardAction) : [];
       let foulAction = actions[0] as BB2.FoulAction;
-      foulingPlayer = args.finalBoardState.playerById(foulAction.PlayerId!);
+      foulingPlayer = args.gameState.playerById(foulAction.PlayerId!);
     }
 
     modifier =
@@ -2352,10 +2404,13 @@ export class CasualtyRoll extends Roll {
     this.isFoul = args.isFoul;
     this.activePlayer = args.activePlayer;
   }
-  static argsFromBB2(xml: ActionXML): CasualtyRollArgs {
+  static fromBB2(xml: ActionXML) {
+    return new this(this.casualtyArgsFromBB2(xml));
+  }
+  static casualtyArgsFromBB2(xml: ActionXML): CasualtyRollArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
-    let args = super.argsFromBB2(xml);
+    let args = super.rollArgsFromBB2(xml);
     return {
       ...args,
       // Casualty dice are also doubled up, and also both rolls appear when an apoc is used (so the last one is the valid one)
@@ -2440,10 +2495,13 @@ export class MoveAction extends Action {
     this.cellTo = attrs.cellTo;
   };
 
-  static argsFromBB2(xml: ActionXML): MoveActionArgs {
+  static fromBB2(xml: ActionXML): MoveAction {
+    return new this(this.moveArgsFromBB2(xml));
+  }
+  static moveArgsFromBB2(xml: ActionXML): MoveActionArgs {
     assert('resultPosition' in xml);
     let { result, action } = xml.resultPosition;
-    let args = super.argsFromBB2(xml);
+    let args = super.actionArgsFromBB2(xml);
     return {
       ...args,
       activePlayer: args.activePlayer!,
@@ -2451,6 +2509,7 @@ export class MoveAction extends Action {
       cellTo: convertCell(BB2.ensureKeyedList('Cell', action.Order.CellTo)[0]),
     };
   }
+
   get description() {
     const from = this.cellFrom;
     const to = this.cellTo;
@@ -2513,17 +2572,17 @@ export class KickoffRoll extends Roll {
 
   get actionName() { return "Kickoff"; }
   get dependentConditions(): DependentCondition[] { return [isKickoffRoll]; }
-  get activeTeam() {
-    return this.finalBoardState.teams[this.kickoffTeam];
+
+  static fromBB2(xml: ActionXML) {
+    return new this(this.kickoffArgsFromBB2(xml));
   }
-  static argsFromBB2(xml: ActionXML): ConstructorParameters<typeof KickoffRoll>[0] {
+  static kickoffArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof KickoffRoll>[0] {
     assert('kickoffPosition' in xml);
     let { step, stepIdx, kickoff } = xml.kickoffPosition;
     assert('BoardState' in step);
     let dice = BB2.translateStringNumberList(kickoff.ListDice);
     return {
-      initialBoardState: BoardState.fromBB2(xml.initialBoard),
-      finalBoardState: BoardState.fromBB2(step.BoardState),
+      gameState: GameState.fromBB2(xml.initialBoard, step.BoardState),
       dice,
       diceSum: dice[0] + dice[1],
       startIndex: xml.positionIdx,
@@ -2689,16 +2748,19 @@ class KickoffEventRoll extends ModifiedD6SumRoll {
   }
 
   get activeTeam() {
-    return this.finalBoardState.teams[this.kickoffTeam];
+    return this.gameState.teams[this.kickoffTeam];
   }
-  static argsFromBB2(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
+
+  static fromBB2(xml: KickoffEventRollXML): KickoffEventRoll {
+    return new this(this.kickoffEventArgsFromBB2(xml));
+  }
+  static kickoffEventArgsFromBB2(xml: KickoffEventRollXML): ConstructorParameters<typeof KickoffEventRoll>[0] {
     const { step } = xml.kickoffPosition;
-    const finalBoardState = BoardState.fromBB2(step.BoardState);
+    const gameState = GameState.fromBB2(step.BoardState, step.BoardState);
     const kickoffTeam = convertSide(step.BoardState.KickOffTeam || SIDE.home);
 
     return {
-      initialBoardState: BoardState.fromBB2(xml.initialBoard),
-      finalBoardState,
+      gameState,
       startIndex: xml.positionIdx,
       messageData: xml.messageData,
       kickoffTeam,
@@ -2727,11 +2789,11 @@ export class PitchInvasionRoll extends KickoffEventRoll {
   }) {
     super(args);
     this.messageData = args.messageData;
-    this.activePlayer = this.finalBoardState.playerById(this.messageData.RulesEventPlayerInvaded.PlayerId)!;
+    this.activePlayer = this.gameState.playerById(this.messageData.RulesEventPlayerInvaded.PlayerId)!;
     this.dice = [this.messageData.RulesEventPlayerInvaded.Die];
     this.stunned = this.messageData.RulesEventPlayerInvaded.Stunned == 1;
     let playerTeam = this.activePlayer.team;
-    let opposingTeam = this.finalBoardState.teams[this.activePlayer.team.id == 'home' ? 'away' : 'home'];
+    let opposingTeam = this.gameState.teams[this.activePlayer.team.id == 'home' ? 'away' : 'home'];
     this.target = 6;
     this.modifier = opposingTeam.fame;
   }
@@ -2758,6 +2820,9 @@ export class PitchInvasionRoll extends KickoffEventRoll {
 
 
 export class SetupAction extends NoValueAction {
+  constructor({ gameState, startIndex }: { gameState: GameState, startIndex: number }) {
+    super({ gameState, startIndex, actionType: ACTION_TYPE.SetupAction });
+  }
   get actionName() { return "Setup"; }
   get dependentConditions(): DependentCondition[] { return [setup]; }
   get hideDependents() { return true; }
@@ -2777,21 +2842,20 @@ export class SetupAction extends NoValueAction {
     return this.description;
   }
 
-  // static fromInternal(position: Internal.SetupActionPosition) {
-  //   return new this({
-  //     initialBoardState: position.checkpoint.boardState
-  //   });
-  // }
-  static fromBB2(xml: ActionXML) {
-    return new this(this.argsFromBB2(xml));
+  static fromInternal(definition: Internal.GameDefinition, position: Internal.SetupActionPosition, positionIdx: number) {
+    return new this({
+      gameState: GameState.fromInternal(position.gameState, definition),
+      startIndex: positionIdx,
+    });
   }
-  static argsFromBB2(xml: ActionXML): ConstructorParameters<typeof SetupAction>[0] {
+  static fromBB2(xml: ActionXML) {
+    return new this(this.setupArgsFromBB2(xml));
+  }
+  static setupArgsFromBB2(xml: ActionXML): ConstructorParameters<typeof SetupAction>[0] {
     assert('setupPosition' in xml);
     return {
-      initialBoardState: BoardState.fromBB2(xml.initialBoard),
-      finalBoardState: BoardState.fromBB2(xml.setupPosition.step.BoardState),
+      gameState: GameState.fromBB2(xml.initialBoard, xml.setupPosition.step.BoardState),
       startIndex: xml.positionIdx,
-      actionType: ACTION_TYPE.SetupAction,
     };
   }
 }

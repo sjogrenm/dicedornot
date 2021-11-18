@@ -14,7 +14,7 @@
       if (
         !lastGroup ||
         !lastRoll ||
-        lastRoll.activeTeam?.id != roll.activeTeam?.id ||
+        lastRoll.gameState.activeTeam != roll.gameState.activeTeam ||
         lastRoll.turn != roll.turn
       ) {
         groups.push([roll]);

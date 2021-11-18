@@ -26,35 +26,40 @@ export interface ModifiedD6SumRoll {
     target: number,
 }
 
-export type Replay = DeepReadonly<{
+export type GameDefinition = DeepReadonly<{
     teams: ByTeam<Team>,
     stadium: {
         name: string,
         type: string,
         enhancement?: string,
     },
-    drives: Drive[],
-    unhandledSteps: BB2.ReplayStep[],
-    finalScore: ByTeam<number>,
+}>;
+
+export type Replay = DeepReadonly<{
     metadata: {
         url?: string,
         filename?: string,
         league?: string,
         datePlayed: Date,
     }
-    fame: ByTeam<Roll>,
+    gameDefinition: GameDefinition,
+    unhandledSteps: BB2.ReplayStep[],
     initialWeather: WEATHER,
     coinFlipWinner: Side,
     initialKickingTeam: Side,
+    fame: ByTeam<Roll>,
+    drives: Drive[],
+    finalScore: ByTeam<number>,
 }>
-export interface Team {
+export type Team = DeepReadonly<{
+    id: Side,
     players: Map<PlayerNumber, Player>,
     inducements: Inducements,
     race: RACE_ID,
     coach: string,
     name: string,
     logo: string,
-}
+}>
 
 export interface Inducements {
     mercenaries: Map<PlayerNumber, Player>,
@@ -106,6 +111,7 @@ export type Player = DeepReadonly<{
 }>
 
 export type PlayerState = DeepReadonly<{
+    id: PlayerId,
     pitchCell?: Cell,
     usedSkills: SKILL[],
     canAct: boolean,
@@ -116,11 +122,28 @@ export type PlayerState = DeepReadonly<{
     casualties?: number[],
 }>;
 
+export type BallState = DeepReadonly<{
+    pitchCell: Cell
+} | {
+    heldBy: PlayerId
+}>
+
 export type PlayerPositions = Record<PlayerNumber, Cell>;
 export type PlayerStates = Record<PlayerNumber, PlayerState>;
-export interface Checkpoint {
-    playerStates: DeepReadonly<PlayerStates>
+
+export type TeamState = {
+    turn: number,
+    score: number,
+    fame?: number,
+    babes?: number,
 }
+
+export type GameState = DeepReadonly<{
+    players: PlayerStates,
+    ball: BallState,
+    teams: ByTeam<TeamState>,
+    activeTeam: Side,
+}>
 
 export type KickoffEvent = {
     dice: number[],
@@ -169,7 +192,7 @@ export type KickoffEvent = {
 }));
 
 export type SetupAction = {
-    checkpoint: Checkpoint,
+    gameState: GameState,
     movedPlayers: PlayerPositions,
 };
 export type CatchRoll = any;
@@ -177,13 +200,13 @@ export type PassRoll = any;
 export type FoulRoll = any;
 export type ScatterRoll = any;
 export interface Drive {
-    checkpoint: Checkpoint,
+    gameState: GameState,
     initialScore: ByTeam<number>,
     kickingTeam: Side,
     wakeups: KickoffOrder<WakeupRoll[]>,
     setups: KickoffOrder<SetupAction[]>,
     kickoff: {
-        checkpoint: Checkpoint,
+        gameState: GameState,
         event: KickoffEvent,
         target: Cell,
         scatters: Cell[],
@@ -210,7 +233,7 @@ export interface WizardRoll {
 }
 
 export interface Turn {
-    checkpoint: Checkpoint,
+    gameState: GameState,
     number: number,
     side: keyof ByTeam<any>,
     activations: Activation[],
@@ -219,7 +242,7 @@ export interface Turn {
 }
 
 export interface Activation {
-    checkpoint: Checkpoint,
+    gameState: GameState,
     playerId: PlayerId,
     test?: ActivationTest,
     action: Action,
@@ -352,13 +375,13 @@ export interface SetupActionPosition {
     setupSide: Side,
     actionIdx: number,
     action: SetupAction,
-    checkpoint: Checkpoint,
+    gameState: GameState,
 }
 
 export interface KickoffTargetPosition {
     type: 'kickoffTarget',
     driveIdx: number,
-    checkpoint: Checkpoint,
+    gameState: GameState,
     target: Drive['kickoff']['target']
 }
 

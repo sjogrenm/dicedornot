@@ -62,8 +62,8 @@
           <div class="col">
               {#if $showResultsAnalysis}
               <Diced
-                homeTeam={$replay.fullReplay.teams.home.coach}
-                awayTeam={$replay.fullReplay.teams.away.coach}
+                homeTeam={$replay.fullReplay.gameDefinition.teams.home.coach}
+                awayTeam={$replay.fullReplay.gameDefinition.teams.away.coach}
               />
             {/if}
             <Summary />

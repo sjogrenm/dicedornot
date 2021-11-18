@@ -44,10 +44,10 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
     }
     for (const setupSide of [drive.kickingTeam, Internal.other(drive.kickingTeam)]) {
       for (const [actionIdx, action] of drive.setups[setupSide].entries()) {
-        yield { type: 'setupAction', driveIdx, setupSide, actionIdx, action, checkpoint: action.checkpoint };
+        yield { type: 'setupAction', driveIdx, setupSide, actionIdx, action, gameState: action.gameState };
       }
     }
-    yield { type: 'kickoffTarget', driveIdx, target: drive.kickoff.target, checkpoint: drive.kickoff.checkpoint };
+    yield { type: 'kickoffTarget', driveIdx, target: drive.kickoff.target, gameState: drive.kickoff.gameState };
     yield { type: 'kickoffScatter', driveIdx, scatters: drive.kickoff.scatters };
     yield { type: 'kickoffEvent', driveIdx, event: drive.kickoff.event };
     if ('activations' in drive.kickoff.event) {
@@ -58,7 +58,7 @@ function* _linearReplay(replay: Internal.Replay): Generator<ReplayPosition> {
       }
     } else if ('setupActions' in drive.kickoff.event) {
       for (const [actionIdx, action] of drive.kickoff.event.setupActions.entries()) {
-        yield { type: 'setupAction', driveIdx, setupSide: drive.kickoff.event.setupSide, actionIdx, action, checkpoint: action.checkpoint };
+        yield { type: 'setupAction', driveIdx, setupSide: drive.kickoff.event.setupSide, actionIdx, action, gameState: action.gameState };
       }
     }
     yield { type: 'kickoffLanding', driveIdx, touchbackTo: drive.kickoff.touchbackTo, catch: drive.kickoff.catch, bounce: drive.kickoff.bounce };

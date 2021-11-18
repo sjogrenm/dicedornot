@@ -19,8 +19,13 @@ function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
 class Replay {
     constructor(
         public unhandledSteps: DeepReadonly<DeepReadonly<B.ReplayStep>>[],
-        public teams: I.ByTeam<Team> = { home: new Team(), away: new Team() },
-        public stadium: DeepWritable<I.Replay['stadium']> = { name: "N/A", type: "" },
+        public gameDefinition: {
+            teams: I.ByTeam<Team>,
+            stadium: DeepWritable<I.GameDefinition['stadium']>,
+        } = {
+                teams: { home: new Team('home'), away: new Team('away') },
+                stadium: { name: "N/A", type: "" },
+            },
         public drives: Drive[] = [],
         private foundUnhandledStep = false,
         public finalScore: I.ByTeam<number> = { home: 0, away: 0 },
@@ -29,7 +34,15 @@ class Replay {
         public initialWeather: WEATHER = WEATHER.Nice,
         public coinFlipWinner: I.Side = "home",
         public initialKickingTeam: I.Side = "home",
-        public checkpoint: I.Checkpoint = { playerStates: {} },
+        public gameState: I.GameState = {
+            players: {},
+            ball: { pitchCell: { x: 0, y: 0 } },
+            teams: {
+                home: { turn: 0, score: 0 },
+                away: { turn: 0, score: 0 }
+            },
+            activeTeam: 'home',
+        },
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
     }
@@ -77,18 +90,26 @@ class Replay {
                 badStep(stepIdx, step);
             }
             if ('BoardState' in step) {
-                this.checkpoint = this.captureCheckpoint(step.BoardState);
+                this.gameState = this.captureCheckpoint(step.BoardState);
             }
         }
     }
 
-    captureCheckpoint(boardState: DeepReadonly<B.BoardState>): I.Checkpoint {
+    captureCheckpoint(boardState: DeepReadonly<B.BoardState>): I.GameState {
+        const players = Object.fromEntries(boardState.ListTeams.TeamState.flatMap(team =>
+            B.ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
+                [player.Id, convertPlayerState(team, player)]
+            )
+        ));
+        const ballCell = convertCell(boardState.Ball.Cell);
         return {
-            playerStates: Object.fromEntries(boardState.ListTeams.TeamState.flatMap(team =>
-                B.ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
-                    [player.Id, convertPlayerState(team, player)]
-                )
-            )),
+            players,
+            ball: boardState.Ball.IsHeld ? {heldBy: Object.values(players).find(player => player.pitchCell && cellEq(player.pitchCell, ballCell))!.id} : {pitchCell: ballCell},
+            teams: {
+                home: { turn: 0, score: 0 },
+                away: { turn: 0, score: 0 }
+            },
+            activeTeam: 'home',
         };
     }
 
@@ -104,7 +125,7 @@ class Replay {
             for (const merc of B.ensureList(step.RulesEventAddMercenary)) {
                 const playerNumber = merc.MercenaryId;
                 const side = playerNumberToSide(playerNumber);
-                const team = this.teams[side];
+                const team = this.gameDefinition.teams[side];
                 const pitchPlayers = B.ensureKeyedList('PlayerState', step.BoardState.ListTeams.TeamState[side == 'home' ? 0 : 1].ListPitchPlayers);
                 const pitchPlayer = pitchPlayers.find(p => p.Id == merc.MercenaryId);
                 assert(pitchPlayer != undefined);
@@ -134,7 +155,7 @@ class Replay {
         const player = step.RulesEventAddInducementSkill.MercenaryId;
         const side = playerNumberToSide(player);
         const skill = step.RulesEventAddInducementSkill.SkillId;
-        const team = this.teams[side];
+        const team = this.gameDefinition.teams[side];
         const merc = team.inducements.mercenaries.get(player);
         if (merc) {
             merc.skills.push(skill);
@@ -145,19 +166,19 @@ class Replay {
     }
 
     handleGameInfo(step: DeepReadonly<B.GameInfoStep>) {
-        this.stadium.name = he.decode(step.GameInfos.NameStadium.toString());
-        this.stadium.type = step.GameInfos.Stadium;
-        this.stadium.enhancement = step.GameInfos.StructStadium;
+        this.gameDefinition.stadium.name = he.decode(step.GameInfos.NameStadium.toString());
+        this.gameDefinition.stadium.type = step.GameInfos.Stadium;
+        this.gameDefinition.stadium.enhancement = step.GameInfos.StructStadium;
 
         for (const side of I.sides as I.Side[]) {
-            this.teams[side].coach = he.decode(B.ensureList(step.GameInfos.CoachesInfos.CoachInfos)[SIDE[side]].UserId.toString());
+            this.gameDefinition.teams[side].coach = he.decode(B.ensureList(step.GameInfos.CoachesInfos.CoachInfos)[SIDE[side]].UserId.toString());
 
             const bb2Team = step.BoardState.ListTeams.TeamState[SIDE[side]];
-            this.teams[side].race = bb2Team.Data.IdRace;
-            this.teams[side].name = he.decode(bb2Team.Data.Name.toString());
-            this.teams[side].logo = bb2Team.Data.Logo;
+            this.gameDefinition.teams[side].race = bb2Team.Data.IdRace;
+            this.gameDefinition.teams[side].name = he.decode(bb2Team.Data.Name.toString());
+            this.gameDefinition.teams[side].logo = bb2Team.Data.Logo;
 
-            this.teams[side].players = new Map(
+            this.gameDefinition.teams[side].players = new Map(
                 B.ensureKeyedList("PlayerState", bb2Team.ListPitchPlayers).map(p => [p.Id, convertPlayerDefinition(p)])
             );
         }
@@ -171,7 +192,7 @@ class Replay {
         const currentSetup = currentDrive.setups[side];
 
         const nextSetup = {
-            checkpoint: this.checkpoint,
+            gameState: this.gameState,
             movedPlayers: Object.fromEntries(
                 step.RulesEventSetUpConfiguration.ListPlayersPositions.PlayerPosition.map(pos => {
                     return [pos.PlayerId || 0, convertCell(pos.Position)];
@@ -188,7 +209,7 @@ class Replay {
         const side = convertSide(step.RulesEventWaitingRequest == '' ? SIDE.home : step.RulesEventWaitingRequest.ConcernedTeam || SIDE.home);
         const currentDrive = this.lastDrive();
         const currentSetup = currentDrive.setups[side];
-        const players: DeepReadonly<Record<I.PlayerNumber, I.PlayerState>> = this.checkpoint.playerStates;
+        const players: DeepReadonly<Record<I.PlayerNumber, I.PlayerState>> = this.gameState.players;
 
         const movedPlayer = Object.entries(players)
             .find(([_, state]) => state.pitchCell && cellEq(fromCell, state.pitchCell));
@@ -200,7 +221,7 @@ class Replay {
                 movedPlayers[alsoMove] = fromCell;
             }
             const nextSetup = {
-                checkpoint: this.checkpoint,
+                gameState: this.gameState,
                 movedPlayers
             }
             currentSetup.push(nextSetup);
@@ -299,8 +320,8 @@ class Replay {
                         dice,
                         total,
                         cancelled: false,
-                        coaching: {home: [], away: []},
-                        rerolls: {home: 0, away: 0},
+                        coaching: { home: [], away: [] },
+                        rerolls: { home: 0, away: 0 },
                     }
                 case KICKOFF_RESULT.ChangingWeather:
                 case KICKOFF_RESULT.CheeringFans:
@@ -385,7 +406,7 @@ function convertInitialWeather(replay: Replay, action: DeepReadonly<B.WeatherAct
 
 function convertKickoffTarget(replay: Replay, action: B.KickoffAction): void {
     const drive = replay.lastDrive();
-    drive.kickoff.checkpoint = replay.checkpoint;
+    drive.kickoff.gameState = replay.gameState;
     drive.kickoff.target = convertCell(action.Order.CellTo.Cell);
 }
 
@@ -477,18 +498,19 @@ function convertActivatePlayer(replay: Replay, step: DeepReadonly<B.GameTurnStep
         turn = new Turn(
             teamState.GameTurn || 0,
             playerSide,
-            replay.checkpoint,
+            replay.gameState,
         )
         drive.turns.push(turn);
     }
     turn.activations.push(new Activation(
         { side: playerSide, number: playerNumber },
-        replay.checkpoint
+        replay.gameState
     ));
 }
 
 class Team {
     constructor(
+        public id: I.Side,
         public players: Map<I.PlayerNumber, DeepWritable<I.Player>> = new Map(),
         public inducements: DeepWritable<I.Inducements> = { mercenaries: new Map() },
         public race: RACE_ID = RACE_ID.Human,
@@ -500,7 +522,7 @@ class Team {
 
 class Drive {
     constructor(
-        public checkpoint: I.Checkpoint,
+        public gameState: I.GameState,
         public kickingTeam: I.Side,
         public wakeups: I.KickoffOrder<I.WakeupRoll[]> = { home: [], away: [] },
         public setups: I.KickoffOrder<I.SetupAction[]> = { home: [], away: [] },
@@ -508,7 +530,15 @@ class Drive {
             event: { dice: [], total: KICKOFF_RESULT.ChangingWeather, cancelled: true },
             target: { x: -1, y: -1 },
             scatters: [],
-            checkpoint: { playerStates: [] },
+            gameState: {
+                players: {},
+                ball: { pitchCell: { x: 0, y: 0 } },
+                teams: {
+                    home: { turn: 0, score: 0 },
+                    away: { turn: 0, score: 0 }
+                },
+                activeTeam: 'home',
+            },
         },
         public turns: Turn[] = [],
         public initialScore: I.ByTeam<number> = { home: 0, away: 0 },
@@ -521,7 +551,7 @@ class Turn {
     constructor(
         public number: number,
         public side: keyof I.ByTeam<any>,
-        public checkpoint: I.Checkpoint,
+        public gameState: I.GameState,
         public activations: Activation[] = [],
         public startWizard?: I.WizardRoll,
         public endWizard?: I.WizardRoll,
@@ -531,7 +561,7 @@ class Turn {
 class Activation {
     constructor(
         public playerId: I.PlayerId,
-        public checkpoint: I.Checkpoint,
+        public gameState: I.GameState,
         public test?: I.ActivationTest,
         public action: I.Action = {
             actionType: ACTION_TYPE.Move,
@@ -608,6 +638,7 @@ export function convertPlayerDefinition(p: B.PitchPlayer): DeepWritable<I.Player
 
 export function convertPlayerState(t: B.TeamState, p: B.PitchPlayer): I.PlayerState {
     return {
+        id: {number: p.Id, side: t.Data.TeamId == 1 ? 'away' : 'home'},
         usedSkills: B.translateStringNumberList(p.ListUsedSkills),
         canAct: p.CanAct == 1,
         status: p.Status || STATUS.standing,
