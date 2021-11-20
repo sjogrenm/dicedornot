@@ -55,8 +55,7 @@ KICKOFF_RESULT,
   import {
     convertCell,
     playerNumberToSide,
-    convertPlayerDefinition,
-    convertPlayerState,
+    captureCheckpoint,
   } from "../replay/BB2toInternal.js";
   import { cellEq, cellString } from "../replay/Internal.js";
   import _ from "underscore";
@@ -192,6 +191,7 @@ KICKOFF_RESULT,
   }
 
   async function resetFromBoardState(boardState: BB2.BoardState) {
+    resetToCheckpoint(captureCheckpoint(boardState));
     teams.home = processTeam(
       SIDE.home,
       boardState.ListTeams.TeamState[0],
@@ -202,8 +202,6 @@ KICKOFF_RESULT,
       boardState.ListTeams.TeamState[1],
       boardState.ActiveTeam == 1
     );
-    setPlayerStates(boardState);
-    setBallPosition(boardState);
     await step();
   }
 
@@ -281,52 +279,6 @@ KICKOFF_RESULT,
     let key = cellString(cell);
     pitch[key] = props;
     return props;
-  }
-
-  function setPlayerStates(boardState: BB2.BoardState) {
-    boardState.ListTeams.TeamState.forEach((teamState) => {
-      ensureKeyedList("PlayerState", teamState.ListPitchPlayers).forEach((p) =>
-        placePlayer(teamState, p)
-      );
-    });
-    for (const team in [0, 1]) {
-      let blitzer = boardState.ListTeams.TeamState[team].BlitzerId;
-      if (blitzer >= 0) {
-        playerStates[blitzer] = { ...playerStates[blitzer], blitzer: true };
-      }
-    }
-  }
-
-  function placePlayer(t: BB2.TeamState, p: BB2.PitchPlayer) {
-    if (!playerDefs[p.Id]) {
-      playerDefs[p.Id] = convertPlayerDefinition(p);
-    }
-    const newState = convertPlayerState(t, p);
-    if (!_.isEqual(playerStates[p.Id], newState)) {
-      playerStates[p.Id] = newState;
-    }
-  }
-
-  function setBallPosition(boardState: BB2.BoardState) {
-    let cell = convertCell(boardState.Ball.Cell);
-
-    if (offPitch(cell)) {
-      ball = undefined;
-    } else if (boardState.Ball.IsHeld == 1) {
-      const holdingPlayer = Object.entries(playerStates).find(
-        ([_, player]) => player.pitchCell && cellEq(player.pitchCell, cell)
-      );
-      if (holdingPlayer) {
-        ball = {
-          heldBy: parseInt(holdingPlayer[0]),
-        };
-      } else {
-        console.error("Unable to find player for held ball");
-        ball = undefined;
-      }
-    } else {
-      ball = { position: cell };
-    }
   }
 
   function badAction(action: never): never;
@@ -836,20 +788,21 @@ KICKOFF_RESULT,
       });
       reset = reset || !matches;
     });
+    if (weather != gameState.weather) {
+      console.assert(false, "Weather didn't match gameState", {
+        weather,
+        gameStateWeather: gameState.weather,
+      });
+      reset = true;
+    }
     if (reset) {
       resetToCheckpoint(gameState);
     }
   }
 
   function resetToCheckpoint(gameState: Internal.GameState) {
-    Object.entries(gameState.players).forEach(([sid, state]) => {
-      let id = parseInt(sid);
-      playerStates[id] = {
-        ...state,
-        usedSkills: [...state.usedSkills],
-        casualties: state.casualties ? [...state.casualties] : undefined,
-      };
-    });
+    playerStates = gameState.players;
+    weather = gameState.weather;
   }
 
   async function handleGameStart(position: {

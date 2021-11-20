@@ -143,6 +143,7 @@ export type GameState = DeepReadonly<{
     ball: BallState,
     teams: ByTeam<TeamState>,
     activeTeam: Side,
+    weather: WEATHER,
 }>
 
 export type KickoffEvent = {

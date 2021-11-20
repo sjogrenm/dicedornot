@@ -9,11 +9,23 @@ import parser from 'fast-xml-parser';
 import he from 'he';
 import type { DeepReadonly, DeepWritable } from "ts-essentials";
 
-function requireValue<T>(v: T | undefined, msg: string, obj: any): T {
-    if (v === undefined) {
-        throw { msg, obj };
-    }
-    return v;
+export function captureCheckpoint(boardState: DeepReadonly<B.BoardState>): I.GameState {
+    const players = Object.fromEntries(boardState.ListTeams.TeamState.flatMap(team =>
+        B.ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
+            [player.Id, convertPlayerState(team, player)]
+        )
+    ));
+    const ballCell = convertCell(boardState.Ball.Cell);
+    return {
+        players,
+        ball: boardState.Ball.IsHeld ? {heldBy: Object.values(players).find(player => player.pitchCell && cellEq(player.pitchCell, ballCell))!.id} : {pitchCell: ballCell},
+        teams: {
+            home: { turn: 0, score: 0 },
+            away: { turn: 0, score: 0 }
+        },
+        activeTeam: 'home',
+        weather: boardState.Meteo || WEATHER.Nice,
+    };
 }
 
 class Replay {
@@ -42,6 +54,7 @@ class Replay {
                 away: { turn: 0, score: 0 }
             },
             activeTeam: 'home',
+            weather: WEATHER.Nice,
         },
     ) {
         this.unhandledSteps = [...this.unhandledSteps];
@@ -90,27 +103,9 @@ class Replay {
                 badStep(stepIdx, step);
             }
             if ('BoardState' in step) {
-                this.gameState = this.captureCheckpoint(step.BoardState);
+                this.gameState = captureCheckpoint(step.BoardState);
             }
         }
-    }
-
-    captureCheckpoint(boardState: DeepReadonly<B.BoardState>): I.GameState {
-        const players = Object.fromEntries(boardState.ListTeams.TeamState.flatMap(team =>
-            B.ensureKeyedList("PlayerState", team.ListPitchPlayers).map(player =>
-                [player.Id, convertPlayerState(team, player)]
-            )
-        ));
-        const ballCell = convertCell(boardState.Ball.Cell);
-        return {
-            players,
-            ball: boardState.Ball.IsHeld ? {heldBy: Object.values(players).find(player => player.pitchCell && cellEq(player.pitchCell, ballCell))!.id} : {pitchCell: ballCell},
-            teams: {
-                home: { turn: 0, score: 0 },
-                away: { turn: 0, score: 0 }
-            },
-            activeTeam: 'home',
-        };
     }
 
     handleGameFinishedStep(step: DeepReadonly<B.GameFinishedStep>) {
@@ -293,7 +288,7 @@ class Replay {
         if (step.RulesEventEndTurn) {
             if (step.RulesEventEndTurn.NewDrive) {
                 this.drives.push(new Drive(
-                    this.captureCheckpoint(step.BoardState),
+                    captureCheckpoint(step.BoardState),
                     convertSide(step.RulesEventEndTurn.PlayingTeam || SIDE.home),
                 ));
             }
@@ -538,6 +533,7 @@ class Drive {
                     away: { turn: 0, score: 0 }
                 },
                 activeTeam: 'home',
+                weather: WEATHER.Nice,
             },
         },
         public turns: Turn[] = [],

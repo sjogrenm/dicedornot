@@ -1411,8 +1411,10 @@ export enum STATUS {
 
 export enum MODIFIER_TYPE {
   unknownModifier2 = 2, // On Dodge
-  unknownModifier5 = 5, // On Pickup
+  unknownModifier3 = 3, // On Pickup
+  pickupBuiltIn = 5, // On Pickup
   teamAssist = 11,
   opponentAssist = 12,
   unknownModifier13 = 13, // ON block
+  pickupInRain = 16, // On Pickup
 }

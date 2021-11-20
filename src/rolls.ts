@@ -441,7 +441,7 @@ export class Action {
     return false;
   }
 
-  static fromReplayPosition(replay: Internal.Replay, initialBoard?: BB2.BoardState, positionIdx: number, position: ReplayPosition): (Action | UnknownAction | undefined) {
+  static fromReplayPosition(replay: Internal.Replay, initialBoard: BB2.BoardState | undefined, positionIdx: number, position: ReplayPosition): (Action | UnknownAction | undefined) {
     switch (position.type) {
       case 'bb2.setup': {
         if (initialBoard) {
