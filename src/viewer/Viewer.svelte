@@ -190,6 +190,28 @@ KICKOFF_RESULT,
     return positions;
   }
 
+  function setBallPosition(boardState: BB2.BoardState) {
+    let cell = convertCell(boardState.Ball.Cell);
+
+    if (offPitch(cell)) {
+      ball = undefined;
+    } else if (boardState.Ball.IsHeld == 1) {
+      const holdingPlayer = Object.entries(playerStates).find(
+        ([_, player]) => player.pitchCell && cellEq(player.pitchCell, cell)
+      );
+      if (holdingPlayer) {
+        ball = {
+          heldBy: parseInt(holdingPlayer[0]),
+        };
+      } else {
+        console.error("Unable to find player for held ball");
+        ball = undefined;
+      }
+    } else {
+      ball = { position: cell };
+    }
+  }
+  
   async function resetFromBoardState(boardState: BB2.BoardState) {
     resetToCheckpoint(captureCheckpoint(boardState));
     teams.home = processTeam(
@@ -202,6 +224,7 @@ KICKOFF_RESULT,
       boardState.ListTeams.TeamState[1],
       boardState.ActiveTeam == 1
     );
+    setBallPosition(boardState);
     await step();
   }
 
