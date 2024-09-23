@@ -1,6 +1,7 @@
 <script lang="typescript">
   import TurnSelectors from "./TurnSelectors.svelte";
   import RollDetails from "./RollDetails.svelte";
+  import FullGameLog from "./FullGameLog.svelte";
 
   import { replay } from "./stores.js";
   import type { Action } from "./rolls";
@@ -28,4 +29,5 @@
 <div>
   <TurnSelectors {actionsByTurn}/>
   <RollDetails {actionsByTurn}/>
+  <FullGameLog {actionsByTurn}/>
 </div>

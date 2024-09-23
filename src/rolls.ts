@@ -1192,7 +1192,11 @@ export class BlockRoll extends Roll {
         : '';
     return `${this.actionName}: [${this.activePlayer.team.shortName}] ${this.activePlayer.name
       }${attackerSkills} against ${this.defender.name
-      }${defenderSkills} - ${this.dice.join(this.diceSeparator)}${uphill}`;
+      }${defenderSkills} - ${this.dice.map(val => BLOCK_DIE[val]).join(this.diceSeparator)}${uphill}`;
+  }
+
+  get shortDescription() {
+    return `${this.actionName}: ${this.activePlayer.name} - ${this.dice.map(val => BLOCK_DIE[val]).join(this.diceSeparator)}`;
   }
 
   get ignore() {
@@ -2899,7 +2903,6 @@ const ROLL_TYPES: Record<ROLL, string | typeof Action | undefined> = {
   [ROLL.Dauntless]: DauntlessRoll,
   [ROLL.DivingTackle]: "Diving Tackle",
   [ROLL.Dodge]: DodgeRoll,
-  [ROLL.DodgePick]: undefined, // Choic to use Dodge
   [ROLL.DodgePick]: "Dodge Pick",
   [ROLL.EatTeammate]: "Eat Teammate",
   [ROLL.Fans]: undefined, // Fans
